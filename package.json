@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "An AI-powered API deployed on Vercel",
   "main": "api/index.js",
+  "type": "module",
   "scripts": {
     "start": "node api/index.js",
     "vercel-build": "npm install"
@@ -13,8 +14,7 @@
     "openai": "^4.12.0"
   },
   "engines": {
-    "node": "18.x"
+    "node": "18.17.x"
   }
 }
 
-  
