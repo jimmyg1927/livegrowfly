@@ -1,9 +1,8 @@
 {
-  "name": "LiveGrowfly",
+  "name": "livegrowfly",
   "version": "1.0.0",
   "description": "An AI-powered API deployed on Vercel",
   "main": "api/index.js",
-  "type": "module",
   "scripts": {
     "start": "node api/index.js"
   },
@@ -14,10 +13,7 @@
   },
   "engines": {
     "node": "18.x"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  }
 }
 
   
