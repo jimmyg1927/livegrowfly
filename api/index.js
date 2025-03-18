@@ -13,16 +13,26 @@ const openai = new OpenAI({
 app.post("/api/chat", async (req, res) => {
   try {
     const { message } = req.body;
+    if (!message) {
+      return res.status(400).json({ error: "Message is required" });
+    }
 
     const response = await openai.chat.completions.create({
       model: "gpt-4",
-      messages: [{ role: "user", content: message }]
+      messages: [{ role: "user", content: message }],
+      max_tokens: 1000
     });
 
     res.json({ response: response.choices[0].message.content });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('OpenAI API Error:', error);
+    res.status(500).json({ error: "Internal server error" });
   }
+});
+
+// Add a health check endpoint
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok" });
 });
 
 export default app;
