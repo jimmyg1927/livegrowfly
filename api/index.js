@@ -1,30 +1,29 @@
 import express from "express";
 import dotenv from "dotenv";
-import { Configuration, OpenAIApi } from "openai";
+import OpenAI from "openai"; // ✅ Correct Import
 
 dotenv.config();
 const app = express();
 app.use(express.json());
 
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY, // ✅ Ensure the API key is correctly set in Vercel
 });
-
-const openai = new OpenAIApi(configuration);
 
 app.post("/api/chat", async (req, res) => {
   try {
     const { message } = req.body;
-    
-    const response = await openai.createChatCompletion({
+
+    const response = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [{ role: "user", content: message }],
     });
 
-    res.json({ response: response.data.choices[0].message.content });
+    res.json({ response: response.choices[0].message.content });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
-app.listen(3000, () => console.log("Server running on port 3000"));
+export default app;
