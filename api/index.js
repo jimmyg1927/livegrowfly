@@ -4,7 +4,34 @@ import OpenAI from "openai";
 
 dotenv.config();
 const app = express();
-app.use(express.json());
+
+// Add more robust JSON parsing error handling
+app.use(express.json({
+  verify: (req, res, buf) => {
+    try {
+      JSON.parse(buf);
+    } catch (e) {
+      res.status(400).json({ 
+        error: 'Invalid JSON',
+        details: e.message 
+      });
+      throw new Error('Invalid JSON');
+    }
+  }
+}));
+
+// Add CORS headers
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  next();
+});
+
+// Handle OPTIONS requests
+app.options('/api/chat', (req, res) => {
+  res.status(200).end();
+});
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -14,8 +41,7 @@ app.post("/api/chat", async (req, res) => {
   try {
     const { message } = req.body;
     
-    // Add more detailed error logging
-    console.log('Received body:', JSON.stringify(req.body));
+    console.log('Received body:', JSON.stringify(req.body, null, 2));
     
     if (!message) {
       return res.status(400).json({ 
