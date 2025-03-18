@@ -13,8 +13,15 @@ const openai = new OpenAI({
 app.post("/api/chat", async (req, res) => {
   try {
     const { message } = req.body;
+    
+    // Add more detailed error logging
+    console.log('Received body:', JSON.stringify(req.body));
+    
     if (!message) {
-      return res.status(400).json({ error: "Message is required" });
+      return res.status(400).json({ 
+        error: "Message is required",
+        received: req.body 
+      });
     }
 
     const response = await openai.chat.completions.create({
@@ -25,8 +32,11 @@ app.post("/api/chat", async (req, res) => {
 
     res.json({ response: response.choices[0].message.content });
   } catch (error) {
-    console.error('OpenAI API Error:', error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Error details:', error);
+    res.status(500).json({ 
+      error: "Internal server error",
+      message: error.message 
+    });
   }
 });
 
