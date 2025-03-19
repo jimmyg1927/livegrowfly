@@ -9,7 +9,8 @@
   },
   "scripts": {
     "start": "node api/index.js",
-    "vercel-build": "npm install"
+    "vercel-build": "npm install",
+    "deploy": "vercel --prod"
   },
   "dependencies": {
     "express": "^4.18.2",
