@@ -5,16 +5,18 @@
   "main": "api/index.js",
   "type": "module",
   "engines": {
-    "node": ">=18.0.0 <=18.20.6"
+    "node": "18.x"
   },
   "scripts": {
     "start": "node api/index.js",
-    "vercel-build": "npm install"
+    "vercel-build": "npm install",
+    "debug": "NODE_ENV=development node --inspect api/index.js"
   },
   "dependencies": {
     "express": "^4.18.2",
     "dotenv": "^16.3.1",
-    "openai": "^4.12.0"
+    "openai": "^4.12.0",
+    "body-parser": "^1.20.2"
   }
 }
 
