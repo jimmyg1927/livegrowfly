@@ -7,7 +7,7 @@ const app = express();
 
 // Add more robust JSON parsing error handling
 app.use(express.json({
-  verify: (req, res, buf) => {
+  verify: (req, res, buf, encoding) => {
     try {
       JSON.parse(buf);
     } catch (e) {
@@ -64,11 +64,6 @@ app.post("/api/chat", async (req, res) => {
       message: error.message 
     });
   }
-});
-
-// Add a health check endpoint
-app.get("/api/health", (req, res) => {
-  res.json({ status: "ok" });
 });
 
 export default app;
