@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String     @id @default(cuid())
+  shopifyUserId   String     @unique
+  email           String     @unique
+  username        String?
+  profileImage    String?
+  jobTitle        String?
+  promptsUsed     Int        @default(0)
+  subscriptionType String    // demo, personal, entrepreneur, business
+  prompts         Prompt[]
+  feedback        Feedback[]
+  bookmarks       Bookmark[]
+  referralCode    String?    @unique
+  referredBy      String?
+  referralCount   Int        @default(0)
+  createdAt       DateTime   @default(now())
+
+  @@index([subscriptionType])
+  @@index([createdAt])
+}
+
+model Prompt {
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id])
+  question     String
+  response     String     @db.Text
+  feedback     Feedback[]
+  bookmarks    Bookmark[]
+  createdAt    DateTime   @default(now())
+}
+
+model Feedback {
+  id          String    @id @default(cuid())
+  promptId    String
+  prompt      Prompt    @relation(fields: [promptId], references: [id])
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  isPositive  Boolean
+  comment     String?   @db.Text
+  createdAt   DateTime  @default(now())
+}
+
+model Bookmark {
+  id          String    @id @default(cuid())
+  name        String
+  promptId    String
+  prompt      Prompt    @relation(fields: [promptId], references: [id])
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  createdAt   DateTime  @default(now())
+}

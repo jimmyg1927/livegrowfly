@@ -9,14 +9,19 @@
   },
   "scripts": {
     "start": "node api/index.js",
-    "vercel-build": "npm install",
-    "debug": "NODE_ENV=development node --inspect api/index.js"
+    "vercel-build": "npm run build",
+    "debug": "NODE_ENV=development node --inspect api/index.js",
+    "build": "npx prisma generate",
+    "dev": "nodemon api/index.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
+    "@prisma/client": "^6.5.0",
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.2",
     "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
     "openai": "^4.12.0",
-    "body-parser": "^1.20.2"
+    "prisma": "^6.5.0"
   }
 }
-
