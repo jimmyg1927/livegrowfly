@@ -9,9 +9,8 @@
   },
   "scripts": {
     "start": "node api/index.js",
-    "vercel-build": "npm run build",
-    "debug": "NODE_ENV=development node --inspect api/index.js",
-    "build": "npx prisma generate",
+    "build": "prisma generate",
+    "vercel-build": "prisma generate",
     "dev": "nodemon api/index.js"
   },
   "dependencies": {
