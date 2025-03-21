@@ -161,7 +161,11 @@ app.get("/api/history", authenticateUser, async (req, res) => {
   }
 });
 
-export default app;
+export default {
+  async handler(req, res) {
+    return app(req, res);
+  }
+};
 
 DATABASE_URL="postgresql://username:password@localhost:5432/growfly"
 OPENAI_API_KEY="your-key"

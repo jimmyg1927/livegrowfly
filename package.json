@@ -2,16 +2,15 @@
   "name": "livegrowfly",
   "version": "1.0.0",
   "description": "An AI-powered API deployed on Vercel",
-  "main": "api/index.js",
   "type": "module",
   "engines": {
-    "node": "18.x"
+    "node": ">=18.x <=20.x"
   },
   "scripts": {
     "start": "node api/index.js",
     "dev": "nodemon api/index.js",
-    "build": "npx prisma generate",
-    "vercel-build": "npx prisma generate"
+    "build": "prisma generate",
+    "vercel-build": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.5.0",
@@ -21,6 +20,9 @@
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
     "openai": "^4.12.0",
-    "prisma": "^6.5.0"
+    "prisma": "^6.5.0",
+    "lru-cache": "^10.0.1",
+    "glob": "^10.3.3",
+    "rimraf": "^5.0.1"
   }
 }
