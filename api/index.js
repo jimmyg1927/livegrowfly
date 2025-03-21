@@ -17,30 +17,35 @@ const authenticateUser = async (req, res, next) => {
     req.user = await prisma.user.findUnique({
       where: { id: decoded.userId }
     });
+    if (!req.user) {
+      throw new Error('User not found');
+    }
     next();
   } catch (error) {
     res.status(401).json({ error: 'Invalid token' });
   }
 };
 
+const SUBSCRIPTION_LIMITS = {
+  free: 10,
+  basic: 50,
+  premium: 100
+};
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-// Enhanced chat endpoint
 app.post("/api/chat", authenticateUser, async (req, res) => {
   try {
     const { message } = req.body;
     
-    // Check prompt limits
     const promptLimit = SUBSCRIPTION_LIMITS[req.user.subscriptionType];
     if (req.user.promptsUsed >= promptLimit) {
       return res.status(403).json({
         error: "Monthly prompt limit reached"
       });
     }
-
-    // Your OpenAI logic here
 
     res.json({ response: "Your OpenAI response" });
   } catch (error) {
