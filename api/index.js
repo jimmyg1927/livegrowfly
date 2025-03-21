@@ -8,7 +8,6 @@ dotenv.config();
 const app = express();
 const prisma = new PrismaClient();
 
-// Middleware
 app.use(express.json());
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
@@ -41,9 +40,7 @@ const SUBSCRIPTION_LIMITS = {
 // Auth middleware
 const authenticateUser = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'Authentication required' });
-    
+    const token = req.headers.authorization.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = await prisma.user.findUnique({
       where: { id: decoded.userId }
@@ -161,11 +158,7 @@ app.get("/api/history", authenticateUser, async (req, res) => {
   }
 });
 
-export default {
-  async handler(req, res) {
-    return app(req, res);
-  }
-};
+export default app;
 
 DATABASE_URL="postgresql://username:password@localhost:5432/growfly"
 OPENAI_API_KEY="your-key"
