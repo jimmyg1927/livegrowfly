@@ -11,5 +11,12 @@
       "src": "/api/(.*)",
       "dest": "api/index.js"
     }
-  ]
+  ],
+  "scripts": {
+    "build": "prisma generate",
+    "vercel-build": "prisma generate"
+  },
+  "engines": {
+    "node": "18.x"
+  }
 }
