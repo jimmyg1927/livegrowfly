@@ -49,7 +49,3 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
 });
 
 export default app;
-
-DATABASE_URL="postgresql://username:password@localhost:5432/growfly"
-OPENAI_API_KEY="your-key"
-JWT_SECRET="your-secret"
