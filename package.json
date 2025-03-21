@@ -10,8 +10,8 @@
   "scripts": {
     "start": "node api/index.js",
     "dev": "nodemon api/index.js",
-    "build": "prisma generate && node api/index.js",
-    "vercel-build": "prisma generate"
+    "build": "npx prisma generate",
+    "vercel-build": "npx prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.5.0",
