@@ -9,8 +9,8 @@
   },
   "scripts": {
     "start": "node api/index.js",
-    "build": "prisma generate",
-    "vercel-build": "prisma generate",
+    "build": "npx prisma generate",
+    "vercel-build": "npx prisma generate",
     "dev": "nodemon api/index.js"
   },
   "dependencies": {
