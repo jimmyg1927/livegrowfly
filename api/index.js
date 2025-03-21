@@ -68,91 +68,9 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
       });
     }
 
-    // Marketing focus prompt
-    const marketingPrompt = `
-      As Growfly.io's marketing AI assistant, respond to: "${message}"
-      Focus only on marketing, business, analytics, social media, or advertising.
-      If unrelated, respond: "I am your growfly.io marketing tool. I cannot answer unrelated questions."
-      If related, provide detailed marketing insights and end with two follow-up questions.
-    `;
+    // Your OpenAI logic here
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [{ role: "user", content: marketingPrompt }]
-    });
-
-    // Save prompt
-    const prompt = await prisma.prompt.create({
-      data: {
-        userId: req.user.id,
-        question: message,
-        response: completion.choices[0].message.content
-      }
-    });
-
-    // Update usage
-    await prisma.user.update({
-      where: { id: req.user.id },
-      data: { promptsUsed: { increment: 1 } }
-    });
-
-    res.json({
-      success: true,
-      response: completion.choices[0].message.content,
-      promptId: prompt.id,
-      promptsRemaining: promptLimit - (req.user.promptsUsed + 1)
-    });
-
-  } catch (error) {
-    console.error('API Error:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Feedback endpoint
-app.post("/api/feedback", authenticateUser, async (req, res) => {
-  const { promptId, isPositive, comment } = req.body;
-  try {
-    await prisma.feedback.create({
-      data: {
-        promptId,
-        userId: req.user.id,
-        isPositive,
-        comment
-      }
-    });
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Bookmark endpoints
-app.post("/api/bookmarks", authenticateUser, async (req, res) => {
-  const { promptId, name } = req.body;
-  try {
-    const bookmark = await prisma.bookmark.create({
-      data: {
-        promptId,
-        userId: req.user.id,
-        name
-      }
-    });
-    res.json({ success: true, bookmark });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Get user history
-app.get("/api/history", authenticateUser, async (req, res) => {
-  try {
-    const prompts = await prisma.prompt.findMany({
-      where: { userId: req.user.id },
-      orderBy: { createdAt: 'desc' },
-      include: { feedback: true, bookmarks: true }
-    });
-    res.json({ success: true, prompts });
+    res.json({ response: "Your OpenAI response" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
