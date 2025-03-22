@@ -1,8 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
-import OpenAI from "openai"; // ✅ Correct import for OpenAI v4+
-import { PrismaClient } from "@prisma/client";
-import jwt from "jsonwebtoken";
+import { OpenAI } from "openai";
+import { PrismaClient } from '@prisma/client';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 const app = express();
@@ -10,27 +10,24 @@ const prisma = new PrismaClient();
 
 app.use(express.json());
 
-// 🔐 Middleware to authenticate user via JWT
+// 🔐 Auth middleware
 const authenticateUser = async (req, res, next) => {
   try {
-    const token = req.headers.authorization.split(" ")[1];
+    const token = req.headers.authorization?.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await prisma.user.findUnique({
+    req.user = await prisma.user.findUnique({
       where: { id: decoded.userId }
     });
-
-    if (!user) {
-      throw new Error("User not found");
+    if (!req.user) {
+      throw new Error('User not found');
     }
-
-    req.user = user;
     next();
   } catch (error) {
-    return res.status(401).json({ error: "Invalid token" });
+    res.status(401).json({ error: 'Invalid token' });
   }
 };
 
-// 🧠 Subscription tiers
+// 🎯 Subscription prompt limits
 const SUBSCRIPTION_LIMITS = {
   free: 5,
   personal: 200,
@@ -38,45 +35,64 @@ const SUBSCRIPTION_LIMITS = {
   business: 3500
 };
 
-// 🤖 OpenAI setup
+// 🧠 OpenAI instance
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-// 🧠 AI chat route with dynamic follow-ups
+// 🤖 Chat endpoint
 app.post("/api/chat", authenticateUser, async (req, res) => {
   try {
     const { message } = req.body;
-
     const promptLimit = SUBSCRIPTION_LIMITS[req.user.subscriptionType] || 5;
+
     if (req.user.promptsUsed >= promptLimit) {
       return res.status(403).json({ error: "Monthly prompt limit reached" });
     }
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4-turbo",
+    // 🧠 Main assistant response
+    const mainResponse = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo", // ✅ Faster model for Vercel
       messages: [
         {
           role: "system",
-          content: `You are an AI assistant specialised in marketing, branding, business ideas, and social media. Be helpful, insightful and always return two follow-up questions relevant to the user's message.`
+          content: "You are a helpful assistant that provides advice on marketing, branding, business ideas, and social media. Be concise, strategic, and encouraging."
         },
         { role: "user", content: message }
       ],
-      max_tokens: 400
+      max_tokens: 300
     });
 
-    const responseContent = completion.choices[0].message.content;
+    // 🧠 Follow-up questions generation
+    const followUpResponse = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are an AI that generates 2 short follow-up questions based on a user's marketing-related input. Return only the questions in a numbered list format."
+        },
+        { role: "user", content: message }
+      ],
+      max_tokens: 100
+    });
 
-    // Update user's prompt usage
+    const responseText = mainResponse.choices[0].message.content.trim();
+    const followUps = followUpResponse.choices[0].message.content.trim();
+
+    // ✅ Update prompt usage
     await prisma.user.update({
       where: { id: req.user.id },
       data: { promptsUsed: { increment: 1 } }
     });
 
-    res.json({ response: responseContent });
+    // 📨 Respond
+    res.json({
+      response: `${responseText}\n\nFollow-up questions:\n${followUps}`
+    });
+
   } catch (error) {
-    console.error("❌ API Error:", error);
-    res.status(500).json({ error: error.message || "Internal Server Error" });
+    console.error("Error:", error);
+    res.status(500).json({ error: "Something went wrong" });
   }
 });
 
