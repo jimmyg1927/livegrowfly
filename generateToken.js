@@ -1,30 +1,25 @@
 import jwt from "jsonwebtoken";
-import { PrismaClient } from "@prisma/client";
 import dotenv from "dotenv";
+import { PrismaClient } from "@prisma/client";
 
 dotenv.config();
 const prisma = new PrismaClient();
 
 async function generateToken() {
-  // Get a user from the database
-  const user = await prisma.user.findFirst();  // Get the first user
-  
+  const user = await prisma.user.findFirst(); // assumes one test user exists
+
   if (!user) {
-    console.log("No user found! Create a user first.");
+    console.error("❌ No user found. Create a user first.");
     return;
   }
 
-  // Generate JWT token for the user
   const token = jwt.sign(
     { userId: user.id },
     process.env.JWT_SECRET,
     { expiresIn: "7d" }
   );
 
-  console.log("Generated Token:", token);
+  console.log("✅ Generated JWT Token:\n", token);
 }
 
-generateToken()
-  .catch((e) => console.error(e))
-  .finally(async () => await prisma.$disconnect());
-
+generateToken();

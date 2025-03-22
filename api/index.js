@@ -1,8 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import { Configuration, OpenAIApi } from "openai";
-import { PrismaClient } from "@prisma/client";
-import jwt from "jsonwebtoken";
+import { PrismaClient } from '@prisma/client';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 const app = express();
@@ -13,17 +13,20 @@ app.use(express.json());
 // 🔐 Auth middleware
 const authenticateUser = async (req, res, next) => {
   try {
-    const token = req.headers.authorization.split(" ")[1];
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) throw new Error("No token provided");
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: decoded.userId }
     });
-    if (!req.user) {
-      throw new Error("User not found");
-    }
+
+    if (!user) throw new Error("User not found");
+    req.user = user;
     next();
   } catch (error) {
-    res.status(401).json({ error: "Invalid token" });
+    console.error("🔐 Auth Error:", error);
+    res.status(401).json({ error: "Invalid token", details: error.message });
   }
 };
 
@@ -32,74 +35,66 @@ const SUBSCRIPTION_LIMITS = {
   free: 5,
   personal: 200,
   professional: 750,
-  business: 3250
+  business: 3500
 };
 
-// 🤖 OpenAI configuration
+// 🧠 OpenAI setup
 const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY,
 });
 const openai = new OpenAIApi(configuration);
 
-// 🧠 AI chat endpoint
+// 🤖 Chat endpoint
 app.post("/api/chat", authenticateUser, async (req, res) => {
   try {
     const { message } = req.body;
-
-    // Input validation
-    if (!message || typeof message !== "string") {
-      return res.status(400).json({ error: "Message is required and must be a string" });
-    }
+    if (!message) return res.status(400).json({ error: "No message provided" });
 
     const promptLimit = SUBSCRIPTION_LIMITS[req.user.subscriptionType] || 5;
+
     if (req.user.promptsUsed >= promptLimit) {
-      return res.status(403).json({
-        error: "Monthly prompt limit reached"
-      });
+      return res.status(403).json({ error: "Monthly prompt limit reached" });
     }
 
     const completion = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo", // Or gpt-4 if you’re on that plan
+      model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
           content:
-            "You are an AI assistant specialized in marketing, branding, business ideas, and social media. Provide helpful and relevant responses. Always include at least two follow-up questions that entice the user to continue."
+            "You are an AI assistant specialised in marketing, branding, business ideas, and social media. Always provide useful answers and include follow-up questions."
         },
-        {
-          role: "user",
-          content: message
-        }
+        { role: "user", content: message }
       ]
     });
 
     const responseContent = completion.data.choices[0].message.content;
 
-    // Update prompt usage
+    // Update user's prompt usage
     await prisma.user.update({
       where: { id: req.user.id },
       data: { promptsUsed: { increment: 1 } }
     });
 
-    // 📋 Dynamic follow-up suggestions
-    const followUpQuestions = [
-      "What specific aspect of marketing are you interested in?",
-      "Do you have any particular branding goals in mind?",
-      "Are you looking for business ideas in a specific industry?",
-      "What social media platforms are you focusing on?"
+    // Custom follow-up questions
+    const followUps = [
+      "What specific marketing goal are you targeting?",
+      "What’s your target audience?",
+      "Would you like ideas for Instagram, TikTok, or LinkedIn?",
+      "Are you focused on brand awareness or lead generation?"
     ];
 
-    const followUpsFormatted = followUpQuestions
-      .map((q, i) => `${i + 1}. ${q}`)
-      .join("\n");
-
-    const responseWithFollowUps = `${responseContent}\n\nFollow-up questions:\n${followUpsFormatted}`;
+    const responseWithFollowUps = `${responseContent}\n\nFollow-up questions:\n1. ${followUps[0]}\n2. ${followUps[1]}`;
 
     res.json({ response: responseWithFollowUps });
   } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ error: error.message });
+    console.error("🔥 API Crash:", error);
+    res.status(500).json({
+      error: "Something went wrong",
+      details: error.message || "Unknown error"
+    });
   }
 });
 
 export default app;
+
