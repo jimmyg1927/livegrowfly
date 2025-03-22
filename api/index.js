@@ -47,7 +47,20 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
       });
     }
 
-    res.json({ response: "Your OpenAI response" });
+    // Make a request to OpenAI API
+    const response = await openai.Completions.create({
+      model: "text-davinci-003",
+      prompt: message,
+      max_tokens: 150
+    });
+
+    // Update the user's promptsUsed count
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { promptsUsed: { increment: 1 } }
+    });
+
+    res.json({ response: response.choices[0].text });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
