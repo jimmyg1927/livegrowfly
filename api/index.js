@@ -1,15 +1,29 @@
 import express from "express";
 import dotenv from "dotenv";
 import { Configuration, OpenAIApi } from "openai";
-import { PrismaClient } from '@prisma/client';
-import jwt from 'jsonwebtoken';
-import shopifyAuth from '../shopify/shopifyAuth';
-import userDashboard from '../shopify/userDashboard';
-import adminDashboard from '../shopify/adminDashboard';
+import jwt from "jsonwebtoken";
+import { PrismaClient } from "@prisma/client";
+
+import shopifyAuth from "../shopify/shopifyAuth.js";
+import userDashboard from "../shopify/userDashboard.js";
+import adminDashboard from "../shopify/adminDashboard.js";
 
 dotenv.config();
 const app = express();
-const prisma = new PrismaClient();
+
+// 🧠 Prisma setup with hot-reloading support (optional but great for dev/serverless)
+const globalForPrisma = global;
+const prisma =
+  globalForPrisma.prisma ||
+  new PrismaClient({
+    log: ["error", "warn"],
+  });
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+
+// 🧠 OpenAI instance
+const openai = new OpenAIApi(
+  new Configuration({ apiKey: process.env.OPENAI_API_KEY })
+);
 
 app.use(express.json());
 
@@ -17,16 +31,18 @@ app.use(express.json());
 const authenticateUser = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
+    if (!token) throw new Error("No token provided");
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await prisma.user.findUnique({
-      where: { id: decoded.userId }
-    });
-    if (!req.user) {
-      throw new Error('User not found');
-    }
+    const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+
+    if (!user) throw new Error("User not found");
+
+    req.user = user;
     next();
   } catch (error) {
-    res.status(401).json({ error: 'Invalid token' });
+    console.error("Auth Error:", error.message);
+    res.status(401).json({ error: "Invalid token" });
   }
 };
 
@@ -35,15 +51,10 @@ const SUBSCRIPTION_LIMITS = {
   free: 5,
   personal: 200,
   professional: 750,
-  business: 3500
+  business: 3500,
 };
 
-// 🧠 OpenAI instance
-const openai = new OpenAIApi({
-  apiKey: process.env.OPENAI_API_KEY
-});
-
-// 🤖 Chat endpoint
+// 🤖 AI Chat endpoint
 app.post("/api/chat", authenticateUser, async (req, res) => {
   try {
     const { message } = req.body;
@@ -59,54 +70,19 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
       messages: [
         {
           role: "system",
-          content: "You are a helpful assistant that provides advice on marketing, branding, business ideas, and social media. Be concise, strategic, and encouraging."
+          content:
+            "You are a helpful assistant that provides advice on marketing, branding, business ideas, and social media. Be concise, strategic, and encouraging.",
         },
-        { role: "user", content: message }
+        { role: "user", content: message },
       ],
-      max_tokens: 300
+      max_tokens: 300,
     });
 
-    // 🧠 Follow-up questions generation
+    // 🧠 Follow-up question suggestions
     const followUpResponse = await openai.createChatCompletion({
       model: "gpt-4",
       messages: [
         {
           role: "system",
-          content: "You are an AI that generates 2 short follow-up questions based on a user's marketing-related input. Return only the questions in a numbered list format."
-        },
-        { role: "user", content: message }
-      ],
-      max_tokens: 100
-    });
-
-    const responseText = mainResponse.data.choices[0].message.content.trim();
-    const followUps = followUpResponse.data.choices[0].message.content.trim();
-
-    // ✅ Update prompt usage
-    await prisma.user.update({
-      where: { id: req.user.id },
-      data: { promptsUsed: { increment: 1 } }
-    });
-
-    // 📨 Respond
-    res.json({
-      response: `${responseText}\n\nFollow-up questions:\n${followUps}`
-    });
-
-  } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ error: "Something went wrong" });
-  }
-});
-
-// Shopify routes
-app.use('/shopify', shopifyAuth);
-app.use('/shopify', userDashboard);
-app.use('/shopify', adminDashboard);
-
-// Handle 404 for undefined routes
-app.use((req, res) => {
-  res.status(404).json({ error: "Not Found" });
-});
-
-export default app;
+          content:
+            "You are an AI that generates 2 short follow-up questions
