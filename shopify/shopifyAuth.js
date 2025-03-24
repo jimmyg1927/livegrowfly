@@ -1,47 +1,65 @@
-import Shopify, { ApiVersion } from '@shopify/shopify-api';
-import Koa from 'koa';
-import Router from 'koa-router';
+import express from 'express';
+import { shopifyApi, ApiVersion, LATEST_API_VERSION } from '@shopify/shopify-api';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const { SHOPIFY_API_KEY, SHOPIFY_API_SECRET, SHOPIFY_SCOPES, SHOPIFY_SHOP } = process.env;
+const {
+  SHOPIFY_API_KEY,
+  SHOPIFY_API_SECRET,
+  SHOPIFY_SCOPES,
+  SHOPIFY_APP_URL
+} = process.env;
 
-Shopify.Context.initialize({
-  API_KEY: SHOPIFY_API_KEY,
-  API_SECRET_KEY: SHOPIFY_API_SECRET,
-  SCOPES: SHOPIFY_SCOPES.split(','),
-  HOST_NAME: SHOPIFY_SHOP,
-  API_VERSION: ApiVersion.October21,
-  IS_EMBEDDED_APP: true,
-  SESSION_STORAGE: new Shopify.Session.MemorySessionStorage(),
+const shopify = shopifyApi({
+  apiKey: SHOPIFY_API_KEY,
+  apiSecretKey: SHOPIFY_API_SECRET,
+  scopes: SHOPIFY_SCOPES.split(','),
+  hostName: SHOPIFY_APP_URL.replace(/^https?:\/\//, ''),
+  isEmbeddedApp: true,
+  apiVersion: ApiVersion.October23,
+  sessionStorage: new shopify.session.MemorySessionStorage(),
 });
 
-const app = new Koa();
-const router = new Router();
+const router = express.Router();
 
-router.get('/auth', async (ctx) => {
-  const authRoute = await Shopify.Auth.beginAuth(
-    ctx.req,
-    ctx.res,
-    SHOPIFY_SHOP,
-    '/auth/callback',
-    false,
-  );
-  ctx.redirect(authRoute);
-});
-
-router.get('/auth/callback', async (ctx) => {
+// Start OAuth
+router.get('/auth', async (req, res) => {
   try {
-    await Shopify.Auth.validateAuthCallback(ctx.req, ctx.res, ctx.query);
-    ctx.redirect('/');
-  } catch (error) {
-    console.error(error);
-    ctx.throw(500, 'Authentication failed');
+    const shop = req.query.shop;
+
+    if (!shop) return res.status(400).send('Missing shop query param');
+
+    const authRoute = await shopify.auth.begin({
+      shop,
+      callbackPath: '/shopify/auth/callback',
+      isOnline: true,
+      rawRequest: req,
+      rawResponse: res,
+    });
+
+    return res.redirect(authRoute);
+  } catch (err) {
+    console.error('Auth start error:', err);
+    return res.status(500).send('Failed to start Shopify OAuth');
   }
 });
 
-app.use(router.routes());
-app.use(router.allowedMethods());
+// Handle OAuth Callback
+router.get('/auth/callback', async (req, res) => {
+  try {
+    const session = await shopify.auth.callback({
+      rawRequest: req,
+      rawResponse: res,
+    });
 
-export default app;
+    console.log('✅ Authenticated session:', session);
+
+    return res.redirect('/shopify/user-dashboard'); // Or wherever you want to go after auth
+  } catch (err) {
+    console.error('Auth callback error:', err);
+    return res.status(500).send('OAuth callback failed');
+  }
+});
+
+export default router;
