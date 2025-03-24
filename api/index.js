@@ -66,50 +66,39 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
       max_tokens: 300
     });
 
-    // 🧠 Follow-up questions generationup questions generation
-    const followUpResponse = await openai.createChatCompletion({ followUpResponse = await openai.createChatCompletion({
+    // 🧠 Follow-up questions generation
+    const followUpResponse = await openai.createChatCompletion({
       model: "gpt-4",
       messages: [
         {
           role: "system",
-          content: "You are an AI that generates 2 short follow-up questions based on a user's marketing-related input. Return only the questions in a numbered list format."  content: "You are an AI that generates 2 short follow-up questions based on a user's marketing-related input. Return only the questions in a numbered list format."
+          content: "You are an AI that generates 2 short follow-up questions based on a user's marketing-related input. Return only the questions in a numbered list format."
         },
-        { role: "user", content: message } { role: "user", content: message }
-      ],      ],
+        { role: "user", content: message }
+      ],
       max_tokens: 100
     });
 
-    const responseText = mainResponse.data.choices[0].message.content.trim();nResponse.data.choices[0].message.content.trim();
-    const followUps = followUpResponse.data.choices[0].message.content.trim();Response.data.choices[0].message.content.trim();
+    const responseText = mainResponse.data.choices[0].message.content.trim();
+    const followUps = followUpResponse.data.choices[0].message.content.trim();
 
     // ✅ Update prompt usage
-    await prisma.user.update({it prisma.user.update({
-      where: { id: req.user.id },      where: { id: req.user.id },
-      data: { promptsUsed: { increment: 1 } }mptsUsed: { increment: 1 } }
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { promptsUsed: { increment: 1 } }
     });
 
-    // 📨 Respond📨 Respond
-    res.json({    res.json({
-      response: `${responseText}\n\nFollow-up questions:\n${followUps}`responseText}\n\nFollow-up questions:\n${followUps}`
+    // 📨 Respond
+    res.json({
+      response: `${responseText}\n\nFollow-up questions:\n${followUps}`
     });
 
-  } catch (error) { catch (error) {
-    console.error("Error:", error); console.error("Error:", error);
-    res.status(500).json({ error: "Something went wrong" });    res.status(500).json({ error: "Something went wrong" });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ error: "Something went wrong" });
   }
-});});
+});
 
-
-
-
-
-
-
-
-
-
-
-export default app;app.use(adminDashboard.allowedMethods());app.use(adminDashboard.routes());app.use(userDashboard.allowedMethods());app.use(userDashboard.routes());app.use(shopifyAuth.allowedMethods());app.use(shopifyAuth.routes());// Shopify routes
 // Shopify routes
 app.use(shopifyAuth.routes());
 app.use(shopifyAuth.allowedMethods());
