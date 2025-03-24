@@ -100,11 +100,13 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
 });
 
 // Shopify routes
-app.use(shopifyAuth.routes());
-app.use(shopifyAuth.allowedMethods());
-app.use(userDashboard.routes());
-app.use(userDashboard.allowedMethods());
-app.use(adminDashboard.routes());
-app.use(adminDashboard.allowedMethods());
+app.use('/shopify', shopifyAuth);
+app.use('/shopify', userDashboard);
+app.use('/shopify', adminDashboard);
+
+// Handle 404 for undefined routes
+app.use((req, res) => {
+  res.status(404).json({ error: "Not Found" });
+});
 
 export default app;

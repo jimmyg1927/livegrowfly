@@ -1,10 +1,10 @@
-import Router from 'koa-router';
+import express from 'express';
 
-const router = new Router();
+const router = express.Router();
 
-router.get('/user-dashboard', async (ctx) => {
+router.get('/user-dashboard', (req, res) => {
   // Fetch user data and render the user dashboard
-  ctx.body = 'User Dashboard';
+  res.send('User Dashboard');
 });
 
 export default router;
