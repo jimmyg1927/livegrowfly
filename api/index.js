@@ -1,6 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
-import { Configuration, OpenAIApi } from "openai";
+import OpenAI from "openai";
 import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
 
@@ -20,11 +20,10 @@ const prisma =
   });
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
-const openai = new OpenAIApi(
-  new Configuration({
-    apiKey: process.env.OPENAI_API_KEY,
-  })
-);
+// ✅ Correct OpenAI v4 setup
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 app.use(express.json());
 
@@ -65,8 +64,8 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
       return res.status(403).json({ error: "Monthly prompt limit reached" });
     }
 
-    // Main response
-    const mainResponse = await openai.createChatCompletion({
+    // Main assistant response
+    const mainResponse = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
         {
@@ -79,8 +78,8 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
       max_tokens: 300,
     });
 
-    // Follow-up suggestions
-    const followUpResponse = await openai.createChatCompletion({
+    // Follow-up question suggestions
+    const followUpResponse = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
         {
@@ -93,8 +92,8 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
       max_tokens: 100,
     });
 
-    const responseText = mainResponse.data.choices[0].message.content.trim();
-    const followUps = followUpResponse.data.choices[0].message.content.trim();
+    const responseText = mainResponse.choices[0].message.content.trim();
+    const followUps = followUpResponse.choices[0].message.content.trim();
 
     // Update usage
     await prisma.user.update({
