@@ -1,8 +1,11 @@
 import express from "express";
 import dotenv from "dotenv";
-import { OpenAI } from "openai";
+import { Configuration, OpenAIApi } from "openai";
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
+import shopifyAuth from '../shopify/shopifyAuth';
+import userDashboard from '../shopify/userDashboard';
+import adminDashboard from '../shopify/adminDashboard';
 
 dotenv.config();
 const app = express();
@@ -36,7 +39,7 @@ const SUBSCRIPTION_LIMITS = {
 };
 
 // 🧠 OpenAI instance
-const openai = new OpenAI({
+const openai = new OpenAIApi({
   apiKey: process.env.OPENAI_API_KEY
 });
 
@@ -51,8 +54,8 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
     }
 
     // 🧠 Main assistant response
-    const mainResponse = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo", // ✅ Faster model for Vercel
+    const mainResponse = await openai.createChatCompletion({
+      model: "gpt-4",
       messages: [
         {
           role: "system",
@@ -63,37 +66,56 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
       max_tokens: 300
     });
 
-    // 🧠 Follow-up questions generation
-    const followUpResponse = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+    // 🧠 Follow-up questions generationup questions generation
+    const followUpResponse = await openai.createChatCompletion({ followUpResponse = await openai.createChatCompletion({
+      model: "gpt-4",
       messages: [
         {
           role: "system",
-          content: "You are an AI that generates 2 short follow-up questions based on a user's marketing-related input. Return only the questions in a numbered list format."
+          content: "You are an AI that generates 2 short follow-up questions based on a user's marketing-related input. Return only the questions in a numbered list format."  content: "You are an AI that generates 2 short follow-up questions based on a user's marketing-related input. Return only the questions in a numbered list format."
         },
-        { role: "user", content: message }
-      ],
+        { role: "user", content: message } { role: "user", content: message }
+      ],      ],
       max_tokens: 100
     });
 
-    const responseText = mainResponse.choices[0].message.content.trim();
-    const followUps = followUpResponse.choices[0].message.content.trim();
+    const responseText = mainResponse.data.choices[0].message.content.trim();nResponse.data.choices[0].message.content.trim();
+    const followUps = followUpResponse.data.choices[0].message.content.trim();Response.data.choices[0].message.content.trim();
 
     // ✅ Update prompt usage
-    await prisma.user.update({
-      where: { id: req.user.id },
-      data: { promptsUsed: { increment: 1 } }
+    await prisma.user.update({it prisma.user.update({
+      where: { id: req.user.id },      where: { id: req.user.id },
+      data: { promptsUsed: { increment: 1 } }mptsUsed: { increment: 1 } }
     });
 
-    // 📨 Respond
-    res.json({
-      response: `${responseText}\n\nFollow-up questions:\n${followUps}`
+    // 📨 Respond📨 Respond
+    res.json({    res.json({
+      response: `${responseText}\n\nFollow-up questions:\n${followUps}`responseText}\n\nFollow-up questions:\n${followUps}`
     });
 
-  } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ error: "Something went wrong" });
+  } catch (error) { catch (error) {
+    console.error("Error:", error); console.error("Error:", error);
+    res.status(500).json({ error: "Something went wrong" });    res.status(500).json({ error: "Something went wrong" });
   }
-});
+});});
+
+
+
+
+
+
+
+
+
+
+
+export default app;app.use(adminDashboard.allowedMethods());app.use(adminDashboard.routes());app.use(userDashboard.allowedMethods());app.use(userDashboard.routes());app.use(shopifyAuth.allowedMethods());app.use(shopifyAuth.routes());// Shopify routes
+// Shopify routes
+app.use(shopifyAuth.routes());
+app.use(shopifyAuth.allowedMethods());
+app.use(userDashboard.routes());
+app.use(userDashboard.allowedMethods());
+app.use(adminDashboard.routes());
+app.use(adminDashboard.allowedMethods());
 
 export default app;
