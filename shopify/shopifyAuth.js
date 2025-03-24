@@ -15,7 +15,7 @@ const shopify = shopifyApi({
   apiKey: SHOPIFY_API_KEY,
   apiSecretKey: SHOPIFY_API_SECRET,
   scopes: SHOPIFY_SCOPES.split(','),
-  hostName: SHOPIFY_APP_URL.replace(/^https?:\/\//, ''),
+  hostName: (process.env.SHOPIFY_APP_URL || '').replace(/^https?:\/\//, ''),
   isEmbeddedApp: true,
   apiVersion: ApiVersion.October23,
   sessionStorage: new shopify.session.MemorySessionStorage(),
