@@ -1,17 +1,23 @@
 import express from 'express';
+// Optional: import Prisma if you use DB here
+// import { PrismaClient } from '@prisma/client';
+// const prisma = new PrismaClient();
 
 const router = express.Router();
 
-router.get('/user-dashboard', (req, res) => {
+router.get('/user-dashboard', async (req, res) => {
   try {
-    console.log('✅ /user-dashboard route hit'); // Logs to Vercel
-    // Simulate dashboard logic — you can replace this with real DB fetch
+    console.log('✅ HIT /api/shopify/user-dashboard');
+
+    // Optional: if using DB
+    // const user = await prisma.user.findFirst();
+    // if (!user) throw new Error("No user found");
+
     res.send('✅ User Dashboard is working!');
   } catch (err) {
-    console.error('❌ Error in /user-dashboard:', err);
-    res.status(500).json({ error: 'Something went wrong on the server' });
+    console.error('❌ Error in /user-dashboard:', err.message);
+    res.status(500).json({ error: 'Internal server error in user-dashboard' });
   }
 });
-;
 
 export default router;
