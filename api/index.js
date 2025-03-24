@@ -11,38 +11,39 @@ import adminDashboard from "../shopify/adminDashboard.js";
 dotenv.config();
 const app = express();
 
-// 🧠 Prisma setup with hot-reloading support (optional but great for dev/serverless)
+// Prisma client setup with dev-friendly hot-reload
 const globalForPrisma = global;
 const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
-    log: ["error", "warn"],
+    log: ["warn", "error"],
   });
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
-// 🧠 OpenAI instance
 const openai = new OpenAIApi(
-  new Configuration({ apiKey: process.env.OPENAI_API_KEY })
+  new Configuration({
+    apiKey: process.env.OPENAI_API_KEY,
+  })
 );
 
 app.use(express.json());
 
-// 🔐 Auth middleware
+// 🔐 JWT Auth Middleware
 const authenticateUser = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
-    if (!token) throw new Error("No token provided");
+    if (!token) throw new Error("No token");
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
 
     if (!user) throw new Error("User not found");
-
     req.user = user;
+
     next();
   } catch (error) {
     console.error("Auth Error:", error.message);
-    res.status(401).json({ error: "Invalid token" });
+    res.status(401).json({ error: "Invalid or missing token" });
   }
 };
 
@@ -54,7 +55,7 @@ const SUBSCRIPTION_LIMITS = {
   business: 3500,
 };
 
-// 🤖 AI Chat endpoint
+// 🤖 AI Chat Route
 app.post("/api/chat", authenticateUser, async (req, res) => {
   try {
     const { message } = req.body;
@@ -64,7 +65,7 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
       return res.status(403).json({ error: "Monthly prompt limit reached" });
     }
 
-    // 🧠 Main assistant response
+    // Main response
     const mainResponse = await openai.createChatCompletion({
       model: "gpt-4",
       messages: [
@@ -78,11 +79,46 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
       max_tokens: 300,
     });
 
-    // 🧠 Follow-up question suggestions
+    // Follow-up suggestions
     const followUpResponse = await openai.createChatCompletion({
       model: "gpt-4",
       messages: [
         {
           role: "system",
           content:
-            "You are an AI that generates 2 short follow-up questions
+            "You are an AI that generates 2 short follow-up questions based on a user's marketing-related input. Return only the questions in a numbered list format.",
+        },
+        { role: "user", content: message },
+      ],
+      max_tokens: 100,
+    });
+
+    const responseText = mainResponse.data.choices[0].message.content.trim();
+    const followUps = followUpResponse.data.choices[0].message.content.trim();
+
+    // Update usage
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { promptsUsed: { increment: 1 } },
+    });
+
+    res.json({
+      response: `${responseText}\n\nFollow-up questions:\n${followUps}`,
+    });
+  } catch (error) {
+    console.error("Chat Route Error:", error);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
+
+// Shopify routes
+app.use("/shopify", shopifyAuth);
+app.use("/shopify", userDashboard);
+app.use("/shopify", adminDashboard);
+
+// 404 fallback
+app.use((req, res) => {
+  res.status(404).json({ error: "Not Found" });
+});
+
+export default app;
