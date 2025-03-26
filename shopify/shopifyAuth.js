@@ -1,6 +1,8 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import { shopifyApi, ApiVersion } from '@shopify/shopify-api';
+import pkg from '@shopify/shopify-api';
+
+const { shopifyApi, ApiVersion } = pkg;
 
 dotenv.config();
 
@@ -19,7 +21,7 @@ const shopify = shopifyApi({
   hostName: (SHOPIFY_APP_URL || '').replace(/^https?:\/\//, ''),
   isEmbeddedApp: true,
   apiVersion: ApiVersion.October23,
-  sessionStorage: new shopifyApi.session.MemorySessionStorage(),
+  sessionStorage: new pkg.session.MemorySessionStorage(),
 });
 
 const router = express.Router();
