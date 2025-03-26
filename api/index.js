@@ -1,11 +1,11 @@
 import express from "express";
 import dotenv from "dotenv";
-import { Configuration, OpenAIApi } from "openai";
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
-import shopifyAuth from '../shopify/shopifyAuth.js'; // 👈 fix extension
-import userDashboard from '../shopify/userDashboard.js'; // 👈 fix extension
-import adminDashboard from '../shopify/adminDashboard.js'; // 👈 fix extension
+import shopifyAuth from '../shopify/shopifyAuth.js';
+import userDashboard from '../shopify/userDashboard.js';
+import adminDashboard from '../shopify/adminDashboard.js';
+import OpenAI from "openai";
 
 dotenv.config();
 const app = express();
@@ -39,11 +39,9 @@ const SUBSCRIPTION_LIMITS = {
 };
 
 // 🧠 OpenAI instance
-const openai = new OpenAIApi(
-  new Configuration({
-    apiKey: process.env.OPENAI_API_KEY
-  })
-);
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 // 🤖 Chat endpoint
 app.post("/api/chat", authenticateUser, async (req, res) => {
@@ -55,7 +53,8 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
       return res.status(403).json({ error: "Monthly prompt limit reached" });
     }
 
-    const mainResponse = await openai.createChatCompletion({
+    // 🧠 Main assistant response
+    const mainResponse = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
         {
@@ -67,7 +66,8 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
       max_tokens: 300
     });
 
-    const followUpResponse = await openai.createChatCompletion({
+    // 🧠 Follow-up questions generation
+    const followUpResponse = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
         {
@@ -79,17 +79,20 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
       max_tokens: 100
     });
 
-    const responseText = mainResponse.data.choices[0].message.content.trim();
-    const followUps = followUpResponse.data.choices[0].message.content.trim();
+    const responseText = mainResponse.choices[0].message.content.trim();
+    const followUps = followUpResponse.choices[0].message.content.trim();
 
+    // ✅ Update prompt usage
     await prisma.user.update({
       where: { id: req.user.id },
       data: { promptsUsed: { increment: 1 } }
     });
 
+    // 📨 Respond
     res.json({
       response: `${responseText}\n\nFollow-up questions:\n${followUps}`
     });
+
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ error: "Something went wrong" });
