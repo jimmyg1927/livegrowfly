@@ -8,10 +8,10 @@ const {
   SHOPIFY_API_KEY,
   SHOPIFY_API_SECRET,
   SHOPIFY_SCOPES,
-  SHOPIFY_APP_URL
+  SHOPIFY_APP_URL,
 } = process.env;
 
-// ✅ Memory session storage via SDK constructor
+// ✅ Initialize Shopify API with in-memory session storage
 const shopify = shopifyApi({
   apiKey: SHOPIFY_API_KEY,
   apiSecretKey: SHOPIFY_API_SECRET,
@@ -24,10 +24,11 @@ const shopify = shopifyApi({
 
 const router = express.Router();
 
-// 🔐 Start OAuth
+// 🔐 Begin OAuth
 router.get('/auth', async (req, res) => {
   try {
     const shop = req.query.shop;
+
     if (!shop) return res.status(400).send('Missing shop query param');
 
     const authRoute = await shopify.auth.begin({
@@ -45,7 +46,7 @@ router.get('/auth', async (req, res) => {
   }
 });
 
-// 🔁 Handle OAuth Callback
+// 🔁 Handle OAuth callback
 router.get('/auth/callback', async (req, res) => {
   try {
     const session = await shopify.auth.callback({
