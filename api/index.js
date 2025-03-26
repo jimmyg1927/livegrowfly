@@ -3,9 +3,9 @@ import dotenv from "dotenv";
 import { Configuration, OpenAIApi } from "openai";
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
-import shopifyAuth from '../shopify/shopifyAuth.js';
-import userDashboard from '../shopify/userDashboard.js';
-import adminDashboard from '../shopify/adminDashboard.js';
+import shopifyAuth from '../shopify/shopifyAuth.js'; // 👈 fix extension
+import userDashboard from '../shopify/userDashboard.js'; // 👈 fix extension
+import adminDashboard from '../shopify/adminDashboard.js'; // 👈 fix extension
 
 dotenv.config();
 const app = express();
