@@ -5,7 +5,17 @@ import dotenv from "dotenv";
 dotenv.config();
 const prisma = new PrismaClient();
 
-async function generateAuthToken() {
+const generateAuthToken = (userId) => {
+  const token = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  return token;
+};
+
+// Example usage
+const userId = 'exampleUserId';
+const token = generateAuthToken(userId);
+console.log('Generated JWT Token:', token);
+
+async function main() {
   try {
     console.log("Connecting to the database...");
     // Get a user from the database
@@ -19,11 +29,7 @@ async function generateAuthToken() {
     console.log("User found:", user);
 
     // Generate JWT token for the user
-    const token = jwt.sign(
-      { userId: user.id },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = generateAuthToken(user.id);
 
     console.log("Generated Token:", token);
   } catch (error) {
@@ -34,4 +40,4 @@ async function generateAuthToken() {
   }
 }
 
-generateAuthToken();
+main();
