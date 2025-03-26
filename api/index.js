@@ -3,9 +3,9 @@ import dotenv from "dotenv";
 import { Configuration, OpenAIApi } from "openai";
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
-import shopifyAuth from '../shopify/shopifyAuth';
-import userDashboard from '../shopify/userDashboard';
-import adminDashboard from '../shopify/adminDashboard';
+import shopifyAuth from '../shopify/shopifyAuth.js';
+import userDashboard from '../shopify/userDashboard.js';
+import adminDashboard from '../shopify/adminDashboard.js';
 
 dotenv.config();
 const app = express();
@@ -39,9 +39,11 @@ const SUBSCRIPTION_LIMITS = {
 };
 
 // 🧠 OpenAI instance
-const openai = new OpenAIApi({
-  apiKey: process.env.OPENAI_API_KEY
-});
+const openai = new OpenAIApi(
+  new Configuration({
+    apiKey: process.env.OPENAI_API_KEY
+  })
+);
 
 // 🤖 Chat endpoint
 app.post("/api/chat", authenticateUser, async (req, res) => {
@@ -53,7 +55,6 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
       return res.status(403).json({ error: "Monthly prompt limit reached" });
     }
 
-    // 🧠 Main assistant response
     const mainResponse = await openai.createChatCompletion({
       model: "gpt-4",
       messages: [
@@ -66,7 +67,6 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
       max_tokens: 300
     });
 
-    // 🧠 Follow-up questions generation
     const followUpResponse = await openai.createChatCompletion({
       model: "gpt-4",
       messages: [
@@ -82,17 +82,14 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
     const responseText = mainResponse.data.choices[0].message.content.trim();
     const followUps = followUpResponse.data.choices[0].message.content.trim();
 
-    // ✅ Update prompt usage
     await prisma.user.update({
       where: { id: req.user.id },
       data: { promptsUsed: { increment: 1 } }
     });
 
-    // 📨 Respond
     res.json({
       response: `${responseText}\n\nFollow-up questions:\n${followUps}`
     });
-
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ error: "Something went wrong" });
