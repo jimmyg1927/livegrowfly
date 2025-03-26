@@ -1,6 +1,6 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import pkg from '@shopify/shopify-api';
+const express = require('express');
+const dotenv = require('dotenv');
+const pkg = require('@shopify/shopify-api');
 
 const { shopifyApi, ApiVersion, session } = pkg;
 const { MemorySessionStorage } = session;
@@ -61,4 +61,4 @@ router.get('/auth/callback', async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;
