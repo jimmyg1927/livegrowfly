@@ -1,10 +1,10 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import pkg from '@shopify/shopify-api';
+import shopifyModule from '@shopify/shopify-api';
 
 dotenv.config();
 
-const { shopifyApi, ApiVersion } = pkg;
+const { shopifyApi, ApiVersion, MemorySessionStorage } = shopifyModule;
 
 const {
   SHOPIFY_API_KEY,
@@ -20,16 +20,14 @@ const shopify = shopifyApi({
   hostName: (SHOPIFY_APP_URL || '').replace(/^https?:\/\//, ''),
   isEmbeddedApp: true,
   apiVersion: ApiVersion.October23,
-  sessionStorage: new pkg.session.MemorySessionStorage(), // ✅ THE CORRECT WAY
+  sessionStorage: new MemorySessionStorage(),
 });
 
 const router = express.Router();
 
-// 🔐 Begin OAuth
 router.get('/auth', async (req, res) => {
   try {
     const shop = req.query.shop;
-
     if (!shop) return res.status(400).send('Missing shop query param');
 
     const authRoute = await shopify.auth.begin({
@@ -47,7 +45,6 @@ router.get('/auth', async (req, res) => {
   }
 });
 
-// 🔁 Handle OAuth callback
 router.get('/auth/callback', async (req, res) => {
   try {
     const session = await shopify.auth.callback({
