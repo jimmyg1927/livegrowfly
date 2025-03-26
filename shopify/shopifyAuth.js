@@ -1,7 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
-const { shopifyApi, ApiVersion } = require('@shopify/shopify-api');
-const { MemorySessionStorage } = require('@shopify/shopify-api/session/memory');
+const { shopifyApi, ApiVersion, session } = require('@shopify/shopify-api');
+const { MemorySessionStorage } = session;
 
 dotenv.config();
 
@@ -24,6 +24,7 @@ const shopify = shopifyApi({
 
 const router = express.Router();
 
+// Start OAuth
 router.get('/auth', async (req, res) => {
   try {
     const shop = req.query.shop;
@@ -44,6 +45,7 @@ router.get('/auth', async (req, res) => {
   }
 });
 
+// OAuth callback
 router.get('/auth/callback', async (req, res) => {
   try {
     const session = await shopify.auth.callback({
@@ -60,4 +62,3 @@ router.get('/auth/callback', async (req, res) => {
 });
 
 module.exports = router;
-
