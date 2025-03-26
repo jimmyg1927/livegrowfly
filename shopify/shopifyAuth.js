@@ -1,13 +1,10 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const shopifyApiModule = require('@shopify/shopify-api');
+const express = require('express');
+const dotenv = require('dotenv');
+const pkg = require('@shopify/shopify-api');
+
+const { shopifyApi, ApiVersion, session } = pkg;
 
 dotenv.config();
-
-const { shopifyApi, ApiVersion } = shopifyApiModule;
-const { MemorySessionStorage } = shopifyApiModule.session;
 
 const {
   SHOPIFY_API_KEY,
@@ -16,6 +13,7 @@ const {
   SHOPIFY_APP_URL,
 } = process.env;
 
+// ✅ Initialize Shopify API with in-memory session storage
 const shopify = shopifyApi({
   apiKey: SHOPIFY_API_KEY,
   apiSecretKey: SHOPIFY_API_SECRET,
@@ -23,12 +21,12 @@ const shopify = shopifyApi({
   hostName: (SHOPIFY_APP_URL || '').replace(/^https?:\/\//, ''),
   isEmbeddedApp: true,
   apiVersion: ApiVersion.October23,
-  sessionStorage: new MemorySessionStorage(),
+  sessionStorage: new session.MemorySessionStorage(),
 });
 
 const router = express.Router();
 
-// 🔐 Start OAuth
+// 🔐 Begin OAuth
 router.get('/auth', async (req, res) => {
   try {
     const shop = req.query.shop;
@@ -50,7 +48,7 @@ router.get('/auth', async (req, res) => {
   }
 });
 
-// 🔁 OAuth callback
+// 🔁 Handle OAuth callback
 router.get('/auth/callback', async (req, res) => {
   try {
     const session = await shopify.auth.callback({
@@ -66,4 +64,4 @@ router.get('/auth/callback', async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

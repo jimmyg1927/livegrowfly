@@ -1,11 +1,11 @@
-import express from "express";
-import dotenv from "dotenv";
-import { PrismaClient } from '@prisma/client';
-import jwt from 'jsonwebtoken';
-import shopifyAuth from '../shopify/shopifyAuth.js';
-import userDashboard from '../shopify/userDashboard.js';
-import adminDashboard from '../shopify/adminDashboard.js';
-import OpenAI from "openai";
+const express = require("express");
+const dotenv = require("dotenv");
+const { PrismaClient } = require('@prisma/client');
+const jwt = require('jsonwebtoken');
+const shopifyAuth = require('../shopify/shopifyAuth.js');
+const userDashboard = require('../shopify/userDashboard.js');
+const adminDashboard = require('../shopify/adminDashboard.js');
+const OpenAI = require("openai");
 
 dotenv.config();
 const app = express();
@@ -109,4 +109,4 @@ app.use((req, res) => {
   res.status(404).json({ error: "Not Found" });
 });
 
-export default app;
+module.exports = app;
