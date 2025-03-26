@@ -1,9 +1,8 @@
 const express = require('express');
-const dotenv = require('dotenv');
-const { shopifyApi, ApiVersion, session } = require('@shopify/shopify-api');
-const { MemorySessionStorage } = session;
-
-dotenv.config();
+const { shopifyApi, ApiVersion } = require('@shopify/shopify-api');
+const { MemorySessionStorage } = require('@shopify/shopify-api/dist/session/memory');
+const { nodeAdapter } = require('@shopify/shopify-api/adapters/node');
+require('dotenv').config();
 
 const {
   SHOPIFY_API_KEY,
@@ -12,19 +11,21 @@ const {
   SHOPIFY_APP_URL,
 } = process.env;
 
+// ✅ Initialize Shopify API
 const shopify = shopifyApi({
   apiKey: SHOPIFY_API_KEY,
   apiSecretKey: SHOPIFY_API_SECRET,
   scopes: SHOPIFY_SCOPES.split(','),
-  hostName: (SHOPIFY_APP_URL || '').replace(/^https?:\/\//, ''),
+  hostName: SHOPIFY_APP_URL.replace(/^https?:\/\//, ''),
   isEmbeddedApp: true,
   apiVersion: ApiVersion.October23,
   sessionStorage: new MemorySessionStorage(),
+  adapter: nodeAdapter,
 });
 
 const router = express.Router();
 
-// Start OAuth
+// 🔐 OAuth start
 router.get('/auth', async (req, res) => {
   try {
     const shop = req.query.shop;
@@ -40,12 +41,12 @@ router.get('/auth', async (req, res) => {
 
     return res.redirect(authRoute);
   } catch (err) {
-    console.error('Auth start error:', err);
+    console.error('OAuth start error:', err);
     return res.status(500).send('Failed to start Shopify OAuth');
   }
 });
 
-// OAuth callback
+// 🔁 OAuth callback
 router.get('/auth/callback', async (req, res) => {
   try {
     const session = await shopify.auth.callback({
@@ -56,7 +57,7 @@ router.get('/auth/callback', async (req, res) => {
     console.log('✅ Authenticated Shopify session:', session);
     return res.redirect('/shopify/user-dashboard');
   } catch (err) {
-    console.error('Auth callback error:', err);
+    console.error('OAuth callback error:', err);
     return res.status(500).send('OAuth callback failed');
   }
 });
