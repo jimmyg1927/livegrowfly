@@ -1,10 +1,11 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import shopifyModule from '@shopify/shopify-api';
+import pkg from '@shopify/shopify-api';
+
+const { shopifyApi, ApiVersion, session } = pkg;
+const { MemorySessionStorage } = session;
 
 dotenv.config();
-
-const { shopifyApi, ApiVersion, MemorySessionStorage } = shopifyModule;
 
 const {
   SHOPIFY_API_KEY,
