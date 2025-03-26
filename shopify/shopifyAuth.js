@@ -1,8 +1,14 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import { shopifyApi, ApiVersion, MemorySessionStorage } from '@shopify/shopify-api';
+import pkg from '@shopify/shopify-api';
 
 dotenv.config();
+
+const {
+  shopifyApi,
+  ApiVersion,
+  session: { MemorySessionStorage }
+} = pkg;
 
 const {
   SHOPIFY_API_KEY,
@@ -23,10 +29,10 @@ const shopify = shopifyApi({
 
 const router = express.Router();
 
+// 🔐 Begin OAuth
 router.get('/auth', async (req, res) => {
   try {
     const shop = req.query.shop;
-
     if (!shop) return res.status(400).send('Missing shop query param');
 
     const authRoute = await shopify.auth.begin({
@@ -44,6 +50,7 @@ router.get('/auth', async (req, res) => {
   }
 });
 
+// 🔁 Handle OAuth callback
 router.get('/auth/callback', async (req, res) => {
   try {
     const session = await shopify.auth.callback({
