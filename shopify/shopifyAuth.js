@@ -1,7 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import { shopifyApi, ApiVersion } from '@shopify/shopify-api';
-import { MemorySessionStorage } from '@shopify/shopify-api/session';
 
 dotenv.config();
 
@@ -12,6 +11,7 @@ const {
   SHOPIFY_APP_URL
 } = process.env;
 
+// ✅ Memory session storage via SDK constructor
 const shopify = shopifyApi({
   apiKey: SHOPIFY_API_KEY,
   apiSecretKey: SHOPIFY_API_SECRET,
@@ -19,7 +19,7 @@ const shopify = shopifyApi({
   hostName: (SHOPIFY_APP_URL || '').replace(/^https?:\/\//, ''),
   isEmbeddedApp: true,
   apiVersion: ApiVersion.October23,
-  sessionStorage: new MemorySessionStorage(),
+  sessionStorage: new shopifyApi.session.MemorySessionStorage(),
 });
 
 const router = express.Router();
@@ -54,9 +54,6 @@ router.get('/auth/callback', async (req, res) => {
     });
 
     console.log('✅ Authenticated Shopify session:', session);
-
-    // Optional: save session or token here if needed
-
     return res.redirect('/shopify/user-dashboard');
   } catch (err) {
     console.error('Auth callback error:', err);
