@@ -1,8 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import pkg from '@shopify/shopify-api';
-
-const { shopifyApi, ApiVersion, session } = pkg;
+import { shopifyApi, ApiVersion, MemorySessionStorage } from '@shopify/shopify-api';
 
 dotenv.config();
 
@@ -13,7 +11,6 @@ const {
   SHOPIFY_APP_URL,
 } = process.env;
 
-// ✅ Initialize Shopify API with in-memory session storage
 const shopify = shopifyApi({
   apiKey: SHOPIFY_API_KEY,
   apiSecretKey: SHOPIFY_API_SECRET,
@@ -21,12 +18,11 @@ const shopify = shopifyApi({
   hostName: (SHOPIFY_APP_URL || '').replace(/^https?:\/\//, ''),
   isEmbeddedApp: true,
   apiVersion: ApiVersion.October23,
-  sessionStorage: new session.MemorySessionStorage(),
+  sessionStorage: new MemorySessionStorage(),
 });
 
 const router = express.Router();
 
-// 🔐 Begin OAuth
 router.get('/auth', async (req, res) => {
   try {
     const shop = req.query.shop;
@@ -48,7 +44,6 @@ router.get('/auth', async (req, res) => {
   }
 });
 
-// 🔁 Handle OAuth callback
 router.get('/auth/callback', async (req, res) => {
   try {
     const session = await shopify.auth.callback({
