@@ -1,13 +1,13 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import pkg from '@shopify/shopify-api';
+import pkg from '@shopify/shopify-api'; // 👈 Default import of CommonJS
 
 dotenv.config();
 
 const {
   shopifyApi,
   ApiVersion,
-  session: { MemorySessionStorage }
+  session: { MemorySessionStorage } // 👈 Correct access to MemorySessionStorage
 } = pkg;
 
 const {
@@ -24,7 +24,7 @@ const shopify = shopifyApi({
   hostName: (SHOPIFY_APP_URL || '').replace(/^https?:\/\//, ''),
   isEmbeddedApp: true,
   apiVersion: ApiVersion.October23,
-  sessionStorage: new MemorySessionStorage(),
+  sessionStorage: new MemorySessionStorage(), // ✅ Correct usage
 });
 
 const router = express.Router();
@@ -33,6 +33,7 @@ const router = express.Router();
 router.get('/auth', async (req, res) => {
   try {
     const shop = req.query.shop;
+
     if (!shop) return res.status(400).send('Missing shop query param');
 
     const authRoute = await shopify.auth.begin({
