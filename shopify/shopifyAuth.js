@@ -1,8 +1,7 @@
 const express = require("express");
 const { shopifyApi, LATEST_API_VERSION } = require("@shopify/shopify-api");
-const { nodeAdapter } = require("@shopify/shopify-api/adapters/node");
+const { node } = require("@shopify/shopify-api/adapters");
 const InMemorySessionStorage = require("./InMemorySessionStorage");
-
 require("dotenv").config();
 
 const shopify = shopifyApi({
@@ -12,12 +11,13 @@ const shopify = shopifyApi({
   hostName: process.env.SHOPIFY_APP_URL.replace(/^https?:\/\//, ""),
   isEmbeddedApp: true,
   apiVersion: LATEST_API_VERSION,
-  sessionStorage: new InMemorySessionStorage(), // ✅ Custom session storage
-  adapter: nodeAdapter(), // ✅ Call it like a function
+  sessionStorage: new InMemorySessionStorage(),
+  adapter: node
 });
 
 const router = express.Router();
 
+// STEP 1: Begin Auth
 router.get("/auth", async (req, res) => {
   try {
     const shop = req.query.shop;
@@ -38,6 +38,7 @@ router.get("/auth", async (req, res) => {
   }
 });
 
+// STEP 2: OAuth Callback
 router.get("/auth/callback", async (req, res) => {
   try {
     const session = await shopify.auth.callback({
