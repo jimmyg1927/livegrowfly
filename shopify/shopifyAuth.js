@@ -1,6 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const { shopifyApi, ApiVersion } = require('@shopify/shopify-api');
+const { NodeAdapter } = require('@shopify/shopify-api/adapters/node');
 const InMemorySessionStorage = require('./InMemorySessionStorage');
 
 dotenv.config();
@@ -12,7 +13,7 @@ const {
   SHOPIFY_APP_URL,
 } = process.env;
 
-// ✅ Initialize Shopify API with custom in-memory session storage
+// ✅ Initialize Shopify API with Node adapter and custom in-memory session storage
 const shopify = shopifyApi({
   apiKey: SHOPIFY_API_KEY,
   apiSecretKey: SHOPIFY_API_SECRET,
@@ -21,6 +22,7 @@ const shopify = shopifyApi({
   isEmbeddedApp: true,
   apiVersion: ApiVersion.October23,
   sessionStorage: new InMemorySessionStorage(),
+  adapter: new NodeAdapter(), // Add the Node adapter here
 });
 
 const router = express.Router();
