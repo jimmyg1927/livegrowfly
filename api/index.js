@@ -3,8 +3,8 @@ const dotenv = require("dotenv");
 const { PrismaClient } = require('@prisma/client');
 const jwt = require('jsonwebtoken');
 const shopifyAuth = require('../shopify/shopifyAuth.js');
-const userDashboard = require('../shopify/userDashboard.js');
-const adminDashboard = require('../shopify/adminDashboard.js');
+const userDashboard = require('../shopify/userDashboard.js'); // Import userDashboard
+const adminDashboard = require('../shopify/adminDashboard.js'); // Import adminDashboard
 const OpenAI = require("openai");
 
 dotenv.config();
@@ -100,9 +100,9 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
 });
 
 // Shopify routes
-app.use('/shopify', shopifyAuth);
-app.use('/shopify', userDashboard);
-app.use('/shopify', adminDashboard);
+app.use('/shopify', shopifyAuth); // Mount shopifyAuth routes
+app.use('/shopify', userDashboard); // Mount userDashboard routes
+app.use('/shopify', adminDashboard); // Mount adminDashboard routes
 
 // Handle 404 for undefined routes
 app.use((req, res) => {
