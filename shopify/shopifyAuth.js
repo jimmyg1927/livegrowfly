@@ -1,8 +1,10 @@
 const express = require("express");
 const { shopifyApi, LATEST_API_VERSION } = require("@shopify/shopify-api");
-const { shopifyApp } = require("@shopify/shopify-app-express");
 const { restResources } = require("@shopify/shopify-api/rest/admin/2023-10");
 const InMemorySessionStorage = require("./InMemorySessionStorage");
+
+// ✅ Register the Node adapter
+require("@shopify/shopify-api/adapters/node");
 
 require("dotenv").config();
 
@@ -25,7 +27,7 @@ router.get("/auth", async (req, res) => {
     const shop = req.query.shop;
     if (!shop) return res.status(400).send("Missing shop query param");
 
-    await shopify.auth.begin({
+    const authRoute = await shopify.auth.begin({
       shop,
       callbackPath: "/shopify/auth/callback",
       isOnline: true,
@@ -33,12 +35,10 @@ router.get("/auth", async (req, res) => {
       rawResponse: res,
     });
 
-    // 🚫 DO NOT add res.redirect — handled internally
+    return res.redirect(authRoute);
   } catch (err) {
     console.error("Auth start error:", err);
-    if (!res.headersSent) {
-      return res.status(500).send("Failed to start Shopify OAuth");
-    }
+    return res.status(500).send("Failed to start Shopify OAuth");
   }
 });
 
@@ -51,12 +51,10 @@ router.get("/auth/callback", async (req, res) => {
     });
 
     console.log("✅ Authenticated Shopify session:", session);
-    res.redirect("/shopify/user-dashboard");
+    return res.redirect("/shopify/user-dashboard");
   } catch (err) {
     console.error("Auth callback error:", err);
-    if (!res.headersSent) {
-      return res.status(500).send("OAuth callback failed");
-    }
+    return res.status(500).send("OAuth callback failed");
   }
 });
 
