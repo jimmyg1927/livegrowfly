@@ -1,26 +1,22 @@
 {
   "name": "livegrowfly",
   "version": "1.0.0",
-  "description": "An AI-powered API deployed on Vercel",
   "main": "api/index.js",
   "engines": {
     "node": "18.x"
   },
   "scripts": {
     "start": "node api/index.js",
-    "dev": "nodemon api/index.js",
-    "build": "prisma generate",
-    "vercel-build": "prisma generate"
+    "dev": "nodemon api/index.js"
   },
   "dependencies": {
-    "@prisma/client": "^6.5.0",
+    "@prisma/client": "^5.5.0",
     "@shopify/shopify-api": "^11.11.1",
-    "bcrypt": "^5.1.1",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
     "koa": "^2.16.0",
     "openai": "^4.89.0",
-    "prisma": "^6.5.0"
+    "prisma": "^5.5.0"
   }
 }
