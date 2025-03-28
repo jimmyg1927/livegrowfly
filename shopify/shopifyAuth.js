@@ -1,11 +1,11 @@
 const express = require("express");
 const { shopifyApi, LATEST_API_VERSION } = require("@shopify/shopify-api");
-const { nodeAdapter } = require("@shopify/shopify-api/adapters/node");
+const { shopifyApp } = require("@shopify/shopify-app-express");
+const { restResources } = require("@shopify/shopify-api/rest/admin/2023-10");
 const InMemorySessionStorage = require("./InMemorySessionStorage");
 
 require("dotenv").config();
 
-// Initialize Shopify API with proper adapter + in-memory session
 const shopify = shopifyApi({
   apiKey: process.env.SHOPIFY_API_KEY,
   apiSecretKey: process.env.SHOPIFY_API_SECRET,
@@ -14,7 +14,7 @@ const shopify = shopifyApi({
   isEmbeddedApp: true,
   apiVersion: LATEST_API_VERSION,
   sessionStorage: new InMemorySessionStorage(),
-  adapter: nodeAdapter, // ✅ Correct usage for v11+
+  restResources,
 });
 
 const router = express.Router();
@@ -25,7 +25,7 @@ router.get("/auth", async (req, res) => {
     const shop = req.query.shop;
     if (!shop) return res.status(400).send("Missing shop query param");
 
-    const authRoute = await shopify.auth.begin({
+    await shopify.auth.begin({
       shop,
       callbackPath: "/shopify/auth/callback",
       isOnline: true,
@@ -33,14 +33,16 @@ router.get("/auth", async (req, res) => {
       rawResponse: res,
     });
 
-    return res.redirect(authRoute);
+    // 🚫 DO NOT add res.redirect — handled internally
   } catch (err) {
     console.error("Auth start error:", err);
-    return res.status(500).send("Failed to start Shopify OAuth");
+    if (!res.headersSent) {
+      return res.status(500).send("Failed to start Shopify OAuth");
+    }
   }
 });
 
-// STEP 2: Handle Callback
+// STEP 2: OAuth Callback
 router.get("/auth/callback", async (req, res) => {
   try {
     const session = await shopify.auth.callback({
@@ -49,12 +51,12 @@ router.get("/auth/callback", async (req, res) => {
     });
 
     console.log("✅ Authenticated Shopify session:", session);
-
-    // Redirect to your post-authenticated area
-    return res.redirect("/shopify/user-dashboard");
+    res.redirect("/shopify/user-dashboard");
   } catch (err) {
     console.error("Auth callback error:", err);
-    return res.status(500).send("OAuth callback failed");
+    if (!res.headersSent) {
+      return res.status(500).send("OAuth callback failed");
+    }
   }
 });
 
