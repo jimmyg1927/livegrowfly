@@ -1,10 +1,10 @@
-const express = require('express');
+const express = require("express");
 
 const router = express.Router();
 
-router.get('/user-dashboard', (req, res) => {
-  // Fetch user data and render the user dashboard
-  res.send('User Dashboard');
+router.get("/user-dashboard", (req, res) => {
+  console.log("Accessed /shopify/user-dashboard");
+  res.send("User Dashboard");
 });
 
 module.exports = router;

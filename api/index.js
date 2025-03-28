@@ -100,9 +100,11 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
 });
 
 // Shopify routes
+console.log("Registering Shopify routes...");
 app.use('/shopify', shopifyAuth); // Mount shopifyAuth routes
 app.use('/shopify', userDashboard); // Mount userDashboard routes
 app.use('/shopify', adminDashboard); // Mount adminDashboard routes
+console.log("Shopify routes registered.");
 
 // Handle 404 for undefined routes
 app.use((req, res) => {
