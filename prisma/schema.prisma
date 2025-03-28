@@ -8,20 +8,19 @@ generator client {
 }
 
 model User {
-  id              String  @id @default(uuid())
-  email           String  @unique
-  password        String
+  id               String   @id @default(uuid())
+  email            String   @unique
+  password         String
   subscriptionType String
-  promptsUsed     Int     @default(0)
-  createdAt       DateTime @default(now())
+  promptsUsed      Int      @default(0)
+  createdAt        DateTime @default(now())
 
-  relatedModels   YourModel[]
+  relatedModels YourModel[]
 }
 
 model YourModel {
-  id        String  @id @default(uuid())
+  id        String   @id @default(uuid())
   userId    String
-  user      User    @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())  // ✅ FIXED SYNTAX
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now()) // ✅ FIXED SYNTAX
 }
-
