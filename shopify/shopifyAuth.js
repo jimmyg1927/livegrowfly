@@ -1,14 +1,11 @@
 const express = require("express");
 const { shopifyApi, LATEST_API_VERSION } = require("@shopify/shopify-api");
-const { node } = require("@shopify/shopify-api/adapters/node"); // Register adapter
+const { nodeAdapter } = require("@shopify/shopify-api/adapters/node");
 const InMemorySessionStorage = require("./InMemorySessionStorage");
 
 require("dotenv").config();
 
-// ✅ Register the Node adapter (required in SDK v11+)
-shopifyApi.adapters.set(node);
-
-// ✅ Initialize the Shopify API client
+// Initialize Shopify API with proper adapter + in-memory session
 const shopify = shopifyApi({
   apiKey: process.env.SHOPIFY_API_KEY,
   apiSecretKey: process.env.SHOPIFY_API_SECRET,
@@ -16,7 +13,8 @@ const shopify = shopifyApi({
   hostName: process.env.SHOPIFY_APP_URL.replace(/^https?:\/\//, ""),
   isEmbeddedApp: true,
   apiVersion: LATEST_API_VERSION,
-  sessionStorage: new InMemorySessionStorage()
+  sessionStorage: new InMemorySessionStorage(),
+  adapter: nodeAdapter, // ✅ Correct usage for v11+
 });
 
 const router = express.Router();
@@ -42,7 +40,7 @@ router.get("/auth", async (req, res) => {
   }
 });
 
-// STEP 2: OAuth Callback
+// STEP 2: Handle Callback
 router.get("/auth/callback", async (req, res) => {
   try {
     const session = await shopify.auth.callback({
@@ -51,6 +49,8 @@ router.get("/auth/callback", async (req, res) => {
     });
 
     console.log("✅ Authenticated Shopify session:", session);
+
+    // Redirect to your post-authenticated area
     return res.redirect("/shopify/user-dashboard");
   } catch (err) {
     console.error("Auth callback error:", err);
