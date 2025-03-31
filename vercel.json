@@ -11,10 +11,9 @@
   ],
   "routes": [
     {
-      "src": "/shopify/(.*)",
+      "src": "/(.*)",
       "dest": "api/index.js"
     }
   ],
   "buildCommand": "npx prisma generate"
 }
-

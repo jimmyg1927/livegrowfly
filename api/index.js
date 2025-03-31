@@ -3,8 +3,8 @@ const dotenv = require("dotenv");
 const { PrismaClient } = require('@prisma/client');
 const jwt = require('jsonwebtoken');
 const shopifyAuth = require('../shopify/shopifyAuth.js');
-const userDashboard = require('../shopify/userDashboard.js'); // Import userDashboard
-const adminDashboard = require('../shopify/adminDashboard.js'); // Import adminDashboard
+const userDashboard = require('../shopify/userDashboard.js');
+const adminDashboard = require('../shopify/adminDashboard.js');
 const OpenAI = require("openai");
 
 dotenv.config();
@@ -21,9 +21,7 @@ const authenticateUser = async (req, res, next) => {
     req.user = await prisma.user.findUnique({
       where: { id: decoded.userId }
     });
-    if (!req.user) {
-      throw new Error('User not found');
-    }
+    if (!req.user) throw new Error('User not found');
     next();
   } catch (error) {
     res.status(401).json({ error: 'Invalid token' });
@@ -39,8 +37,13 @@ const SUBSCRIPTION_LIMITS = {
 };
 
 // 🧠 OpenAI instance
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// 📥 Handle embedded app launch from Shopify Admin
+app.get("/", (req, res) => {
+  const { shop } = req.query;
+  if (!shop) return res.status(400).send("Missing ?shop= param");
+  return res.redirect(`/shopify/auth?shop=${shop}`);
 });
 
 // 🤖 Chat endpoint
@@ -53,7 +56,6 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
       return res.status(403).json({ error: "Monthly prompt limit reached" });
     }
 
-    // 🧠 Main assistant response
     const mainResponse = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
@@ -66,7 +68,6 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
       max_tokens: 300
     });
 
-    // 🧠 Follow-up questions generation
     const followUpResponse = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
@@ -82,13 +83,11 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
     const responseText = mainResponse.choices[0].message.content.trim();
     const followUps = followUpResponse.choices[0].message.content.trim();
 
-    // ✅ Update prompt usage
     await prisma.user.update({
       where: { id: req.user.id },
       data: { promptsUsed: { increment: 1 } }
     });
 
-    // 📨 Respond
     res.json({
       response: `${responseText}\n\nFollow-up questions:\n${followUps}`
     });
@@ -99,14 +98,14 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
   }
 });
 
-// Shopify routes
+// 🛒 Shopify Routes
 console.log("Registering Shopify routes...");
-app.use('/shopify', shopifyAuth); // Mount shopifyAuth routes
-app.use('/shopify', userDashboard); // Mount userDashboard routes
-app.use('/shopify', adminDashboard); // Mount adminDashboard routes
+app.use('/shopify', shopifyAuth);
+app.use('/shopify', userDashboard);
+app.use('/shopify', adminDashboard);
 console.log("Shopify routes registered.");
 
-// Handle 404 for undefined routes
+// ❌ Handle 404
 app.use((req, res) => {
   res.status(404).json({ error: "Not Found" });
 });
