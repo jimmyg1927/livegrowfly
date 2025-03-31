@@ -39,59 +39,19 @@ const SUBSCRIPTION_LIMITS = {
 // 🧠 OpenAI instance
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// 🛒 Shopify Routes
-console.log("Registering Shopify routes...");
-app.use('/shopify', shopifyAuth);
-app.use('/shopify', userDashboard);
-app.use('/shopify', adminDashboard);
-console.log("Shopify routes registered.");
-
-// 📥 Embedded App Entry Point
+// 📥 Embedded app entry from Shopify Admin
 app.get("/", (req, res) => {
-  const { shop, host } = req.query;
+  const { shop } = req.query;
 
-  console.log("🛬 Incoming GET / from Shopify with query:", req.query);
-
-  if (!shop) {
-    console.warn("⚠️ Missing shop param in embedded launch.");
-    return res.status(400).send("Missing ?shop parameter. Try launching from Shopify Admin.");
+  if (!shop || !shop.endsWith(".myshopify.com")) {
+    console.log("⚠️ Missing ?shop param");
+    return res.status(400).send("Missing or invalid ?shop= parameter");
   }
 
-  // Respond with embedded HTML shell using App Bridge
-  return res.send(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Growfly</title>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
-        <script>
-          var AppBridge = window['app-bridge'];
-          var createApp = AppBridge.default;
-          var Redirect = AppBridge.actions.Redirect;
-
-          var app = createApp({
-            apiKey: "${process.env.SHOPIFY_API_KEY}",
-            shopOrigin: "${shop}",
-            host: "${host}",
-            forceRedirect: true,
-          });
-
-          Redirect.create(app).dispatch(
-            Redirect.Action.REMOTE,
-            "/shopify/auth?shop=${shop}"
-          );
-        </script>
-      </head>
-      <body>
-        <h1>Redirecting to Shopify auth...</h1>
-      </body>
-    </html>
-  `);
+  return res.redirect(`/shopify/auth?shop=${shop}`);
 });
 
-// 🤖 AI Chat endpoint
+// 🤖 Chat endpoint
 app.post("/api/chat", authenticateUser, async (req, res) => {
   try {
     const { message } = req.body;
@@ -138,12 +98,17 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error:", error);
+    console.error("❌ Chat error:", error);
     res.status(500).json({ error: "Something went wrong" });
   }
 });
 
-// ❌ Catch-all route handler
+// 🛒 Shopify Routes
+app.use('/shopify', shopifyAuth);
+app.use('/shopify', userDashboard);
+app.use('/shopify', adminDashboard);
+
+// ❌ Catch-all fallback
 app.get("*", (req, res) => {
   res.status(404).send("Not Found – make sure the route exists.");
 });

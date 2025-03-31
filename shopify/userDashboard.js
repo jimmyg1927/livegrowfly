@@ -5,29 +5,29 @@ router.get("/user-dashboard", (req, res) => {
   const { shop, host } = req.query;
 
   if (!shop || !host) {
-    console.warn("Missing shop or host in /user-dashboard request:", req.query);
-    return res.status(400).send("Missing shop or host query parameters.");
+    return res.status(400).send("Missing shop or host query params");
   }
 
-  console.log("✅ Accessed /shopify/user-dashboard", req.query);
-
-  res.send(`
+  // Basic HTML UI for testing the embedded app
+  return res.send(`
+    <!DOCTYPE html>
     <html>
       <head>
-        <title>Growfly Dashboard</title>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Growfly.io App</title>
+        <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
         <script>
-          if (window.top === window.self) {
-            window.location.href = "https://${shop}/admin/apps/growfly";
-          }
+          var AppBridge = window['app-bridge'];
+          var createApp = AppBridge.default;
+          var app = createApp({
+            apiKey: "${process.env.SHOPIFY_API_KEY}",
+            host: "${host}",
+            forceRedirect: true
+          });
         </script>
       </head>
       <body>
-        <h1>✅ Growfly Installed & Running</h1>
-        <p>Welcome! This confirms your embedded app loaded successfully inside Shopify.</p>
-        <p>Shop: <strong>${shop}</strong></p>
-        <p>Host: <strong>${host}</strong></p>
+        <h1 style="font-family: sans-serif;">Welcome to Growfly.io Embedded App</h1>
+        <p>The app has successfully loaded inside Shopify Admin.</p>
       </body>
     </html>
   `);
