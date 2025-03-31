@@ -59,8 +59,14 @@ router.get("/auth/callback", async (req, res) => {
 
     console.log("✅ Authenticated session:", session);
 
-    // Redirect into embedded dashboard
-    const redirectUrl = `/shopify/user-dashboard?shop=${session.shop}&host=${req.query.host}`;
+    const shop = session.shop;
+    const host = req.query.host;
+
+    if (!shop || !host) {
+      return res.status(400).send("Missing shop or host during callback redirect");
+    }
+
+    const redirectUrl = `/shopify/user-dashboard?shop=${shop}&host=${host}`;
     return res.redirect(redirectUrl);
   } catch (err) {
     console.error("OAuth callback error:", err);
