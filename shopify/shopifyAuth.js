@@ -3,7 +3,7 @@ const { shopifyApi, LATEST_API_VERSION } = require("@shopify/shopify-api");
 const { restResources } = require("@shopify/shopify-api/rest/admin/2023-10");
 const InMemorySessionStorage = require("./InMemorySessionStorage");
 
-// ✅ Register the Node adapter
+// ✅ Register Node adapter
 require("@shopify/shopify-api/adapters/node");
 require("dotenv").config();
 
@@ -30,7 +30,7 @@ router.get("/auth", async (req, res) => {
       return res.status(400).send("Invalid or missing shop query parameter");
     }
 
-    console.log(`[shopify-api/INFO] Beginning OAuth for shop: ${shop}`);
+    console.log(`[OAuth Start] Beginning OAuth for: ${shop}`);
 
     const authRoute = await shopify.auth.begin({
       shop,
@@ -40,17 +40,12 @@ router.get("/auth", async (req, res) => {
       rawResponse: res,
     });
 
-    if (authRoute) {
-      console.log(`[shopify-api/INFO] Redirecting to: ${authRoute}`);
-      return res.redirect(authRoute);
-    } else {
-      console.error("❌ Auth route is undefined");
-      return res.status(500).send("Failed to generate auth route");
-    }
+    console.log(`[OAuth Start] Redirecting to: ${authRoute}`);
+    return res.redirect(authRoute);
   } catch (err) {
-    console.error("❌ OAuth start error:", err);
+    console.error("❌ Error starting OAuth:", err);
     if (!res.headersSent) {
-      return res.status(500).send("Failed to start Shopify OAuth");
+      return res.status(500).send("OAuth start failed");
     }
   }
 });
@@ -63,17 +58,18 @@ router.get("/auth/callback", async (req, res) => {
       rawResponse: res,
     });
 
-    console.log("✅ Authenticated session:", session);
+    const shop = session?.shop || req.query.shop;
+    const host = session?.host || req.query.host;
 
-    const shop = session.shop;
-    const host = session.host; // ✅ pulled from session
+    console.log("✅ OAuth callback successful");
+    console.log("🔎 shop:", shop);
+    console.log("🔎 host:", host);
 
     if (!shop || !host) {
       console.error("❌ Missing shop or host during callback redirect");
       return res.status(400).send("Missing shop or host during callback redirect");
     }
 
-    // ✅ Redirect into Shopify Admin (embedded app)
     const appHandle = process.env.SHOPIFY_APP_HANDLE || "growfly-io-account";
     return res.redirect(`https://${shop}/admin/apps/${appHandle}`);
   } catch (err) {
