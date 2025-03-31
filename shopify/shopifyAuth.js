@@ -25,13 +25,16 @@ const router = express.Router();
 router.get("/auth", async (req, res) => {
   try {
     const shop = req.query.shop;
-    if (!shop) {
-      console.error("Missing shop query parameter");
-      return res.status(400).send("Missing shop query parameter");
+
+    // Validate the shop parameter
+    if (!shop || !shop.endsWith(".myshopify.com")) {
+      console.error("Invalid or missing shop query parameter:", shop);
+      return res.status(400).send("Invalid or missing shop query parameter");
     }
 
     console.log(`[shopify-api/INFO] Beginning OAuth | {shop: ${shop}, isOnline: true, callbackPath: /shopify/auth/callback}`);
 
+    // Begin OAuth process
     const authRoute = await shopify.auth.begin({
       shop,
       callbackPath: "/shopify/auth/callback",
@@ -40,8 +43,16 @@ router.get("/auth", async (req, res) => {
       rawResponse: res,
     });
 
+    // Log the generated authRoute
     console.log(`[shopify-api/INFO] Redirecting to: ${authRoute}`);
-    return res.redirect(authRoute); // ✅ Add return to prevent further execution
+
+    // Redirect to the generated authRoute
+    if (authRoute) {
+      return res.redirect(authRoute); // ✅ Add return to prevent further execution
+    } else {
+      console.error("Auth route is undefined");
+      return res.status(500).send("Failed to generate auth route");
+    }
   } catch (err) {
     console.error("Auth start error:", err);
 
