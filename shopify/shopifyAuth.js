@@ -25,7 +25,12 @@ const router = express.Router();
 router.get("/auth", async (req, res) => {
   try {
     const shop = req.query.shop;
-    if (!shop) return res.status(400).send("Missing shop query param");
+    if (!shop) {
+      console.error("Missing shop query parameter");
+      return res.status(400).send("Missing shop query parameter");
+    }
+
+    console.log(`[shopify-api/INFO] Beginning OAuth | {shop: ${shop}, isOnline: true, callbackPath: /shopify/auth/callback}`);
 
     const authRoute = await shopify.auth.begin({
       shop,
@@ -35,10 +40,15 @@ router.get("/auth", async (req, res) => {
       rawResponse: res,
     });
 
-    return res.redirect(authRoute);
+    console.log(`[shopify-api/INFO] Redirecting to: ${authRoute}`);
+    return res.redirect(authRoute); // ✅ Add return to prevent further execution
   } catch (err) {
     console.error("Auth start error:", err);
-    return res.status(500).send("Failed to start Shopify OAuth");
+
+    // ✅ Check if headers have already been sent
+    if (!res.headersSent) {
+      return res.status(500).send("Failed to start Shopify OAuth");
+    }
   }
 });
 
@@ -51,10 +61,14 @@ router.get("/auth/callback", async (req, res) => {
     });
 
     console.log("✅ Authenticated Shopify session:", session);
-    return res.redirect("/shopify/user-dashboard");
+    return res.redirect("/shopify/user-dashboard"); // ✅ Add return to prevent further execution
   } catch (err) {
     console.error("Auth callback error:", err);
-    return res.status(500).send("OAuth callback failed");
+
+    // ✅ Check if headers have already been sent
+    if (!res.headersSent) {
+      return res.status(500).send("OAuth callback failed");
+    }
   }
 });
 
