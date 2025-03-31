@@ -39,17 +39,56 @@ const SUBSCRIPTION_LIMITS = {
 // 🧠 OpenAI instance
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// 📥 Shopify embedded app entry point
+// 🛒 Shopify Routes
+console.log("Registering Shopify routes...");
+app.use('/shopify', shopifyAuth);
+app.use('/shopify', userDashboard);
+app.use('/shopify', adminDashboard);
+console.log("Shopify routes registered.");
+
+// 📥 Embedded App Entry Point
 app.get("/", (req, res) => {
   const { shop, host } = req.query;
 
   console.log("🛬 Incoming GET / from Shopify with query:", req.query);
 
-  if (!shop || !shop.endsWith(".myshopify.com")) {
-    return res.status(400).send("Missing or invalid ?shop= param");
+  if (!shop) {
+    console.warn("⚠️ Missing shop param in embedded launch.");
+    return res.status(400).send("Missing ?shop parameter. Try launching from Shopify Admin.");
   }
 
-  return res.redirect(`/shopify/auth?shop=${shop}`);
+  // Respond with embedded HTML shell using App Bridge
+  return res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Growfly</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
+        <script>
+          var AppBridge = window['app-bridge'];
+          var createApp = AppBridge.default;
+          var Redirect = AppBridge.actions.Redirect;
+
+          var app = createApp({
+            apiKey: "${process.env.SHOPIFY_API_KEY}",
+            shopOrigin: "${shop}",
+            host: "${host}",
+            forceRedirect: true,
+          });
+
+          Redirect.create(app).dispatch(
+            Redirect.Action.REMOTE,
+            "/shopify/auth?shop=${shop}"
+          );
+        </script>
+      </head>
+      <body>
+        <h1>Redirecting to Shopify auth...</h1>
+      </body>
+    </html>
+  `);
 });
 
 // 🤖 AI Chat endpoint
@@ -104,14 +143,7 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
   }
 });
 
-// 🛒 Shopify Routes
-console.log("Registering Shopify routes...");
-app.use('/shopify', shopifyAuth);
-app.use('/shopify', userDashboard);
-app.use('/shopify', adminDashboard);
-console.log("Shopify routes registered.");
-
-// ❌ Catch-all route handler (fallback)
+// ❌ Catch-all route handler
 app.get("*", (req, res) => {
   res.status(404).send("Not Found – make sure the route exists.");
 });
