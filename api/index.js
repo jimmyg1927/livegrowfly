@@ -39,14 +39,20 @@ const SUBSCRIPTION_LIMITS = {
 // 🧠 OpenAI instance
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// 📥 Handle embedded app launch from Shopify Admin
+// 📥 Shopify embedded app entry point
 app.get("/", (req, res) => {
-  const { shop } = req.query;
-  if (!shop) return res.status(400).send("Missing ?shop= param");
+  const { shop, host } = req.query;
+
+  console.log("🛬 Incoming GET / from Shopify with query:", req.query);
+
+  if (!shop || !shop.endsWith(".myshopify.com")) {
+    return res.status(400).send("Missing or invalid ?shop= param");
+  }
+
   return res.redirect(`/shopify/auth?shop=${shop}`);
 });
 
-// 🤖 Chat endpoint
+// 🤖 AI Chat endpoint
 app.post("/api/chat", authenticateUser, async (req, res) => {
   try {
     const { message } = req.body;
@@ -105,9 +111,9 @@ app.use('/shopify', userDashboard);
 app.use('/shopify', adminDashboard);
 console.log("Shopify routes registered.");
 
-// ❌ Handle 404
-app.use((req, res) => {
-  res.status(404).json({ error: "Not Found" });
+// ❌ Catch-all route handler (fallback)
+app.get("*", (req, res) => {
+  res.status(404).send("Not Found – make sure the route exists.");
 });
 
 module.exports = app;
