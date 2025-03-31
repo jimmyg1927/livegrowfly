@@ -18,7 +18,9 @@ const authenticateUser = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+    req.user = await prisma.user.findUnique({
+      where: { id: decoded.userId }
+    });
     if (!req.user) throw new Error('User not found');
     next();
   } catch (error) {
@@ -26,6 +28,7 @@ const authenticateUser = async (req, res, next) => {
   }
 };
 
+// 🎯 Subscription prompt limits
 const SUBSCRIPTION_LIMITS = {
   free: 5,
   personal: 200,
@@ -33,51 +36,31 @@ const SUBSCRIPTION_LIMITS = {
   business: 3500
 };
 
+// 🧠 OpenAI instance
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// 📥 Shopify embedded app entry point
+// 📥 Embedded app entrypoint (placeholder)
 app.get("/", (req, res) => {
-  let { shop, host } = req.query;
+  const { shop, host } = req.query;
 
-  // Try fallback to headers if missing (Shopify Admin embedded iframe often omits these)
-  if (!shop || !host) {
-    const referer = req.headers.referer || '';
-    const params = new URLSearchParams(referer.split('?')[1]);
-    shop = shop || params.get("shop");
-    host = host || params.get("host");
-  }
+  console.log("Incoming request to / with query:", req.query);
 
   if (!shop || !host) {
-    console.error("⚠️ Missing shop or host param on /");
-    return res.status(400).send("Missing shop param");
+    return res.status(400).send("Missing shop or host param");
   }
 
-  // Render placeholder HTML (Shopify requires something to render in the iframe)
   res.send(`
-    <!DOCTYPE html>
     <html>
       <head>
-        <title>Growfly App</title>
-        <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
-        <script>
-          window.onload = function() {
-            var AppBridge = window['app-bridge'];
-            var createApp = AppBridge.default;
-            var app = createApp({
-              apiKey: "${process.env.SHOPIFY_API_KEY}",
-              host: "${host}",
-              shopOrigin: "https://${shop}",
-              forceRedirect: true
-            });
-
-            app.redirect({
-              path: "/shopify/user-dashboard",
-            });
-          };
-        </script>
+        <title>Growfly Embedded</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
       </head>
       <body>
-        <h1>Loading Growfly...</h1>
+        <h1>🎉 Growfly App is Installed & Working</h1>
+        <p>Shop: ${shop}</p>
+        <p>Host: ${host}</p>
+        <p>We'll replace this screen with the full UI shortly.</p>
       </body>
     </html>
   `);
@@ -96,7 +79,10 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
     const mainResponse = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
-        { role: "system", content: "You are a helpful assistant that provides advice on marketing, branding, business ideas, and social media. Be concise, strategic, and encouraging." },
+        {
+          role: "system",
+          content: "You are a helpful assistant that provides advice on marketing, branding, business ideas, and social media. Be concise, strategic, and encouraging."
+        },
         { role: "user", content: message }
       ],
       max_tokens: 300
@@ -105,7 +91,10 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
     const followUpResponse = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
-        { role: "system", content: "You are an AI that generates 2 short follow-up questions based on a user's marketing-related input. Return only the questions in a numbered list format." },
+        {
+          role: "system",
+          content: "You are an AI that generates 2 short follow-up questions based on a user's marketing-related input. Return only the questions in a numbered list format."
+        },
         { role: "user", content: message }
       ],
       max_tokens: 100
@@ -119,7 +108,13 @@ app.post("/api/chat", authenticateUser, async (req, res) => {
       data: { promptsUsed: { increment: 1 } }
     });
 
-    res.json({ response: `${responseText}\n\nFollow-up questions:\n${followUps}` });
+    res.json({
+      response: `${responseText}
+
+Follow-up questions:
+${followUps}`
+    });
+
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ error: "Something went wrong" });
@@ -133,9 +128,9 @@ app.use('/shopify', userDashboard);
 app.use('/shopify', adminDashboard);
 console.log("Shopify routes registered.");
 
-// ❌ Catch-all route handler (fallback)
+// ❌ Catch-all 404
 app.get("*", (req, res) => {
-  res.status(404).send("Not Found – make sure the route exists.");
+  res.status(404).send("Not Found – check your route.");
 });
 
 module.exports = app;
