@@ -1,26 +1,58 @@
+// Define the database connection
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("DATABASE_URL") // Uses the DATABASE_URL from the .env file
 }
 
+// Generate the Prisma Client
 generator client {
   provider = "prisma-client-js"
 }
 
+// User model
 model User {
-  id               String   @id @default(uuid())
-  email            String   @unique
-  password         String
-  subscriptionType String
-  promptsUsed      Int      @default(0)
-  createdAt        DateTime @default(now())
+  id               String     @id @default(uuid()) // Unique identifier
+  email            String     @unique              // Unique email
+  password         String                           // User's password
+  subscriptionType String                           // Subscription type (e.g., free, premium)
+  promptsUsed      Int        @default(0)          // Tracks the number of prompts used
+  createdAt        DateTime   @default(now())      // Timestamp for when the user was created
 
-  relatedModels YourModel[]
+  // Relation to YourModel
+  relatedModels    YourModel[]
+
+  // Relation to Feedback
+  feedbacks        Feedback[]
+
+  // Relation to Document
+  documents        Document[]
 }
 
+// YourModel model
 model YourModel {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now()) // ✅ FIXED SYNTAX
+  id        String   @id @default(uuid())          // Unique identifier
+  userId    String                               // Foreign key to User
+  user      User     @relation(fields: [userId], references: [id]) // Relation to User
+  createdAt DateTime @default(now())              // Timestamp for when the record was created
+}
+
+// Feedback model
+model Feedback {
+  id          String   @id @default(uuid())       // Unique identifier
+  responseId  String                              // ID of the response being voted on
+  userId      String                              // Foreign key to User
+  user        User     @relation(fields: [userId], references: [id]) // Relation to User
+  vote        Int                                 // +1 for upvote, -1 for downvote
+  comment     String?                             // Optional text feedback
+  createdAt   DateTime @default(now())            // Timestamp for when the feedback was created
+}
+
+// Document model
+model Document {
+  id          String   @id @default(uuid())       // Unique identifier
+  title       String                              // Title of the document
+  content     String                              // Content of the document
+  createdById String                              // Foreign key to User
+  createdBy   User     @relation(fields: [createdById], references: [id]) // Relation to User
+  createdAt   DateTime @default(now())            // Timestamp for when the document was created
 }
