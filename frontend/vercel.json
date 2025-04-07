@@ -1,0 +1,7 @@
+{
+    "buildCommand": "npm run build",
+    "outputDirectory": "out",
+    "ignoreCommand": "echo 'No ignored files'",
+    "installCommand": "npm install --legacy-peer-deps"
+  }
+  
