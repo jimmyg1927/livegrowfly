@@ -8,16 +8,17 @@
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
-    "moduleResolution": "node", // Changed from "bundler" to "node" for compatibility
+    "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "baseUrl": "./",
     "paths": {
-      "@components/*": ["src/components/*"], // Alias for components
-      "@/*": ["src/*"] // Alias for the entire src directory
+      "@components/*": ["src/components/*"],
+      "@/*": ["src/*"]
     },
+    "types": ["react", "react-dom", "estree", "json-schema"],
     "plugins": [
       {
         "name": "next"
