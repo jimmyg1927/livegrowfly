@@ -49,7 +49,7 @@ export default function VoteFeedback({ responseId, userId, aiResponse }: VoteFee
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          title: "New Document", // Default title, can be customized
+          title: "New Document", // Default title, here can be customized
           content: aiResponse,
           createdById: userId,
         }),
