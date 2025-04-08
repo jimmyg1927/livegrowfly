@@ -1,54 +1,42 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import DashboardClient from './DashboardClient';
-
-type UserProps = {
-  name?: string | null;
-  email: string;
-  promptsUsed: number;
-  subscriptionType: string;
-};
+import { useEffect, useState } from "react";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<UserProps | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("Loading...");
 
   useEffect(() => {
-    const fetchUser = async () => {
+    // Step 1: Handle token in query param
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+
+    if (token) {
+      sessionStorage.setItem("jwt", token);
+
+      const url = new URL(window.location.href);
+      url.searchParams.delete("token");
+      window.history.replaceState({}, document.title, url.toString());
+    }
+
+    // Step 2: Fetch data from backend using JWT
+    async function loadData() {
       try {
-        const token = localStorage.getItem('token');
-
-        if (!token) {
-          console.warn('No JWT token found in localStorage');
-          setUser(null);
-          return;
-        }
-
-        const res = await fetch('https://glowfly-api-production.up.railway.app/shopify/user', {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!res.ok) throw new Error('Failed to fetch user');
-        const data = await res.json();
-        setUser(data);
-      } catch (error) {
-        console.error('Error fetching user:', error);
-        setUser(null);
-      } finally {
-        setLoading(false);
+        const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/hello`);
+        setMessage(res.message);
+      } catch (err) {
+        console.error("Failed to fetch:", err);
+        setMessage("Error loading data");
       }
-    };
+    }
 
-    fetchUser();
+    loadData();
   }, []);
 
-  if (loading) {
-    return <div className="p-8 text-gray-600">Loading...</div>;
-  }
-
-  return <DashboardClient user={user} />;
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Welcome to Growfly 🧠</h1>
+      <p>{message}</p>
+    </div>
+  );
 }
