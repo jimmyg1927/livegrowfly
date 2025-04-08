@@ -1,32 +1,26 @@
-import "../styles/globals.css"; // Corrected path to globals.css
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+'use client'
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+import React from 'react'
+import './globals.css'
+import { Inter, Roboto_Mono } from 'next/font/google'
+import type { Metadata } from 'next'
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
+const robotoMono = Roboto_Mono({ subsets: ['latin'], variable: '--font-mono' })
 
 export const metadata: Metadata = {
-  title: "Growfly Dashboard",
-  description: "Your AI-powered marketing sidekick",
-};
+  title: 'Growfly',
+  description: 'AI-powered marketing assistant',
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {children}
-      </body>
+    <html lang="en" className={`${inter.variable} ${robotoMono.variable}`}>
+      <body className="font-sans">{children}</body>
     </html>
-  );
+  )
 }
