@@ -1,16 +1,16 @@
-import React from 'react';
 'use client';
 
+import React from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function SelectPlan() {
   const router = useRouter();
 
   function handleSelectPlan(plan: string) {
-    // Set the selected plan (for now, this is just a UI update)
+    // Save selected plan locally (for UI purposes)
     sessionStorage.setItem('selectedPlan', plan);
 
-    // Redirect to Shopify billing page (using Shopify API)
+    // Redirect to Shopify billing with plan
     router.push(`/shopify/billing?plan=${plan}`);
   }
 

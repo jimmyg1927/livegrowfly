@@ -7,10 +7,10 @@ export default function SelectPlan() {
   const router = useRouter();
 
   function handleSelectPlan(plan: string) {
-    // Save selected plan (you can later send this to the backend if needed)
+    // Save selected plan locally (for UI purposes)
     sessionStorage.setItem('selectedPlan', plan);
 
-    // Redirect to Shopify billing with plan as a query param
+    // Redirect to Shopify billing with plan
     router.push(`/shopify/billing?plan=${plan}`);
   }
 
