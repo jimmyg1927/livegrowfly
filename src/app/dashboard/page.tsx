@@ -1,53 +1,43 @@
 'use client';
 
-import { useEffect, useState } from "react";
-import { fetchWithAuth } from "@/lib/fetchWithAuth";
-import { decodeToken } from "@/lib/decodeToken";
+import { useEffect, useState } from 'react';
+import { fetchWithAuth } from '@/lib/fetchWithAuth';
+import DashboardClient from './DashboardClient';
+
+type UserProps = {
+  name?: string | null;
+  email: string;
+  promptsUsed: number;
+  subscriptionType: string;
+};
 
 export default function DashboardPage() {
-  const [message, setMessage] = useState("Loading...");
-  const [userId, setUserId] = useState<string | null>(null);
+  const [user, setUser] = useState<UserProps | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Step 1: Handle token in query param
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
-
-    if (token) {
-      sessionStorage.setItem("jwt", token);
-
-      const url = new URL(window.location.href);
-      url.searchParams.delete("token");
-      window.history.replaceState({}, document.title, url.toString());
-    }
-
-    async function loadData() {
-      const storedToken = sessionStorage.getItem("jwt");
-
-      if (storedToken) {
-        const decoded = await decodeToken(storedToken);
-        if (decoded?.userId) {
-          setUserId(decoded.userId);
-        }
-      }
-
+    async function loadUser() {
       try {
-        const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/hello`);
-        setMessage(res.message);
+        const data = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user`);
+        setUser(data);
       } catch (err) {
-        console.error("Failed to fetch:", err);
-        setMessage("Error loading data");
+        console.error('Error loading user:', err);
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
     }
 
-    loadData();
+    loadUser();
   }, []);
 
-  return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Welcome to Growfly 🧠</h1>
-      {userId && <p className="mb-2 text-green-600">👤 Logged in as User ID: <strong>{userId}</strong></p>}
-      <p>{message}</p>
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-gray-600">Loading your dashboard...</p>
+      </div>
+    );
+  }
+
+  return <DashboardClient user={user} />;
 }
