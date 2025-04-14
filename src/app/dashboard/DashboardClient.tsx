@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import PromptTracker from '@/components/PromptTracker';
@@ -13,6 +14,7 @@ type UserProps = {
 };
 
 export default function DashboardClient({ user }: { user: UserProps | null }) {
+  const router = useRouter();
   const [input, setInput] = useState('');
   const [response, setResponse] = useState('');
   const [followUps, setFollowUps] = useState('');
@@ -20,10 +22,21 @@ export default function DashboardClient({ user }: { user: UserProps | null }) {
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
-  if (!user) {
+  // 🚨 Redirect if no user or missing plan
+  useEffect(() => {
+    if (!user) return;
+
+    const isPlanMissing = !user.subscriptionType || user.subscriptionType === 'none';
+
+    if (isPlanMissing) {
+      router.push('/dashboard/select-plan');
+    }
+  }, [user, router]);
+
+  if (!user || !user.subscriptionType || user.subscriptionType === 'none') {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-lg text-gray-600">User not found.</p>
+        <p className="text-lg text-gray-600">Redirecting you to select a plan...</p>
       </div>
     );
   }
@@ -35,17 +48,14 @@ export default function DashboardClient({ user }: { user: UserProps | null }) {
     setFollowUps('');
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/chat`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ message: input }),
-        }
-      );
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ message: input }),
+      });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Something went wrong');

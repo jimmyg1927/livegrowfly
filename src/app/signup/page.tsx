@@ -26,9 +26,11 @@ export default function SignUpPage() {
         throw new Error(data.message || 'Sign-up failed');
       }
 
-      // Save JWT and redirect
-      sessionStorage.setItem('jwt', data.token);
-      router.push('/dashboard');
+      // Save JWT in localStorage
+      localStorage.setItem('token', data.token);
+
+      // Redirect to select plan instead of dashboard
+      router.push('/dashboard/select-plan');
     } catch (err: any) {
       setError(err.message || 'Something went wrong');
     }
