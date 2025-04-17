@@ -1,31 +1,27 @@
-'use client';
+'use client'
 
-import React from 'react';
-
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation'
 
 export default function PlansPage() {
-  const router = useRouter();
-
-  function handlePlanSelect(plan: string) {
-    sessionStorage.setItem('selectedPlan', plan);
-    router.push('/signup');
-  }
+  const router = useRouter()
 
   const plans = [
     {
+      id: 'free',
       name: 'Free',
       price: '£0/month',
       features: ['5 prompts/month', '1 user', 'Basic AI support'],
-      id: 'free',
+      recommended: false,
     },
     {
+      id: 'personal',
       name: 'Personal',
       price: '£8.99/month',
       features: ['50 prompts/month', '1 user', 'Priority AI speed'],
-      id: 'personal',
+      recommended: false,
     },
     {
+      id: 'entrepreneur',
       name: 'Entrepreneur',
       price: '£16.99/month',
       features: [
@@ -35,43 +31,59 @@ export default function PlansPage() {
         'AI feedback',
         'Early feature access',
       ],
-      id: 'entrepreneur',
-      highlight: true, // 🔥 Highlight this plan
+      recommended: true,
     },
     {
+      id: 'business',
       name: 'Business',
       price: '£49.99/month',
-      features: ['1200 prompts/month', '3 users', 'Team dashboard', 'Prompt analytics'],
-      id: 'business',
+      features: [
+        '1200 prompts/month',
+        '3 users',
+        'Brand assets',
+        'Unlimited AI access',
+        'Team workspace',
+      ],
+      recommended: false,
     },
-  ];
+  ]
+
+  const handleSelect = (planId: string) => {
+    sessionStorage.setItem('selectedPlan', planId)
+    router.push('/signup')
+  }
 
   return (
-    <div className="min-h-screen bg-[#2daaff] text-white px-4 py-16">
-      <h1 className="text-4xl font-bold text-center mb-10">Choose Your Plan</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[#2daaff] text-white px-6 py-12">
+      <h1 className="text-4xl font-bold text-center mb-12">Choose Your Plan</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
         {plans.map((plan) => (
           <div
             key={plan.id}
-            className={`bg-white text-black rounded-2xl p-6 shadow-lg flex flex-col items-center transition transform hover:scale-105 ${
-              plan.highlight ? 'border-4 border-[#2daaff] shadow-blue-300' : ''
+            className={`bg-white text-black rounded-2xl p-6 shadow-md flex flex-col items-start justify-between ${
+              plan.recommended ? 'border-4 border-blue-500 scale-105' : ''
             }`}
           >
-            {plan.highlight && (
-              <div className="text-xs font-semibold uppercase bg-[#2daaff] text-white px-3 py-1 rounded-full mb-2">
-                Recommended
-              </div>
-            )}
-            <h2 className="text-xl font-bold mb-1">{plan.name}</h2>
-            <p className="text-2xl font-semibold mb-4">{plan.price}</p>
-            <ul className="mb-6 text-sm space-y-2 text-left">
-              {plan.features.map((feat, idx) => (
-                <li key={idx}>✅ {feat}</li>
-              ))}
-            </ul>
+            <div className="w-full">
+              <h2 className="text-2xl font-bold mb-2">{plan.name}</h2>
+              <p className="text-lg mb-4">{plan.price}</p>
+              <ul className="space-y-2 mb-6">
+                {plan.features.map((feature, idx) => (
+                  <li key={idx} className="flex items-center gap-2">
+                    <span className="text-green-500">✔</span>
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              {plan.recommended && (
+                <p className="text-xs text-blue-600 font-semibold uppercase mb-2">
+                  Recommended
+                </p>
+              )}
+            </div>
             <button
-              onClick={() => handlePlanSelect(plan.id)}
-              className="bg-black text-white px-4 py-2 rounded hover:opacity-90"
+              onClick={() => handleSelect(plan.id)}
+              className="mt-auto w-full bg-black text-white py-2 px-4 rounded hover:bg-gray-800 transition"
             >
               Select Plan
             </button>
@@ -79,5 +91,6 @@ export default function PlansPage() {
         ))}
       </div>
     </div>
-  );
+  )
 }
+
