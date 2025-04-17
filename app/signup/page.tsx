@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 export default function SignupPage() {
   const router = useRouter();
+
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -12,8 +13,8 @@ export default function SignupPage() {
     confirmPassword: '',
   });
 
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -47,37 +48,42 @@ export default function SignupPage() {
         }),
       });
 
-      const data = await res.json();
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
 
       if (!res.ok) {
         throw new Error(data.error || 'Signup failed');
       }
 
+      if (!data.token) {
+        throw new Error('Signup succeeded but no token received');
+      }
+
       localStorage.setItem('token', data.token);
       router.push('/plans');
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-[#2daaff] text-white">
-      <div className="bg-white text-black w-full max-w-md rounded-2xl shadow p-6 space-y-4">
-        <h1 className="text-2xl font-bold text-center mb-2">Create Your Growfly Account</h1>
+    <div className="min-h-screen bg-[#2daaff] text-white flex items-center justify-center px-4">
+      <div className="bg-white text-black p-8 rounded-2xl shadow max-w-md w-full">
+        <h1 className="text-2xl font-bold mb-6 text-center">Create Your Growfly Account</h1>
 
-        {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+        {error && <p className="text-red-500 mb-4 text-sm">{error}</p>}
 
         <input
-          className="w-full border rounded px-4 py-2"
-          placeholder="Full Name"
+          className="w-full border p-2 rounded mb-3"
+          placeholder="Name"
           name="name"
           value={form.name}
           onChange={handleChange}
         />
         <input
-          className="w-full border rounded px-4 py-2"
+          className="w-full border p-2 rounded mb-3"
           placeholder="Email"
           name="email"
           type="email"
@@ -85,7 +91,7 @@ export default function SignupPage() {
           onChange={handleChange}
         />
         <input
-          className="w-full border rounded px-4 py-2"
+          className="w-full border p-2 rounded mb-3"
           placeholder="Password"
           name="password"
           type="password"
@@ -93,7 +99,7 @@ export default function SignupPage() {
           onChange={handleChange}
         />
         <input
-          className="w-full border rounded px-4 py-2"
+          className="w-full border p-2 rounded mb-5"
           placeholder="Confirm Password"
           name="confirmPassword"
           type="password"
@@ -102,11 +108,11 @@ export default function SignupPage() {
         />
 
         <button
-          className="w-full bg-[#2daaff] text-white py-2 rounded hover:bg-blue-600 transition"
           onClick={handleSubmit}
+          className="w-full bg-[#2daaff] text-white py-2 rounded hover:bg-blue-600 transition"
           disabled={loading}
         >
-          {loading ? 'Creating Account...' : 'Sign Up'}
+          {loading ? 'Creating account...' : 'Sign Up'}
         </button>
       </div>
     </div>
