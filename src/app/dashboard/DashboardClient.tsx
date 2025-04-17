@@ -22,21 +22,18 @@ export default function DashboardClient({ user }: { user: UserProps | null }) {
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
-  // 🚨 Redirect if no user or missing plan
   useEffect(() => {
     if (!user) return;
-
     const isPlanMissing = !user.subscriptionType || user.subscriptionType === 'none';
-
     if (isPlanMissing) {
-      router.push('/dashboard/select-plan');
+      router.push('/plans');
     }
   }, [user, router]);
 
   if (!user || !user.subscriptionType || user.subscriptionType === 'none') {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-lg text-gray-600">Redirecting you to select a plan...</p>
+      <div className="flex items-center justify-center h-screen bg-[#2daaff] text-white">
+        <p className="text-lg">Redirecting to select your plan...</p>
       </div>
     );
   }
@@ -69,7 +66,7 @@ export default function DashboardClient({ user }: { user: UserProps | null }) {
   };
 
   return (
-    <div className="flex h-screen bg-white text-gray-900">
+    <div className="flex h-screen bg-[#2daaff] text-white">
       <Sidebar />
 
       <div className="flex-1 flex flex-col">
@@ -79,19 +76,19 @@ export default function DashboardClient({ user }: { user: UserProps | null }) {
           <PromptTracker used={user.promptsUsed} limit={200} />
 
           <div className="mt-6">
-            <h2 className="text-xl font-semibold">Subscription: {user.subscriptionType}</h2>
-            <p className="text-gray-600 mb-4">Welcome to your dashboard, {user.email}.</p>
+            <h2 className="text-xl font-bold">Welcome, {user.email}</h2>
+            <p className="text-sm mb-4 text-white/80">Your plan: <strong>{user.subscriptionType}</strong></p>
 
             <div className="space-y-4">
               <input
                 type="text"
                 placeholder="Ask Growfly AI something..."
-                className="w-full border border-gray-300 rounded p-2"
+                className="w-full p-3 rounded bg-white text-black placeholder:text-gray-500"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
               />
               <button
-                className="bg-black text-white px-4 py-2 rounded"
+                className="bg-black text-white px-6 py-2 rounded hover:opacity-90 transition"
                 onClick={handlePromptSubmit}
                 disabled={loading}
               >
@@ -99,16 +96,16 @@ export default function DashboardClient({ user }: { user: UserProps | null }) {
               </button>
 
               {response && (
-                <div className="border border-gray-200 rounded p-4 bg-gray-50 space-y-3">
+                <div className="border border-white/30 rounded p-4 bg-white/10 mt-4 space-y-4">
                   <div>
-                    <h3 className="font-semibold mb-2">AI Response:</h3>
-                    <pre className="whitespace-pre-wrap text-sm text-gray-800">{response}</pre>
+                    <h3 className="font-semibold mb-2 text-white">AI Response:</h3>
+                    <pre className="whitespace-pre-wrap text-white/90">{response}</pre>
                   </div>
 
                   {followUps && (
                     <div className="mt-4">
-                      <h4 className="font-medium mb-1 text-sm">Follow-up suggestions:</h4>
-                      <ul className="list-disc pl-5 text-sm text-gray-700">
+                      <h4 className="font-medium mb-1 text-sm text-white">Follow-up suggestions:</h4>
+                      <ul className="list-disc pl-5 text-sm text-white/80">
                         {followUps.split('\n').map((q, i) => (
                           <li key={i}>{q}</li>
                         ))}
