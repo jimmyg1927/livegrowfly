@@ -1,14 +1,12 @@
-import React from "react";
+'use client';
 
+import React from 'react';
 
-type HeaderProps = {
-  name: string;
-};
-
-export default function Header({ name }: HeaderProps) {
+export default function Header({ name }: { name: string }) {
   return (
-    <header className="bg-gray-100 p-4 border-b border-gray-300">
-      <h1 className="text-xl font-semibold">Hey {name}, what can we do for you today?</h1>
+    <header className="bg-[#161b22] text-white p-4 flex justify-between items-center">
+      <h1 className="text-xl font-bold">Growfly AI</h1>
+      <span className="text-sm">Logged in as: {name}</span>
     </header>
   );
 }

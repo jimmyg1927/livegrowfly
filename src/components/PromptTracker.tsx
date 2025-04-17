@@ -1,25 +1,17 @@
-import React from "react";
+'use client';
 
-type PromptTrackerProps = {
-  used: number;
-  limit: number;
-};
+import React from 'react';
 
-export default function PromptTracker({ used, limit }: PromptTrackerProps) {
-  const percentage = Math.min((used / limit) * 100, 100);
-
+export default function PromptTracker({ used, limit }: { used: number; limit: number }) {
   return (
-    <div className="bg-gray-100 p-4 rounded-lg shadow">
-      <div className="flex justify-between items-center mb-2">
-        <span className="text-sm font-medium text-gray-700">AI Prompts Used</span>
-        <span className="text-sm font-medium text-gray-700">
-          {used}/{limit}
-        </span>
-      </div>
-      <div className="w-full bg-gray-300 rounded-full h-4">
+    <div className="bg-gray-100 p-4 rounded-lg mb-6">
+      <p className="text-sm text-gray-800 font-medium">
+        Prompts used: {used} / {limit}
+      </p>
+      <div className="w-full bg-gray-300 rounded h-2 mt-2">
         <div
-          className="bg-blue-600 h-4 rounded-full transition-all duration-300"
-          style={{ width: `${percentage}%` }}
+          className="bg-blue-600 h-2 rounded"
+          style={{ width: `${(used / limit) * 100}%` }}
         ></div>
       </div>
     </div>

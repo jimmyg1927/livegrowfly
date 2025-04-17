@@ -1,16 +1,29 @@
-import React from "react";
+'use client';
+
+import React from 'react';
+import Link from 'next/link';
 
 export default function Sidebar() {
   return (
-    <aside className="w-64 h-screen bg-gray-900 text-white p-6">
-      <nav>
-        <ul className="space-y-4">
-          <li>Dashboard</li>
-          <li>Saved Responses</li>
-          <li>Refer a Friend</li>
-          <li>Request a Feature</li>
-          <li>Company News</li>
-          <li>Settings</li>
+    <aside className="w-64 bg-[#0d1117] text-white p-4">
+      <nav className="space-y-4">
+        <h2 className="text-lg font-bold">Growfly</h2>
+        <ul>
+          <li>
+            <Link href="/dashboard" className="block hover:text-blue-400">
+              🏠 Dashboard
+            </Link>
+          </li>
+          <li>
+            <Link href="/plans" className="block hover:text-blue-400">
+              💡 Upgrade Plan
+            </Link>
+          </li>
+          <li>
+            <Link href="/logout" className="block hover:text-red-400">
+              🚪 Logout
+            </Link>
+          </li>
         </ul>
       </nav>
     </aside>
