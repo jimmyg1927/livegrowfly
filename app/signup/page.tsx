@@ -9,66 +9,106 @@ export default function SignupPage() {
     name: '',
     email: '',
     password: '',
+    confirmPassword: '',
   });
 
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    setError('');
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/signup`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(form),
-    });
+    if (!form.name || !form.email || !form.password || !form.confirmPassword) {
+      setError('Please fill out all fields.');
+      return;
+    }
 
-    if (res.ok) {
+    if (form.password !== form.confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          password: form.password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Signup failed');
+      }
+
+      localStorage.setItem('token', data.token);
       router.push('/plans');
-    } else {
-      alert('Signup failed');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#2daaff] text-white p-8">
-      <h1 className="text-2xl font-bold mb-6">Signup</h1>
-      <form onSubmit={handleSubmit} className="max-w-md mx-auto space-y-4">
+    <div className="flex items-center justify-center min-h-screen bg-[#2daaff] text-white">
+      <div className="bg-white text-black w-full max-w-md rounded-2xl shadow p-6 space-y-4">
+        <h1 className="text-2xl font-bold text-center mb-2">Create Your Growfly Account</h1>
+
+        {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+
         <input
-          className="w-full border p-2 rounded"
-          placeholder="Name"
+          className="w-full border rounded px-4 py-2"
+          placeholder="Full Name"
           name="name"
           value={form.name}
           onChange={handleChange}
         />
         <input
-          className="w-full border p-2 rounded"
+          className="w-full border rounded px-4 py-2"
           placeholder="Email"
           name="email"
+          type="email"
           value={form.email}
           onChange={handleChange}
         />
         <input
-          className="w-full border p-2 rounded"
+          className="w-full border rounded px-4 py-2"
           placeholder="Password"
           name="password"
           type="password"
           value={form.password}
           onChange={handleChange}
         />
+        <input
+          className="w-full border rounded px-4 py-2"
+          placeholder="Confirm Password"
+          name="confirmPassword"
+          type="password"
+          value={form.confirmPassword}
+          onChange={handleChange}
+        />
+
         <button
-          type="submit"
-          className="w-full bg-black text-white py-2 px-4 rounded hover:bg-gray-800"
+          className="w-full bg-[#2daaff] text-white py-2 rounded hover:bg-blue-600 transition"
+          onClick={handleSubmit}
+          disabled={loading}
         >
-          Sign Up
+          {loading ? 'Creating Account...' : 'Sign Up'}
         </button>
-      </form>
+      </div>
     </div>
   );
 }
