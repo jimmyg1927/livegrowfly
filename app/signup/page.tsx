@@ -3,117 +3,114 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-export default function SignupPage() {
+export default function SignUpPage() {
   const router = useRouter();
-
   const [form, setForm] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
   });
-
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async () => {
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError('');
 
-    if (!form.name || !form.email || !form.password || !form.confirmPassword) {
-      setError('Please fill out all fields.');
-      return;
+    const { name, email, password, confirmPassword } = form;
+
+    if (!name || !email || !password || !confirmPassword) {
+      return setError('All fields are required.');
     }
 
-    if (form.password !== form.confirmPassword) {
-      setError('Passwords do not match.');
-      return;
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      return setError('Please enter a valid email.');
     }
 
-    setLoading(true);
+    if (password !== confirmPassword) {
+      return setError('Passwords do not match.');
+    }
+
+    if (password.length < 10 || !/\d/.test(password) || !/[^a-zA-Z0-9]/.test(password)) {
+      return setError('Password must be at least 10 characters and include a number and special character.');
+    }
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/signup`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          password: form.password,
-        }),
+        body: JSON.stringify({ name, email, password }),
       });
 
-      const text = await res.text();
-      const data = text ? JSON.parse(text) : {};
+      const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Signup failed');
-      }
-
-      if (!data.token) {
-        throw new Error('Signup succeeded but no token received');
-      }
+      if (!res.ok) throw new Error(data.error || 'Sign-up failed');
 
       localStorage.setItem('token', data.token);
       router.push('/plans');
     } catch (err: any) {
       setError(err.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#2daaff] text-white flex items-center justify-center px-4">
-      <div className="bg-white text-black p-8 rounded-2xl shadow max-w-md w-full">
-        <h1 className="text-2xl font-bold mb-6 text-center">Create Your Growfly Account</h1>
+    <div className="min-h-screen flex items-center justify-center bg-[#2daaff] p-6">
+      <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md">
+        <h1 className="text-2xl font-bold text-center text-black mb-6">🚀 Sign Up to Growfly</h1>
 
-        {error && <p className="text-red-500 mb-4 text-sm">{error}</p>}
+        <form onSubmit={handleSignUp} className="space-y-4">
+          <input
+            type="text"
+            name="name"
+            placeholder="Your Name"
+            value={form.name}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-4 py-2"
+            required
+          />
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={form.email}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-4 py-2"
+            required
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={form.password}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-4 py-2"
+            required
+          />
+          <input
+            type="password"
+            name="confirmPassword"
+            placeholder="Confirm Password"
+            value={form.confirmPassword}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-4 py-2"
+            required
+          />
 
-        <input
-          className="w-full border p-2 rounded mb-3"
-          placeholder="Name"
-          name="name"
-          value={form.name}
-          onChange={handleChange}
-        />
-        <input
-          className="w-full border p-2 rounded mb-3"
-          placeholder="Email"
-          name="email"
-          type="email"
-          value={form.email}
-          onChange={handleChange}
-        />
-        <input
-          className="w-full border p-2 rounded mb-3"
-          placeholder="Password"
-          name="password"
-          type="password"
-          value={form.password}
-          onChange={handleChange}
-        />
-        <input
-          className="w-full border p-2 rounded mb-5"
-          placeholder="Confirm Password"
-          name="confirmPassword"
-          type="password"
-          value={form.confirmPassword}
-          onChange={handleChange}
-        />
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
-        <button
-          onClick={handleSubmit}
-          className="w-full bg-[#2daaff] text-white py-2 rounded hover:bg-blue-600 transition"
-          disabled={loading}
-        >
-          {loading ? 'Creating account...' : 'Sign Up'}
-        </button>
+          <button
+            type="submit"
+            className="w-full bg-[#2daaff] text-white font-semibold py-2 rounded hover:bg-blue-600 transition"
+          >
+            Create Account
+          </button>
+        </form>
       </div>
     </div>
   );
