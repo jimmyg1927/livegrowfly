@@ -1,31 +1,22 @@
-'use client';
-
-import React from 'react';
 import Link from 'next/link';
 
 export default function Sidebar() {
   return (
-    <aside className="w-64 bg-[#0d1117] text-white p-4">
-      <nav className="space-y-4">
-        <h2 className="text-lg font-bold">Growfly</h2>
-        <ul>
+    <aside className="bg-black text-white w-64 p-6 flex flex-col space-y-6">
+      <div>
+        <h2 className="text-xl font-bold mb-4">Growfly</h2>
+        <ul className="space-y-3">
           <li>
-            <Link href="/dashboard" className="block hover:text-blue-400">
-              🏠 Dashboard
-            </Link>
+            <Link href="/dashboard" className="hover:text-blue-400">Dashboard</Link>
           </li>
           <li>
-            <Link href="/plans" className="block hover:text-blue-400">
-              💡 Upgrade Plan
-            </Link>
+            <Link href="/change-plan" className="hover:text-blue-400">Change Plan</Link>
           </li>
           <li>
-            <Link href="/logout" className="block hover:text-red-400">
-              🚪 Logout
-            </Link>
+            <Link href="/settings" className="hover:text-blue-400">Settings</Link>
           </li>
         </ul>
-      </nav>
+      </div>
     </aside>
   );
 }
