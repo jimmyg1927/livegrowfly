@@ -1,9 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export default function PlansPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   const plans = [
     {
@@ -49,27 +51,37 @@ export default function PlansPage() {
   ];
 
   const handleSelect = async (planId: string) => {
-    if (planId === 'free') {
-      router.push(`/signup?plan=free`);
-    } else {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/create-checkout-session`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ planId }),
-        });
+    setLoading(true);
 
-        const data = await res.json();
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stripe/create-checkout-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          plan: planId,
+          email: 'testuser@example.com', // Replace with real email from session later
+          name: 'Test User',             // Replace with real name from session later
+        }),
+      });
 
-        if (!res.ok) throw new Error(data.error || 'Something went wrong.');
-
-        // Redirect to Stripe Checkout
-        window.location.href = data.url;
-      } catch (err: any) {
-        alert(err.message || 'Failed to redirect to Stripe');
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Error ${res.status}: ${text}`);
       }
+
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('Stripe session URL missing');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Something went wrong');
+      console.error('Plan selection error:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -104,8 +116,9 @@ export default function PlansPage() {
             <button
               onClick={() => handleSelect(plan.id)}
               className="mt-auto w-full bg-black text-white py-2 px-4 rounded hover:bg-gray-800 transition"
+              disabled={loading}
             >
-              Select Plan
+              {loading ? 'Loading...' : 'Select Plan'}
             </button>
           </div>
         ))}
