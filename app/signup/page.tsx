@@ -1,17 +1,25 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function SignUpPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [form, setForm] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
   });
+  const [plan, setPlan] = useState<string>('free');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const selectedPlan = searchParams.get('plan');
+    if (selectedPlan) setPlan(selectedPlan);
+  }, [searchParams]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -40,12 +48,10 @@ export default function SignUpPage() {
     }
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/register`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, password }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, subscriptionType: plan }),
       });
 
       const data = await res.json();
@@ -53,7 +59,7 @@ export default function SignUpPage() {
       if (!res.ok) throw new Error(data.error || 'Sign-up failed');
 
       localStorage.setItem('token', data.token);
-      router.push('/plans');
+      router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Something went wrong');
     }
@@ -65,49 +71,14 @@ export default function SignUpPage() {
         <h1 className="text-2xl font-bold text-center text-black mb-6">🚀 Sign Up to Growfly</h1>
 
         <form onSubmit={handleSignUp} className="space-y-4">
-          <input
-            type="text"
-            name="name"
-            placeholder="Your Name"
-            value={form.name}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded px-4 py-2"
-            required
-          />
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={form.email}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded px-4 py-2"
-            required
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={form.password}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded px-4 py-2"
-            required
-          />
-          <input
-            type="password"
-            name="confirmPassword"
-            placeholder="Confirm Password"
-            value={form.confirmPassword}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded px-4 py-2"
-            required
-          />
+          <input type="text" name="name" placeholder="Your Name" value={form.name} onChange={handleChange} className="w-full border border-gray-300 rounded px-4 py-2" required />
+          <input type="email" name="email" placeholder="Email" value={form.email} onChange={handleChange} className="w-full border border-gray-300 rounded px-4 py-2" required />
+          <input type="password" name="password" placeholder="Password" value={form.password} onChange={handleChange} className="w-full border border-gray-300 rounded px-4 py-2" required />
+          <input type="password" name="confirmPassword" placeholder="Confirm Password" value={form.confirmPassword} onChange={handleChange} className="w-full border border-gray-300 rounded px-4 py-2" required />
 
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
-          <button
-            type="submit"
-            className="w-full bg-[#2daaff] text-white font-semibold py-2 rounded hover:bg-blue-600 transition"
-          >
+          <button type="submit" className="w-full bg-[#2daaff] text-white font-semibold py-2 rounded hover:bg-blue-600 transition">
             Create Account
           </button>
         </form>

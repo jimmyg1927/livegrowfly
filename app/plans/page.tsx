@@ -1,9 +1,9 @@
-'use client'
+'use client';
 
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation';
 
 export default function PlansPage() {
-  const router = useRouter()
+  const router = useRouter();
 
   const plans = [
     {
@@ -46,12 +46,11 @@ export default function PlansPage() {
       ],
       recommended: false,
     },
-  ]
+  ];
 
   const handleSelect = (planId: string) => {
-    sessionStorage.setItem('selectedPlan', planId)
-    router.push('/signup')
-  }
+    router.push(`/signup?plan=${planId}`);
+  };
 
   return (
     <div className="min-h-screen bg-[#2daaff] text-white px-6 py-12">
@@ -91,6 +90,5 @@ export default function PlansPage() {
         ))}
       </div>
     </div>
-  )
+  );
 }
-

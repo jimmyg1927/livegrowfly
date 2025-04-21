@@ -1,135 +1,79 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 const plans = [
-  {
-    id: 'free',
-    name: 'Free',
-    price: '£0/month',
-    features: ['5 prompts/month', '1 user', 'Basic AI support'],
-  },
-  {
-    id: 'personal',
-    name: 'Personal',
-    price: '£8.99/month',
-    features: ['50 prompts/month', '1 user', 'Priority AI speed'],
-  },
-  {
-    id: 'entrepreneur',
-    name: 'Entrepreneur',
-    price: '£16.99/month',
-    features: [
-      '250 prompts/month',
-      '1 user',
-      'Prompt saving',
-      'AI feedback',
-      'Early feature access',
-    ],
-  },
-  {
-    id: 'business',
-    name: 'Business',
-    price: '£49.99/month',
-    features: [
-      '1200 prompts/month',
-      '3 users',
-      'Brand assets',
-      'Unlimited AI access',
-      'Team workspace',
-    ],
-  },
+  { id: 'free', name: 'Free', description: '5 prompts/month' },
+  { id: 'personal', name: 'Personal', description: '50 prompts/month - £8.99/mo' },
+  { id: 'entrepreneur', name: 'Entrepreneur', description: '250 prompts - £16.99/mo' },
+  { id: 'business', name: 'Business', description: '1200 prompts - £49.99/mo' },
 ];
 
 export default function ChangePlanPage() {
   const router = useRouter();
-  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState('');
+  const [message, setMessage] = useState('');
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
   useEffect(() => {
-    const fetchUserPlan = async () => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const data = await res.json();
-        setCurrentPlan(data.subscriptionType);
-      } catch (err) {
-        console.error('Failed to load user plan', err);
-      }
-    };
-
-    if (token) fetchUserPlan();
+    if (!token) {
+      router.push('/login');
+    }
   }, [token]);
 
-  const handlePlanChange = async (planId: string) => {
-    setLoading(true);
+  const handlePlanChange = async () => {
+    if (!selectedPlan) {
+      setMessage('Please select a plan.');
+      return;
+    }
+
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stripe/change-plan`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/change-plan`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ planId }),
+        body: JSON.stringify({ subscriptionType: selectedPlan }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Something went wrong');
-      window.location.href = data.checkoutUrl;
-    } catch (err) {
-      if (err instanceof Error) {
-        alert(err.message);
-      } else {
-        alert('Something went wrong');
-      }
-    } finally {
-      setLoading(false);
+      if (!res.ok) throw new Error(data.error || 'Error updating plan');
+      setMessage('✅ Plan updated successfully!');
+      router.push('/dashboard');
+    } catch (err: any) {
+      setMessage(`❌ ${err.message}`);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#2daaff] text-white px-6 py-12">
-      <h1 className="text-4xl font-bold text-center mb-12">Update Your Plan</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[#2daaff] text-white p-6 flex flex-col items-center justify-center">
+      <h1 className="text-3xl font-bold mb-6">Change Your Plan</h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-6xl">
         {plans.map((plan) => (
           <div
             key={plan.id}
-            className={`bg-white text-black rounded-2xl p-6 shadow-md flex flex-col justify-between ${
-              currentPlan === plan.id ? 'border-4 border-green-500' : ''
+            className={`p-6 bg-white text-black rounded-xl shadow hover:shadow-lg cursor-pointer ${
+              selectedPlan === plan.id ? 'border-4 border-blue-600 scale-105' : ''
             }`}
+            onClick={() => setSelectedPlan(plan.id)}
           >
-            <div>
-              <h2 className="text-2xl font-bold mb-2">{plan.name}</h2>
-              <p className="text-lg mb-4">{plan.price}</p>
-              <ul className="space-y-2 mb-6">
-                {plan.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-center gap-2">
-                    <span className="text-green-500">✔</span>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <button
-              onClick={() => handlePlanChange(plan.id)}
-              className={`mt-auto w-full py-2 px-4 rounded ${
-                currentPlan === plan.id
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-black text-white hover:bg-gray-800'
-              }`}
-              disabled={loading || currentPlan === plan.id}
-            >
-              {currentPlan === plan.id ? 'Current Plan' : loading ? 'Redirecting...' : 'Select Plan'}
-            </button>
+            <h2 className="text-xl font-semibold">{plan.name}</h2>
+            <p className="text-sm mt-2">{plan.description}</p>
           </div>
         ))}
       </div>
+
+      <button
+        onClick={handlePlanChange}
+        className="mt-8 bg-black text-white px-6 py-2 rounded hover:bg-gray-800 transition"
+      >
+        Update Plan
+      </button>
+
+      {message && <p className="mt-4 text-white font-medium">{message}</p>}
     </div>
   );
 }
