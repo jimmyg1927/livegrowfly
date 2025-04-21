@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function SignUpPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const selectedPlan = searchParams.get('plan') || 'free';
 
   const [form, setForm] = useState({
     name: '',
@@ -12,13 +14,8 @@ export default function SignUpPage() {
     password: '',
     confirmPassword: '',
   });
-  const [plan, setPlan] = useState<string>('free');
-  const [error, setError] = useState('');
 
-  useEffect(() => {
-    const selectedPlan = sessionStorage.getItem('selectedPlan');
-    if (selectedPlan) setPlan(selectedPlan);
-  }, []);
+  const [error, setError] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -43,24 +40,40 @@ export default function SignUpPage() {
     }
 
     if (password.length < 10 || !/\d/.test(password) || !/[^a-zA-Z0-9]/.test(password)) {
-      return setError('Password must be at least 10 characters and include a number and special character.');
+      return setError('Password must be at least 10 characters, include a number and special character.');
     }
 
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, subscriptionType: plan }),
+        body: JSON.stringify({ name, email, password, subscriptionType: selectedPlan }),
       });
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || 'Sign-up failed');
+      if (!res.ok) throw new Error(data.error || 'Signup failed');
 
       localStorage.setItem('token', data.token);
+
+      // For paid plans, redirect to Stripe checkout
+      if (selectedPlan !== 'free') {
+        const checkoutRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/create-checkout-session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ planId: selectedPlan }),
+        });
+
+        const checkoutData = await checkoutRes.json();
+        if (!checkoutRes.ok) throw new Error(checkoutData.error || 'Stripe Checkout failed');
+
+        return window.location.href = checkoutData.url;
+      }
+
+      // For free plan, go directly to dashboard
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Something went wrong');
+      setError(err.message || 'Something went wrong.');
     }
   };
 
