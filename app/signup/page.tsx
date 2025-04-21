@@ -56,7 +56,6 @@ export default function SignUpPage() {
 
       localStorage.setItem('token', data.token);
 
-      // For paid plans, redirect to Stripe checkout
       if (selectedPlan !== 'free') {
         const checkoutRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/create-checkout-session`, {
           method: 'POST',
@@ -70,7 +69,6 @@ export default function SignUpPage() {
         return window.location.href = checkoutData.url;
       }
 
-      // For free plan, go directly to dashboard
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Something went wrong.');
