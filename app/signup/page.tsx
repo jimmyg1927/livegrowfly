@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 export default function SignUpPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [form, setForm] = useState({
     name: '',
@@ -17,9 +16,9 @@ export default function SignUpPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const selectedPlan = searchParams.get('plan');
+    const selectedPlan = sessionStorage.getItem('selectedPlan');
     if (selectedPlan) setPlan(selectedPlan);
-  }, [searchParams]);
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
