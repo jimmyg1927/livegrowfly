@@ -11,47 +11,59 @@ export default function PlansPage() {
     {
       id: 'free',
       name: 'Free',
-      price: '£0/month',
-      features: ['5 prompts/month', '1 user', 'Basic AI support'],
-      recommended: false,
+      price: 'Free',
+      prompts: '5 prompts/month',
+      users: '1 user',
+      benefits: ['Basic AI support'],
+      isEnterprise: false,
     },
     {
       id: 'personal',
       name: 'Personal',
       price: '£8.99/month',
-      features: ['50 prompts/month', '1 user', 'Priority AI speed'],
-      recommended: false,
-    },
-    {
-      id: 'entrepreneur',
-      name: 'Entrepreneur',
-      price: '£16.99/month',
-      features: [
-        '250 prompts/month',
-        '1 user',
-        'Prompt saving',
-        'AI feedback',
-        'Early feature access',
-      ],
-      recommended: true,
+      prompts: '150 prompts/month',
+      users: '1 user',
+      benefits: ['Priority AI speed', 'Prompt history access'],
+      isEnterprise: false,
     },
     {
       id: 'business',
       name: 'Business',
-      price: '£49.99/month',
-      features: [
-        '1200 prompts/month',
-        '3 users',
-        'Brand assets',
-        'Unlimited AI access',
-        'Team workspace',
+      price: '£38.99/month',
+      prompts: '500 prompts/month',
+      users: '3 users',
+      benefits: ['Brand workspace', 'Unlimited AI speed', 'Collaboration tools'],
+      isEnterprise: false,
+    },
+    {
+      id: 'enterprise',
+      name: 'Enterprise',
+      price: 'Custom pricing',
+      prompts: 'Unlimited prompts',
+      users: 'Unlimited users',
+      benefits: [
+        'Dedicated AI analyst',
+        'White-glove onboarding',
+        'SLAs + Enterprise compliance',
       ],
-      recommended: false,
+      isEnterprise: true,
     },
   ];
 
   const handleSelect = async (planId: string) => {
     setLoading(true);
+    if (planId === 'enterprise') {
+      router.push('/contact');
+      return;
+    }
+
+    const email = localStorage.getItem('email') || prompt('Enter your email to continue:');
+    const name = localStorage.getItem('name') || prompt('Enter your name:');
+    if (!email || !name) {
+      alert('Name and email are required.');
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stripe/create-checkout-session`, {
@@ -59,66 +71,55 @@ export default function PlansPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          plan: planId,
-          email: 'testuser@example.com', // Replace with real email from session later
-          name: 'Test User',             // Replace with real name from session later
-        }),
+        body: JSON.stringify({ plan: planId, email, name }),
       });
 
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Error ${res.status}: ${text}`);
-      }
-
       const data = await res.json();
-      if (data.url) {
+
+      if (res.ok && data.url) {
         window.location.href = data.url;
       } else {
-        throw new Error('Stripe session URL missing');
+        alert(data.error || 'Something went wrong');
+        setLoading(false);
       }
-    } catch (err: any) {
-      alert(err.message || 'Something went wrong');
-      console.error('Plan selection error:', err);
-    } finally {
+    } catch (error) {
+      console.error(error);
+      alert('Stripe error');
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#2daaff] text-white px-6 py-12">
-      <h1 className="text-4xl font-bold text-center mb-12">Choose Your Plan</h1>
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0f2c] to-[#001F3F] text-white p-6">
+      <h1 className="text-4xl font-bold text-center mb-12">✨ Choose Your Growfly Plan ✨</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
         {plans.map((plan) => (
           <div
             key={plan.id}
-            className={`bg-white text-black rounded-2xl p-6 shadow-md flex flex-col items-start justify-between ${
-              plan.recommended ? 'border-4 border-blue-500 scale-105' : ''
+            className={`bg-white text-black rounded-2xl p-6 shadow-xl transform transition hover:scale-105 flex flex-col justify-between border-4 ${
+              plan.id === 'business' ? 'border-yellow-500' :
+              plan.id === 'entrepreneur' ? 'border-green-500' :
+              plan.id === 'enterprise' ? 'border-purple-600' :
+              'border-transparent'
             }`}
           >
-            <div className="w-full">
-              <h2 className="text-2xl font-bold mb-2">{plan.name}</h2>
-              <p className="text-lg mb-4">{plan.price}</p>
-              <ul className="space-y-2 mb-6">
-                {plan.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-center gap-2">
-                    <span className="text-green-500">✔</span>
-                    {feature}
-                  </li>
+            <div>
+              <h2 className="text-2xl font-extrabold mb-2">{plan.name}</h2>
+              <p className="text-lg font-semibold text-gray-700 mb-4">{plan.price}</p>
+              <ul className="text-sm text-gray-800 mb-4 space-y-2">
+                <li>✔ {plan.prompts}</li>
+                <li>✔ {plan.users}</li>
+                {plan.benefits.map((b, i) => (
+                  <li key={i}>✔ {b}</li>
                 ))}
               </ul>
-              {plan.recommended && (
-                <p className="text-xs text-blue-600 font-semibold uppercase mb-2">
-                  Recommended
-                </p>
-              )}
             </div>
             <button
-              onClick={() => handleSelect(plan.id)}
-              className="mt-auto w-full bg-black text-white py-2 px-4 rounded hover:bg-gray-800 transition"
               disabled={loading}
+              onClick={() => handleSelect(plan.id)}
+              className="mt-auto w-full bg-[#2daaff] text-white font-bold py-2 px-4 rounded hover:bg-blue-600 transition"
             >
-              {loading ? 'Loading...' : 'Select Plan'}
+              {plan.isEnterprise ? 'Contact Us' : 'Select Plan'}
             </button>
           </div>
         ))}
