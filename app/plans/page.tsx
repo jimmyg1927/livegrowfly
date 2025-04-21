@@ -48,8 +48,29 @@ export default function PlansPage() {
     },
   ];
 
-  const handleSelect = (planId: string) => {
-    router.push(`/signup?plan=${planId}`);
+  const handleSelect = async (planId: string) => {
+    if (planId === 'free') {
+      router.push(`/signup?plan=free`);
+    } else {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/create-checkout-session`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ planId }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+
+        // Redirect to Stripe Checkout
+        window.location.href = data.url;
+      } catch (err: any) {
+        alert(err.message || 'Failed to redirect to Stripe');
+      }
+    }
   };
 
   return (
