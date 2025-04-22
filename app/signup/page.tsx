@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function SignUpPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [form, setForm] = useState({
     name: '',
@@ -16,9 +17,9 @@ export default function SignUpPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const selectedPlan = sessionStorage.getItem('selectedPlan');
-    if (selectedPlan) setPlan(selectedPlan);
-  }, []);
+    const selectedPlan = searchParams.get('plan') || 'free';
+    setPlan(selectedPlan);
+  }, [searchParams]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -67,17 +68,54 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#2daaff] p-6">
       <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center text-black mb-6">🚀 Sign Up to Growfly</h1>
+        <h1 className="text-2xl font-bold text-center text-black mb-6">
+          🚀 Sign Up to Growfly ({plan.charAt(0).toUpperCase() + plan.slice(1)} Plan)
+        </h1>
 
         <form onSubmit={handleSignUp} className="space-y-4">
-          <input type="text" name="name" placeholder="Your Name" value={form.name} onChange={handleChange} className="w-full border border-gray-300 rounded px-4 py-2" required />
-          <input type="email" name="email" placeholder="Email" value={form.email} onChange={handleChange} className="w-full border border-gray-300 rounded px-4 py-2" required />
-          <input type="password" name="password" placeholder="Password" value={form.password} onChange={handleChange} className="w-full border border-gray-300 rounded px-4 py-2" required />
-          <input type="password" name="confirmPassword" placeholder="Confirm Password" value={form.confirmPassword} onChange={handleChange} className="w-full border border-gray-300 rounded px-4 py-2" required />
+          <input
+            type="text"
+            name="name"
+            placeholder="Your Name"
+            value={form.name}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-4 py-2"
+            required
+          />
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={form.email}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-4 py-2"
+            required
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={form.password}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-4 py-2"
+            required
+          />
+          <input
+            type="password"
+            name="confirmPassword"
+            placeholder="Confirm Password"
+            value={form.confirmPassword}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-4 py-2"
+            required
+          />
 
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
-          <button type="submit" className="w-full bg-[#2daaff] text-white font-semibold py-2 rounded hover:bg-blue-600 transition">
+          <button
+            type="submit"
+            className="w-full bg-[#2daaff] text-white font-semibold py-2 rounded hover:bg-blue-600 transition"
+          >
             Create Account
           </button>
         </form>
