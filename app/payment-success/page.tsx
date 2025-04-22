@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -24,7 +24,6 @@ export default function PaymentSuccessPage() {
         const data = await res.json();
 
         if (data.token) {
-          // ✅ Store JWT in localStorage (or cookies if you prefer)
           localStorage.setItem('growfly_jwt', data.token);
           router.push('/dashboard');
         } else {
@@ -57,4 +56,12 @@ export default function PaymentSuccessPage() {
   }
 
   return null;
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-white bg-blue-600">Loading...</div>}>
+      <PaymentSuccessContent />
+    </Suspense>
+  );
 }
