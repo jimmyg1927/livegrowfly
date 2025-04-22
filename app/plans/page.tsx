@@ -15,7 +15,7 @@ export default function PlansPage() {
       prompts: '5 prompts/month',
       users: '1 user',
       features: ['Basic AI support'],
-      buttonText: 'Select Free Plan',
+      buttonText: 'Select Free',
     },
     {
       id: 'personal',
@@ -24,7 +24,7 @@ export default function PlansPage() {
       prompts: '150 prompts/month',
       users: '1 user',
       features: ['Priority AI speed', 'Prompt history access'],
-      buttonText: 'Select Personal Plan',
+      buttonText: 'Select Personal',
     },
     {
       id: 'business',
@@ -33,7 +33,7 @@ export default function PlansPage() {
       prompts: '500 prompts/month',
       users: '3 users',
       features: ['Brand workspace', 'Unlimited AI access'],
-      buttonText: 'Select Business Plan',
+      buttonText: 'Select Business',
     },
     {
       id: 'enterprise',
@@ -46,55 +46,28 @@ export default function PlansPage() {
     },
   ];
 
-  const handleSelect = async (planId: string) => {
+  const handleSelect = (planId: string) => {
+    setLoadingPlan(planId);
     if (planId === 'enterprise') {
       router.push('/contact');
-      return;
-    }
-
-    if (planId === 'free') {
+    } else {
       router.push(`/signup?plan=${planId}`);
-      return;
-    }
-
-    setLoadingPlan(planId);
-
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stripe/create-checkout-session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId }),
-      });
-
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        alert('Failed to create Stripe session.');
-      }
-    } catch (error) {
-      console.error('Stripe session error:', error);
-      alert('Something went wrong. Please try again.');
-    } finally {
-      setLoadingPlan(null);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-700 to-blue-400 text-white p-8">
-      <h1 className="text-4xl font-bold text-center mb-12">🚀 Choose Your Growfly Plan</h1>
+    <div className="min-h-screen bg-gradient-to-b from-blue-600 to-blue-300 text-white p-8">
+      <h1 className="text-4xl font-bold text-center mb-12">✨ Choose Your Growfly Plan ✨</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
         {plans.map((plan) => (
           <div
             key={plan.id}
-            className={`bg-white text-black rounded-2xl shadow-xl p-8 flex flex-col justify-between hover:scale-105 transition ${
-              plan.id === 'entrepreneur' ? 'border-4 border-blue-500' : ''
-            }`}
+            className="bg-white text-black rounded-2xl shadow-lg p-6 flex flex-col justify-between hover:scale-105 transition transform duration-300"
           >
             <div>
               <h2 className="text-2xl font-bold mb-2">{plan.name}</h2>
               <p className="text-lg font-semibold text-blue-700 mb-4">{plan.price}</p>
-              <ul className="space-y-2">
+              <ul className="space-y-2 mb-4">
                 <li>✔ {plan.prompts}</li>
                 <li>✔ {plan.users}</li>
                 {plan.features.map((feature, idx) => (
@@ -106,10 +79,10 @@ export default function PlansPage() {
               onClick={() => handleSelect(plan.id)}
               disabled={loadingPlan === plan.id}
               className={`mt-6 w-full py-2 rounded-xl text-white font-semibold ${
-                loadingPlan === plan.id ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-800'
-              } transition`}
+                loadingPlan === plan.id ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-800 transition'
+              }`}
             >
-              {loadingPlan === plan.id ? 'Processing...' : plan.buttonText}
+              {loadingPlan === plan.id ? 'Loading...' : plan.buttonText}
             </button>
           </div>
         ))}
