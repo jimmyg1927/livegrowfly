@@ -1,11 +1,14 @@
 'use client';
 
-import SignUpForm from './SignUpForm';
+import React, { Suspense } from 'react';
+import SignUpForm from '../../components/SignUpForm';
 
 export default function SignUpPage() {
   return (
-    <div className="min-h-screen bg-[#2daaff] flex items-center justify-center p-6">
-      <SignUpForm />
+    <div className="min-h-screen bg-gradient-to-br from-[#2daaff] to-[#1e90ff] flex items-center justify-center p-6">
+      <Suspense fallback={<p className="text-white text-xl">Loading signup form...</p>}>
+        <SignUpForm />
+      </Suspense>
     </div>
   );
 }
