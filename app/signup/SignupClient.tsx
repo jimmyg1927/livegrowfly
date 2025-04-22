@@ -1,19 +1,25 @@
 'use client';
 
-import { useSearchParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
 export default function SignupClient() {
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const plan = searchParams.get('plan') || 'free';
 
+  const [plan, setPlan] = useState('free');
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // ✅ Safe way to read URL params on client-side only:
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const selectedPlan = params.get('plan') || 'free';
+    setPlan(selectedPlan);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,16 +39,28 @@ export default function SignupClient() {
         body: JSON.stringify({ email, password, name, subscriptionType: plan }),
       });
 
+      const contentType = res.headers.get('content-type');
+
+      if (!res.ok) {
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          setError(data.error || 'Something went wrong.');
+        } else {
+          setError('Unexpected server error. Please try again.');
+        }
+        return;
+      }
+
       const data = await res.json();
 
-      if (res.ok && data.token) {
+      if (data.token) {
         localStorage.setItem('growfly_jwt', data.token);
         router.push('/dashboard');
       } else {
-        setError(data.error || 'Something went wrong.');
+        setError('Signup succeeded but no token returned.');
       }
     } catch (err) {
-      setError('Server error. Please try again.');
+      setError('Network error or server is unreachable.');
     } finally {
       setLoading(false);
     }
