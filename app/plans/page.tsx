@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 export default function PlansPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
   const plans = [
     {
@@ -15,7 +15,7 @@ export default function PlansPage() {
       prompts: '5 prompts/month',
       users: '1 user',
       features: ['Basic AI support'],
-      buttonText: 'Select Plan',
+      buttonText: 'Select Free Plan',
     },
     {
       id: 'personal',
@@ -24,7 +24,7 @@ export default function PlansPage() {
       prompts: '150 prompts/month',
       users: '1 user',
       features: ['Priority AI speed', 'Prompt history access'],
-      buttonText: 'Select Personal',
+      buttonText: 'Select Personal Plan',
     },
     {
       id: 'business',
@@ -33,7 +33,7 @@ export default function PlansPage() {
       prompts: '500 prompts/month',
       users: '3 users',
       features: ['Brand workspace', 'Unlimited AI access'],
-      buttonText: 'Select Business',
+      buttonText: 'Select Business Plan',
     },
     {
       id: 'enterprise',
@@ -49,40 +49,47 @@ export default function PlansPage() {
   const handleSelect = async (planId: string) => {
     if (planId === 'enterprise') {
       router.push('/contact');
-    } else {
-      setLoading(true);
-      try {
-        const userEmail = prompt('Enter your email to continue:');
-        const userName = prompt('Enter your name:');
+      return;
+    }
 
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stripe/create-checkout-session`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: userEmail, plan: planId, name: userName }),
-        });
+    if (planId === 'free') {
+      router.push(`/signup?plan=${planId}`);
+      return;
+    }
 
-        const data = await res.json();
-        if (data.url) {
-          window.location.href = data.url;
-        } else {
-          alert('Failed to create Stripe session.');
-        }
-      } catch (err) {
-        alert('Something went wrong.');
-      } finally {
-        setLoading(false);
+    setLoadingPlan(planId);
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stripe/create-checkout-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId }),
+      });
+
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert('Failed to create Stripe session.');
       }
+    } catch (error) {
+      console.error('Stripe session error:', error);
+      alert('Something went wrong. Please try again.');
+    } finally {
+      setLoadingPlan(null);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-600 to-blue-300 text-white p-8">
-      <h1 className="text-4xl font-bold text-center mb-12">✨ Choose Your Growfly Plan ✨</h1>
+    <div className="min-h-screen bg-gradient-to-b from-blue-700 to-blue-400 text-white p-8">
+      <h1 className="text-4xl font-bold text-center mb-12">🚀 Choose Your Growfly Plan</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
         {plans.map((plan) => (
           <div
             key={plan.id}
-            className="bg-white text-black rounded-2xl shadow-lg p-6 flex flex-col justify-between hover:scale-105 transition"
+            className={`bg-white text-black rounded-2xl shadow-xl p-8 flex flex-col justify-between hover:scale-105 transition ${
+              plan.id === 'entrepreneur' ? 'border-4 border-blue-500' : ''
+            }`}
           >
             <div>
               <h2 className="text-2xl font-bold mb-2">{plan.name}</h2>
@@ -97,10 +104,12 @@ export default function PlansPage() {
             </div>
             <button
               onClick={() => handleSelect(plan.id)}
-              disabled={loading}
-              className="mt-6 bg-blue-600 text-white w-full py-2 rounded-xl hover:bg-blue-800 transition"
+              disabled={loadingPlan === plan.id}
+              className={`mt-6 w-full py-2 rounded-xl text-white font-semibold ${
+                loadingPlan === plan.id ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-800'
+              } transition`}
             >
-              {loading ? 'Loading...' : plan.buttonText}
+              {loadingPlan === plan.id ? 'Processing...' : plan.buttonText}
             </button>
           </div>
         ))}
