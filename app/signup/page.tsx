@@ -1,7 +1,7 @@
 'use client';
 
 import React, { Suspense } from 'react';
-import SignUpForm from '@/components/SignUpForm';
+import SignUpForm from './SignUpForm'; // ✅ Correct path, relative import
 
 export default function SignUpPage() {
   return (
