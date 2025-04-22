@@ -55,7 +55,7 @@ export default function PlansPage() {
     }
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stripe/create-checkout-session`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/create-checkout-session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ planId }),
@@ -69,6 +69,7 @@ export default function PlansPage() {
         alert('Failed to create Stripe session.');
       }
     } catch (err) {
+      console.error('Error creating Stripe session:', err);
       alert('Something went wrong creating Stripe session.');
     } finally {
       setLoadingPlan(null);
