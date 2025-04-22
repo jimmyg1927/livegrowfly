@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useState } from 'react';
 
-export default function SignupPage() {
-  const router = useRouter();
+export default function SignupForm() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const plan = searchParams.get('plan') || 'free';
 
   const [email, setEmail] = useState('');
