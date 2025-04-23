@@ -1,7 +1,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import ClientLayout from './ClientLayout';
-import { ThemeProvider } from '@/context/ThemeContext';
+import ThemeContextProvider from '@/context/ThemeContext'; // ✅ Correct import
 import { Analytics } from '@vercel/analytics/react';
 
 export const metadata: Metadata = {
@@ -13,10 +13,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <ThemeProvider>
+        <ThemeContextProvider>  {/* ✅ Correct usage here */}
           <ClientLayout>{children}</ClientLayout>
           <Analytics />
-        </ThemeProvider>
+        </ThemeContextProvider>  {/* ✅ Closing correctly */}
       </body>
     </html>
   );
