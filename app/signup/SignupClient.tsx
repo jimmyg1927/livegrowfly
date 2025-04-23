@@ -7,6 +7,7 @@ export default function SignupClient() {
   const router = useRouter();
 
   const [plan, setPlan] = useState('free');
+  const [referrerCode, setReferrerCode] = useState<string | null>(null); // NEW: Capture ref code
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
@@ -14,11 +15,14 @@ export default function SignupClient() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Safe way to read URL params on client-side only:
+  // ✅ Capture plan + referrer from URL params safely
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const selectedPlan = params.get('plan') || 'free';
+    const refCode = params.get('ref') || null;
+
     setPlan(selectedPlan);
+    setReferrerCode(refCode);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,7 +40,7 @@ export default function SignupClient() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name, subscriptionType: plan }),
+        body: JSON.stringify({ email, password, name, subscriptionType: plan, referrerCode }),
       });
 
       const contentType = res.headers.get('content-type');
@@ -72,6 +76,12 @@ export default function SignupClient() {
         <h1 className="text-3xl font-bold mb-6 text-center">
           🚀 Sign Up for {plan.charAt(0).toUpperCase() + plan.slice(1)} Plan
         </h1>
+
+        {referrerCode && (
+          <p className="text-sm text-green-600 mb-4">
+            🎉 You were referred! Your referrer code: <strong>{referrerCode}</strong>
+          </p>
+        )}
 
         {error && <p className="text-red-600 mb-4">{error}</p>}
 

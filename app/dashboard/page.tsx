@@ -15,7 +15,6 @@ export default function DashboardPage() {
   const [followUps, setFollowUps] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // ✅ FIXED TOKEN: use 'growfly_jwt' here (matches your signup)
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null;
 
   useEffect(() => {
@@ -90,13 +89,13 @@ export default function DashboardPage() {
     );
   }
 
+  const referralLink = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/signup?ref=${user.referralCode}`;
+
   return (
     <div className="flex h-screen bg-[#2daaff] text-white">
       <Sidebar />
-
       <div className="flex-1 flex flex-col">
         <Header name={user.email} />
-
         <main className="p-6 overflow-y-auto space-y-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <h1 className="text-2xl font-bold">Welcome, {user.name || user.email}</h1>
@@ -106,6 +105,24 @@ export default function DashboardPage() {
           </div>
 
           <PromptTracker used={user.promptsUsed} limit={user.promptLimit} />
+
+          {/* 🚀 Referral Link Box */}
+          <section className="bg-black text-white rounded-2xl shadow p-6">
+            <h2 className="text-xl font-semibold mb-2">🎁 Refer Your Friends!</h2>
+            <p className="mb-4">Share this link and get 50 FREE prompts when your friends sign up:</p>
+            <div className="bg-gray-800 p-3 rounded-lg flex items-center justify-between">
+              <span className="break-all">{referralLink}</span>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(referralLink);
+                  alert('Referral link copied to clipboard!');
+                }}
+                className="ml-4 bg-blue-600 hover:bg-blue-800 text-white px-4 py-1 rounded"
+              >
+                Copy Link
+              </button>
+            </div>
+          </section>
 
           <section className="bg-white text-black rounded-2xl shadow p-6">
             <h2 className="text-xl font-semibold mb-2">🤖 Ask Growfly AI</h2>

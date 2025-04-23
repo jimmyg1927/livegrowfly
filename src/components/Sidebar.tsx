@@ -10,6 +10,9 @@ export default function Sidebar() {
             <Link href="/dashboard" className="hover:text-blue-400">Dashboard</Link>
           </li>
           <li>
+            <Link href="/collab-zone" className="hover:text-blue-400">Collaborative Zone</Link>
+          </li>
+          <li>
             <Link href="/change-plan" className="hover:text-blue-400">Change Plan</Link>
           </li>
           <li>
