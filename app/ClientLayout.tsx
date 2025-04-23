@@ -2,18 +2,21 @@
 
 import React from 'react';
 import { Inter, Roboto_Mono } from 'next/font/google';
-import ThemeContextProvider from '@/context/ThemeContext';
-
+import { ThemeContextProvider } from '../src/context/ThemeContext';
+import { Analytics } from '@vercel/analytics/react';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 const robotoMono = Roboto_Mono({ subsets: ['latin'], variable: '--font-mono' });
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeContextProvider>
+    <html lang="en">
       <body className={`${inter.variable} ${robotoMono.variable} font-sans`}>
-        {children}
+        <ThemeContextProvider>
+          {children}
+        </ThemeContextProvider>
+        <Analytics />
       </body>
-    </ThemeContextProvider>
+    </html>
   );
 }
