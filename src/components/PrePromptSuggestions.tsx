@@ -2,32 +2,26 @@
 
 import React from 'react';
 
-interface PrePromptSuggestionsProps {
-  onSelect: (prompt: string) => void;
-}
-
 const suggestions = [
-  "Give me a weekly content plan for Instagram.",
-  "Write a catchy TikTok caption for a product launch.",
-  "Suggest 5 viral marketing ideas for my clothing brand.",
-  "How can I increase engagement on LinkedIn this week?",
-  "Write an email subject line that boosts open rates.",
-  "Generate a list of blog topics for my niche business.",
-  "Suggest daily tasks to improve my social media presence.",
+  '📊 Give me a social media plan for this week',
+  '🎯 Suggest a TikTok strategy for my brand',
+  '📝 Write me a Facebook ad copy for a product launch',
+  '📅 Generate a daily content calendar for Instagram',
+  '💡 Give me 5 growth hacks for my Shopify store',
 ];
 
-export default function PrePromptSuggestions({ onSelect }: PrePromptSuggestionsProps) {
+export default function PrePromptSuggestions({ onSelect }: { onSelect: (prompt: string) => void }) {
   return (
-    <div className="bg-card text-textPrimary p-4 rounded-2xl shadow-smooth mb-6">
-      <h2 className="text-lg font-bold mb-3">🔥 Try These Daily Prompts</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {suggestions.map((prompt, index) => (
+    <div className="bg-card text-textPrimary p-4 rounded-xl shadow-smooth mb-6">
+      <h3 className="text-sm font-semibold mb-3">✨ Need inspiration? Try one of these prompts:</h3>
+      <div className="flex flex-wrap gap-2">
+        {suggestions.map((suggestion, index) => (
           <button
             key={index}
-            onClick={() => onSelect(prompt)}
-            className="bg-accent text-background px-4 py-2 rounded-xl hover:bg-primary transition-colors duration-300 ease-in-out text-sm text-left"
+            onClick={() => onSelect(suggestion.replace(/^[^a-zA-Z]+/, ''))}
+            className="bg-primary text-white px-3 py-1 rounded hover:bg-blue-700 text-sm transition-colors"
           >
-            {prompt}
+            {suggestion}
           </button>
         ))}
       </div>

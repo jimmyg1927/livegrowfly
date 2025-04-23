@@ -7,12 +7,12 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: 'var(--background-color)',    // Will auto-switch with light/dark
-        textPrimary: 'var(--text-color)',         // Also switches with light/dark
-        accent: 'var(--accent-color)',
-        card: '#1e293b',                          // Consistent dark card color
-        primary: '#4f46e5',                       // Indigo (your previous)
-        textSecondary: '#94a3b8',                 // Soft gray text
+        primary: '#4f46e5',         // Indigo
+        accent: '#38bdf8',          // Sky Blue
+        background: '#0f172a',      // Dark Slate
+        card: '#1e293b',            // Dark Gray
+        textPrimary: '#f1f5f9',     // Light text
+        textSecondary: '#94a3b8',   // Soft gray text
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
