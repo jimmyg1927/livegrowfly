@@ -69,8 +69,13 @@ export default function DashboardPage() {
         body: JSON.stringify({ message: input }),
       });
 
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('⚠️ Invalid response from server. Please try again later.');
+      }
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Something went wrong');
+      if (!res.ok) throw new Error(data.error || '❌ Something went wrong!');
 
       setResponse(data.response);
       if (data.followUps) setFollowUps(data.followUps);
