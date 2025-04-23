@@ -2,37 +2,25 @@
 
 import React from 'react';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 
-interface GrowflyBotProps {
-  status: 'idle' | 'loading' | 'success' | 'error';
-}
-
-const GrowflyBot: React.FC<GrowflyBotProps> = ({ status }) => {
-  const getAnimation = () => {
-    switch (status) {
-      case 'loading':
-        return 'animate-bounce';
-      case 'success':
-        return 'animate-pulse';
-      case 'error':
-        return 'animate-shake';
-      default:
-        return '';
-    }
-  };
-
+export default function GrowflyBot() {
   return (
-    <div className={`flex justify-center items-center p-4 ${getAnimation()}`}>
-      <Image
-        src="/growfly-bot.png"
-        alt="Growfly Bot"
-        width={150}
-        height={150}
-        priority
-        className="rounded-full"
-      />
+    <div className="relative w-40 h-40 md:w-48 md:h-48">
+      <motion.div
+        initial={{ y: 0 }}
+        animate={{ y: [0, -10, 0] }}
+        transition={{ repeat: Infinity, duration: 2 }}
+        className="w-full h-full"
+      >
+        <Image
+          src="/growflybot.png"
+          alt="Growfly Bot"
+          layout="fill"
+          objectFit="contain"
+          priority
+        />
+      </motion.div>
     </div>
   );
-};
-
-export default GrowflyBot;
+}
