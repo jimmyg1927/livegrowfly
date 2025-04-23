@@ -14,16 +14,17 @@ export default function DashboardPage() {
   const [response, setResponse] = useState('');
   const [followUps, setFollowUps] = useState('');
   const [loading, setLoading] = useState(false);
-  const [checkingAuth, setCheckingAuth] = useState(true); // ✅ ADDED to avoid premature redirect
+
+  // ✅ FIXED TOKEN: use 'growfly_jwt' here (matches your signup)
+  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null;
 
   useEffect(() => {
-    const token = localStorage.getItem('growfly_jwt'); // ✅ Ensure correct token name
-    if (!token) {
-      router.push('/login');
-      return;
-    }
-
     const fetchUser = async () => {
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
           headers: {
@@ -34,28 +35,24 @@ export default function DashboardPage() {
         if (res.ok) {
           setUser(data);
         } else {
-          localStorage.removeItem('growfly_jwt'); // ✅ Clear invalid token
+          localStorage.removeItem('growfly_jwt');
           router.push('/login');
         }
       } catch (err) {
-        localStorage.removeItem('growfly_jwt'); // ✅ Clear token on error
+        localStorage.removeItem('growfly_jwt');
         router.push('/login');
-      } finally {
-        setCheckingAuth(false); // ✅ Done checking auth
       }
     };
-
     fetchUser();
-  }, [router]);
+  }, [token, router]);
 
   useEffect(() => {
-    if (!checkingAuth && user) {
-      const isPlanMissing = !user.subscriptionType || user.subscriptionType === 'none';
-      if (isPlanMissing) {
-        router.push('/plans');
-      }
+    if (!user) return;
+    const isPlanMissing = !user.subscriptionType || user.subscriptionType === 'none';
+    if (isPlanMissing) {
+      router.push('/plans');
     }
-  }, [user, checkingAuth, router]);
+  }, [user, router]);
 
   const handlePromptSubmit = async () => {
     if (!input) return;
@@ -63,7 +60,6 @@ export default function DashboardPage() {
     setResponse('');
     setFollowUps('');
 
-    const token = localStorage.getItem('growfly_jwt');
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chat`, {
         method: 'POST',
@@ -86,18 +82,10 @@ export default function DashboardPage() {
     }
   };
 
-  if (checkingAuth) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-lg text-gray-600">Checking authentication...</p>
-      </div>
-    );
-  }
-
   if (!user) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-lg text-gray-600">Redirecting to login...</p>
+        <p className="text-lg text-gray-600">Loading your dashboard...</p>
       </div>
     );
   }
@@ -105,8 +93,10 @@ export default function DashboardPage() {
   return (
     <div className="flex h-screen bg-[#2daaff] text-white">
       <Sidebar />
+
       <div className="flex-1 flex flex-col">
         <Header name={user.email} />
+
         <main className="p-6 overflow-y-auto space-y-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <h1 className="text-2xl font-bold">Welcome, {user.name || user.email}</h1>
@@ -115,7 +105,7 @@ export default function DashboardPage() {
             </span>
           </div>
 
-          <PromptTracker used={user.promptsUsed} limit={200} />
+          <PromptTracker used={user.promptsUsed} limit={user.promptLimit} />
 
           <section className="bg-white text-black rounded-2xl shadow p-6">
             <h2 className="text-xl font-semibold mb-2">🤖 Ask Growfly AI</h2>
