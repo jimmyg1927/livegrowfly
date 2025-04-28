@@ -13,7 +13,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
   const [input, setInput] = useState('');
   const [response, setResponse] = useState('');
-  const [followUps, setFollowUps] = useState('');
+  const [followUps, setFollowUps] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null;
@@ -83,7 +83,7 @@ export default function DashboardPage() {
   };
 
   const handlePrePromptSelect = (prompt: string) => {
-    setInput(prompt); // Auto-fills the prompt input
+    setInput(prompt);
   };
 
   if (!user) {
@@ -110,7 +110,6 @@ export default function DashboardPage() {
           </div>
 
           <PromptTracker used={user.promptsUsed} limit={user.promptLimit} />
-
           <PrePromptSuggestions onSelect={handlePrePromptSelect} />
 
           <section className="bg-black text-white rounded-2xl shadow p-6">
@@ -159,7 +158,7 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {followUps && (
+            {typeof followUps === 'string' && followUps.trim() !== '' && (
               <div className="mt-4">
                 <h4 className="text-sm font-semibold">Try asking:</h4>
                 <ul className="list-disc list-inside text-sm text-gray-700">
