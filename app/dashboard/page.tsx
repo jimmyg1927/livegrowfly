@@ -1,19 +1,23 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Sidebar from '../../src/components/Sidebar';
-import Header from '../../src/components/Header';
-import PromptTracker from '../../src/components/PromptTracker';
-import VoteFeedback from '../../src/components/VoteFeedback';
-import PrePromptSuggestions from '../../src/components/PrePromptSuggestions';
+import Sidebar from '@/components/Sidebar';
+import Header from '@/components/Header';
+import PromptTracker from '@/components/PromptTracker';
+import VoteFeedback from '@/components/VoteFeedback';
+import PrePromptSuggestions from '@/components/PrePromptSuggestions';
+import Image from 'next/image';
+import Mascot from '@/assets/growfly-mascot.png';
 
 export default function DashboardPage() {
   const router = useRouter();
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
   const [user, setUser] = useState<any>(null);
   const [input, setInput] = useState('');
-  const [response, setResponse] = useState('');
-  const [followUps, setFollowUps] = useState<string>('');
+  const [messages, setMessages] = useState<{ user: string; ai: string }[]>([]);
+  const [followUps, setFollowUps] = useState('');
   const [loading, setLoading] = useState(false);
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null;
@@ -27,14 +31,11 @@ export default function DashboardPage() {
 
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
-        if (res.ok) {
-          setUser(data);
-        } else {
+        if (res.ok) setUser(data);
+        else {
           localStorage.removeItem('growfly_jwt');
           router.push('/login');
         }
@@ -48,17 +49,24 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!user) return;
-    const isPlanMissing = !user.subscriptionType || user.subscriptionType === 'none';
-    if (isPlanMissing) {
+    if (!user.subscriptionType || user.subscriptionType === 'none') {
       router.push('/plans');
     }
   }, [user, router]);
 
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
+
   const handlePromptSubmit = async () => {
-    if (!input) return;
-    setLoading(true);
-    setResponse('');
+    if (!input.trim()) return;
+    const newMessages = [...messages, { user: input, ai: '' }];
+    setMessages(newMessages);
+    setInput('');
     setFollowUps('');
+    setLoading(true);
 
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/ai`, {
@@ -69,27 +77,37 @@ export default function DashboardPage() {
         },
         body: JSON.stringify({ message: input }),
       });
-
       const data = await res.json();
+
       if (!res.ok) throw new Error(data.error || 'Something went wrong');
 
-      setResponse(data.response);
+      setMessages((prev) => {
+        const last = prev[prev.length - 1];
+        return [...prev.slice(0, -1), { user: last.user, ai: data.response }];
+      });
+
       if (data.followUps) setFollowUps(data.followUps);
     } catch (err: any) {
-      setResponse(`❌ Error: ${err.message}`);
+      setMessages((prev) => {
+        const last = prev[prev.length - 1];
+        return [...prev.slice(0, -1), { user: last.user, ai: `❌ ${err.message}` }];
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePrePromptSelect = (prompt: string) => {
-    setInput(prompt);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handlePromptSubmit();
+    }
   };
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-lg text-gray-600">Loading your dashboard...</p>
+      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
+        <p>Loading your dashboard...</p>
       </div>
     );
   }
@@ -97,83 +115,74 @@ export default function DashboardPage() {
   const referralLink = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/signup?ref=${user.referralCode}`;
 
   return (
-    <div className="flex h-screen bg-[#2daaff] text-white">
+    <div className="flex h-screen bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-white">
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <Header name={user.email} />
-        <main className="p-6 overflow-y-auto space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <h1 className="text-2xl font-bold">Welcome, {user.name || user.email}</h1>
-            <span className="text-sm bg-black text-white rounded px-3 py-1 mt-2 md:mt-0">
+
+        <main className="relative flex flex-col h-full overflow-hidden">
+          <div className="p-4 flex justify-between items-center">
+            <h1 className="text-2xl font-bold">Hey {user.name || user.email}</h1>
+            <span className="text-sm bg-blue-600 px-3 py-1 rounded-full">
               Plan: {user.subscriptionType}
             </span>
           </div>
 
           <PromptTracker used={user.promptsUsed} limit={user.promptLimit} />
-          <PrePromptSuggestions onSelect={handlePrePromptSelect} />
 
-          <section className="bg-black text-white rounded-2xl shadow p-6">
-            <h2 className="text-xl font-semibold mb-2">🎁 Refer Your Friends!</h2>
-            <p className="mb-4">
-              Share this link and get 50 FREE prompts when your friends sign up:
-            </p>
-            <div className="bg-gray-800 p-3 rounded-lg flex items-center justify-between">
-              <span className="break-all">{referralLink}</span>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(referralLink);
-                  alert('Referral link copied to clipboard!');
-                }}
-                className="ml-4 bg-blue-600 hover:bg-blue-800 text-white px-4 py-1 rounded"
-              >
-                Copy Link
-              </button>
-            </div>
-          </section>
+          <PrePromptSuggestions onSelect={(prompt) => setInput(prompt)} />
 
-          <section className="bg-white text-black rounded-2xl shadow p-6">
-            <h2 className="text-xl font-semibold mb-2">🤖 Ask Growfly AI</h2>
-            <input
-              type="text"
-              placeholder="e.g. Suggest a TikTok strategy for my clothing brand"
-              className="w-full border rounded px-4 py-2 mt-2 mb-4"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-            />
-            <button
-              className="bg-[#2daaff] text-white px-4 py-2 rounded hover:bg-blue-700"
-              onClick={handlePromptSubmit}
-              disabled={loading}
-            >
-              {loading ? 'Thinking...' : 'Submit Prompt'}
-            </button>
-
-            {response && (
-              <div className="mt-6">
-                <h3 className="text-lg font-bold">📬 AI Response</h3>
-                <div className="bg-gray-100 text-gray-800 p-4 rounded mt-2">
-                  <pre className="whitespace-pre-wrap text-sm">{response}</pre>
+          <div
+            ref={chatContainerRef}
+            className="flex-1 overflow-y-auto px-6 py-4 space-y-6 scrollbar-thin scrollbar-thumb-blue-700 scrollbar-track-transparent"
+          >
+            {messages.map((m, i) => (
+              <div key={i} className="space-y-2">
+                <div className="bg-blue-700 p-3 rounded-lg max-w-3xl">🧠 You: {m.user}</div>
+                <div className="bg-gray-100 text-gray-900 p-3 rounded-lg max-w-3xl">
+                  <pre className="whitespace-pre-wrap text-sm">{m.ai}</pre>
+                  {m.ai && <VoteFeedback response={m.ai} />}
                 </div>
-                <VoteFeedback response={response} />
               </div>
+            ))}
+            {loading && (
+              <div className="text-sm text-gray-400 italic">🤖 Growfly is thinking...</div>
             )}
-
-            {typeof followUps === 'string' && followUps.trim() !== '' && (
-              <div className="mt-4">
-                <h4 className="text-sm font-semibold">Try asking:</h4>
-                <ul className="list-disc list-inside text-sm text-gray-700">
+            {followUps && (
+              <div className="mt-4 text-sm text-gray-300">
+                <strong>Try asking:</strong>
+                <ul className="list-disc list-inside">
                   {followUps.split('\n').map((q, i) => (
                     <li key={i}>{q}</li>
                   ))}
                 </ul>
               </div>
             )}
-          </section>
+          </div>
 
-          <section className="bg-black text-white rounded-2xl shadow p-6">
-            <h2 className="text-xl font-semibold mb-2">📢 Growfly News</h2>
-            <p>New feature: Share responses with your team!</p>
-          </section>
+          <div className="border-t bg-[#1e293b] p-4">
+            <div className="flex gap-4 items-center">
+              <textarea
+                rows={1}
+                placeholder="Ask Growfly anything..."
+                className="w-full p-3 rounded-lg bg-gray-800 text-white placeholder:text-gray-400 resize-none"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+              />
+              <button
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-800 rounded text-white"
+                onClick={handlePromptSubmit}
+                disabled={loading}
+              >
+                Send
+              </button>
+            </div>
+          </div>
+
+          <div className="absolute bottom-6 right-6 opacity-80 pointer-events-none">
+            <Image src={Mascot} alt="Growfly Bot" width={100} height={100} />
+          </div>
         </main>
       </div>
     </div>
