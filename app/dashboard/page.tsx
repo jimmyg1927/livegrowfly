@@ -13,7 +13,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
   const [input, setInput] = useState('');
   const [response, setResponse] = useState('');
-  const [followUps, setFollowUps] = useState<string | null>(null);
+  const [followUps, setFollowUps] = useState('');
   const [loading, setLoading] = useState(false);
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null;
@@ -58,10 +58,10 @@ export default function DashboardPage() {
     if (!input) return;
     setLoading(true);
     setResponse('');
-    setFollowUps(null);
+    setFollowUps('');
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chat`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/ai`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -74,7 +74,7 @@ export default function DashboardPage() {
       if (!res.ok) throw new Error(data.error || 'Something went wrong');
 
       setResponse(data.response);
-      setFollowUps(data.followUps || null);
+      if (data.followUps) setFollowUps(data.followUps);
     } catch (err: any) {
       setResponse(`❌ Error: ${err.message}`);
     } finally {
@@ -83,7 +83,7 @@ export default function DashboardPage() {
   };
 
   const handlePrePromptSelect = (prompt: string) => {
-    setInput(prompt);
+    setInput(prompt); // Auto-fills the prompt input
   };
 
   if (!user) {
@@ -110,6 +110,7 @@ export default function DashboardPage() {
           </div>
 
           <PromptTracker used={user.promptsUsed} limit={user.promptLimit} />
+
           <PrePromptSuggestions onSelect={handlePrePromptSelect} />
 
           <section className="bg-black text-white rounded-2xl shadow p-6">
@@ -158,7 +159,7 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {typeof followUps === 'string' && (
+            {followUps && (
               <div className="mt-4">
                 <h4 className="text-sm font-semibold">Try asking:</h4>
                 <ul className="list-disc list-inside text-sm text-gray-700">
