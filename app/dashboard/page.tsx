@@ -27,9 +27,7 @@ export default function DashboardPage() {
 
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
         if (res.ok) {
@@ -38,7 +36,7 @@ export default function DashboardPage() {
           localStorage.removeItem('growfly_jwt');
           router.push('/login');
         }
-      } catch (err) {
+      } catch {
         localStorage.removeItem('growfly_jwt');
         router.push('/login');
       }
@@ -47,21 +45,19 @@ export default function DashboardPage() {
   }, [token, router]);
 
   useEffect(() => {
-    if (!user) return;
-    const isPlanMissing = !user.subscriptionType || user.subscriptionType === 'none';
-    if (isPlanMissing) {
+    if (user && (!user.subscriptionType || user.subscriptionType === 'none')) {
       router.push('/plans');
     }
   }, [user, router]);
 
   const handlePromptSubmit = async () => {
-    if (!input) return;
+    if (!input.trim()) return;
     setLoading(true);
     setResponse('');
     setFollowUps('');
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chat`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/ai`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -72,9 +68,8 @@ export default function DashboardPage() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Something went wrong');
-
       setResponse(data.response);
-      if (data.followUps) setFollowUps(data.followUps);
+      setFollowUps(data.followUps);
     } catch (err: any) {
       setResponse(`❌ Error: ${err.message}`);
     } finally {
@@ -82,14 +77,12 @@ export default function DashboardPage() {
     }
   };
 
-  const handlePrePromptSelect = (prompt: string) => {
-    setInput(prompt); // Auto-fills the prompt input
-  };
+  const handlePrePromptSelect = (prompt: string) => setInput(prompt);
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-lg text-gray-600">Loading your dashboard...</p>
+      <div className="flex items-center justify-center h-screen bg-black text-white">
+        <p className="text-lg">Loading your dashboard...</p>
       </div>
     );
   }
@@ -97,7 +90,7 @@ export default function DashboardPage() {
   const referralLink = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/signup?ref=${user.referralCode}`;
 
   return (
-    <div className="flex h-screen bg-[#2daaff] text-white">
+    <div className="flex h-screen bg-gradient-to-br from-blue-600 to-blue-800 text-white">
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <Header name={user.email} />
@@ -109,13 +102,10 @@ export default function DashboardPage() {
             </span>
           </div>
 
-          {/* Restyled PromptTracker */}
           <PromptTracker used={user.promptsUsed} limit={user.promptLimit} />
 
-          {/* Pre-prompt Suggestions */}
           <PrePromptSuggestions onSelect={handlePrePromptSelect} />
 
-          {/* 🚀 Referral Link Box */}
           <section className="bg-black text-white rounded-2xl shadow p-6">
             <h2 className="text-xl font-semibold mb-2">🎁 Refer Your Friends!</h2>
             <p className="mb-4">
@@ -135,7 +125,6 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          {/* 🤖 Ask Growfly AI */}
           <section className="bg-white text-black rounded-2xl shadow p-6">
             <h2 className="text-xl font-semibold mb-2">🤖 Ask Growfly AI</h2>
             <input
@@ -175,7 +164,6 @@ export default function DashboardPage() {
             )}
           </section>
 
-          {/* 📢 Growfly News */}
           <section className="bg-black text-white rounded-2xl shadow p-6">
             <h2 className="text-xl font-semibold mb-2">📢 Growfly News</h2>
             <p>New feature: Share responses with your team!</p>
