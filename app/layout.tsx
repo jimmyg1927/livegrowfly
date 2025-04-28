@@ -13,10 +13,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <ThemeContextProvider>  {/* ✅ Correct usage here */}
+        <ThemeContextProvider>
+          {' '}
+          {/* ✅ Correct usage here */}
           <ClientLayout>{children}</ClientLayout>
           <Analytics />
-        </ThemeContextProvider>  {/* ✅ Closing correctly */}
+        </ThemeContextProvider>{' '}
+        {/* ✅ Closing correctly */}
       </body>
     </html>
   );

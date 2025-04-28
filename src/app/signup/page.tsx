@@ -13,11 +13,14 @@ export default function SignUpPage() {
       if (!sessionId) return;
 
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stripe/token-from-session`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId }),
-        });
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/stripe/token-from-session`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId }),
+          },
+        );
 
         const data = await response.json();
 

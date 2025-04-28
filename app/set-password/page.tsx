@@ -43,7 +43,10 @@ export default function SetPasswordPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-600 to-blue-300 text-white">
-      <form onSubmit={handleSubmit} className="bg-white text-black rounded-2xl shadow-lg p-8 max-w-md w-full">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white text-black rounded-2xl shadow-lg p-8 max-w-md w-full"
+      >
         <h1 className="text-3xl font-bold mb-6 text-center">🔐 Set Your Password</h1>
 
         {error && <p className="text-red-600 mb-4">{error}</p>}
@@ -82,7 +85,9 @@ export default function SetPasswordPage() {
           Set Password & Continue
         </button>
 
-        {success && <p className="text-green-600 mt-4 text-center">✅ Password updated successfully!</p>}
+        {success && (
+          <p className="text-green-600 mt-4 text-center">✅ Password updated successfully!</p>
+        )}
       </form>
     </div>
   );

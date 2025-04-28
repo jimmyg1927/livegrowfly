@@ -118,7 +118,9 @@ export default function DashboardPage() {
           {/* 🚀 Referral Link Box */}
           <section className="bg-black text-white rounded-2xl shadow p-6">
             <h2 className="text-xl font-semibold mb-2">🎁 Refer Your Friends!</h2>
-            <p className="mb-4">Share this link and get 50 FREE prompts when your friends sign up:</p>
+            <p className="mb-4">
+              Share this link and get 50 FREE prompts when your friends sign up:
+            </p>
             <div className="bg-gray-800 p-3 rounded-lg flex items-center justify-between">
               <span className="break-all">{referralLink}</span>
               <button

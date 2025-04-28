@@ -73,8 +73,12 @@ export default function FeedbackPage() {
         <Header name="Community Feedback" />
         <main className="p-6 overflow-y-auto space-y-6">
           <div className="bg-black text-white rounded-2xl shadow p-6">
-            <h2 className="text-xl font-bold mb-2">🧠 We nerds are working to constantly improve Growfly.</h2>
-            <p className="mb-4">The most upvoted feedback each week gets worked on by our team. Drop your ideas below!</p>
+            <h2 className="text-xl font-bold mb-2">
+              🧠 We nerds are working to constantly improve Growfly.
+            </h2>
+            <p className="mb-4">
+              The most upvoted feedback each week gets worked on by our team. Drop your ideas below!
+            </p>
             {error && <p className="text-red-500">{error}</p>}
             <textarea
               className="w-full p-3 rounded text-black mb-4"

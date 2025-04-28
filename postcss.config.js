@@ -1,7 +1,7 @@
-// filepath: /workspaces/livegrowfly/postcss.config.js
+// postcss.config.js
 module.exports = {
   plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
+    '@tailwindcss/postcss': {}, // ✅ Correct plugin
+    autoprefixer: {}, // ✅ Correct autoprefixer
   },
 };

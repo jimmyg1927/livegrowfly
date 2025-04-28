@@ -13,13 +13,7 @@ export default function GrowflyBot() {
         transition={{ repeat: Infinity, duration: 2 }}
         className="w-full h-full"
       >
-        <Image
-          src="/growflybot.png"
-          alt="Growfly Bot"
-          layout="fill"
-          objectFit="contain"
-          priority
-        />
+        <Image src="/growflybot.png" alt="Growfly Bot" layout="fill" objectFit="contain" priority />
       </motion.div>
     </div>
   );

@@ -1,31 +1,30 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    './app/**/*.{js,ts,jsx,tsx}',
-    './src/components/**/*.{js,ts,jsx,tsx}',
+    "./src/**/*.{js,ts,jsx,tsx}",    // ✅ Grabs all your components & pages
+    "./pages/**/*.{js,ts,jsx,tsx}",
+    "./app/**/*.{js,ts,jsx,tsx}",     // ✅ If you're using app directory (which you are)
   ],
   theme: {
     extend: {
       colors: {
-        primary: '#4f46e5', // Indigo
-        accent: '#38bdf8', // Sky Blue
-        background: '#0f172a', // Dark Slate
-        card: '#1e293b', // Dark Gray
-        textPrimary: '#f1f5f9', // Light text
-        textSecondary: '#94a3b8', // Soft gray text
+        primary: "#22a2a0",             // 💙 Add your Growfly colors here
+        secondary: "#1e1e2f",
+        accent: "#ff4081",
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        mono: ['Roboto Mono', 'monospace'],
+        inter: ["'Inter'", "sans-serif"],   // Matches your global styles
+        mono: ["'Roboto Mono'", "monospace"],
       },
-      boxShadow: {
-        smooth: '0 4px 14px rgba(0, 0, 0, 0.25)',
-      },
-      borderRadius: {
-        xl: '1.25rem',
-        '2xl': '1.5rem',
+      backgroundImage: {
+        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
+        "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/forms'),        // Optional: Pretty form styling
+    require('@tailwindcss/typography'),   // Optional: Great for readable text areas
+    require('@tailwindcss/aspect-ratio'), // Optional: Good for media embeds / images
+  ],
 };

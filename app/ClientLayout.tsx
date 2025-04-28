@@ -12,9 +12,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   return (
     <html lang="en">
       <body className={`${inter.variable} ${robotoMono.variable} font-sans`}>
-        <ThemeContextProvider>
-          {children}
-        </ThemeContextProvider>
+        <ThemeContextProvider>{children}</ThemeContextProvider>
         <Analytics />
       </body>
     </html>

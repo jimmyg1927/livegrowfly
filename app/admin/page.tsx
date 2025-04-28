@@ -26,7 +26,8 @@ export default function AdminPage() {
         const data = await res.json();
         if (res.ok) {
           setUser(data);
-          if (data.email !== 'jimmy@growfly.io') { // ✅ Your admin email
+          if (data.email !== 'jimmy@growfly.io') {
+            // ✅ Your admin email
             router.push('/dashboard');
           }
         } else {
@@ -83,8 +84,12 @@ export default function AdminPage() {
           {feedback.map((item) => (
             <li key={item.id} className="bg-gray-800 p-4 rounded shadow">
               <p className="text-lg mb-2">{item.response}</p>
-              <p className="text-sm text-gray-400">Votes: 👍 {item.upvotes} / 👎 {item.downvotes}</p>
-              <p className="text-xs text-gray-500">Submitted on: {new Date(item.createdAt).toLocaleString()}</p>
+              <p className="text-sm text-gray-400">
+                Votes: 👍 {item.upvotes} / 👎 {item.downvotes}
+              </p>
+              <p className="text-xs text-gray-500">
+                Submitted on: {new Date(item.createdAt).toLocaleString()}
+              </p>
             </li>
           ))}
         </ul>

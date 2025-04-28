@@ -1,11 +1,11 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
 
-router.get("/user-dashboard", (req, res) => {
+router.get('/user-dashboard', (req, res) => {
   const { shop, host } = req.query;
 
   if (!shop || !host) {
-    return res.status(400).send("Missing shop or host query params");
+    return res.status(400).send('Missing shop or host query params');
   }
 
   // Basic HTML UI for testing the embedded app

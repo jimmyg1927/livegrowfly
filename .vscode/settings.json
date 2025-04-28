@@ -1,3 +1,10 @@
 {
-    "typescript.tsdk": "node_modules/typescript/lib"
-}
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode", // ✅ Now valid because Prettier is installed!
+    "css.validate": false,
+    "scss.validate": false,
+    "less.validate": false,
+    "tailwindCSS.emmetCompletions": true,
+    "tailwindCSS.experimental.configFile": "./tailwind.config.js"
+  }
+  

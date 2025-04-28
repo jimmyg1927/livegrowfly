@@ -100,7 +100,9 @@ export default function PlansPage() {
               onClick={() => handleSelect(plan.id)}
               disabled={loadingPlan === plan.id}
               className={`mt-6 w-full py-2 rounded-xl text-white font-semibold ${
-                loadingPlan === plan.id ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-800 transition'
+                loadingPlan === plan.id
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-800 transition'
               }`}
             >
               {loadingPlan === plan.id ? 'Loading...' : plan.buttonText}

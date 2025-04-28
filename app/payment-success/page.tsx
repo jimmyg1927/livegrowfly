@@ -20,7 +20,9 @@ function PaymentSuccessContent() {
 
     const confirmPayment = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/confirm-payment?session_id=${sessionId}`);
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/confirm-payment?session_id=${sessionId}`,
+        );
         const data = await res.json();
 
         if (data.token) {
@@ -60,7 +62,13 @@ function PaymentSuccessContent() {
 
 export default function PaymentSuccessPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-white bg-blue-600">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center text-white bg-blue-600">
+          Loading...
+        </div>
+      }
+    >
       <PaymentSuccessContent />
     </Suspense>
   );
