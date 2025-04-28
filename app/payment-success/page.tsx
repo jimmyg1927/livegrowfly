@@ -10,6 +10,13 @@ function PaymentSuccessContent() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // ✅ SAFELY handle potential null for searchParams
+    if (!searchParams) {
+      setError('Missing search parameters.');
+      setLoading(false);
+      return;
+    }
+
     const sessionId = searchParams.get('session_id');
 
     if (!sessionId) {
