@@ -13,7 +13,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
   const [input, setInput] = useState('');
   const [response, setResponse] = useState('');
-  const [followUps, setFollowUps] = useState('');
+  const [followUps, setFollowUps] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null;
@@ -27,7 +27,9 @@ export default function DashboardPage() {
 
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
         const data = await res.json();
         if (res.ok) {
@@ -36,7 +38,7 @@ export default function DashboardPage() {
           localStorage.removeItem('growfly_jwt');
           router.push('/login');
         }
-      } catch {
+      } catch (err) {
         localStorage.removeItem('growfly_jwt');
         router.push('/login');
       }
@@ -45,19 +47,21 @@ export default function DashboardPage() {
   }, [token, router]);
 
   useEffect(() => {
-    if (user && (!user.subscriptionType || user.subscriptionType === 'none')) {
+    if (!user) return;
+    const isPlanMissing = !user.subscriptionType || user.subscriptionType === 'none';
+    if (isPlanMissing) {
       router.push('/plans');
     }
   }, [user, router]);
 
   const handlePromptSubmit = async () => {
-    if (!input.trim()) return;
+    if (!input) return;
     setLoading(true);
     setResponse('');
-    setFollowUps('');
+    setFollowUps(null);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/ai`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -68,8 +72,9 @@ export default function DashboardPage() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Something went wrong');
+
       setResponse(data.response);
-      setFollowUps(data.followUps);
+      setFollowUps(data.followUps || null);
     } catch (err: any) {
       setResponse(`❌ Error: ${err.message}`);
     } finally {
@@ -77,12 +82,14 @@ export default function DashboardPage() {
     }
   };
 
-  const handlePrePromptSelect = (prompt: string) => setInput(prompt);
+  const handlePrePromptSelect = (prompt: string) => {
+    setInput(prompt);
+  };
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center h-screen bg-black text-white">
-        <p className="text-lg">Loading your dashboard...</p>
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-lg text-gray-600">Loading your dashboard...</p>
       </div>
     );
   }
@@ -90,7 +97,7 @@ export default function DashboardPage() {
   const referralLink = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/signup?ref=${user.referralCode}`;
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-blue-600 to-blue-800 text-white">
+    <div className="flex h-screen bg-[#2daaff] text-white">
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <Header name={user.email} />
@@ -103,7 +110,6 @@ export default function DashboardPage() {
           </div>
 
           <PromptTracker used={user.promptsUsed} limit={user.promptLimit} />
-
           <PrePromptSuggestions onSelect={handlePrePromptSelect} />
 
           <section className="bg-black text-white rounded-2xl shadow p-6">
@@ -152,7 +158,7 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {followUps && (
+            {typeof followUps === 'string' && (
               <div className="mt-4">
                 <h4 className="text-sm font-semibold">Try asking:</h4>
                 <ul className="list-disc list-inside text-sm text-gray-700">
