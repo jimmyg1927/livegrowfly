@@ -1,20 +1,24 @@
-'use client';
+'use client'
 
-import React from 'react';
-import { Inter, Roboto_Mono } from 'next/font/google';
-import { ThemeContextProvider } from '../src/context/ThemeContext';
-import { Analytics } from '@vercel/analytics/react';
+import React from 'react'
+import Sidebar from '../src/components/Sidebar'
+import Header from '../src/components/Header'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
-const robotoMono = Roboto_Mono({ subsets: ['latin'], variable: '--font-mono' });
-
-export default function ClientLayout({ children }: { children: React.ReactNode }) {
+export default function ClientLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} ${robotoMono.variable} font-sans`}>
-        <ThemeContextProvider>{children}</ThemeContextProvider>
-        <Analytics />
-      </body>
-    </html>
-  );
+    <div className="flex min-h-screen bg-background">
+      <Sidebar />
+
+      <div className="flex-1 flex flex-col">
+        <Header />
+        <main className="flex-1 overflow-y-auto p-6">
+          {children}
+        </main>
+      </div>
+    </div>
+  )
 }

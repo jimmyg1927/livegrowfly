@@ -1,26 +1,24 @@
-import './globals.css';
-import type { Metadata } from 'next';
-import ClientLayout from './ClientLayout';
-import ThemeContextProvider from '@/context/ThemeContext'; // ✅ Correct import
-import { Analytics } from '@vercel/analytics/react';
+// app/layout.tsx
+import './globals.css'
+import ClientLayout from './ClientLayout'
+import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Growfly',
-  description: 'AI-powered marketing assistant',
-};
+  description: 'Your AI-powered marketing assistant',
+}
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="en">
       <body>
-        <ThemeContextProvider>
-          {' '}
-          {/* ✅ Correct usage here */}
-          <ClientLayout>{children}</ClientLayout>
-          <Analytics />
-        </ThemeContextProvider>{' '}
-        {/* ✅ Closing correctly */}
+        {/* wrap everything in your client layout which includes the Sidebar */}
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
-  );
+  )
 }
