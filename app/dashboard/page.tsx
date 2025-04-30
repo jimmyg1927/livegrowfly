@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '../../src/components/Sidebar';
 import Header from '../../src/components/Header';
@@ -11,85 +11,83 @@ export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [input, setInput] = useState('');
-  const [responseHistory, setResponseHistory] = useState<any[]>([]);
+  const [response, setResponse] = useState('');
+  const [followUps, setFollowUps] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null;
+  // pulls our stored JWT
+  const token = typeof window !== 'undefined' 
+    ? localStorage.getItem('growfly_jwt') 
+    : null;
 
-  const promptSuggestions = [
-    'Give me a social media plan for this week',
-    'Suggest a TikTok strategy for my brand',
-    'Write me a Facebook ad copy for a product launch',
-    'Generate a daily content calendar for Instagram',
-    'Give me 5 growth hacks for my Shopify store',
-  ];
-
+  // fetch current user
   useEffect(() => {
     if (!token) {
       router.push('/login');
-    } else {
-      fetchUser();
+      return;
     }
-  }, [token]);
-
-  const fetchUser = async () => {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setUser(data);
-      } else {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (res.ok) setUser(data);
+        else {
+          localStorage.removeItem('growfly_jwt');
+          router.push('/login');
+        }
+      } catch {
         localStorage.removeItem('growfly_jwt');
         router.push('/login');
       }
-    } catch {
-      localStorage.removeItem('growfly_jwt');
-      router.push('/login');
-    }
-  };
+    };
+    fetchUser();
+  }, [token, router]);
 
+  // redirect if no plan
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [responseHistory]);
+    if (!user) return;
+    if (!user.subscriptionType || user.subscriptionType === 'none') {
+      router.push('/plans');
+    }
+  }, [user, router]);
 
-  const handlePromptSubmit = async () => {
-    if (!input.trim()) return;
-
+  // handle both manual-send and suggestion-click
+  const handlePromptSubmit = async (overrideMessage?: string) => {
+    const messageToSend = overrideMessage ?? input;
+    if (!messageToSend.trim()) return;
     setLoading(true);
+    setResponse('');
+    setFollowUps([]);
+
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/ai/chat`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/ai`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ message: input }),
+        body: JSON.stringify({ message: messageToSend }),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Something went wrong');
 
-      setResponseHistory((prev) => [...prev, { prompt: input, response: data.response }]);
-      setInput('');
+      setResponse(data.response);
+      setFollowUps(data.followUps || []);
+      // clear input only when manually sent
+      if (!overrideMessage) setInput('');
     } catch (err: any) {
-      setResponseHistory((prev) => [...prev, { prompt: input, response: `❌ Error: ${err.message}` }]);
+      setResponse(`❌ Error: ${err.message}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handlePromptSubmit();
-    }
-  };
-
-  const handlePrePromptSelect = (prompt: string) => {
-    setInput(prompt);
+  // click on a suggestion pill
+  const handleSuggestionClick = (suggestion: string) => {
+    handlePromptSubmit(suggestion);
   };
 
   if (!user) {
@@ -100,88 +98,75 @@ export default function DashboardPage() {
     );
   }
 
-  const referralLink = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/signup?ref=${user.referralCode}`;
-
   return (
-    <div className="flex h-screen bg-[#0D1B2A] text-white">
+    <div className="flex h-screen bg-[#2daaff] text-white">
       <Sidebar />
+
       <div className="flex-1 flex flex-col">
         <Header name={user.email} />
+
         <main className="p-6 overflow-y-auto space-y-6">
+          {/* Welcome + Plan */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <h1 className="text-2xl font-bold">Welcome, {user.name || user.email}</h1>
+            <h1 className="text-2xl font-bold text-white">Welcome, {user.name || user.email}</h1>
             <span className="text-sm bg-black text-white rounded px-3 py-1 mt-2 md:mt-0">
-              Plan: {user.subscriptionType} | {user.promptsUsed} / {user.promptLimit}
+              Plan: {user.subscriptionType}
             </span>
           </div>
 
+          {/* Prompt usage tracker */}
           <PromptTracker used={user.promptsUsed} limit={user.promptLimit} />
 
-          <section className="bg-black text-white rounded-2xl shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">✨ Need inspiration? Try one of these prompts:</h2>
-            <div className="flex flex-wrap gap-3">
-              {promptSuggestions.map((prompt, index) => (
-                <button
-                  key={index}
-                  onClick={() => handlePrePromptSelect(prompt)}
-                  className="bg-[#2daaff] hover:bg-blue-700 text-white rounded-full px-4 py-2 text-sm"
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
-          </section>
+          {/* AI Chat Section */}
+          <section className="bg-white text-black rounded-2xl shadow p-6">
+            <h2 className="text-xl font-semibold mb-4">🤖 Ask Growfly AI</h2>
 
-          <section className="bg-black text-white rounded-2xl shadow p-6">
-            <h2 className="text-xl font-semibold mb-2">🎁 Refer Your Friends!</h2>
-            <p className="mb-4">Share this link and get 50 FREE prompts when your friends sign up:</p>
-            <div className="bg-gray-800 p-3 rounded-lg flex items-center justify-between">
-              <span className="break-all">{referralLink}</span>
+            {/* 1) Follow-up / suggestion pills */}
+            {followUps.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {followUps.map((sug, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleSuggestionClick(sug)}
+                    className="bg-gray-200 text-gray-800 px-3 py-1 rounded hover:bg-gray-300 transition"
+                  >
+                    {sug}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* 2) Input + send */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Type your prompt here…"
+                className="flex-1 border rounded px-4 py-2"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                disabled={loading}
+              />
               <button
-                onClick={() => {
-                  navigator.clipboard.writeText(referralLink);
-                  alert('Referral link copied to clipboard!');
-                }}
-                className="ml-4 bg-blue-600 hover:bg-blue-800 text-white px-4 py-1 rounded"
+                onClick={() => handlePromptSubmit()}
+                disabled={loading}
+                className={`px-4 py-2 rounded text-white ${
+                  loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-800'
+                }`}
               >
-                Copy Link
+                {loading ? '...' : 'Send'}
               </button>
             </div>
-          </section>
 
-          {/* 🚀 Growfly Chat Section */}
-          <section className="bg-white text-black rounded-2xl shadow p-6 flex flex-col">
-            <div className="flex items-center mb-4">
-              <img src="/growfly-bot.png" alt="Growfly Bot" className="w-10 h-10 mr-3" />
-              <h2 className="text-xl font-bold">Growfly</h2>
-            </div>
-
-            <div className="flex-1 space-y-4 overflow-y-auto max-h-96 border p-4 rounded mb-4 bg-gray-100 text-black">
-              {responseHistory.map((item, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="font-semibold text-blue-600">You: {item.prompt}</div>
-                  <div className="bg-white text-black p-3 rounded shadow-sm whitespace-pre-wrap">{item.response}</div>
-                  <VoteFeedback response={item.response} />
+            {/* 3) AI response + vote */}
+            {response && (
+              <div className="mt-6">
+                <h3 className="text-lg font-bold mb-2">📬 AI Response</h3>
+                <div className="bg-gray-100 text-gray-800 p-4 rounded">
+                  <pre className="whitespace-pre-wrap">{response}</pre>
                 </div>
-              ))}
-              <div ref={chatEndRef} />
-            </div>
-
-            <textarea
-              placeholder="Type your question..."
-              className="w-full border rounded px-4 py-2 mb-4 resize-none text-black"
-              rows={3}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-            />
-            <button
-              onClick={handlePromptSubmit}
-              className="bg-[#2daaff] hover:bg-blue-700 text-white px-4 py-2 rounded"
-              disabled={loading}
-            >
-              {loading ? 'Thinking...' : 'Submit Prompt'}
-            </button>
+                <VoteFeedback response={response} />
+              </div>
+            )}
           </section>
         </main>
       </div>
