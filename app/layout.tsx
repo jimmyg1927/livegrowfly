@@ -1,23 +1,28 @@
 // app/layout.tsx
 import './globals.css'
-import ClientLayout from './ClientLayout'
-import type { Metadata } from 'next'
+import { ReactNode } from 'react'
+import ThemeContextProvider from '../src/context/ThemeContext'
+import ClientLayout from '../src/components/ClientLayout' // if you have a shared layout component
+import { Inter } from 'next/font/google'
 
-export const metadata: Metadata = {
+const inter = Inter({ subsets: ['latin'] })
+
+export const metadata = {
   title: 'Growfly',
-  description: 'Your AI-powered marketing assistant',
+  description: 'AI-powered growth dashboard',
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.className}>
       <body>
-        {/* wrap everything in your client layout which includes the Sidebar */}
-        <ClientLayout>{children}</ClientLayout>
+        {/* 1) THEME CONTEXT */}
+        <ThemeContextProvider>
+          {/* 2) YOUR APP SHELL (SIDEBAR / HEADER) */}
+          <ClientLayout>
+            {children}
+          </ClientLayout>
+        </ThemeContextProvider>
       </body>
     </html>
   )
