@@ -1,22 +1,33 @@
-'use client'
+'use client';
 
-import React from 'react'
-import Image from 'next/image'
-import botPng from '@/public/growfly-bot.png'
+import React from 'react';
+import Image from 'next/image';
 
 export interface GrowflyBotProps {
-  size?: number
+  /** idle: standing; thinking: bounce; responded: calm */
+  status?: 'idle' | 'thinking' | 'responded';
+  /** width in pixels (height will be 1.2× width) */
+  size?: number;
 }
 
-const GrowflyBot: React.FC<GrowflyBotProps> = ({ size = 80 }) => (
-  <div style={{ width: size, height: size }} className="relative flex-shrink-0">
-    <Image
-      src={botPng}
-      alt="Growfly Bot"
-      fill
-      style={{ objectFit: 'contain' }}
-    />
-  </div>
-)
+export default function GrowflyBot({
+  status = 'idle',
+  size = 200,
+}: GrowflyBotProps) {
+  const width = size;
+  const height = Math.round(size * 1.2);
 
-export default GrowflyBot
+  return (
+    <div style={{ width, height }} className="relative">
+      <Image
+        src="/growfly-bot.png"
+        alt="Growfly Bot"
+        width={width}
+        height={height}
+        className={`object-contain transition-transform ${
+          status === 'thinking' ? 'animate-bounce' : ''
+        }`}
+      />
+    </div>
+  );
+}

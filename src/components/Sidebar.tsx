@@ -1,32 +1,39 @@
-// src/components/Sidebar.tsx
-import Link from 'next/link'
-import { MessageCircle, ThumbsUp, Users, Settings, Newspaper } from 'lucide-react'
-import growflyLogo from '@/public/growfly-logo.png'
+'use client';
+
+import React from 'react';
+import Link from 'next/link';
+import { MessageCircle, Settings, ThumbsUp, Users, Newspaper } from 'lucide-react';
 
 export default function Sidebar() {
   return (
-    <aside className="w-64 bg-background text-textPrimary flex flex-col p-6">
-      <div className="flex items-center space-x-2 mb-10">
-        <img src={growflyLogo.src} alt="Growfly Logo" className="h-8 w-auto" />
+    <aside className="w-64 flex-shrink-0 bg-primary text-white h-screen p-6 flex flex-col">
+      <div className="flex items-center space-x-2 mb-8">
+        <img src="/growfly-logo.png" alt="Growfly Logo" className="h-6 w-auto" />
         <span className="text-2xl font-bold">Growfly</span>
       </div>
       <nav className="flex-1 space-y-4">
-        <Link href="/dashboard" className="flex items-center space-x-2 p-2 rounded hover:bg-accent hover:text-background">
-          <MessageCircle size={20} /> <span>Dashboard</span>
+        <Link href="/dashboard" className="flex items-center space-x-2 hover:text-accent">
+          <MessageCircle size={18} /> <span>Dashboard</span>
         </Link>
-        <Link href="/feedback" className="flex items-center space-x-2 p-2 rounded hover:bg-accent hover:text-background">
-          <ThumbsUp size={20} /> <span>Feedback</span>
+        <Link href="/feedback" className="flex items-center space-x-2 hover:text-accent">
+          <ThumbsUp size={18} /> <span>Feedback</span>
         </Link>
-        <Link href="/change-plan" className="flex items-center space-x-2 p-2 rounded hover:bg-accent hover:text-background">
-          <Users size={20} /> <span>Change Plan</span>
+        <Link href="/change-plan" className="flex items-center space-x-2 hover:text-accent">
+          <Users size={18} /> <span>Change Plan</span>
         </Link>
-        <Link href="/settings" className="flex items-center space-x-2 p-2 rounded hover:bg-accent hover:text-background">
-          <Settings size={20} /> <span>Settings</span>
+        <Link href="/settings" className="flex items-center space-x-2 hover:text-accent">
+          <Settings size={18} /> <span>Settings</span>
         </Link>
-        <Link href="/growfly-news" className="flex items-center space-x-2 p-2 rounded hover:bg-accent hover:text-background">
-          <Newspaper size={20} /> <span>Growfly News</span>
+        <Link href="/growfly-news" className="flex items-center space-x-2 hover:text-accent">
+          <Newspaper size={18} /> <span>Growfly News</span>
         </Link>
       </nav>
+      <div className="mt-auto">
+        <Link href="/settings" className="flex items-center space-x-2 hover:text-accent">
+          {/* re-use Settings icon for “Admin” */}
+          <Settings size={18} /> <span>Admin</span>
+        </Link>
+      </div>
     </aside>
-  )
+  );
 }
