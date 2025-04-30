@@ -2,7 +2,7 @@
 import './globals.css'
 import { ReactNode } from 'react'
 import ThemeContextProvider from '../src/context/ThemeContext'
-import ClientLayout from '../src/components/ClientLayout' // if you have a shared layout component
+import ClientLayout from './ClientLayout'        // ← fixed import path
 import { Inter } from 'next/font/google'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -16,9 +16,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={inter.className}>
       <body>
-        {/* 1) THEME CONTEXT */}
         <ThemeContextProvider>
-          {/* 2) YOUR APP SHELL (SIDEBAR / HEADER) */}
           <ClientLayout>
             {children}
           </ClientLayout>
