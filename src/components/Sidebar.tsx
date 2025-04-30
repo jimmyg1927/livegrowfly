@@ -2,7 +2,14 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { MessageCircle, Settings, ThumbsUp, Users, Newspaper } from 'lucide-react';
+import { 
+  MessageCircle, 
+  Settings, 
+  ThumbsUp, 
+  Users, 
+  Newspaper, 
+  Gift 
+} from 'lucide-react';
 
 export default function Sidebar() {
   return (
@@ -11,27 +18,34 @@ export default function Sidebar() {
         <img src="/growfly-logo.png" alt="Growfly Logo" className="h-6 w-auto" />
         <span className="text-2xl font-bold">Growfly</span>
       </div>
+
       <nav className="flex-1 space-y-4">
         <Link href="/dashboard" className="flex items-center space-x-2 hover:text-accent">
           <MessageCircle size={18} /> <span>Dashboard</span>
         </Link>
+
         <Link href="/feedback" className="flex items-center space-x-2 hover:text-accent">
           <ThumbsUp size={18} /> <span>Feedback</span>
         </Link>
+
         <Link href="/change-plan" className="flex items-center space-x-2 hover:text-accent">
           <Users size={18} /> <span>Change Plan</span>
         </Link>
-        <Link href="/settings" className="flex items-center space-x-2 hover:text-accent">
-          <Settings size={18} /> <span>Settings</span>
+
+        {/* New “Refer a Friend” link */}
+        <Link href="/refer" className="flex items-center space-x-2 hover:text-accent">
+          <Gift size={18} /> <span>Refer a Friend</span>
         </Link>
+
         <Link href="/growfly-news" className="flex items-center space-x-2 hover:text-accent">
           <Newspaper size={18} /> <span>Growfly News</span>
         </Link>
       </nav>
+
+      {/* Settings always at the very bottom */}
       <div className="mt-auto">
         <Link href="/settings" className="flex items-center space-x-2 hover:text-accent">
-          {/* re-use Settings icon for “Admin” */}
-          <Settings size={18} /> <span>Admin</span>
+          <Settings size={18} /> <span>Settings</span>
         </Link>
       </div>
     </aside>
