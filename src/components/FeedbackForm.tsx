@@ -1,63 +1,54 @@
 'use client'
 
-import React, { useState, FormEvent } from 'react'
+import React, { useState } from 'react'
 import { API_BASE_URL } from '@/lib/constants'
 
-interface FeedbackFormProps {
+export interface FeedbackFormProps {
   onCreated: () => void
 }
 
-export default function FeedbackForm({
-  onCreated,
-}: FeedbackFormProps): JSX.Element {
-  const [content, setContent] = useState<string>('')
-  const [loading, setLoading] = useState<boolean>(false)
-  const [error, setError] = useState<string | null>(null)
+export default function FeedbackForm({ onCreated }: FeedbackFormProps) {
+  const [value, setValue] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!content.trim()) return
+    if (!value.trim()) return
     setLoading(true)
-    setError(null)
-
     try {
       const token = localStorage.getItem('growfly_jwt')
-      if (!token) throw new Error('Missing auth token')
-      const res = await fetch(`${API_BASE_URL}/api/feedback`, {
+      await fetch(`${API_BASE_URL}/api/feedback`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content: value }),
       })
-      if (!res.ok) throw new Error('Failed to submit feedback')
-      setContent('')
+      setValue('')
       onCreated()
-    } catch (err: any) {
-      setError(err.message || 'Unknown error')
+    } catch {
+      // swallow
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 mb-6">
-      {error && <div className="text-sm text-red-400">{error}</div>}
+    <form onSubmit={handleSubmit} className="mb-6">
       <textarea
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
         placeholder="Share your feedback…"
+        className="w-full p-4 rounded bg-white text-black"
         rows={3}
-        required
-        className="w-full p-3 bg-card rounded border border-card text-textPrimary focus:outline-accent"
       />
       <button
         type="submit"
         disabled={loading}
-        className="px-4 py-2 bg-accent text-background rounded hover:bg-accent/90 transition"
+        className="mt-2 px-4 py-2 bg-accent text-white rounded hover:bg-accent/90 transition"
       >
-        {loading ? 'Submitting…' : 'Submit Feedback'}
+        {loading ? '…' : 'Submit Feedback'}
       </button>
     </form>
   )

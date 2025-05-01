@@ -16,7 +16,7 @@ interface FeedbackItem {
 
 export default function FeedbackPage() {
   const [feedbackList, setFeedbackList] = useState<FeedbackItem[]>([])
-  const [loading, setLoading] = useState<boolean>(false)
+  const [loading, setLoading] = useState(false)
 
   const fetchFeedback = async () => {
     setLoading(true)
@@ -25,29 +25,9 @@ export default function FeedbackPage() {
       const res = await fetch(`${API_BASE_URL}/api/feedback`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-      const data = await res.json()
-      setFeedbackList(data)
-    } catch {
-      // ignore
+      if (res.ok) setFeedbackList(await res.json())
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleVote = async (id: string, type: 'up' | 'down') => {
-    try {
-      const token = localStorage.getItem('growfly_jwt')
-      await fetch(`${API_BASE_URL}/api/feedback/vote`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ id, type }),
-      })
-      fetchFeedback()
-    } catch {
-      // ignore
     }
   }
 
@@ -55,20 +35,40 @@ export default function FeedbackPage() {
     fetchFeedback()
   }, [])
 
+  const handleVote = async (id: string, type: 'up' | 'down') => {
+    const token = localStorage.getItem('growfly_jwt')
+    await fetch(`${API_BASE_URL}/api/feedback/${id}/vote`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ type }),
+    })
+    fetchFeedback()
+  }
+
   return (
     <div className="flex h-screen bg-background text-textPrimary">
-      <aside className="w-64">
-        <Sidebar />
-      </aside>
+      {/* Sidebar */}
+      <Sidebar />
+
+      {/* Main panel */}
       <div className="flex-1 flex flex-col">
-        <Header name="Community Feedback" />
+        {/* Single header, no props */}
+        <Header />
+
+        {/* Page content */}
         <main className="flex-1 overflow-y-auto p-6">
+          {/* New feedback form */}
           <FeedbackForm onCreated={fetchFeedback} />
-          {loading && <div className="spinner" />}
+
+          {loading && <div className="spinner mx-auto my-6" />}
+
           {!loading &&
             feedbackList.map((item) => (
               <div key={item.id} className="bg-card rounded p-4 mb-4">
-                <p className="text-textPrimary">{item.content}</p>
+                <p className="text-textPrimary mb-2">{item.content}</p>
                 <VoteFeedback
                   id={item.id}
                   votesUp={item.votesUp}
