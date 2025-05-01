@@ -57,8 +57,8 @@ export default function DashboardPage() {
 
   // 3) Send prompt
   const handleSend = async (msg: string) => {
+    if (!msg.trim()) return
     setLoading(true)
-    setResponse('')
     try {
       const res = await fetch(`${API_BASE_URL}/api/ai`, {
         method: 'POST',
@@ -74,8 +74,10 @@ export default function DashboardPage() {
       setFollowUps(data.followUps || [])
     } catch (err: any) {
       setResponse(`❌ ${err.message}`)
+      setFollowUps([])
     } finally {
       setLoading(false)
+      setInput('')
     }
   }
 
@@ -88,16 +90,10 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header row */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">
-            Welcome, {user.name || user.email}
-          </h1>
-          <p className="text-sm text-textSecondary">Prompts used this month</p>
-        </div>
-
+    <div className="space-y-8 px-4 md:px-8 lg:px-16">
+      {/** ─── HEADER ─────────────────────────────────────────────────────────────── */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <h1 className="text-2xl font-medium">Welcome, {user.name || user.email}</h1>
         <div className="flex items-center space-x-4">
           <PromptTracker used={user.promptsUsed} limit={user.promptLimit} />
           <Link
@@ -110,28 +106,48 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Prompt pills */}
-      <div className="bg-card rounded-2xl p-4 flex flex-wrap gap-2">
-        {followUps.map((pill, i) => (
+      {/** ─── STARTER PROMPTS ───────────────────────────────────────────────────── */}
+      <div className="flex flex-wrap gap-2 overflow-x-auto pb-2">
+        {STARTER_PROMPTS.map((pill, i) => (
           <button
             key={i}
-            onClick={() => {
-              setInput(pill)
-              handleSend(pill)
-            }}
-            className="bg-accent text-background px-4 py-1 rounded-full whitespace-normal hover:bg-accent/90 transition"
+            onClick={() => handleSend(pill)}
+            className="text-sm bg-accent text-background px-3 py-1 rounded-full whitespace-normal hover:bg-accent/90 transition"
           >
             {pill}
           </button>
         ))}
       </div>
 
-      {/* Chat box */}
-      <div className="bg-card rounded-2xl p-6 space-y-4">
+      {/** ─── CHAT PANEL ────────────────────────────────────────────────────────── */}
+      <div className="bg-card rounded-2xl p-6 space-y-6 shadow-sm">
+        {/** Title */}
         <div className="flex items-center space-x-2">
-          <GrowflyBot size={28} />
-          <h2 className="text-xl font-semibold">Ask Growfly AI</h2>
+          <GrowflyBot size={24} />
+          <h2 className="text-lg font-medium">Ask Growfly</h2>
         </div>
+
+        {/** Latest AI response */}
+        <div className="bg-background p-4 rounded-lg text-textPrimary whitespace-pre-wrap">
+          {response}
+        </div>
+
+        {/** Live follow-up suggestions */}
+        {followUps.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {followUps.map((f, i) => (
+              <button
+                key={i}
+                onClick={() => handleSend(f)}
+                className="text-sm bg-muted text-textPrimary px-3 py-1 rounded-full hover:bg-muted/80 transition"
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/** Input box */}
         <div className="flex space-x-2">
           <input
             type="text"
@@ -139,6 +155,12 @@ export default function DashboardPage() {
             className="flex-1 border border-card rounded px-4 py-2 bg-background text-textPrimary focus:outline-accent"
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                handleSend(input)
+              }
+            }}
             disabled={loading}
           />
           <button
@@ -148,20 +170,6 @@ export default function DashboardPage() {
           >
             {loading ? '…' : 'Send'}
           </button>
-        </div>
-        <div className="space-y-2">
-          <h3 className="flex items-center space-x-2 text-lg font-semibold">
-            <GrowflyBot size={20} />
-            <span>Growfly Response</span>
-          </h3>
-          <div className="bg-background p-4 rounded text-textPrimary">
-            {response}
-          </div>
-          <div className="flex items-center space-x-4 pt-1">
-            <span className="text-textSecondary">Was this helpful?</span>
-            <button className="text-accent hover:opacity-80">👍</button>
-            <button className="text-card hover:opacity-80">👎</button>
-          </div>
         </div>
       </div>
     </div>

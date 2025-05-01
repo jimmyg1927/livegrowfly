@@ -1,28 +1,27 @@
 'use client'
 
 import React from 'react'
-import { Moon, Sun } from 'lucide-react'
+import { Moon, Sun, User } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 
-interface HeaderProps {
-  name?: string
-}
-
-export default function Header({ name }: HeaderProps) {
+export default function Header() {
   const { theme, toggleTheme } = useTheme()
 
   return (
-    <header className="flex items-center justify-between p-4 bg-background text-textPrimary shadow-sm">
-      <div className="text-sm">
-        {name ? `Logged in as: ${name}` : null}
+    <header className="flex items-center justify-between px-6 py-4 bg-card text-textPrimary shadow-sm">
+      <div className="text-lg font-semibold">Growfly</div>
+      <div className="flex items-center space-x-4">
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-full hover:bg-muted transition"
+          aria-label="Toggle Theme"
+        >
+          {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+        </button>
+        <div className="p-2 rounded-full hover:bg-muted transition cursor-pointer">
+          <User size={20} />
+        </div>
       </div>
-      <button
-        onClick={toggleTheme}
-        className="flex items-center space-x-2 bg-card px-3 py-1 rounded hover:opacity-90"
-      >
-        {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
-        <span className="text-sm">{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
-      </button>
     </header>
   )
 }
