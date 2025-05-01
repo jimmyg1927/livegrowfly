@@ -6,6 +6,7 @@ import Link from 'next/link'
 import PromptTracker from '../../src/components/PromptTracker'
 import GrowflyBot from '../../src/components/GrowflyBot'
 import { Gift } from 'lucide-react'
+import { API_BASE_URL } from '@/lib/constants'
 
 const STARTER_PROMPTS = [
   'Give me 3 new ideas today on how to get new business.',
@@ -33,7 +34,7 @@ export default function DashboardPage() {
       router.push('/login')
       return
     }
-    fetch('/api/auth/me', {
+    fetch(`${API_BASE_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => {
@@ -59,7 +60,7 @@ export default function DashboardPage() {
     setLoading(true)
     setResponse('')
     try {
-      const res = await fetch('/api/ai', {
+      const res = await fetch(`${API_BASE_URL}/api/ai`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -164,5 +165,5 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
-)
+  )
 }
