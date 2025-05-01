@@ -1,60 +1,43 @@
-/* app/globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   Base layer: set up custom vars & apply them
+   ───────────────────────────────────────────────────────────────────────────── */
 @layer base {
-  /* ✅ Fixed global styles */
+  :root {
+    /* your brand palette */
+    --background: #0D1117;
+    --textPrimary: #E6EDF3;
+    --accent: #58A6FF;
+    --card: #161B22;
+    --muted: #21262D;
+    --primary: #161B22;
+  }
+
+  /* ensure sensible defaults */
+  html {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  }
   body {
-    @apply bg-background text-textPrimary font-sans;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply font-bold;
-  }
-
-  button {
-    @apply transition-colors duration-300 ease-in-out;
-  }
-
-  input,
-  textarea,
-  select,
-  button {
-    @apply font-sans;
-  }
-
-  a {
-    @apply text-accent hover:underline;
-  }
-
-  /* ✅ Loading spinner */
-  .spinner {
-    border: 4px solid rgba(255, 255, 255, 0.1);
-    border-left-color: #38bdf8;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
+    /* use the variables via your tailwind theme */
+    @apply bg-background text-textPrimary;
   }
 }
 
-/* Add tailwind custom styles for new variables here */
-:root {
-  --background: #0f172a; /* Dark Slate */
-  --textPrimary: #f1f5f9; /* Light Text */
-  --accent: #38bdf8;      /* Sky Blue */
-}
+/* ─────────────────────────────────────────────────────────────────────────────
+   (You can add any additional global overrides or keyframes below)
+   ───────────────────────────────────────────────────────────────────────────── */
 
-/* Add additional global styles here */
+/* Loading spinner example (if you still need it) */
+.spinner {
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-left-color: #38bdf8;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
