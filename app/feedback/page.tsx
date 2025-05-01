@@ -1,82 +1,68 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import Sidebar from '../../src/components/Sidebar'
-import Header from '../../src/components/Header'
-import FeedbackForm from '../../src/components/FeedbackForm'
-import VoteFeedback from '../../src/components/VoteFeedback'
-import { API_BASE_URL } from '@/lib/constants'
+import Sidebar from '@/components/Sidebar'
+import Header from '@/components/Header'
+import axios from 'axios'
 
-interface FeedbackItem {
+interface Feedback {
   id: string
   content: string
-  votesUp: number
-  votesDown: number
+  upvotes: number
+  downvotes: number
+  status: 'approved' | 'pending'
 }
 
 export default function FeedbackPage() {
-  const [feedbackList, setFeedbackList] = useState<FeedbackItem[]>([])
-  const [loading, setLoading] = useState(false)
-
-  const fetchFeedback = async () => {
-    setLoading(true)
-    try {
-      const token = localStorage.getItem('growfly_jwt')
-      const res = await fetch(`${API_BASE_URL}/api/feedback`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (res.ok) setFeedbackList(await res.json())
-    } finally {
-      setLoading(false)
-    }
-  }
+  const [feedbackList, setFeedbackList] = useState<Feedback[]>([])
 
   useEffect(() => {
+    const fetchFeedback = async () => {
+      try {
+        const res = await axios.get('/api/feedback')
+        setFeedbackList(res.data)
+      } catch (err) {
+        console.error('Failed to fetch feedback', err)
+      }
+    }
+
     fetchFeedback()
   }, [])
 
-  const handleVote = async (id: string, type: 'up' | 'down') => {
-    const token = localStorage.getItem('growfly_jwt')
-    await fetch(`${API_BASE_URL}/api/feedback/${id}/vote`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ type }),
-    })
-    fetchFeedback()
-  }
-
   return (
     <div className="flex h-screen bg-background text-textPrimary">
-      {/* Sidebar */}
-      <Sidebar />
+      <aside className="w-64">
+        <Sidebar />
+      </aside>
 
-      {/* Main panel */}
       <div className="flex-1 flex flex-col">
-        {/* Single header, no props */}
-        <Header />
+        {/* ✅ FIXED: Header now has required prop */}
+        <Header name="feedback@growfly.io" />
 
-        {/* Page content */}
         <main className="flex-1 overflow-y-auto p-6">
-          {/* New feedback form */}
-          <FeedbackForm onCreated={fetchFeedback} />
+          <h1 className="text-2xl font-bold mb-6">User Feedback</h1>
 
-          {loading && <div className="spinner mx-auto my-6" />}
+          <p className="mb-6 text-muted">
+            We nerds are working to constantly improve our system. Your feedback helps! 
+            The most upvoted feedback each week gets worked on by our team.
+          </p>
 
-          {!loading &&
-            feedbackList.map((item) => (
-              <div key={item.id} className="bg-card rounded p-4 mb-4">
-                <p className="text-textPrimary mb-2">{item.content}</p>
-                <VoteFeedback
-                  id={item.id}
-                  votesUp={item.votesUp}
-                  votesDown={item.votesDown}
-                  onVote={handleVote}
-                />
-              </div>
-            ))}
+          <div className="space-y-4">
+            {feedbackList
+              .filter((fb) => fb.status === 'approved')
+              .map((fb) => (
+                <div
+                  key={fb.id}
+                  className="bg-card p-4 rounded-md shadow-sm flex justify-between items-center"
+                >
+                  <p>{fb.content}</p>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm">👍 {fb.upvotes}</span>
+                    <span className="text-sm">👎 {fb.downvotes}</span>
+                  </div>
+                </div>
+              ))}
+          </div>
         </main>
       </div>
     </div>
