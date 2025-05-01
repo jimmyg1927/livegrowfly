@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { API_BASE_URL } from '@/lib/constants'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -13,16 +14,18 @@ export default function LoginPage() {
     e.preventDefault()
     setError(null)
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ email, password }),
       })
+
       if (!res.ok) {
-        const { message } = await res.json()
-        throw new Error(message || 'Login failed')
+        const data = await res.json()
+        throw new Error(data?.error || 'Login failed')
       }
+
       router.push('/dashboard')
     } catch (err: any) {
       setError(err.message)

@@ -14,7 +14,7 @@ export default function PromptTracker({ used, limit }: { used: number; limit: nu
         </p>
       </div>
       <div className="w-full bg-gray-700 rounded h-2">
-        <div className="bg-accent h-2 rounded" style={{ width: `${progress}%` }}></div>
+        <div className="bg-accent h-2 rounded" style={{ width: `${progress}%` }} />
       </div>
     </div>
   );

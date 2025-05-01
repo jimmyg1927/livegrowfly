@@ -1,0 +1,264 @@
+[33m76490e6[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Fix ClientLayout: ensure hooks run in order and guard only protected routes
+[33m67dbc75[m Handle nullable pathname in ClientLayout
+[33m15de77a[m Remove stray app/ClientLayout + fix HeaderProps
+[33mf3b76f7[m Fix Header props and unify ClientLayout usage
+[33m0777094[m Fix ClientLayout import paths
+[33m52b4746[m Fix layout import: move ClientLayout up & restore sidebar + header wrapper
+[33m3270bd4[m Fix ClientLayout import path in app/layout.tsx
+[33m6668a70[m Wrap pages in ThemeContextProvider in RootLayout
+[33m73c7f79[m Fix GrowflyBot size prop and remove invalid Gear icon
+[33m1ed9f81[m fix: optional Header props & typed GrowflyBot
+[33ma8958bf[m feat: AI dashboard – clickable suggestion pills
+[33m2f80f70[m ✨ Updated dashboard layout, chat flow, and prompt suggestions
+[33m541eea8[m Fixed mascot import and updated dashboard layout
+[33m5d759dc[m ✨ Redesigned dashboard layout and AI chat flow
+[33mb5d65ae[m 🚀 Fix: Safe followUps.split() check and AI prompt bug fix
+[33m0e06a0e[m ✅ Fix AI endpoint path to /api/ai in page.tsx
+[33m624a9e5[m ✅ Fix followUps split error and prevent dashboard crash
+[33mfeb2686[m 🔥 Fix login API route and JWT storage for Growfly
+[33m65f9ed7[m Fixed AI route and cleaned up dashboard logic
+[33mcf8ca7b[m ✅ Fix: payment-success page TypeScript error
+[33m2710dfe[m Fix: types installed, lint and build passing
+[33m53d0f37[m Fixed PostCSS config and Tailwind build issue
+[33m2092ba2[m final prep - working build ready for vercel
+[33meee2770[m Fixed Tailwind CSS setup and configuration
+[33m9d052bb[m fix: resolve tailwind postcss plugin issue
+[33m8325668[m 🚀 Dashboard redesign + GrowflyBot positioning + sidebar improvements
+[33mfc035db[m 🚀 Dashboard restyle, Growfly bot positioning, sidebar logo added, pre-made prompts live
+[33m91ab9b0[m 🚀 Push latest feedback feature and fixes
+[33m31ce32b[m 🚀 Added feedback submission & admin approval system
+[33mbc05d74[m ✅ Fixed ThemeContext import and installed missing packages
+[33mc15a6e0[m ✅ Fixed ThemeContextProvider usage in layout.tsx
+[33ma594c77[m 🚀 Integrated referral code tracking and ref param on signup
+[33mc3b3929[m ✅ Fix dashboard JWT token key and deploy
+[33m04d5731[m ✅ Updated dashboard auth flow and fixed token handling
+[33m6710423[m ✅ Fix signup page to avoid search param issues and auto-login to dashboard
+[33m3a6d768[m ✅ Fix signup page build error with Suspense and client component
+[33m9acd929[m ✅ Fix /signup route with Suspense-compliant useSearchParams
+[33m3a74ca5[m ✅ Add /signup page for free and paid plan registration
+[33m3e4df38[m 🚑 Fix: wrapped payment-success page in Suspense to resolve build error
+[33m145e609[m ✅ Added payment-success page for Stripe confirm flow
+[33md6f83db[m Update plans page with enterprise plan and Tailwind fixes
+[33mc2eb657[m Fix useSearchParams issue on payment success page
+[33m657df8f[m Updated plans page with correct placement
+[33me56b3a7[m Fix SignUpForm import path in signup page
+[33m5cff262[m ✅ Fix signup form import path
+[33mea043d7[m ✅ Fix signup page: wrapped useSearchParams with Suspense boundary
+[33m74a4536[m 🔥 new style SignUpForm.tsx and wrapping with Client Component
+[33mff1aab9[m ✅ Fixed signup flow to correctly handle plan selection from URL
+[33m4cb54e9[m ✅ Final working plans page with plan selection logic
+[33m47d7009[m Fixed plans page flow and Stripe integration
+[33mc0ae94b[m 🔥 Fix SSR error on signup by removing useSearchParams
+[33m9db3387[m Fix and new design
+[33me996dbd[m Fix signup to route to Stripe correctly
+[33m9aa9599[m Redesigned plans page and integrated Stripe sessions
+[33m8a6a702[m ✨ Added /contact page for Enterprise plan
+[33m47f810c[m Fix Stripe plan selection + error handling
+[33mc8a84fc[m Connect plan selection to Stripe checkout
+[33m1a7b45e[m 🔥 Fix: removed useSearchParams and use sessionStorage to avoid build error
+[33m87358ec[m 🚑 Fix signup build error with proper client component
+[33m562a74e[m Fix SSR error by dynamically loading SignUpForm
+[33mf4a6b5e[m Add SignUpForm client component
+[33m883dff6[m 🎨 Add /change-plan page and plan switch logic
+[33mf4e4465[m 🔗 Add link to Change Plan page in sidebar
+[33mc63376f[m 🔧 Fix signup URL env and endpoint path
+[33m3547ad6[m ✅ Fix signup route + validations + UI
+[33m480aecc[m ✅ Fixed signup form JSON crash and improved UI
+[33m2adb613[m ✨ Modern signup form with validation
+[33m4ad3ce5[m ✅ Fix JSX errors in signup page
+[33mf12d27a[m 🐛 Fix: added default export to signup page
+[33m10fcb8c[m ✅ Fixed VoteFeedback props and cleaned up test route
+[33me9128ef[m Add Vercel Analytics
+[33m1a26fbe[m Fix dashboard route and layout structure
+[33m8f9aeb9[m 🔥 Redesigned pricing plan page
+[33mfe92b94[m 🔧 Rename global.css to globals.css for layout import
+[33mb38a218[m ✅ Add missing components and fix global styles
+[33m7dfa78c[m 🛠️ Fix React UMD imports + component alias paths
+[33m03c1588[m ➕ Add next.config.js to enable /dashboard and fix 404s
+[33m481c202[m Fix testdashboard module export
+[33me6ef8da[m Add testdashboard route
+[33m5c6df6a[m Test dashboard route
+[33mbe0ce06[m Fix dashboard and apply Growfly styling
+[33mcc49d49[m Trigger Vercel redeploy
+[33mcb63451[m Updated plans page with branding and Entrepreneur highlight
+[33m8529da6[m Fix: add styled /plans route with branding and plan logic
+[33mc8a1d1f[m New signup & plan selection flow with validation and Growfly styling
+[33md0a133d[m Remove legacy selectPlan.tsx file to fix routing
+[33m3db5d43[m Connect dashboard/page.tsx to DashboardClient and /api/user
+[33mcd21dc7[m Fix 'use client' placement in select-plan page
+[33m43b54ff[m Fix client directive and finalize select-plan page
+[33m890ae89[m Remove old selectPlan file
+[33m7939a54[m Fix route for select-plan page
+[33m403a5ab[m Update DashboardClient and related logic for deployment
+[33m2349cd0[m Trigger rebuild
+[33m0b48032[m Add login and signup pages, plan selection component
+[33m84bd24e[m Deploy dashboard to Vercel
+[33m004fdc7[m 🔥 Remove backend shopifyAuth.js from frontend
+[33m0fe1064[m 💥 Finalize index.js and Shopify auth integration
+[33mc2729bd[m ✅ Connect frontend to backend with fetchWithAuth and JWT
+[33mbce9cbb[m Fix: Installed dotenv and its types
+[33m2a28b6f[m Fix: Added @types/jsonwebtoken for TypeScript build
+[33m9eca5e6[m Fix: Added @types/node to support TypeScript on Vercel
+[33mcd2cfda[m Fix path to globals.css for Vercel build
+[33m1e12c4d[m ✅ Fix missing ClientLayout import extension
+[33m51bbad8[m ✅ Add React TypeScript types to fix JSX errors
+[33mec7a13f[m ✅ Add tsconfig with path alias support
+[33m518d375[m ✅ Final project structure ready for production
+[33m2278850[m 🧹 Clean Tailwind/PostCSS config for Vercel
+[33mc67a67f[m 💥 Fix Tailwind/PostCSS config for Vercel
+[33m9dc6c43[m Force pushing latest changes to fix Vercel config
+[33m2e5bc99[m 🔥 Reset Vercel config and removed prisma override
+[33m2fb2ac8[m 🔥 Final cleanup: removed Prisma, added safe postinstall, ready for clean Vercel deploy
+[33m19d41d1[m 🔥 Fully removed all Prisma traces from frontend
+[33md5f6440[m Fixed Tailwind IntelliSense issues and cleaned VS Code settings
+[33m47df2b8[m Final Tailwind fix: cleaned postcss config and reloaded IntelliSense
+[33m0c2aaed[m Cleaned tsconfig and fixed type errors for estree/json-schema
+[33m0ad94a6[m Removed Prisma completely from frontend and fixed TypeScript types
+[33medaf32d[m Fully removed all prisma files from frontend
+[33m6a03b31[m Cleaned up frontend package.json and skipped prisma
+[33mc85f5de[m Trigger redeploy after setting Vercel root to frontend
+[33m39d6d28[m Restore full Shopify auth flow
+[33mf29be0a[m Update dashboard client with prompt input and API call
+[33m92783f7[m Cleanup: removed old API and unused scripts
+[33mc701475[m Update styles and components for testing
+[33mb4d61b4[m Restore correct shopifyAuth.js implementation
+[33mc36e9ac[m Restore correct shopifyAuth.js implementation
+[33mf6f9640[m Restore correct shopifyAuth.js implementation
+[33m4885bdc[m Restore correct shopifyAuth.js implementation
+[33mf2b8994[m Update shopifyAuth.js and other files for OAuth and routing fixes
+[33m59bfc66[m Update shopifyAuth.js and other files for OAuth and routing fixes
+[33m41753e9[m Update shopifyAuth.js and other files for OAuth and routing fixes
+[33m72a82a6[m Update index.js with new Shopify and AI routes
+[33meb30350[m Fix Prisma Client generation issueotherfierc4
+[33m2840b44[m Fix Prisma Client generation issue
+[33m493b386[m Fix ERR_HTTP_HEADERS_SENT in Shopify auth flow
+[33mbc57417[m ✅ Finalise Shopify OAuth with Node adapter for v11
+[33mb6cb405[m 🐛 Fix: Prevent double response headers in /auth route
+[33m6f74286[m Fix Prisma generation on Vercel
+[33m61117b2[m 🔧 Final fix: Prisma + Vercel deployment config
+[33m770f90e[m 🔧 Final fix: Prisma + Vercel deployment config
+[33mb087161[m 🛠️ Fix: run Prisma generate on Vercel build
+[33m7e80f75[m ✅ Final adapter fix for Shopify v11.11.1
+[33ma5d288e[m 🔥 Fix: Register Shopify Node adapter for runtime
+[33m99caf94[m 🛠️ Remove invalid register() usage
+[33m89810d1[m Add @shopify/shopify-app-express for compatibility
+[33mb1d1593[m ✅ Fix: Register Shopify Node adapter for v11 compatibility
+[33m6a47496[m Fix Shopify API runtime adapter issue
+[33me170143[m ✅ Fix NodeAdapter usage and session storage for Shopify SDK v11
+[33m9291a99[m Ensure /shopify/user-dashboard route is registered
+[33m8ddc5f8[m Fix node adapter and Shopify in-memory session
+[33mc2a4b5f[m Fix NodeAdapter usage and in-memory session storage
+[33mc062a48[m Fix Shopify custom session storage issue
+[33mb9c25ae[m Fix Shopify NodeAdapter usage and install @shopify/shopify-api@11.11.1
+[33m5ee75a9[m Fix Shopify Node adapter issue
+[33mf95c538[m Convert to CommonJS and fix Shopify integration
+[33ma831e4a[m Fix Shopify adapter and session issue
+[33ma4fe8b5[m Fix Shopify session import and prevent path export errors
+[33m0086116[m Fix Shopify MemorySessionStorage import
+[33m86ffa36[m Convert project to CommonJS for Shopify compatibility
+[33m337bb6d[m Fix ShopifyAuth.js for ES Modules using createRequire
+[33m6bb8141[m Fix MemorySessionStorage import using proper ES module structure
+[33m67a31d5[m Fix MemorySessionStorage import
+[33m6cd5d97[m Fix Shopify API import for ES module compatibility
+[33m058aa93[m Fix import/export and ES module compatibility
+[33m326d3e7[m Convert to CommonJS to fix Vercel + Shopify SDK compatibility
+[33m09675bb[m Fix: CommonJS import for Shopify SDK
+[33ma3ef9db[m Fix: Use stable Shopify SDK and proper MemorySessionStorage import
+[33mb228b73[m Fix Shopify MemorySessionStorage import
+[33mdb2a7ab[m Fix Shopify MemorySessionStorage import for Vercel
+[33m51ff540[m Fix MemorySessionStorage import
+[33m860139e[m Fix Shopify session import
+[33m8d9f75e[m Fix shopify session import bug
+[33m0842e8d[m Fix Shopify OAuth router export
+[33mf1d4e0b[m Fix Shopify auth route syntax error
+[33m8e59f3d[m Refactor OpenAI SDK import for Vercel compatibility
+[33m67c5f79[m Add missing dashboard files and fix routes
+[33me104ab5[m Fix ESM imports for Vercel
+[33m313d5b5[m Fix Shopify integration and dashboards
+[33m5fedb6c[m ✅ Fixed Shopify Auth & RegExp issue
+[33medf1898[m ✅ Shopify API v5.0.0 installed for session compatibility
+[33m9f1f460[m ✅ Fix Shopify session import fully for production
+[33md12313b[m Fix: correct Shopify session import and OAuth setup
+[33m15cabd2[m Fix OpenAI crash by using version 4.20.0
+[33mc33adf2[m Update Shopify .env variables
+[33m458e031[m Fix Shopify auth Express implementation
+[33m5221344[m Fix crash on undefined SHOPIFY_APP_URL
+[33mf606c32[m Fix OpenAI import for SDK v4 and update chat completion calls
+[33m7a65ffe[m Convert Shopify auth from Koa to Express
+[33m7a925d0[m Install Koa for ShopifyAuth middleware
+[33m6ab5714[m Cleaned up dependencies and added @shopify/shopify-api
+[33mf170c91[m Fix crashing /user-dashboard route with logging
+[33m420ec83[m Fix follow-up string & brackets; cleaned up server code
+[33med9fb44[m Fix Vercel module import & improve error handling
+[33mf18b148[m Add logging to /user-dashboard route
+[33mcf14917[m Fix Shopify integration and dashboards
+[33meead424[m Fix Shopify integration and dashboards
+[33mb62a4e2[m Add Shopify integration and dashboards
+[33m2ff9314[m Add Shopify integration and dashboards
+[33m4b4206c[m Fix timeout, use gpt-3.5-turbo, AI follow-ups
+[33maa088e8[m Fix Vercel timeout using legacy builds config
+[33m0ccbac3[m Increase Vercel function timeout to 30s
+[33m03451b1[m Fix OpenAI import and deploy GPT-4 Turbo endpoint
+[33m88d1493[m Final working GPT-4 Turbo endpoint with OpenAI SDK v4
+[33m4c710e5[m Deploy working AI chat endpoint to Vercel
+[33mfe8bedd[m Update API with dynamic follow-ups and OpenAI integration
+[33mdfb6771[m Update API to include context and follow-up questions
+[33m2bdf280[m Fix OpenAI chat integration
+[33mb8ca3e1[m Update API to make real request to OpenAI
+[33m330954e[m Fix Prisma and install dependencies
+[33m16be0ac[m Updated authentication and JWT handling
+[33m243ab06[m Fix file organization and dependencies
+[33m41e3a0d[m Fix authentication and deployment configuration
+[33mef82219[m Fix authentication and deployment configuration
+[33m93d4f31[m Fix authentication and deployment configuration
+[33m803641e[m Fix authentication and deployment configuration
+[33m33048ee[m Fix authentication and deployment configuration
+[33m666058b[m Remove output directory requirement
+[33me6b389c[m Fix vercel.json configuration
+[33mce8ce6a[m Fix build configuration and optimize schema
+[33m2eab8d2[m Remove output directory requirement
+[33m17b93e6[m Setup Vercel deployment configuration
+[33mc837a60[m Switch to zero-config deployment
+[33mfffa80f[m Fix routing configuration in vercel.json
+[33m2d6c38a[m Simplify Vercel configuration with rewrites
+[33m4e33d10[m Simplify Vercel configuration
+[33mcfac723[m Fix JSON syntax in configuration files
+[33me13c9b3[m Remove framework from vercel.json
+[33m82f9845[m Update Vercel configuration
+[33m5a1e6f2[m Remove functions property from vercel.json
+[33m7843d94[m Update Vercel configuration for API deployment
+[33m0e673d1[m Update Vercel configuration
+[33m76d7a21[m Fix vercel.json configuration
+[33mf749095[m Fix vercel.json configuration
+[33mfe55dc6[m Update build configuration for Vercel deployment
+[33m68d4a61[m Fix build configuration and optimize schema
+[33mdeaf988[m Simplify JSON parsing and add better error handling
+[33me4e6f09[m Improve JSON parsing error handling
+[33m2d8253d[m Fix Node.js version compatibility and use latest @vercel/node
+[33mf0a0ac7[m Fix Node.js version compatibility
+[33ma4dd801[m Enable auto deployments
+[33m05b8a5f[m Update Node.js version and configuration
+[33m9935cc3[m Fix Node.js version specification
+[33m72ce975[m Update Node.js engine requirements
+[33mb79f4fc[m Add better error handling for JSON parsing
+[33m7233689[m Remove specific @vercel/node version to fix deployment error
+[33mc6ac523[m Fix Vercel configuration warnings
+[33m444df1a[m Fix Vercel configuration warnings
+[33m417c1b2[m Prepare for Vercel deployment
+[33m58c572d[m Your commit message
+[33m9fa28a9[m version69
+[33m513d3b2[m Fix function runtime & Node.js version for Vercel
+[33m3b2cc43[m Fix function runtime and node version
+[33m2f77d49[m Fix function runtime + Node.js 18 version
+[33m38c87c1[m Fix function runtime issue
+[33m6060c2b[m Final fix: Vercel runtime issue + API fixes
+[33ma746f18[m Fix API import, routing, and deployment issues
+[33m54555d1[m Fix API import issues
+[33me4ea9c2[m Fix OpenAI import issue and ensure correct module type
+[33m05b2280[m Fix import issues and ensure correct API route
+[33m67e8c4a[m Fix import issues and ensure correct API route
+[33m77f1992[m Fix runtime and module issues
+[33m4baede0[m Fix Vercel runtime issue
+[33ma556330[m Fixed Vercel deployment issues
+[33m5bf31d5[m Initial commit with working API
+[33m17ce4eb[m Initial commit
