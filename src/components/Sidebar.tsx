@@ -1,64 +1,56 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { FiSettings } from 'react-icons/fi'
 import {
-  HiOutlineSparkles,
-  HiOutlineUserGroup,
-  HiOutlineNewspaper,
-  HiOutlineSwitchHorizontal,
-  HiOutlineThumbUp,
-  HiOutlineLightBulb
-} from 'react-icons/hi'
+  FiHome,
+  FiMessageCircle,
+  FiRepeat,
+  FiUserPlus,
+  FiSettings,
+  FiBarChart2,
+} from 'react-icons/fi'
+import Image from 'next/image'
 
 const navItems = [
-  { name: 'Dashboard', href: '/dashboard', icon: HiOutlineSparkles },
-  { name: 'Feedback', href: '/feedback', icon: HiOutlineThumbUp },
-  { name: 'Change Plan', href: '/plans', icon: HiOutlineSwitchHorizontal },
-  { name: 'Refer a Friend', href: '/refer', icon: HiOutlineUserGroup },
-  { name: 'Growfly News', href: '/news', icon: HiOutlineNewspaper },
+  { label: 'Dashboard', href: '/dashboard', icon: <FiHome /> },
+  { label: 'Feedback', href: '/feedback', icon: <FiMessageCircle /> },
+  { label: 'Change Plan', href: '/change-plan', icon: <FiRepeat /> },
+  { label: 'Refer a Friend', href: '/refer', icon: <FiUserPlus /> },
+  { label: 'Growfly News', href: '/news', icon: <FiBarChart2 /> },
 ]
 
 export default function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="w-64 min-h-screen bg-sidebar text-white flex flex-col justify-between">
-      <div>
-        <div className="p-6 flex items-center space-x-3">
-          <Image
-            src="/growfly-bot.png"
-            alt="Growfly Bot"
-            width={64}
-            height={64}
-            className="rounded-full"
-          />
-        </div>
-        <nav className="space-y-2 mt-4 px-4">
-          {navItems.map(({ name, href, icon: Icon }) => (
-            <Link href={href} key={name}>
-              <div
-                className={`flex items-center px-3 py-2 rounded-md text-sm font-medium cursor-pointer transition-colors ${
-                  pathname === href
-                    ? 'bg-active text-white'
-                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                }`}
-              >
-                <Icon className="h-5 w-5 mr-3" />
-                {name}
-              </div>
-            </Link>
-          ))}
-        </nav>
+    <aside className="w-60 bg-sidebar h-full flex flex-col text-white py-6 px-4">
+      <div className="flex justify-center items-center mb-8">
+        <Image
+          src="/growfly-logo.png"
+          alt="Growfly Logo"
+          width={100}
+          height={100}
+          className="object-contain"
+        />
       </div>
-      <div className="px-4 py-6">
-        <Link
-          href="/settings"
-          className="flex items-center text-sm text-gray-400 hover:text-white"
-        >
-          <FiSettings className="mr-2" />
+      <nav className="flex flex-col gap-4">
+        {navItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`flex items-center gap-3 px-3 py-2 rounded-md transition-all hover:bg-accent ${
+              pathname === item.href ? 'bg-accent text-white' : 'text-gray-300'
+            }`}
+          >
+            {item.icon}
+            {item.label}
+          </Link>
+        ))}
+      </nav>
+      <div className="mt-auto text-sm text-gray-400 px-3">
+        <Link href="/settings" className="flex items-center gap-3 hover:text-white">
+          <FiSettings />
           Settings
         </Link>
       </div>
