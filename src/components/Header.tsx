@@ -1,29 +1,23 @@
 'use client'
 
-import { useUserStore } from '../lib/store'
-import { useTheme } from 'next-themes'
-import { FaSun, FaMoon } from 'react-icons/fa'
+import React from 'react'
+import { FaUserCircle } from 'react-icons/fa'
+import ThemeToggle from './ThemeToggle'
 
-export default function Header() {
-  const { user } = useUserStore()
-  const { theme, setTheme } = useTheme()
+type HeaderProps = {
+  name: string
+}
 
+export default function Header({ name }: HeaderProps) {
   return (
-    <div className="flex justify-between items-center p-4">
-      <div>
-        <h2 className="text-xl font-semibold text-white">
-          Welcome, {user?.name || 'Growfly User'}
-        </h2>
+    <header className="flex items-center justify-between px-6 py-4 border-b border-border">
+      <div className="text-lg font-semibold text-textPrimary">
+        Welcome, {name}
       </div>
       <div className="flex items-center gap-4">
-        <button
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          className="text-white"
-        >
-          {theme === 'dark' ? <FaSun /> : <FaMoon />}
-        </button>
-        <div className="w-8 h-8 bg-gray-400 rounded-full" />
+        <ThemeToggle />
+        <FaUserCircle className="text-2xl text-textSecondary" />
       </div>
-    </div>
+    </header>
   )
 }
