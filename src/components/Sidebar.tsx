@@ -1,59 +1,62 @@
 'use client'
 
+import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  FiHome,
-  FiMessageCircle,
-  FiRepeat,
-  FiUserPlus,
-  FiSettings,
-  FiBarChart2,
-} from 'react-icons/fi'
-import Image from 'next/image'
+  HiOutlineHome,
+  HiOutlineCog,
+  HiOutlineLogout,
+  HiOutlineDocumentText,
+  HiOutlineUserGroup,
+} from 'react-icons/hi'
 
 const navItems = [
-  { label: 'Dashboard', href: '/dashboard', icon: <FiHome /> },
-  { label: 'Feedback', href: '/feedback', icon: <FiMessageCircle /> },
-  { label: 'Change Plan', href: '/change-plan', icon: <FiRepeat /> },
-  { label: 'Refer a Friend', href: '/refer', icon: <FiUserPlus /> },
-  { label: 'Growfly News', href: '/news', icon: <FiBarChart2 /> },
+  { name: 'Dashboard', href: '/dashboard', icon: HiOutlineHome },
+  { name: 'Collab Zone', href: '/collab-zone', icon: HiOutlineUserGroup },
+  { name: 'Saved', href: '/saved', icon: HiOutlineDocumentText },
+  { name: 'Settings', href: '/settings', icon: HiOutlineCog },
 ]
 
 export default function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="w-60 bg-sidebar h-full flex flex-col text-white py-6 px-4">
-      <div className="flex justify-center items-center mb-8">
-        <Image
-          src="/growfly-logo.png"
-          alt="Growfly Logo"
-          width={100}
-          height={100}
-          className="object-contain"
-        />
+    <div className="bg-[#020617] text-white w-20 sm:w-60 flex flex-col items-center sm:items-start py-6 px-2 sm:px-4 border-r border-gray-800">
+      <div className="mb-10">
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <img
+            src="/growfly-logo.png"
+            alt="Growfly"
+            className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
+          />
+        </Link>
       </div>
-      <nav className="flex flex-col gap-4">
+      <nav className="flex flex-col gap-4 w-full">
         {navItems.map((item) => (
           <Link
-            key={item.href}
+            key={item.name}
             href={item.href}
-            className={`flex items-center gap-3 px-3 py-2 rounded-md transition-all hover:bg-accent ${
-              pathname === item.href ? 'bg-accent text-white' : 'text-gray-300'
+            className={`flex items-center gap-3 p-2 rounded-md transition ${
+              pathname === item.href
+                ? 'bg-white text-black'
+                : 'text-gray-400 hover:text-white hover:bg-gray-800'
             }`}
           >
-            {item.icon}
-            {item.label}
+            <item.icon className="h-5 w-5" />
+            <span className="hidden sm:inline">{item.name}</span>
           </Link>
         ))}
       </nav>
-      <div className="mt-auto text-sm text-gray-400 px-3">
-        <Link href="/settings" className="flex items-center gap-3 hover:text-white">
-          <FiSettings />
-          Settings
+      <div className="mt-auto">
+        <Link
+          href="/logout"
+          className="flex items-center gap-3 p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-md transition"
+        >
+          <HiOutlineLogout className="h-5 w-5" />
+          <span className="hidden sm:inline">Logout</span>
         </Link>
       </div>
-    </aside>
+    </div>
   )
 }
