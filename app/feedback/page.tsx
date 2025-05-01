@@ -1,9 +1,13 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import Sidebar from '../../src/components/Sidebar'
 import Header from '../../src/components/Header'
+import FeedbackForm from '../../src/components/FeedbackForm'
+import VoteFeedback from '../../src/components/VoteFeedback'
+import { API_BASE_URL } from '@/lib/constants'
 
-interface Feedback {
+interface FeedbackItem {
   id: string
   content: string
   votesUp: number
@@ -11,42 +15,20 @@ interface Feedback {
 }
 
 export default function FeedbackPage() {
-  const [feedbackList, setFeedbackList] = useState<Feedback[]>([])
-  const [newFeedback, setNewFeedback] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetchFeedback()
-  }, [])
+  const [feedbackList, setFeedbackList] = useState<FeedbackItem[]>([])
+  const [loading, setLoading] = useState<boolean>(false)
 
   const fetchFeedback = async () => {
+    setLoading(true)
     try {
-      const res = await fetch('/api/feedback')
-      if (!res.ok) throw new Error('Failed to load')
+      const token = localStorage.getItem('growfly_jwt')
+      const res = await fetch(`${API_BASE_URL}/api/feedback`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
       const data = await res.json()
       setFeedbackList(data)
-    } catch (err: any) {
-      setError(err.message)
-    }
-  }
-
-  const handleSubmit = async () => {
-    if (!newFeedback) return
-    setLoading(true)
-    setError(null)
-
-    try {
-      const res = await fetch('/api/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: newFeedback }),
-      })
-      if (!res.ok) throw new Error('Failed to submit')
-      setNewFeedback('')
-      fetchFeedback()
-    } catch (err: any) {
-      setError(err.message)
+    } catch {
+      // ignore
     } finally {
       setLoading(false)
     }
@@ -54,74 +36,49 @@ export default function FeedbackPage() {
 
   const handleVote = async (id: string, type: 'up' | 'down') => {
     try {
-      const res = await fetch('/api/feedback/vote', {
+      const token = localStorage.getItem('growfly_jwt')
+      await fetch(`${API_BASE_URL}/api/feedback/vote`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ feedbackId: id, voteType: type }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ id, type }),
       })
-      if (res.ok) fetchFeedback()
+      fetchFeedback()
     } catch {
-      /* ignore */
+      // ignore
     }
   }
 
+  useEffect(() => {
+    fetchFeedback()
+  }, [])
+
   return (
-    <div className="space-y-6 bg-[#2daaff] text-white rounded-2xl p-6">
-      <Header name="Community Feedback" />
-
-      <section className="bg-black text-white rounded-2xl shadow p-6 space-y-4">
-        <h2 className="text-xl font-bold">
-          🧠 We nerds are working to constantly improve Growfly.
-        </h2>
-        <p>
-          The most upvoted feedback each week gets worked on by our team. Drop
-          your ideas below!
-        </p>
-
-        {error && <p className="text-red-400">{error}</p>}
-
-        <textarea
-          className="w-full p-3 rounded text-black"
-          placeholder="Suggest an improvement or feature..."
-          value={newFeedback}
-          onChange={(e) => setNewFeedback(e.target.value)}
-        />
-
-        <button
-          onClick={handleSubmit}
-          disabled={loading}
-          className="bg-green-600 hover:bg-green-800 px-4 py-2 rounded"
-        >
-          {loading ? 'Submitting…' : 'Submit Feedback'}
-        </button>
-      </section>
-
-      <section className="bg-white text-black rounded-2xl shadow p-6 space-y-4">
-        <h3 className="text-xl font-semibold mb-4">📢 Community Feedback</h3>
-        {feedbackList.length === 0 ? (
-          <p>No feedback yet. Be the first to suggest something!</p>
-        ) : (
-          feedbackList.map((fb) => (
-            <div key={fb.id} className="mb-4 p-4 bg-gray-100 rounded-lg">
-              <p className="mb-2">{fb.content}</p>
-              <div className="flex space-x-4">
-                <button
-                  onClick={() => handleVote(fb.id, 'up')}
-                  className="bg-blue-600 hover:bg-blue-800 text-white px-3 py-1 rounded"
-                >
-                  👍 {fb.votesUp}
-                </button>
-                <button
-                  onClick={() => handleVote(fb.id, 'down')}
-                  className="bg-red-600 hover:bg-red-800 text-white px-3 py-1 rounded"
-                >
-                  👎 {fb.votesDown}
-                </button>
+    <div className="flex h-screen bg-background text-textPrimary">
+      <aside className="w-64">
+        <Sidebar />
+      </aside>
+      <div className="flex-1 flex flex-col">
+        <Header name="Community Feedback" />
+        <main className="flex-1 overflow-y-auto p-6">
+          <FeedbackForm onCreated={fetchFeedback} />
+          {loading && <div className="spinner" />}
+          {!loading &&
+            feedbackList.map((item) => (
+              <div key={item.id} className="bg-card rounded p-4 mb-4">
+                <p className="text-textPrimary">{item.content}</p>
+                <VoteFeedback
+                  id={item.id}
+                  votesUp={item.votesUp}
+                  votesDown={item.votesDown}
+                  onVote={handleVote}
+                />
               </div>
-            </div>
-          ))
-        )}
-      </section>
+            ))}
+        </main>
+      </div>
     </div>
-)
+  )
 }

@@ -1,41 +1,37 @@
-'use client';
+'use client'
 
-import React from 'react';
+import React from 'react'
+import { ThumbsUp, ThumbsDown } from 'lucide-react'
 
-type VoteFeedbackProps = {
-  response: string;
-};
+interface VoteFeedbackProps {
+  id: string
+  votesUp: number
+  votesDown: number
+  onVote: (id: string, type: 'up' | 'down') => Promise<void>
+}
 
-export default function VoteFeedback({ response }: VoteFeedbackProps) {
-  const handleVote = async (vote: 'up' | 'down') => {
-    try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/feedback`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ vote, response }),
-      });
-    } catch (err) {
-      console.error('Voting failed:', err);
-    }
-  };
-
+export default function VoteFeedback({
+  id,
+  votesUp,
+  votesDown,
+  onVote,
+}: VoteFeedbackProps): JSX.Element {
   return (
-    <div className="mt-4 flex items-center space-x-4">
-      <span className="text-sm text-gray-600">Was this helpful?</span>
+    <div className="flex space-x-4 mt-2">
       <button
-        className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-        onClick={() => handleVote('up')}
+        onClick={() => onVote(id, 'up')}
+        className="flex items-center space-x-1 hover:text-accent transition"
       >
-        👍 Yes
+        <ThumbsUp size={18} />
+        <span className="text-sm">{votesUp}</span>
       </button>
       <button
-        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-        onClick={() => handleVote('down')}
+        onClick={() => onVote(id, 'down')}
+        className="flex items-center space-x-1 hover:text-accent transition"
       >
-        👎 No
+        <ThumbsDown size={18} />
+        <span className="text-sm">{votesDown}</span>
       </button>
     </div>
-  );
+  )
 }
