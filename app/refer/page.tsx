@@ -4,19 +4,31 @@ import React, { useEffect, useState } from 'react'
 import Header from '../../src/components/Header'
 
 export default function ReferPage() {
-  const [code, setCode] = useState('')
+  const [code, setCode] = useState<string>('')
+  const [shareUrl, setShareUrl] = useState<string>('')
 
   useEffect(() => {
+    const token = localStorage.getItem('growfly_jwt')
+    if (!token) return
+
     fetch('/api/auth/me', {
-      headers: { Authorization: `Bearer ${localStorage.getItem('growfly_jwt')}` },
+      headers: { Authorization: `Bearer ${token}` },
     })
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error('Not authenticated')
+        return r.json()
+      })
       .then((data) => {
-        if (data.referralCode) setCode(data.referralCode)
+        if (data.referralCode) {
+          setCode(data.referralCode)
+          // Only access window in the browser
+          setShareUrl(`${window.location.origin}/signup?ref=${data.referralCode}`)
+        }
+      })
+      .catch(() => {
+        /* handle failed auth if you want */
       })
   }, [])
-
-  const shareUrl = `${window.location.origin}/signup?ref=${code}`
 
   return (
     <div className="space-y-6">
@@ -31,23 +43,25 @@ export default function ReferPage() {
             {code || '—'}
           </code>
           <button
-            onClick={() => navigator.clipboard.writeText(code)}
+            onClick={() => code && navigator.clipboard.writeText(code)}
             className="bg-accent text-background px-4 py-1 rounded hover:bg-accent/90 transition text-sm"
           >
             Copy Code
           </button>
         </div>
 
-        <div>
-          <a
-            href={shareUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-accent underline"
-          >
-            Share this link
-          </a>
-        </div>
+        {shareUrl && (
+          <div>
+            <a
+              href={shareUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent underline"
+            >
+              Share this link
+            </a>
+          </div>
+        )}
       </div>
     </div>
   )
