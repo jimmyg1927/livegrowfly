@@ -11,7 +11,7 @@ export default function FeedbackForm({ onCreated }: FeedbackFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: submit logic here
+    // TODO: Submit logic
     onCreated()
   }
 
@@ -23,7 +23,10 @@ export default function FeedbackForm({ onCreated }: FeedbackFormProps) {
         className="w-full p-2 border rounded text-black"
         placeholder="Enter your feedback"
       />
-      <button type="submit" className="mt-2 px-4 py-2 bg-blue-500 text-white rounded">
+      <button
+        type="submit"
+        className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
+      >
         Submit
       </button>
     </form>

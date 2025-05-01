@@ -1,16 +1,25 @@
-import React from 'react'
+// File: /app/feedback/page.tsx
+'use client'
+
+import React, { useState } from 'react'
 import Sidebar from '@/components/Sidebar'
 import Header from '@/components/Header'
 import FeedbackForm from '@/components/FeedbackForm'
 
 export default function FeedbackPage() {
+  const [submitted, setSubmitted] = useState(false)
+
   return (
-    <div className="flex h-screen bg-background text-textPrimary">
+    <div className="flex min-h-screen">
       <Sidebar />
       <div className="flex-1 flex flex-col">
-        <Header name="Growfly User" /> {/* ✅ Fix: added name prop */}
-        <main className="flex-1 overflow-y-auto p-6">
-          <FeedbackForm onCreated={() => {}} />
+        <Header name="Feedback" />
+        <main className="p-6 overflow-y-auto">
+          {submitted ? (
+            <p className="text-green-600">Thank you for your feedback!</p>
+          ) : (
+            <FeedbackForm onCreated={() => setSubmitted(true)} />
+          )}
         </main>
       </div>
     </div>
