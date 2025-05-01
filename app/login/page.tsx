@@ -13,6 +13,7 @@ export default function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
@@ -26,6 +27,12 @@ export default function LoginPage() {
         throw new Error(data?.error || 'Login failed')
       }
 
+      const data = await res.json()
+
+      // ✅ STEP 1: Save the token
+      localStorage.setItem('growfly_jwt', data.token)
+
+      // ✅ STEP 2: Redirect to dashboard
       router.push('/dashboard')
     } catch (err: any) {
       setError(err.message)
