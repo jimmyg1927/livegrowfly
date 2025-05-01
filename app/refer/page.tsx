@@ -1,24 +1,22 @@
-'use client';
+'use client'
 
-import React, { useEffect, useState } from 'react';
-import Header from '../../src/components/Header';
+import React, { useEffect, useState } from 'react'
+import Header from '../../src/components/Header'
 
 export default function ReferPage() {
-  const [code, setCode] = useState<string>('');
+  const [code, setCode] = useState('')
 
   useEffect(() => {
-    const token = localStorage.getItem('growfly_jwt');
-    if (!token) return;
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
+    fetch('/api/auth/me', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('growfly_jwt')}` },
     })
       .then((r) => r.json())
       .then((data) => {
-        if (data.referralCode) setCode(data.referralCode);
-      });
-  }, []);
+        if (data.referralCode) setCode(data.referralCode)
+      })
+  }, [])
 
-  const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL}/signup?ref=${code}`;
+  const shareUrl = `${window.location.origin}/signup?ref=${code}`
 
   return (
     <div className="space-y-6">
@@ -29,7 +27,9 @@ export default function ReferPage() {
         <p>Give a friend 10 free prompts, earn 5 credits for each signup.</p>
 
         <div className="flex items-center space-x-2">
-          <code className="bg-background px-3 py-1 rounded font-mono">{code || '—'}</code>
+          <code className="bg-background px-3 py-1 rounded font-mono">
+            {code || '—'}
+          </code>
           <button
             onClick={() => navigator.clipboard.writeText(code)}
             className="bg-accent text-background px-4 py-1 rounded hover:bg-accent/90 transition text-sm"
@@ -50,5 +50,5 @@ export default function ReferPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

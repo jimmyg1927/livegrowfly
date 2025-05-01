@@ -1,102 +1,104 @@
-'use client';
+'use client'
 
-import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import PromptTracker from '../../src/components/PromptTracker';
-import GrowflyBot from '../../src/components/GrowflyBot';
-import { Gift } from 'lucide-react';
+import React, { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import PromptTracker from '../../src/components/PromptTracker'
+import GrowflyBot from '../../src/components/GrowflyBot'
+import { Gift } from 'lucide-react'
 
 const STARTER_PROMPTS = [
   'Give me 3 new ideas today on how to get new business.',
   'Outline a week-long social media calendar for my brand.',
   'Write an email sequence to nurture leads.',
   'Recommend the best marketing channels for a B2B SaaS.',
-];
+]
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const [user, setUser] = useState<any>(null);
-  const [input, setInput] = useState('');
+  const router = useRouter()
+  const [user, setUser] = useState<any>(null)
+  const [input, setInput] = useState('')
   const [response, setResponse] = useState(
     "Hello, I'm Growfly — I’m here to help. How can I assist you today?"
-  );
-  const [followUps, setFollowUps] = useState<string[]>(STARTER_PROMPTS);
-  const [loading, setLoading] = useState(false);
+  )
+  const [followUps, setFollowUps] = useState<string[]>(STARTER_PROMPTS)
+  const [loading, setLoading] = useState(false)
 
   const token =
-    typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null;
+    typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null
 
+  // 1) Auth check
   useEffect(() => {
     if (!token) {
-      router.push('/login');
-      return;
+      router.push('/login')
+      return
     }
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
+    fetch('/api/auth/me', {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.email) setUser(data);
-        else {
-          localStorage.removeItem('growfly_jwt');
-          router.push('/login');
-        }
-      });
-  }, [token, router]);
+      .then((r) => {
+        if (!r.ok) throw new Error('Not authenticated')
+        return r.json()
+      })
+      .then((data) => setUser(data))
+      .catch(() => {
+        localStorage.removeItem('growfly_jwt')
+        router.push('/login')
+      })
+  }, [token, router])
 
+  // 2) Plan guard
   useEffect(() => {
-    if (!user) return;
-    if (!user.subscriptionType || user.subscriptionType === 'none') {
-      router.push('/plans');
+    if (user && (!user.subscriptionType || user.subscriptionType === 'none')) {
+      router.push('/plans')
     }
-  }, [user, router]);
+  }, [user, router])
 
+  // 3) Send prompt
   const handleSend = async (msg: string) => {
-    setLoading(true);
-    setResponse('');
+    setLoading(true)
+    setResponse('')
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/ai`, {
+      const res = await fetch('/api/ai', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ message: msg }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Server error');
-      setResponse(data.response);
-      setFollowUps(data.followUps || []);
+      })
+      if (!res.ok) throw new Error('Server error')
+      const data = await res.json()
+      setResponse(data.response)
+      setFollowUps(data.followUps || [])
     } catch (err: any) {
-      setResponse(`❌ ${err.message}`);
+      setResponse(`❌ ${err.message}`)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   if (!user) {
     return (
       <div className="flex items-center justify-center h-screen text-textSecondary">
         Loading…
       </div>
-    );
+    )
   }
 
   return (
     <div className="space-y-6">
-      {/* Header row: title + actions */}
-      <div className="flex items-center justify-between mb-6">
+      {/* Header row */}
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Welcome, {user.name || user.email}</h1>
+          <h1 className="text-3xl font-bold mb-2">
+            Welcome, {user.name || user.email}
+          </h1>
           <p className="text-sm text-textSecondary">Prompts used this month</p>
         </div>
 
         <div className="flex items-center space-x-4">
-          {/* Progress bar component */}
           <PromptTracker used={user.promptsUsed} limit={user.promptLimit} />
-
-          {/* Tiny Refer-a-Friend button */}
           <Link
             href="/refer"
             className="flex items-center space-x-1 bg-accent text-background px-3 py-1 rounded-full text-sm hover:bg-accent/90 transition"
@@ -107,14 +109,14 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Starter suggestions – now flex-wrap so no scrollbar */}
+      {/* Prompt pills */}
       <div className="bg-card rounded-2xl p-4 flex flex-wrap gap-2">
         {followUps.map((pill, i) => (
           <button
             key={i}
             onClick={() => {
-              setInput(pill);
-              handleSend(pill);
+              setInput(pill)
+              handleSend(pill)
             }}
             className="bg-accent text-background px-4 py-1 rounded-full whitespace-normal hover:bg-accent/90 transition"
           >
@@ -129,7 +131,6 @@ export default function DashboardPage() {
           <GrowflyBot size={28} />
           <h2 className="text-xl font-semibold">Ask Growfly AI</h2>
         </div>
-
         <div className="flex space-x-2">
           <input
             type="text"
@@ -147,14 +148,14 @@ export default function DashboardPage() {
             {loading ? '…' : 'Send'}
           </button>
         </div>
-
-        {/* Growfly Response */}
         <div className="space-y-2">
           <h3 className="flex items-center space-x-2 text-lg font-semibold">
             <GrowflyBot size={20} />
             <span>Growfly Response</span>
           </h3>
-          <div className="bg-background p-4 rounded text-textPrimary">{response}</div>
+          <div className="bg-background p-4 rounded text-textPrimary">
+            {response}
+          </div>
           <div className="flex items-center space-x-4 pt-1">
             <span className="text-textSecondary">Was this helpful?</span>
             <button className="text-accent hover:opacity-80">👍</button>
@@ -163,5 +164,5 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
-  );
+)
 }

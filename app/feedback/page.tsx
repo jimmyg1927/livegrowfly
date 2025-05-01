@@ -1,4 +1,3 @@
-// app/feedback/page.tsx
 'use client'
 
 import React, { useEffect, useState } from 'react'
@@ -23,9 +22,9 @@ export default function FeedbackPage() {
 
   const fetchFeedback = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/feedback`)
+      const res = await fetch('/api/feedback')
+      if (!res.ok) throw new Error('Failed to load')
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to load feedback.')
       setFeedbackList(data)
     } catch (err: any) {
       setError(err.message)
@@ -36,14 +35,14 @@ export default function FeedbackPage() {
     if (!newFeedback) return
     setLoading(true)
     setError(null)
+
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/feedback`, {
+      const res = await fetch('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: newFeedback }),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to submit feedback.')
+      if (!res.ok) throw new Error('Failed to submit')
       setNewFeedback('')
       fetchFeedback()
     } catch (err: any) {
@@ -55,14 +54,14 @@ export default function FeedbackPage() {
 
   const handleVote = async (id: string, type: 'up' | 'down') => {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/feedback/vote`, {
+      const res = await fetch('/api/feedback/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ feedbackId: id, voteType: type }),
       })
-      fetchFeedback()
+      if (res.ok) fetchFeedback()
     } catch {
-      /* swallow */
+      /* ignore */
     }
   }
 
@@ -74,7 +73,10 @@ export default function FeedbackPage() {
         <h2 className="text-xl font-bold">
           🧠 We nerds are working to constantly improve Growfly.
         </h2>
-        <p>The most upvoted feedback each week gets worked on by our team. Drop your ideas below!</p>
+        <p>
+          The most upvoted feedback each week gets worked on by our team. Drop
+          your ideas below!
+        </p>
 
         {error && <p className="text-red-400">{error}</p>}
 
@@ -95,7 +97,7 @@ export default function FeedbackPage() {
       </section>
 
       <section className="bg-white text-black rounded-2xl shadow p-6 space-y-4">
-        <h3 className="text-xl font-semibold">📢 Community Feedback</h3>
+        <h3 className="text-xl font-semibold mb-4">📢 Community Feedback</h3>
         {feedbackList.length === 0 ? (
           <p>No feedback yet. Be the first to suggest something!</p>
         ) : (

@@ -1,28 +1,24 @@
-// app/change-plan/page.tsx
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 const plans = [
   { id: 'free', name: 'Free', description: '5 prompts/month' },
   { id: 'personal', name: 'Personal', description: '50 prompts/month - £8.99/mo' },
-  { id: 'entrepreneur', name: 'Entrepreneur', description: '250 prompts - £16.99/mo' },
-  { id: 'business', name: 'Business', description: '1200 prompts - £49.99/mo' },
+  { id: 'entrepreneur', name: 'Entrepreneur', description: '250 prompts/month - £16.99/mo' },
+  { id: 'business', name: 'Business', description: '1200 prompts/month - £49.99/mo' },
 ]
 
 export default function ChangePlanPage() {
   const router = useRouter()
   const [selectedPlan, setSelectedPlan] = useState('')
   const [message, setMessage] = useState('')
-  const token = typeof window !== 'undefined'
-    ? localStorage.getItem('growfly_jwt')
-    : null
+  const token =
+    typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null
 
   useEffect(() => {
-    if (!token) {
-      router.push('/login')
-    }
+    if (!token) router.push('/login')
   }, [token, router])
 
   const handlePlanChange = async () => {
@@ -31,19 +27,15 @@ export default function ChangePlanPage() {
       return
     }
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/change-plan`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ subscriptionType: selectedPlan }),
-        }
-      )
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Error updating plan')
+      const res = await fetch('/api/change-plan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ subscriptionType: selectedPlan }),
+      })
+      if (!res.ok) throw new Error('Error updating plan')
       setMessage('✅ Plan updated successfully!')
       router.push('/dashboard')
     } catch (err: any) {
@@ -60,10 +52,9 @@ export default function ChangePlanPage() {
           <div
             key={plan.id}
             onClick={() => setSelectedPlan(plan.id)}
-            className={`
-              p-6 bg-white text-black rounded-xl shadow hover:shadow-lg transition-transform
-              ${selectedPlan === plan.id ? 'border-4 border-blue-600 scale-105' : ''}
-            `}
+            className={`p-6 bg-white text-black rounded-xl shadow hover:shadow-lg transition-transform ${
+              selectedPlan === plan.id ? 'border-4 border-blue-600 scale-105' : ''
+            }`}
           >
             <h2 className="text-xl font-semibold">{plan.name}</h2>
             <p className="text-sm mt-2">{plan.description}</p>

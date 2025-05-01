@@ -1,4 +1,3 @@
-// app/settings/page.tsx
 'use client'
 
 import React, { useEffect, useState } from 'react'
@@ -24,29 +23,30 @@ export default function SettingsPage() {
     industry: '',
     narrative: '',
   })
-  const token = typeof window !== 'undefined'
-    ? localStorage.getItem('growfly_jwt')
-    : null
+  const token =
+    typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null
 
   useEffect(() => {
-    if (!token) return router.push('/login')
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
+    if (!token) {
+      router.push('/login')
+      return
+    }
+    fetch('/api/auth/me', {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error('Not authenticated')
+        return res.json()
+      })
       .then((data) => {
-        if (data.email) {
-          setUser(data)
-          setForm({
-            name: data.name || '',
-            linkedIn: (data as any).linkedIn || '',
-            jobTitle: (data as any).jobTitle || '',
-            industry: (data as any).industry || '',
-            narrative: (data as any).narrative || '',
-          })
-        } else {
-          router.push('/login')
-        }
+        setUser(data)
+        setForm({
+          name: data.name || '',
+          linkedIn: data.linkedIn || '',
+          jobTitle: data.jobTitle || '',
+          industry: data.industry || '',
+          narrative: data.narrative || '',
+        })
       })
       .catch(() => router.push('/login'))
   }, [token, router])
@@ -59,9 +59,8 @@ export default function SettingsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!token) return
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user`, {
+      const res = await fetch('/api/user', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -69,14 +68,13 @@ export default function SettingsPage() {
         },
         body: JSON.stringify(form),
       })
-      if (res.ok) {
-        alert('Profile updated!')
-      } else {
-        const err = await res.json()
-        alert(`Error: ${err.error || res.statusText}`)
+      if (!res.ok) {
+        const { error } = await res.json()
+        throw new Error(error || res.statusText)
       }
+      alert('Profile updated!')
     } catch (err: any) {
-      alert(`Network error: ${err.message}`)
+      alert(`Error: ${err.message}`)
     }
   }
 
@@ -95,6 +93,7 @@ export default function SettingsPage() {
       <h1 className="text-2xl font-bold mb-4">Your Settings</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6 max-w-xl">
+        {/* Name */}
         <div>
           <label className="block mb-1 font-semibold">Name</label>
           <input
@@ -105,6 +104,7 @@ export default function SettingsPage() {
           />
         </div>
 
+        {/* LinkedIn */}
         <div>
           <label className="block mb-1 font-semibold">LinkedIn URL</label>
           <input
@@ -116,6 +116,7 @@ export default function SettingsPage() {
           />
         </div>
 
+        {/* Job Title */}
         <div>
           <label className="block mb-1 font-semibold">Job Title</label>
           <input
@@ -126,6 +127,7 @@ export default function SettingsPage() {
           />
         </div>
 
+        {/* Industry */}
         <div>
           <label className="block mb-1 font-semibold">Industry</label>
           <input
@@ -136,6 +138,7 @@ export default function SettingsPage() {
           />
         </div>
 
+        {/* Narrative */}
         <div>
           <label className="block mb-1 font-semibold">About You</label>
           <textarea
@@ -149,7 +152,7 @@ export default function SettingsPage() {
 
         <button
           type="submit"
-          className="bg-accent text-white px-6 py-2 rounded hover:bg-accent/90"
+          className="bg-accent text-white px-6 py-2 rounded hover:bg-accent/90 transition"
         >
           Save Changes
         </button>
