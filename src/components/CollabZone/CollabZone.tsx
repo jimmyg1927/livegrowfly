@@ -1,35 +1,51 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react'
 
 export default function CollabZone() {
-  const [documentContent, setDocumentContent] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [documentContent, setDocumentContent] = useState('')
+  const [copied, setCopied] = useState(false)
+  const [token, setToken] = useState<string | null>(null)
+
+  useEffect(() => {
+    const jwt = localStorage.getItem('growfly_jwt')
+    if (!jwt) return
+    setToken(jwt)
+
+    fetch('/api/collab', {
+      headers: { Authorization: `Bearer ${jwt}` },
+    })
+      .then((res) => res.json())
+      .then((data) => setDocumentContent(data.content || ''))
+      .catch(() => setDocumentContent(''))
+  }, [])
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(documentContent);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
+    navigator.clipboard.writeText(documentContent)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
 
   return (
-    <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl shadow p-6 text-black dark:text-white">
-      <h2 className="text-xl font-bold mb-4">📄 Collab-Zone: Shared Document</h2>
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      <h2 className="text-xl font-semibold text-foreground">📄 Collab-Zone: Shared Document</h2>
+
       <textarea
-        className="w-full border border-gray-300 dark:border-gray-700 rounded-xl p-4 bg-gray-100 dark:bg-[#2a2a2a] text-black dark:text-white mb-4 min-h-[200px]"
+        className="w-full min-h-[300px] bg-muted text-foreground border border-border rounded-xl p-4 text-sm leading-relaxed shadow resize-none"
         placeholder="Start writing your document here or paste AI responses..."
         value={documentContent}
         onChange={(e) => setDocumentContent(e.target.value)}
-      ></textarea>
+      />
+
       <div className="flex items-center justify-between">
         <button
           onClick={handleCopy}
-          className="bg-blue-600 hover:bg-blue-800 text-white px-4 py-2 rounded-xl transition"
+          className="bg-primary text-white text-sm px-4 py-2 rounded-xl hover:bg-primary/80 transition"
         >
           {copied ? '✅ Copied!' : 'Copy Document'}
         </button>
-        <p className="text-sm opacity-70">Shareable links & invites coming soon…</p>
+        <p className="text-xs text-muted-foreground">🔗 Shareable links & invites coming soon…</p>
       </div>
     </div>
-  );
+  )
 }
