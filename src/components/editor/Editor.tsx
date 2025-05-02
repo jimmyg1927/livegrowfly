@@ -1,3 +1,4 @@
+// File: src/components/editor/Editor.tsx
 'use client'
 
 import React from 'react'
@@ -7,8 +8,8 @@ import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
 import TextAlign from '@tiptap/extension-text-align'
 
-// Use absolute import via your tsconfig paths
-import EditorBubbleMenu from '@/components/EditorBubbleMenu'
+// ← Relative import from the same folder
+import EditorBubbleMenu from './EditorBubbleMenu'
 
 interface Props {
   content: string
