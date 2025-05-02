@@ -1,77 +1,43 @@
-'use client';
+// src/components/EditorBubbleMenu.tsx
+'use client'
 
-import React from 'react';
-import { BubbleMenu } from '@tiptap/react';
-import type { Editor } from '@tiptap/react';
-import {
-  Bold,
-  Italic,
-  Underline,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  Link as LinkIcon,
-} from 'lucide-react';
+import React from 'react'
+import { BubbleMenu, type Editor as TipTapEditor } from '@tiptap/react'
+import { Bold, Italic, Underline as UnderlineIcon, Link, AlignLeft, AlignCenter, AlignRight } from 'lucide-react'
 
 interface Props {
-  editor: Editor;
+  editor: TipTapEditor
 }
 
 export default function EditorBubbleMenu({ editor }: Props) {
-  if (!editor) return null;
-
   return (
-    <BubbleMenu
-      editor={editor}
-      tippyOptions={{ duration: 100 }}
-      className="bg-white dark:bg-gray-800 shadow-lg border border-gray-300 dark:border-gray-700 flex space-x-2 p-2 rounded-md"
-    >
-      <button
-        onClick={() => editor.chain().focus().toggleBold().run()}
-        className={editor.isActive('bold') ? 'text-accent' : ''}
-      >
+    <BubbleMenu editor={editor} className="bg-background border rounded shadow p-2 flex gap-2">
+      <button onClick={() => editor.chain().focus().toggleBold().run()}>
         <Bold size={18} />
       </button>
-      <button
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-        className={editor.isActive('italic') ? 'text-accent' : ''}
-      >
+      <button onClick={() => editor.chain().focus().toggleItalic().run()}>
         <Italic size={18} />
       </button>
-      <button
-        onClick={() => editor.chain().focus().toggleUnderline().run()}
-        className={editor.isActive('underline') ? 'text-accent' : ''}
-      >
-        <Underline size={18} />
-      </button>
-      <button
-        onClick={() => editor.chain().focus().setTextAlign('left').run()}
-        className={editor.isActive({ textAlign: 'left' }) ? 'text-accent' : ''}
-      >
-        <AlignLeft size={18} />
-      </button>
-      <button
-        onClick={() => editor.chain().focus().setTextAlign('center').run()}
-        className={editor.isActive({ textAlign: 'center' }) ? 'text-accent' : ''}
-      >
-        <AlignCenter size={18} />
-      </button>
-      <button
-        onClick={() => editor.chain().focus().setTextAlign('right').run()}
-        className={editor.isActive({ textAlign: 'right' }) ? 'text-accent' : ''}
-      >
-        <AlignRight size={18} />
+      <button onClick={() => editor.chain().focus().toggleUnderline().run()}>
+        <UnderlineIcon size={18} />
       </button>
       <button
         onClick={() => {
-          const url = prompt('Enter URL');
-          if (url) {
-            editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-          }
+          const url = window.prompt('Enter URL')
+          if (url) editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
         }}
       >
-        <LinkIcon size={18} />
+        <Link size={18} />
+      </button>
+      <button onClick={() => editor.chain().focus().setTextAlign('left').run()}>
+        <AlignLeft size={18} />
+      </button>
+      <button onClick={() => editor.chain().focus().setTextAlign('center').run()}>
+        <AlignCenter size={18} />
+      </button>
+      <button onClick={() => editor.chain().focus().setTextAlign('right').run()}>
+        <AlignRight size={18} />
       </button>
     </BubbleMenu>
-  );
+  )
 }
