@@ -1,3 +1,4 @@
+// File: src/components/Editor.tsx
 'use client'
 
 import React from 'react'
@@ -6,12 +7,12 @@ import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
 import TextAlign from '@tiptap/extension-text-align'
-import EditorBubbleMenu from './EditorBubbleMenu'
+import EditorBubbleMenu from './EditorBubbleMenu'  // same folder
 
 interface Props {
   content: string
   setContent: (val: string) => void
-  onChange?: (val: string) => void // Optional external change handler
+  onChange?: (val: string) => void
 }
 
 export default function Editor({ content, setContent, onChange }: Props) {
@@ -19,21 +20,26 @@ export default function Editor({ content, setContent, onChange }: Props) {
     extensions: [
       StarterKit,
       Underline,
-      Link,
+      Link.configure({ openOnClick: false }),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
     ],
     content,
-    onUpdate({ editor }) {
-      const newContent = editor.getHTML()
-      setContent(newContent)
-      if (onChange) onChange(newContent)
+    onUpdate: ({ editor }) => {
+      const html = editor.getHTML()
+      setContent(html)
+      onChange?.(html)
     },
   })
 
+  if (!editor) return null
+
   return (
-    <div className="border rounded-lg">
-      {editor && <EditorBubbleMenu editor={editor} />}
-      <EditorContent editor={editor} className="min-h-[200px] p-4 outline-none" />
+    <div className="relative">
+      <EditorBubbleMenu editor={editor} />
+      <EditorContent
+        editor={editor}
+        className="prose dark:prose-invert min-h-[200px] bg-background border border-card rounded-lg p-4"
+      />
     </div>
   )
 }
