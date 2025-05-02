@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import Header from '../../src/components/Header'
 
 interface UserProfile {
@@ -11,6 +12,7 @@ interface UserProfile {
   jobTitle?: string
   industry?: string
   narrative?: string
+  subscriptionType?: string
 }
 
 export default function SettingsPage() {
@@ -23,6 +25,7 @@ export default function SettingsPage() {
     industry: '',
     narrative: '',
   })
+
   const token =
     typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null
 
@@ -31,6 +34,7 @@ export default function SettingsPage() {
       router.push('/login')
       return
     }
+
     fetch('/api/auth/me', {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -90,10 +94,41 @@ export default function SettingsPage() {
     <div className="space-y-6 bg-background text-textPrimary rounded-2xl p-6">
       <Header name={user.email} />
 
-      <h1 className="text-2xl font-bold mb-4">Your Settings</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold">Your Settings</h1>
+        <Link
+          href="/plans"
+          className="text-sm text-accent hover:underline bg-muted px-3 py-1 rounded"
+        >
+          Change Plan
+        </Link>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-6 max-w-xl">
-        {/* Name */}
+        {/* Readonly Email */}
+        <div>
+          <label className="block mb-1 font-semibold">Email</label>
+          <input
+            type="email"
+            value={user.email}
+            readOnly
+            disabled
+            className="w-full px-4 py-2 rounded border border-muted bg-muted text-muted-foreground"
+          />
+        </div>
+
+        {/* Plan */}
+        <div>
+          <label className="block mb-1 font-semibold">Plan</label>
+          <input
+            value={user.subscriptionType || 'free'}
+            readOnly
+            disabled
+            className="w-full px-4 py-2 rounded border border-muted bg-muted text-muted-foreground capitalize"
+          />
+        </div>
+
+        {/* Editable Fields */}
         <div>
           <label className="block mb-1 font-semibold">Name</label>
           <input
@@ -104,7 +139,6 @@ export default function SettingsPage() {
           />
         </div>
 
-        {/* LinkedIn */}
         <div>
           <label className="block mb-1 font-semibold">LinkedIn URL</label>
           <input
@@ -116,7 +150,6 @@ export default function SettingsPage() {
           />
         </div>
 
-        {/* Job Title */}
         <div>
           <label className="block mb-1 font-semibold">Job Title</label>
           <input
@@ -127,7 +160,6 @@ export default function SettingsPage() {
           />
         </div>
 
-        {/* Industry */}
         <div>
           <label className="block mb-1 font-semibold">Industry</label>
           <input
@@ -138,7 +170,6 @@ export default function SettingsPage() {
           />
         </div>
 
-        {/* Narrative */}
         <div>
           <label className="block mb-1 font-semibold">About You</label>
           <textarea

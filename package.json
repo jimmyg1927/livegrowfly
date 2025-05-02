@@ -11,6 +11,11 @@
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "@shopify/shopify-api": "^11.12.0",
+    "@tiptap/extension-link": "^2.11.9",
+    "@tiptap/extension-text-align": "^2.11.9",
+    "@tiptap/extension-underline": "^2.11.9",
+    "@tiptap/react": "^2.11.9",
+    "@tiptap/starter-kit": "^2.11.9",
     "@vercel/analytics": "^1.5.0",
     "axios": "^1.6.8",
     "dotenv": "^16.4.7",

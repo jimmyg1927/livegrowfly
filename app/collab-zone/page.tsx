@@ -1,57 +1,49 @@
-'use client';
+'use client'
 
-import CollabZone from '../../src/components/CollabZone/CollabZone';
-import Sidebar from '../../src/components/Sidebar';
-import Header from '../../src/components/Header';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react'
+import { API_BASE_URL } from '@/lib/constants'
 
 export default function CollabZonePage() {
-  const router = useRouter();
-  const [user, setUser] = useState<any>(null);
-  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null;
+  const [content, setContent] = useState('')
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    const fetchUser = async () => {
-      if (!token) {
-        router.push('/login');
-        return;
-      }
+    const token = localStorage.getItem('growfly_jwt')
+    if (!token) return
 
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        if (res.ok) {
-          setUser(data);
-        } else {
-          router.push('/login');
-        }
-      } catch {
-        router.push('/login');
-      }
-    };
-    fetchUser();
-  }, [token, router]);
+    fetch(`${API_BASE_URL}/api/collab`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.content) setContent(data.content)
+      })
+  }, [])
 
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-lg text-gray-600">Loading your collaborative zone...</p>
-      </div>
-    );
+  const handleCopy = () => {
+    navigator.clipboard.writeText(content)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
   }
 
   return (
-    <div className="flex h-screen bg-[#2daaff] text-white">
-      <Sidebar />
-      <div className="flex-1 flex flex-col">
-        <Header name={user.email} />
-        <main className="p-6 overflow-y-auto">
-          <CollabZone />
-        </main>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-semibold">📝 Collab Zone</h1>
+      <textarea
+        className="w-full h-[300px] p-4 rounded-xl bg-card text-textPrimary border border-muted focus:outline-accent resize-none"
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        placeholder="Write or paste AI responses here..."
+      />
+      <div className="flex items-center justify-between">
+        <button
+          onClick={handleCopy}
+          className="bg-accent text-background px-4 py-2 rounded-xl hover:bg-accent/90 transition"
+        >
+          {copied ? '✅ Copied!' : 'Copy to Clipboard'}
+        </button>
+        <p className="text-sm text-muted">Sharing & documents coming soon…</p>
       </div>
     </div>
-  );
+  )
 }
