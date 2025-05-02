@@ -90,15 +90,17 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8 px-4 md:px-8 lg:px-16">
+    <div className="space-y-6 px-4 md:px-8 lg:px-12 pb-10">
       {/** ─── HEADER ─────────────────────────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <h1 className="text-2xl font-medium">Welcome, {user.name || user.email}</h1>
+        <h1 className="text-xl font-semibold text-foreground">
+          Welcome, {user.name || user.email}
+        </h1>
         <div className="flex items-center space-x-4">
           <PromptTracker used={user.promptsUsed} limit={user.promptLimit} />
           <Link
             href="/refer"
-            className="flex items-center space-x-1 bg-accent text-background px-3 py-1 rounded-full text-sm hover:bg-accent/90 transition"
+            className="flex items-center space-x-1 bg-accent text-background px-3 py-1 rounded-full text-xs hover:bg-accent/90 transition"
           >
             <Gift size={16} />
             <span>Refer a Friend</span>
@@ -107,12 +109,12 @@ export default function DashboardPage() {
       </div>
 
       {/** ─── STARTER PROMPTS ───────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap gap-2 overflow-x-auto pb-2">
+      <div className="flex flex-wrap gap-2 overflow-x-auto pb-1">
         {STARTER_PROMPTS.map((pill, i) => (
           <button
             key={i}
             onClick={() => handleSend(pill)}
-            className="text-sm bg-accent text-background px-3 py-1 rounded-full whitespace-normal hover:bg-accent/90 transition"
+            className="text-xs bg-accent text-background px-3 py-1 rounded-full whitespace-normal hover:bg-accent/90 transition"
           >
             {pill}
           </button>
@@ -120,11 +122,11 @@ export default function DashboardPage() {
       </div>
 
       {/** ─── CHAT PANEL ────────────────────────────────────────────────────────── */}
-      <div className="bg-card rounded-2xl p-6 space-y-6 shadow-sm">
+      <div className="bg-card rounded-2xl p-4 space-y-4 shadow-sm">
         {/** Title Bar */}
         <div className="flex items-center space-x-2">
           <GrowflyBot size={24} />
-          <h2 className="text-lg font-medium">Ask Growfly</h2>
+          <h2 className="text-base font-medium">Ask Growfly</h2>
         </div>
 
         {/** AI Response Bubble */}
@@ -152,7 +154,7 @@ export default function DashboardPage() {
           <input
             type="text"
             placeholder="Type your prompt here…"
-            className="flex-1 border border-border rounded px-4 py-2 bg-background text-textPrimary focus:outline-accent"
+            className="flex-1 border border-border rounded px-4 py-2 bg-background text-textPrimary text-sm focus:outline-accent"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -166,7 +168,7 @@ export default function DashboardPage() {
           <button
             onClick={() => handleSend(input)}
             disabled={loading}
-            className="bg-accent text-background px-6 rounded hover:bg-accent/90 transition"
+            className="bg-accent text-background px-6 py-2 text-sm rounded hover:bg-accent/90 transition"
           >
             {loading ? '…' : 'Send'}
           </button>
