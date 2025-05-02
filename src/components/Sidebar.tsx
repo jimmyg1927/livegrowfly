@@ -25,6 +25,7 @@ export default function Sidebar() {
 
   return (
     <div className="bg-[#020617] text-white w-20 sm:w-60 flex flex-col items-center sm:items-start py-6 px-2 sm:px-4 border-r border-gray-800">
+      {/* Logo */}
       <div className="mb-10">
         <Link href="/dashboard" className="flex items-center gap-2">
           <img
@@ -34,6 +35,8 @@ export default function Sidebar() {
           />
         </Link>
       </div>
+
+      {/* Navigation */}
       <nav className="flex flex-col gap-4 w-full">
         {navItems.map((item) => (
           <Link
@@ -50,14 +53,19 @@ export default function Sidebar() {
           </Link>
         ))}
       </nav>
-      <div className="mt-auto">
-        <Link
-          href="/logout"
-          className="flex items-center gap-3 p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-md transition"
+
+      {/* Logout */}
+      <div className="mt-auto w-full">
+        <button
+          onClick={() => {
+            localStorage.removeItem('growfly_jwt')
+            window.location.href = '/login'
+          }}
+          className="flex items-center gap-3 w-full p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-md transition"
         >
           <HiOutlineLogout className="h-5 w-5" />
           <span className="hidden sm:inline">Logout</span>
-        </Link>
+        </button>
       </div>
     </div>
   )
