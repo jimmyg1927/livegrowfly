@@ -1,49 +1,48 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { API_BASE_URL } from '@/lib/constants'
+import React, { useState, useEffect } from 'react'
+import Editor from '@/components/Editor'
+import { useRouter } from 'next/navigation'
 
 export default function CollabZonePage() {
-  const [content, setContent] = useState('')
-  const [copied, setCopied] = useState(false)
+  const [activeDoc, setActiveDoc] = useState<{ content: string } | null>(null)
+  const [user, setUser] = useState<any>(null)
+  const router = useRouter()
 
+  // TEMPORARY MOCK – Replace with real auth logic when available
   useEffect(() => {
-    const token = localStorage.getItem('growfly_jwt')
-    if (!token) return
-
-    fetch(`${API_BASE_URL}/api/collab`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.content) setContent(data.content)
-      })
+    const mockUser = { id: 1, name: 'Demo User' }
+    setUser(mockUser)
+    setActiveDoc({ content: '' })
   }, [])
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(content)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
+  const handleContentChange = async (content: string) => {
+    setActiveDoc({ content })
+    // ⏳ TODO: Persist this via API call or save to state
+  }
+
+  const handleSetContent = (newContent: string) => {
+    setActiveDoc(prev => ({ ...(prev || {}), content: newContent }))
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">📝 Collab Zone</h1>
-      <textarea
-        className="w-full h-[300px] p-4 rounded-xl bg-card text-textPrimary border border-muted focus:outline-accent resize-none"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder="Write or paste AI responses here..."
-      />
-      <div className="flex items-center justify-between">
-        <button
-          onClick={handleCopy}
-          className="bg-accent text-background px-4 py-2 rounded-xl hover:bg-accent/90 transition"
-        >
-          {copied ? '✅ Copied!' : 'Copy to Clipboard'}
-        </button>
-        <p className="text-sm text-muted">Sharing & documents coming soon…</p>
+    <div className="p-6 max-w-5xl mx-auto">
+      <h1 className="text-3xl font-bold mb-1">📄 Collab Zone</h1>
+      <p className="text-gray-400 mb-4 text-sm">
+        Share Growfly responses with colleagues and friends to improve, document and collaborate on plans, documents and other responses from Growfly.
+      </p>
+
+      <div className="bg-zinc-900 p-4 rounded-lg min-h-[300px] border border-zinc-800">
+        <Editor
+          content={activeDoc?.content || ''}
+          onChange={handleContentChange}
+          setContent={handleSetContent}
+        />
       </div>
+
+      <p className="text-right text-sm text-gray-500 mt-4">
+        Sharing & documents coming soon...
+      </p>
     </div>
   )
 }
