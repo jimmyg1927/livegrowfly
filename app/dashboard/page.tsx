@@ -121,14 +121,14 @@ export default function DashboardPage() {
 
       {/** ─── CHAT PANEL ────────────────────────────────────────────────────────── */}
       <div className="bg-card rounded-2xl p-6 space-y-6 shadow-sm">
-        {/** Title */}
+        {/** Title Bar */}
         <div className="flex items-center space-x-2">
           <GrowflyBot size={24} />
           <h2 className="text-lg font-medium">Ask Growfly</h2>
         </div>
 
-        {/** Latest AI response */}
-        <div className="bg-background p-4 rounded-lg text-textPrimary whitespace-pre-wrap">
+        {/** AI Response Bubble */}
+        <div className="bg-muted text-foreground p-4 rounded-xl shadow text-sm leading-relaxed whitespace-pre-wrap border border-border">
           {response}
         </div>
 
@@ -139,7 +139,7 @@ export default function DashboardPage() {
               <button
                 key={i}
                 onClick={() => handleSend(f)}
-                className="text-sm bg-muted text-textPrimary px-3 py-1 rounded-full hover:bg-muted/80 transition"
+                className="text-xs bg-primary text-white px-3 py-1 rounded-full hover:bg-primary/80 transition-colors"
               >
                 {f}
               </button>
@@ -147,12 +147,12 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/** Input box */}
+        {/** Input field */}
         <div className="flex space-x-2">
           <input
             type="text"
             placeholder="Type your prompt here…"
-            className="flex-1 border border-card rounded px-4 py-2 bg-background text-textPrimary focus:outline-accent"
+            className="flex-1 border border-border rounded px-4 py-2 bg-background text-textPrimary focus:outline-accent"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {

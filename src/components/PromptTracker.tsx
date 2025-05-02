@@ -6,13 +6,16 @@ export default function PromptTracker({ used, limit }: { used: number; limit: nu
   const pct = Math.min((used / limit) * 100, 100)
 
   return (
-    <div className="w-48 bg-card p-4 rounded-xl shadow flex flex-col">
-      <div className="flex justify-between text-sm mb-2">
-        <span>Prompts This Month</span>
-        <span>{used} / {limit}</span>
+    <div className="w-full max-w-sm bg-muted p-4 rounded-2xl shadow-md flex flex-col gap-2 border border-border">
+      <div className="flex justify-between items-center text-xs font-medium text-foreground/80">
+        <span>Prompts Used</span>
+        <span className="text-foreground">{used} / {limit}</span>
       </div>
-      <div className="w-full bg-gray-700 h-2 rounded">
-        <div className="bg-accent h-2 rounded" style={{ width: `${pct}%` }} />
+      <div className="w-full h-2 rounded-full bg-border overflow-hidden">
+        <div
+          className="h-full bg-primary transition-all duration-500 ease-in-out"
+          style={{ width: `${pct}%` }}
+        />
       </div>
     </div>
   )
