@@ -6,38 +6,35 @@ import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
 import TextAlign from '@tiptap/extension-text-align'
-
-// ✅ Correct path based on your project structure
 import EditorBubbleMenu from '../../components/EditorBubbleMenu'
+
 
 interface Props {
   content: string
-  setContent: (val: string) => void
+  setContent?: (val: string) => void
+  onChange?: (val: string) => void
 }
 
-export default function Editor({ content, setContent }: Props) {
+export default function Editor({ content, setContent, onChange }: Props) {
   const editor = useEditor({
     extensions: [
       StarterKit,
       Underline,
       Link,
-      TextAlign.configure({
-        types: ['heading', 'paragraph'],
-      }),
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
     ],
     content,
     onUpdate: ({ editor }) => {
-      setContent(editor.getHTML())
+      const newContent = editor.getHTML()
+      setContent?.(newContent)
+      onChange?.(newContent)
     },
   })
 
   return (
-    <div className="w-full bg-background border border-border rounded-lg p-4 shadow-sm">
+    <div className="relative">
       {editor && <EditorBubbleMenu editor={editor} />}
-      <EditorContent
-        editor={editor}
-        className="prose dark:prose-invert min-h-[300px] max-w-none focus:outline-none"
-      />
+      <EditorContent editor={editor} className="prose dark:prose-invert min-h-[200px] bg-background border border-card rounded-lg p-4" />
     </div>
   )
 }
