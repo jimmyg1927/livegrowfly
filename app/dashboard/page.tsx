@@ -120,9 +120,10 @@ export default function DashboardPage() {
           <PromptTracker used={user.promptsUsed} limit={user.promptLimit} />
           <Link
             href="/refer"
-            className="bg-muted border border-border px-4 py-2 rounded-xl text-xs flex items-center gap-2 hover:bg-muted/70 transition"
+            className="flex items-center gap-2 bg-muted border border-border px-4 py-3 rounded-xl shadow-sm hover:bg-muted/70 transition"
           >
-            <Gift size={14} /> Refer a Friend
+            <Gift size={18} className="text-accent" />
+            <span className="text-sm font-medium">Refer a Friend</span>
           </Link>
           <Link href="/settings">
             <UserCircle className="text-foreground hover:text-accent transition w-7 h-7" />
