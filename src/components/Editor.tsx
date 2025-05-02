@@ -1,4 +1,3 @@
-// File: src/components/Editor.tsx
 'use client'
 
 import React from 'react'
@@ -7,7 +6,9 @@ import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
 import TextAlign from '@tiptap/extension-text-align'
-import EditorBubbleMenu from './EditorBubbleMenu'  // same folder
+
+// Use absolute import via your tsconfig paths
+import EditorBubbleMenu from '@/components/EditorBubbleMenu'
 
 interface Props {
   content: string
@@ -24,7 +25,7 @@ export default function Editor({ content, setContent, onChange }: Props) {
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
     ],
     content,
-    onUpdate: ({ editor }) => {
+    onUpdate({ editor }) {
       const html = editor.getHTML()
       setContent(html)
       onChange?.(html)
