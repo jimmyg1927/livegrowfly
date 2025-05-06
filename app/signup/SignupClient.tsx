@@ -1,76 +1,76 @@
-'use client';
+'use client'
 
-import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
 
 export default function SignupClient() {
-  const router = useRouter();
+  const router = useRouter()
 
-  const [plan, setPlan] = useState('free');
-  const [referrerCode, setReferrerCode] = useState<string | null>(null);
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [plan, setPlan] = useState('free')
+  const [referrerCode, setReferrerCode] = useState<string | null>(null)
+  const [email, setEmail] = useState('')
+  const [name, setName] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const selectedPlan = params.get('plan') || 'free';
-    const refCode = params.get('ref') || null;
+    const params = new URLSearchParams(window.location.search)
+    const selectedPlan = params.get('plan') || 'free'
+    const refCode = params.get('ref') || null
 
-    setPlan(selectedPlan);
-    setReferrerCode(refCode);
-  }, []);
+    setPlan(selectedPlan)
+    setReferrerCode(refCode)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+    e.preventDefault()
+    setError(null)
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match.');
-      return;
+      setError('Passwords do not match.')
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
 
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, name, subscriptionType: plan, referrerCode }),
-      });
+      })
 
-      const contentType = res.headers.get('content-type');
+      const contentType = res.headers.get('content-type')
 
       if (!res.ok) {
         if (contentType && contentType.includes('application/json')) {
-          const data = await res.json();
-          setError(data.error || 'Something went wrong.');
+          const data = await res.json()
+          setError(data.error || 'Something went wrong.')
         } else {
-          setError('Unexpected server error. Please try again.');
+          setError('Unexpected server error. Please try again.')
         }
-        return;
+        return
       }
 
-      const data = await res.json();
+      const data = await res.json()
 
       if (data.token) {
-        localStorage.setItem('growfly_jwt', data.token);
-        router.push('/dashboard');
+        localStorage.setItem('growfly_jwt', data.token)
+        router.push('/dashboard')
       } else {
-        setError('Signup succeeded but no token returned.');
+        setError('Signup succeeded but no token returned.')
       }
     } catch (err) {
-      setError('Network error or server is unreachable.');
+      setError('Network error or server is unreachable.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#020617] to-gray-900 text-white flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#e6f2ff] to-[#fefefe] px-4 py-12">
       <div className="bg-white text-black p-8 rounded-2xl shadow-2xl w-full max-w-md">
         <button
           onClick={() => router.push('/plans')}
@@ -147,5 +147,5 @@ export default function SignupClient() {
         </form>
       </div>
     </div>
-  );
+  )
 }
