@@ -120,22 +120,25 @@ export default function DashboardPage() {
       let buffer = ''
       let fullText = ''
 
-      while (true) {
-        const { value, done } = await reader.read()
-        if (done) break
-        buffer += decoder.decode(value)
+      let done = false
+      while (!done) {
+        const result = await reader.read()
+        done = result.done
+        if (result.value) {
+          buffer += decoder.decode(result.value)
 
-        try {
-          const json = JSON.parse(buffer)
-          if (json.response) {
-            fullText += json.response
-            setMessages((prev) => prev.map((m, i) => i === prev.length - 1 ? { ...m, content: fullText } : m))
+          try {
+            const json = JSON.parse(buffer)
+            if (json.response) {
+              fullText += json.response
+              setMessages((prev) => prev.map((m, i) => i === prev.length - 1 ? { ...m, content: fullText } : m))
+            }
+            if (json.followUps) {
+              setFollowUps(json.followUps)
+            }
+          } catch (err) {
+            // Incomplete JSON chunk, skip
           }
-          if (json.followUps) {
-            setFollowUps(json.followUps)
-          }
-        } catch (err) {
-          // partial stream, ignore
         }
       }
 
