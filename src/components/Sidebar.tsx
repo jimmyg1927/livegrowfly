@@ -1,3 +1,5 @@
+// File: components/Sidebar.tsx
+
 'use client'
 
 import React from 'react'
@@ -24,14 +26,14 @@ export default function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <div className="bg-[#2bb5ff] text-white w-20 sm:w-60 flex flex-col items-center sm:items-start py-6 px-2 sm:px-4 border-r border-blue-300">
+    <div className="bg-[#dbeafe] text-black w-20 sm:w-60 flex flex-col items-center sm:items-start py-6 px-2 sm:px-4 border-r border-blue-300">
       {/* Logo */}
       <div className="mb-10">
         <Link href="/dashboard" className="flex items-center gap-2">
           <img
             src="/growfly-logo.png"
             alt="Growfly"
-            className="w-14 h-14 sm:w-16 sm:h-16 object-contain"
+            className="w-15 h-15 sm:w-18 sm:h-18 object-contain"
           />
         </Link>
       </div>
@@ -42,10 +44,10 @@ export default function Sidebar() {
           <Link
             key={item.name}
             href={item.href}
-            className={`flex items-center gap-3 p-2 rounded-md transition font-medium ${
+            className={`flex items-center gap-3 p-2 rounded-md transition text-sm font-medium ${
               pathname === item.href
-                ? 'bg-white text-black'
-                : 'text-white hover:bg-white/20'
+                ? 'bg-blue-600 text-white'
+                : 'text-blue-900 hover:bg-blue-100 hover:text-blue-700'
             }`}
           >
             <item.icon className="h-5 w-5" />
@@ -61,7 +63,7 @@ export default function Sidebar() {
             localStorage.removeItem('growfly_jwt')
             window.location.href = '/login'
           }}
-          className="flex items-center gap-3 w-full p-2 text-white hover:bg-white/20 rounded-md transition font-medium"
+          className="flex items-center gap-3 w-full p-2 text-blue-800 hover:text-white hover:bg-blue-600 rounded-md transition"
         >
           <HiOutlineLogout className="h-5 w-5" />
           <span className="hidden sm:inline">Logout</span>

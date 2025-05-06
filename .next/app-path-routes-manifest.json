@@ -1,0 +1,19 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/favicon.ico/route": "/favicon.ico",
+  "/forgot-password/page": "/forgot-password",
+  "/payment-success/page": "/payment-success",
+  "/plans/page": "/plans",
+  "/refer/page": "/refer",
+  "/set-password/page": "/set-password",
+  "/admin/page": "/admin",
+  "/contact/page": "/contact",
+  "/feedback/page": "/feedback",
+  "/dashboard/page": "/dashboard",
+  "/settings/page": "/settings",
+  "/collab-zone/page": "/collab-zone",
+  "/change-plan/page": "/change-plan",
+  "/saved/page": "/saved",
+  "/login/page": "/login",
+  "/signup/page": "/signup"
+}
