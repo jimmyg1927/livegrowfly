@@ -27,7 +27,18 @@ export default function DashboardPage() {
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null
 
-  // fetch user on mount
+  // Next month start date string
+  const getNextRefresh = () => {
+    const now = new Date()
+    const next = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+    return next.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  }
+
+  // Fetch user & usage
   useEffect(() => {
     if (!token) {
       router.push('/login')
@@ -51,14 +62,14 @@ export default function DashboardPage() {
       })
   }, [token, router])
 
-  // protect plans
+  // Redirect if no subscription
   useEffect(() => {
     if (user && (!user.subscriptionType || user.subscriptionType === 'none')) {
       router.push('/plans')
     }
   }, [user, router])
 
-  // auto-scroll on new messages
+  // Auto-scroll chat
   useEffect(() => {
     if (chatRef.current) {
       chatRef.current.scrollTo({
@@ -72,7 +83,21 @@ export default function DashboardPage() {
     const text = msg.trim()
     if (!text) return
 
-    // append user message
+    // Check limit
+    if (usage >= user.promptLimit) {
+      const refreshDate = getNextRefresh()
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: `🚫 You’ve hit your monthly limit. Upgrade your plan to unlock more prompts, or wait until ${refreshDate}.`,
+        },
+      ])
+      setInput('')
+      return
+    }
+
+    // Append user message
     setMessages((prev) => [...prev, { role: 'user', content: text }])
     setLoading(true)
 
@@ -89,11 +114,9 @@ export default function DashboardPage() {
       if (!res.ok) throw new Error('Server error')
       const data = await res.json()
 
-      // append AI response
+      // Append AI response + follow-ups + bump usage
       setMessages((prev) => [...prev, { role: 'assistant', content: data.response }])
       setFollowUps(data.followUps || [])
-
-      // update usage
       setUsage((prev) => prev + 1)
     } catch (err: any) {
       setMessages((prev) => [...prev, { role: 'assistant', content: `❌ ${err.message}` }])
@@ -220,11 +243,11 @@ export default function DashboardPage() {
         )}
 
         {/* INPUT AREA */}
-        <div className="flex space-x-2 items-center">
+        <div className="flex space-x-2 items-center bg-muted-light p-2 rounded-lg">
           <input
             type="text"
             placeholder="What would you like help with today?"
-            className="flex-1 border border-border rounded px-4 py-2 bg-background text-textPrimary text-sm focus:outline-accent"
+            className="flex-1 border border-border rounded px-4 py-2 bg-muted text-textPrimary text-sm focus:outline-accent"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
