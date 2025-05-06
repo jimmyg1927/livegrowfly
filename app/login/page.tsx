@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { API_BASE_URL } from '@/lib/constants'
 
 export default function LoginPage() {
@@ -28,11 +29,7 @@ export default function LoginPage() {
       }
 
       const data = await res.json()
-
-      // ✅ STEP 1: Save the token
       localStorage.setItem('growfly_jwt', data.token)
-
-      // ✅ STEP 2: Redirect to dashboard
       router.push('/dashboard')
     } catch (err: any) {
       setError(err.message)
@@ -59,6 +56,14 @@ export default function LoginPage() {
           required
           className="w-full px-3 py-2 border rounded"
         />
+        <div className="text-right">
+          <Link
+            href="/forgot-password"
+            className="text-sm text-blue-600 hover:underline"
+          >
+            Forgot password?
+          </Link>
+        </div>
         <button
           type="submit"
           className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
