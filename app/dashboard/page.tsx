@@ -93,7 +93,7 @@ export default function DashboardPage() {
         ...prev,
         {
           role: 'assistant',
-          content: `🚫 You’ve hit your monthly limit. Upgrade your plan to unlock more prompts, or wait until ${refreshDate}.`,
+          content: `🛛 You’ve hit your monthly limit. Upgrade your plan to unlock more prompts, or wait until ${refreshDate}.`,
         },
       ])
       setInput('')
@@ -120,24 +120,27 @@ export default function DashboardPage() {
       let buffer = ''
       let fullText = ''
 
-      let done = false
-      while (!done) {
-        const result = await reader.read()
-        done = result.done
-        if (result.value) {
-          buffer += decoder.decode(result.value)
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
 
-          try {
-            const json = JSON.parse(buffer)
-            if (json.response) {
-              fullText += json.response
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n\n')
+        buffer = lines.pop() || ''
+
+        for (let line of lines) {
+          if (line.startsWith('data:')) {
+            const jsonStr = line.replace('data:', '').trim()
+            if (jsonStr === '[DONE]') continue
+
+            const data = JSON.parse(jsonStr)
+            if (data.type === 'partial') {
+              fullText += data.content
               setMessages((prev) => prev.map((m, i) => i === prev.length - 1 ? { ...m, content: fullText } : m))
             }
-            if (json.followUps) {
-              setFollowUps(json.followUps)
+            if (data.type === 'complete' && data.followUps) {
+              setFollowUps(data.followUps)
             }
-          } catch (err) {
-            // Incomplete JSON chunk, skip
           }
         }
       }
