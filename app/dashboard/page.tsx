@@ -142,7 +142,9 @@ export default function DashboardPage() {
                 if (parsed.type === 'complete') {
                   setFollowUps(parsed.followUps || [])
                 }
-              } catch {}
+              } catch (err: any) {
+                console.error('Streaming error:', err)
+              }
             }
           }
         }
