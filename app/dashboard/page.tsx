@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import React, { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
@@ -142,7 +142,7 @@ export default function DashboardPage() {
                 if (parsed.type === 'complete') {
                   setFollowUps(parsed.followUps || [])
                 }
-              } catch (err: any) {
+              } catch (err) {
                 console.error('Streaming error:', err)
               }
             }
@@ -213,10 +213,10 @@ export default function DashboardPage() {
           <h2 className="text-base font-medium text-foreground">Your AI Sidekick</h2>
         </div>
 
-        <div ref={chatRef} className="max-h-[60vh] overflow-y-auto space-y-4 bg-zinc-100 dark:bg-zinc-800 p-4 rounded-xl text-sm leading-relaxed whitespace-pre-wrap animate-fade-in">
+        <div ref={chatRef} className="max-h-[60vh] overflow-y-auto space-y-4 bg-muted text-foreground p-4 rounded-xl text-sm leading-relaxed whitespace-pre-wrap animate-fade-in">
           {messages.slice(-10).map((m, i) => (
             <div key={i} className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
-              <div className={`p-3 rounded-lg max-w-[80%] ${m.role === 'assistant' ? 'bg-blue-50 dark:bg-zinc-700 border border-blue-100 dark:border-zinc-600' : 'bg-accent text-white'}`}>
+              <div className={`p-3 rounded-xl max-w-[80%] text-sm shadow ${m.role === 'assistant' ? 'bg-blue-50 dark:bg-zinc-700 border border-blue-100 dark:border-zinc-600 text-foreground' : 'bg-accent text-white'}`}>
                 {m.content}
               </div>
             </div>

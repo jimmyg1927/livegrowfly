@@ -24,7 +24,7 @@ export default function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <div className="bg-[#020617] text-white w-20 sm:w-60 flex flex-col items-center sm:items-start py-6 px-2 sm:px-4 border-r border-gray-800">
+    <div className="bg-[#2bb5ff] text-white w-20 sm:w-60 flex flex-col items-center sm:items-start py-6 px-2 sm:px-4 border-r border-blue-300">
       {/* Logo */}
       <div className="mb-10">
         <Link href="/dashboard" className="flex items-center gap-2">
@@ -42,10 +42,10 @@ export default function Sidebar() {
           <Link
             key={item.name}
             href={item.href}
-            className={`flex items-center gap-3 p-2 rounded-md transition ${
+            className={`flex items-center gap-3 p-2 rounded-md transition font-medium ${
               pathname === item.href
                 ? 'bg-white text-black'
-                : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                : 'text-white hover:bg-white/20'
             }`}
           >
             <item.icon className="h-5 w-5" />
@@ -61,7 +61,7 @@ export default function Sidebar() {
             localStorage.removeItem('growfly_jwt')
             window.location.href = '/login'
           }}
-          className="flex items-center gap-3 w-full p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-md transition"
+          className="flex items-center gap-3 w-full p-2 text-white hover:bg-white/20 rounded-md transition font-medium"
         >
           <HiOutlineLogout className="h-5 w-5" />
           <span className="hidden sm:inline">Logout</span>
