@@ -85,16 +85,13 @@ export default function DashboardPage() {
 
   const handleSend = async (msg: string) => {
     const text = msg.trim()
-    if (!text) return
+    if (!text || !user) return
 
-    if (usage >= (user?.promptLimit || 0)) {
+    if (usage >= user.promptLimit) {
       const refreshDate = getNextRefresh()
       setMessages((prev) => [
         ...prev,
-        {
-          role: 'assistant',
-          content: `🛛 You’ve hit your monthly limit. Upgrade your plan to unlock more prompts, or wait until ${refreshDate}.`,
-        },
+        { role: 'assistant', content: `🚫 You’ve hit your monthly limit. Upgrade your plan to unlock more prompts, or wait until ${refreshDate}.` },
       ])
       setInput('')
       return
@@ -117,29 +114,34 @@ export default function DashboardPage() {
       if (!reader) throw new Error('No response body')
 
       const decoder = new TextDecoder()
-      let buffer = ''
       let fullText = ''
 
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
+      let done = false
+      while (!done) {
+        const { value, done: readerDone } = await reader.read()
+        done = readerDone
 
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n\n')
-        buffer = lines.pop() || ''
+        if (value) {
+          const chunk = decoder.decode(value, { stream: true })
+          const lines = chunk.split('\n\n')
+          for (const line of lines) {
+            const clean = line.trim()
+            if (clean.startsWith('data:')) {
+              const jsonStr = clean.replace(/^data:\s*/, '')
+              if (jsonStr === '[DONE]') continue
 
-        for (let line of lines) {
-          if (line.startsWith('data:')) {
-            const jsonStr = line.replace('data:', '').trim()
-            if (jsonStr === '[DONE]') continue
-
-            const data = JSON.parse(jsonStr)
-            if (data.type === 'partial') {
-              fullText += data.content
-              setMessages((prev) => prev.map((m, i) => i === prev.length - 1 ? { ...m, content: fullText } : m))
-            }
-            if (data.type === 'complete' && data.followUps) {
-              setFollowUps(data.followUps)
+              try {
+                const parsed = JSON.parse(jsonStr)
+                if (parsed.type === 'partial') {
+                  fullText += parsed.content
+                  setMessages((prev) => prev.map((m, i) => i === prev.length - 1 ? { ...m, content: fullText } : m))
+                }
+                if (parsed.type === 'complete') {
+                  setFollowUps(parsed.followUps || [])
+                }
+              } catch (err) {
+                // incomplete JSON, skip
+              }
             }
           }
         }
@@ -180,25 +182,16 @@ export default function DashboardPage() {
   }
 
   if (!user) {
-    return (
-      <div className="flex items-center justify-center h-screen text-textSecondary">
-        Loading…
-      </div>
-    )
+    return <div className="flex items-center justify-center h-screen text-textSecondary">Loading…</div>
   }
 
   return (
     <div className="space-y-6 px-4 md:px-8 lg:px-12 pb-10">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold text-foreground">
-          Welcome, {user.name || user.email}
-        </h1>
+        <h1 className="text-xl font-semibold text-foreground">Welcome, {user.name || user.email}</h1>
         <div className="flex items-center space-x-4">
           <PromptTracker used={usage} limit={user.promptLimit} />
-          <Link
-            href="/refer"
-            className="flex items-center gap-2 bg-muted border border-border px-4 py-3 rounded-xl shadow-sm hover:bg-muted/70 transition"
-          >
+          <Link href="/refer" className="flex items-center gap-2 bg-muted border border-border px-4 py-3 rounded-xl shadow-sm hover:bg-muted/70 transition">
             <Gift size={18} className="text-accent" />
             <span className="text-sm font-medium">Refer a Friend</span>
           </Link>
@@ -214,22 +207,10 @@ export default function DashboardPage() {
           <h2 className="text-base font-medium text-foreground">Your AI Sidekick</h2>
         </div>
 
-        <div
-          ref={chatRef}
-          className="max-h-[60vh] overflow-y-auto space-y-4 bg-muted text-foreground p-4 rounded-xl shadow text-sm leading-relaxed whitespace-pre-wrap animate-fade-in"
-        >
+        <div ref={chatRef} className="max-h-[60vh] overflow-y-auto space-y-4 bg-muted text-foreground p-4 rounded-xl shadow text-sm leading-relaxed whitespace-pre-wrap animate-fade-in">
           {messages.slice(-10).map((m, i) => (
-            <div
-              key={i}
-              className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}
-            >
-              <div
-                className={`p-3 rounded-lg max-w-[80%] ${
-                  m.role === 'assistant'
-                    ? 'bg-muted border border-border'
-                    : 'bg-primary text-white'
-                }`}
-              >
+            <div key={i} className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
+              <div className={`p-3 rounded-lg max-w-[80%] ${m.role === 'assistant' ? 'bg-muted border border-border' : 'bg-primary text-white'}`}>
                 {m.content}
               </div>
             </div>
@@ -237,16 +218,10 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex gap-2">
-          <button
-            onClick={handleSave}
-            className="flex items-center gap-1 text-xs px-3 py-1 rounded-full bg-primary text-white hover:bg-primary/80 transition"
-          >
+          <button onClick={handleSave} className="flex items-center gap-1 text-xs px-3 py-1 rounded-full bg-primary text-white hover:bg-primary/80 transition">
             <Save size={14} /> Save
           </button>
-          <button
-            onClick={handleShare}
-            className="flex items-center gap-1 text-xs px-3 py-1 rounded-full bg-secondary text-foreground hover:bg-secondary/80 transition"
-          >
+          <button onClick={handleShare} className="flex items-center gap-1 text-xs px-3 py-1 rounded-full bg-secondary text-foreground hover:bg-secondary/80 transition">
             <Share2 size={14} /> Share to Collab Zone
           </button>
         </div>
@@ -254,11 +229,7 @@ export default function DashboardPage() {
         {followUps.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {followUps.map((f, i) => (
-              <button
-                key={i}
-                onClick={() => handleSend(f)}
-                className="text-xs bg-secondary/10 text-secondary border border-secondary px-3 py-1 rounded-full hover:bg-secondary/20 transition"
-              >
+              <button key={i} onClick={() => handleSend(f)} className="text-xs bg-secondary/10 text-secondary border border-secondary px-3 py-1 rounded-full hover:bg-secondary/20 transition">
                 {f}
               </button>
             ))}
