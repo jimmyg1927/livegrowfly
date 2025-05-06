@@ -1,10 +1,16 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { FiTrash2, FiMaximize2 } from "react-icons/fi";
-import { format } from "date-fns";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { FiTrash2, FiMaximize2 } from 'react-icons/fi';
+import { format } from 'date-fns';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog';
 
 interface SavedItem {
   id: string;
@@ -13,68 +19,74 @@ interface SavedItem {
   createdAt: string;
 }
 
-const ITEMS_PER_PAGE = 6;
-
 export default function SavedPage() {
   const [saved, setSaved] = useState<SavedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editedTitle, setEditedTitle] = useState("");
-  const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [editedTitle, setEditedTitle] = useState('');
+  const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<SavedItem | null>(null);
   const router = useRouter();
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("growfly_jwt") : null;
+  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null;
 
   useEffect(() => {
     if (!token) {
-      router.push("/login");
+      router.push('/login');
       return;
     }
 
-    fetch("/api/saved", {
+    fetch('/api/saved', {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
-        if (!res.ok) throw new Error("Not authenticated");
+        if (!res.ok) throw new Error('Not authenticated');
         return res.json();
       })
-      .then((data: SavedItem[]) => setSaved(data))
-      .catch(() => alert("Failed to load saved responses"))
+      .then((data: SavedItem[]) => {
+        setSaved(data);
+      })
+      .catch(() => alert('Failed to load saved responses'))
       .finally(() => setLoading(false));
   }, [token, router]);
 
   const handleDelete = async (id: string) => {
     if (!token) return;
-    const confirm = window.confirm("Are you sure you want to delete this saved item?");
-    if (!confirm) return;
+    if (!confirm('Delete this saved response?')) return;
 
     const res = await fetch(`/api/saved/${id}`, {
-      method: "DELETE",
+      method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (res.ok) setSaved((prev) => prev.filter((item) => item.id !== id));
-    else alert("Failed to delete");
+
+    if (res.ok) {
+      setSaved((prev) => prev.filter((item) => item.id !== id));
+    } else {
+      alert('Failed to delete');
+    }
   };
 
   const handleRename = async (id: string) => {
     if (!token) return;
+
     const res = await fetch(`/api/saved/${id}`, {
-      method: "PUT",
+      method: 'PUT',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ title: editedTitle }),
     });
+
     if (res.ok) {
       setSaved((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, title: editedTitle } : item))
+        prev.map((item) =>
+          item.id === id ? { ...item, title: editedTitle } : item
+        )
       );
       setEditingId(null);
     } else {
-      alert("Failed to rename");
+      alert('Failed to rename');
     }
   };
 
@@ -83,20 +95,14 @@ export default function SavedPage() {
   );
 
   const grouped = filtered.reduce((acc: { [key: string]: SavedItem[] }, item) => {
-    const date = format(new Date(item.createdAt), "PPP");
+    const date = format(new Date(item.createdAt), 'PPP');
     if (!acc[date]) acc[date] = [];
     acc[date].push(item);
     return acc;
   }, {});
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const paginated = filtered.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
-
   return (
-    <div className="p-6 space-y-6 bg-background text-textPrimary min-h-screen">
+    <div className="p-6 space-y-8 bg-background text-textPrimary min-h-screen">
       <h1 className="text-2xl font-bold">📁 Saved Responses</h1>
 
       <input
@@ -108,46 +114,42 @@ export default function SavedPage() {
       />
 
       {loading ? (
-        <p>Loading saved responses…</p>
+        <p>Loading…</p>
       ) : filtered.length === 0 ? (
         <p className="text-muted-foreground">No saved responses found.</p>
       ) : (
         Object.entries(grouped).map(([date, items]) => (
           <div key={date} className="space-y-3">
-            <h2 className="text-lg font-semibold text-muted-foreground">{date}</h2>
+            <h2 className="text-lg font-semibold text-blue-400">{date}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {items.slice(
-                (currentPage - 1) * ITEMS_PER_PAGE,
-                currentPage * ITEMS_PER_PAGE
-              ).map((item) => (
+              {items.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-card border border-muted rounded-xl p-4 shadow-sm hover:shadow-md transition duration-200"
+                  className="bg-card border border-muted rounded-xl p-4 shadow-sm hover:shadow-md transition"
                 >
-                  <div>
-                    {editingId === item.id ? (
-                      <input
-                        className="mb-2 w-full px-3 py-1 rounded border border-muted bg-background focus:outline-none focus:ring-2 focus:ring-accent"
-                        value={editedTitle}
-                        onChange={(e) => setEditedTitle(e.target.value)}
-                        onBlur={() => handleRename(item.id)}
-                        autoFocus
-                      />
-                    ) : (
-                      <h3
-                        className="text-lg font-semibold cursor-pointer hover:underline"
-                        onClick={() => {
-                          setEditingId(item.id);
-                          setEditedTitle(item.title);
-                        }}
-                      >
-                        {item.title}
-                      </h3>
-                    )}
-                    <p className="mt-2 text-sm whitespace-pre-wrap text-muted-foreground">
-                      {item.content.slice(0, 200)}…
-                    </p>
-                  </div>
+                  {editingId === item.id ? (
+                    <input
+                      className="mb-2 w-full px-3 py-1 rounded border border-muted bg-background focus:outline-none focus:ring-2 focus:ring-accent"
+                      value={editedTitle}
+                      onChange={(e) => setEditedTitle(e.target.value)}
+                      onBlur={() => handleRename(item.id)}
+                      autoFocus
+                    />
+                  ) : (
+                    <h3
+                      className="text-lg font-semibold cursor-pointer hover:underline"
+                      onClick={() => {
+                        setEditingId(item.id);
+                        setEditedTitle(item.title);
+                      }}
+                    >
+                      {item.title}
+                    </h3>
+                  )}
+
+                  <p className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap">
+                    {item.content.slice(0, 200)}...
+                  </p>
 
                   <div className="mt-4 flex justify-between items-center">
                     <Dialog>
@@ -168,6 +170,7 @@ export default function SavedPage() {
                         </div>
                       </DialogContent>
                     </Dialog>
+
                     <button
                       onClick={() => handleDelete(item.id)}
                       className="flex items-center gap-1 text-sm px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white transition"
@@ -180,25 +183,6 @@ export default function SavedPage() {
             </div>
           </div>
         ))
-      )}
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center gap-2 mt-6">
-          {[...Array(totalPages)].map((_, idx) => (
-            <button
-              key={idx + 1}
-              onClick={() => setCurrentPage(idx + 1)}
-              className={`px-3 py-1 rounded-full text-sm font-medium transition border ${
-                currentPage === idx + 1
-                  ? 'bg-accent text-white border-accent'
-                  : 'bg-card text-foreground border-muted hover:bg-muted'
-              }`}
-            >
-              {idx + 1}
-            </button>
-          ))}
-        </div>
       )}
     </div>
   );

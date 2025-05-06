@@ -11,15 +11,17 @@ import {
   HiOutlineUserGroup,
   HiOutlineCurrencyPound,
   HiOutlineLightBulb,
+  HiOutlineHeart,
 } from 'react-icons/hi'
 
 const navItems = [
-  { name: 'Dashboard', href: '/dashboard', icon: HiOutlineHome },
-  { name: 'Collab Zone', href: '/collab-zone', icon: HiOutlineUserGroup },
-  { name: 'Saved', href: '/saved', icon: HiOutlineDocumentText },
-  { name: 'Nerdify Me!', href: '/nerd-mode', icon: HiOutlineLightBulb },
-  { name: 'Settings', href: '/settings', icon: HiOutlineCog },
-  { name: 'Change Plan', href: '/plans', icon: HiOutlineCurrencyPound },
+  { name: 'Dashboard',    href: '/dashboard',    icon: HiOutlineHome       },
+  { name: 'Collab Zone',  href: '/collab-zone',  icon: HiOutlineUserGroup  },
+  { name: 'Saved',        href: '/saved',        icon: HiOutlineDocumentText },
+  { name: 'Nerdify Me!',  href: '/nerd-mode',    icon: HiOutlineLightBulb  },
+  { name: 'Wishlist',     href: '/wishlist',     icon: HiOutlineHeart      },
+  { name: 'Settings',     href: '/settings',     icon: HiOutlineCog        },
+  { name: 'Change Plan',  href: '/plans',        icon: HiOutlineCurrencyPound },
 ]
 
 export default function Sidebar() {
@@ -33,27 +35,30 @@ export default function Sidebar() {
           <img
             src="/growfly-logo.png"
             alt="Growfly"
-            className="w-15 h-15 sm:w-18 sm:h-18 object-contain"
+            className="w-14 h-14 sm:w-16 sm:h-16 object-contain"
           />
         </Link>
       </div>
 
       {/* Navigation */}
       <nav className="flex flex-col gap-3 w-full">
-        {navItems.map((item) => (
-          <Link
-            key={item.name}
-            href={item.href}
-            className={`flex items-center gap-3 px-4 py-2 rounded-md transition text-sm font-medium ${
-              pathname === item.href
-                ? 'bg-white text-black shadow'
-                : 'text-white hover:bg-white/20'
-            }`}
-          >
-            <item.icon className="h-5 w-5" />
-            <span className="hidden sm:inline">{item.name}</span>
-          </Link>
-        ))}
+        {navItems.map((item) => {
+          const isActive = pathname === item.href
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`flex items-center gap-3 px-4 py-2 rounded-md transition text-sm font-medium ${
+                isActive
+                  ? 'bg-white text-black shadow'
+                  : 'text-white hover:bg-white/20'
+              }`}
+            >
+              <item.icon className="h-5 w-5" />
+              <span className="hidden sm:inline">{item.name}</span>
+            </Link>
+          )
+        })}
       </nav>
 
       {/* Logout */}
