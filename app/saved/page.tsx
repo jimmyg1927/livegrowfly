@@ -1,4 +1,3 @@
-// app/saved/page.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -20,9 +19,7 @@ export default function SavedPage() {
   const [search, setSearch] = useState('')
   const router = useRouter()
 
-  // grab your JWT however you store it
-  const token =
-    typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null
+  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null
 
   useEffect(() => {
     if (!token) {
@@ -30,47 +27,52 @@ export default function SavedPage() {
       return
     }
 
-    fetch('/api/saved', {
-      headers: { Authorization: `Bearer ${token}` },
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/saved`, {
+      headers: { Authorization: `Bearer ${token}` }
     })
       .then((res) => {
-        if (!res.ok) throw new Error('Not authenticated')
+        if (!res.ok) throw new Error('Auth error')
         return res.json()
       })
       .then((data: SavedItem[]) => setSaved(data))
-      .catch(() => alert('Failed to load saved responses'))
+      .catch((err) => {
+        console.error('❌ Failed to load saved responses:', err)
+        alert('Failed to load saved responses')
+      })
       .finally(() => setLoading(false))
   }, [token, router])
 
   const handleDelete = async (id: string) => {
     if (!token) return
-    const res = await fetch(`/api/saved/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/saved/${id}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${token}` }
     })
-    if (res.ok) setSaved((prev) => prev.filter((item) => item.id !== id))
-    else alert('Failed to delete')
+    if (res.ok) {
+      setSaved((prev) => prev.filter((item) => item.id !== id))
+    } else {
+      alert('Failed to delete saved response')
+    }
   }
 
   const handleRename = async (id: string) => {
     if (!token) return
-    const res = await fetch(`/api/saved/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/saved/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`
       },
-      body: JSON.stringify({ title: editedTitle }),
+      body: JSON.stringify({ title: editedTitle })
     })
+
     if (res.ok) {
       setSaved((prev) =>
-        prev.map((item) =>
-          item.id === id ? { ...item, title: editedTitle } : item
-        )
+        prev.map((item) => (item.id === id ? { ...item, title: editedTitle } : item))
       )
       setEditingId(null)
     } else {
-      alert('Failed to rename')
+      alert('Failed to rename saved response')
     }
   }
 
@@ -91,17 +93,17 @@ export default function SavedPage() {
       />
 
       {loading ? (
-        <p>Loading saved responses…</p>
+        <p className="mt-4 text-muted-foreground">Loading saved responses…</p>
       ) : filtered.length === 0 ? (
-        <p className="text-muted-foreground">No saved responses found.</p>
+        <p className="mt-4 text-muted-foreground">No saved responses found.</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
           {filtered.map((item) => (
             <div
               key={item.id}
-              className="bg-card border border-muted rounded-xl p-4 shadow-sm flex flex-col justify-between"
+              className="bg-card border border-muted rounded-xl p-4 shadow-sm flex flex-col justify-between hover:shadow-md transition"
             >
-              <div>
+              <div className="flex-1">
                 {editingId === item.id ? (
                   <input
                     className="mb-2 w-full px-3 py-1 rounded border border-muted bg-background focus:outline-none focus:ring-2 focus:ring-accent"
@@ -122,17 +124,20 @@ export default function SavedPage() {
                   </h2>
                 )}
 
-                <p className="mt-2 text-sm whitespace-pre-wrap text-muted-foreground">
-                  {item.content.slice(0, 200)}…
+                <p className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap max-h-40 overflow-hidden">
+                  {item.content}
                 </p>
               </div>
 
-              <div className="mt-4 flex justify-end gap-2">
+              <div className="mt-4 flex justify-between items-center">
+                <span className="text-xs text-muted-foreground">
+                  Saved {new Date(item.createdAt).toLocaleDateString()}
+                </span>
                 <button
                   onClick={() => handleDelete(item.id)}
                   className="flex items-center gap-1 text-sm px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white transition"
                 >
-                  <FiTrash2 /> Delete
+                  <FiTrash2 size={16} /> Delete
                 </button>
               </div>
             </div>
