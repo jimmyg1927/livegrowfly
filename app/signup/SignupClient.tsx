@@ -7,7 +7,7 @@ export default function SignupClient() {
   const router = useRouter();
 
   const [plan, setPlan] = useState('free');
-  const [referrerCode, setReferrerCode] = useState<string | null>(null); // NEW: Capture ref code
+  const [referrerCode, setReferrerCode] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
@@ -15,7 +15,6 @@ export default function SignupClient() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Capture plan + referrer from URL params safely
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const selectedPlan = params.get('plan') || 'free';
@@ -71,69 +70,82 @@ export default function SignupClient() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-600 to-blue-300 text-white">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white text-black rounded-2xl shadow-lg p-8 max-w-md w-full"
-      >
-        <h1 className="text-3xl font-bold mb-6 text-center">
+    <div className="min-h-screen bg-gradient-to-b from-[#020617] to-gray-900 text-white flex items-center justify-center px-4 py-12">
+      <div className="bg-white text-black p-8 rounded-2xl shadow-2xl w-full max-w-md">
+        <button
+          onClick={() => router.push('/plans')}
+          className="text-sm text-blue-600 hover:underline mb-4"
+        >
+          ← Back to Plans
+        </button>
+        <h1 className="text-2xl font-bold mb-4 text-center">
           🚀 Sign Up for {plan.charAt(0).toUpperCase() + plan.slice(1)} Plan
         </h1>
 
         {referrerCode && (
-          <p className="text-sm text-green-600 mb-4">
-            🎉 You were referred! Your referrer code: <strong>{referrerCode}</strong>
+          <p className="text-sm text-green-600 mb-4 text-center">
+            🎉 You were referred! Referrer Code: <strong>{referrerCode}</strong>
           </p>
         )}
 
-        {error && <p className="text-red-600 mb-4">{error}</p>}
+        {error && <p className="text-red-600 mb-4 text-center">{error}</p>}
 
-        <label className="block mb-2 font-semibold">Name</label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full border border-gray-300 p-2 rounded mb-4"
-          required
-        />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block mb-1 font-semibold">Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100"
+              required
+            />
+          </div>
 
-        <label className="block mb-2 font-semibold">Email</label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full border border-gray-300 p-2 rounded mb-4"
-          required
-        />
+          <div>
+            <label className="block mb-1 font-semibold">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100"
+              required
+            />
+          </div>
 
-        <label className="block mb-2 font-semibold">Password</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full border border-gray-300 p-2 rounded mb-4"
-          required
-        />
+          <div>
+            <label className="block mb-1 font-semibold">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100"
+              required
+            />
+          </div>
 
-        <label className="block mb-2 font-semibold">Confirm Password</label>
-        <input
-          type="password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          className="w-full border border-gray-300 p-2 rounded mb-6"
-          required
-        />
+          <div>
+            <label className="block mb-1 font-semibold">Confirm Password</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100"
+              required
+            />
+          </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full py-2 rounded-xl text-white font-semibold ${
-            loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-800 transition'
-          }`}
-        >
-          {loading ? 'Creating Account...' : 'Create Account'}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full py-2 rounded-xl text-white font-semibold ${
+              loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-800 transition'
+            }`}
+          >
+            {loading ? 'Creating Account...' : 'Create Account'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
