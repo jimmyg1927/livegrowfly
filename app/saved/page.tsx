@@ -1,93 +1,103 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { FiTrash2 } from 'react-icons/fi'
-import { format } from 'date-fns'
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { FiTrash2, FiMaximize2 } from "react-icons/fi";
+import { format } from "date-fns";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface SavedItem {
-  id: string
-  title: string
-  content: string
-  createdAt: string
+  id: string;
+  title: string;
+  content: string;
+  createdAt: string;
 }
 
-export default function SavedPage() {
-  const [saved, setSaved] = useState<SavedItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editedTitle, setEditedTitle] = useState('')
-  const [search, setSearch] = useState('')
-  const router = useRouter()
+const ITEMS_PER_PAGE = 6;
 
-  const token =
-    typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null
+export default function SavedPage() {
+  const [saved, setSaved] = useState<SavedItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editedTitle, setEditedTitle] = useState("");
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selected, setSelected] = useState<SavedItem | null>(null);
+  const router = useRouter();
+
+  const token = typeof window !== "undefined" ? localStorage.getItem("growfly_jwt") : null;
 
   useEffect(() => {
     if (!token) {
-      router.push('/login')
-      return
+      router.push("/login");
+      return;
     }
 
-    fetch('/api/saved', {
+    fetch("/api/saved", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
-        if (!res.ok) throw new Error('Not authenticated')
-        return res.json()
+        if (!res.ok) throw new Error("Not authenticated");
+        return res.json();
       })
       .then((data: SavedItem[]) => setSaved(data))
-      .catch(() => alert('Failed to load saved responses'))
-      .finally(() => setLoading(false))
-  }, [token, router])
+      .catch(() => alert("Failed to load saved responses"))
+      .finally(() => setLoading(false));
+  }, [token, router]);
 
   const handleDelete = async (id: string) => {
-    if (!token) return
-    const confirm = window.confirm('Are you sure you want to delete this saved item?')
-    if (!confirm) return
+    if (!token) return;
+    const confirm = window.confirm("Are you sure you want to delete this saved item?");
+    if (!confirm) return;
 
     const res = await fetch(`/api/saved/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
-    })
-    if (res.ok) setSaved((prev) => prev.filter((item) => item.id !== id))
-    else alert('Failed to delete')
-  }
+    });
+    if (res.ok) setSaved((prev) => prev.filter((item) => item.id !== id));
+    else alert("Failed to delete");
+  };
 
   const handleRename = async (id: string) => {
-    if (!token) return
+    if (!token) return;
     const res = await fetch(`/api/saved/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ title: editedTitle }),
-    })
+    });
     if (res.ok) {
       setSaved((prev) =>
         prev.map((item) => (item.id === id ? { ...item, title: editedTitle } : item))
-      )
-      setEditingId(null)
+      );
+      setEditingId(null);
     } else {
-      alert('Failed to rename')
+      alert("Failed to rename");
     }
-  }
+  };
 
   const filtered = saved.filter((item) =>
     item.title.toLowerCase().includes(search.toLowerCase())
-  )
+  );
 
   const grouped = filtered.reduce((acc: { [key: string]: SavedItem[] }, item) => {
-    const date = format(new Date(item.createdAt), 'PPP')
-    if (!acc[date]) acc[date] = []
-    acc[date].push(item)
-    return acc
-  }, {})
+    const date = format(new Date(item.createdAt), "PPP");
+    if (!acc[date]) acc[date] = [];
+    acc[date].push(item);
+    return acc;
+  }, {});
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginated = filtered.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
-    <div className="p-6 space-y-6 bg-background text-textPrimary">
-      <h1 className="text-2xl font-bold text-foreground">📁 Saved Responses</h1>
+    <div className="p-6 space-y-6 bg-background text-textPrimary min-h-screen">
+      <h1 className="text-2xl font-bold">📁 Saved Responses</h1>
 
       <input
         type="text"
@@ -106,10 +116,13 @@ export default function SavedPage() {
           <div key={date} className="space-y-3">
             <h2 className="text-lg font-semibold text-muted-foreground">{date}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {items.map((item) => (
+              {items.slice(
+                (currentPage - 1) * ITEMS_PER_PAGE,
+                currentPage * ITEMS_PER_PAGE
+              ).map((item) => (
                 <div
                   key={item.id}
-                  className="bg-white dark:bg-zinc-900 border border-border rounded-xl p-4 shadow-md flex flex-col justify-between transition hover:shadow-lg"
+                  className="bg-card border border-muted rounded-xl p-4 shadow-sm hover:shadow-md transition duration-200"
                 >
                   <div>
                     {editingId === item.id ? (
@@ -124,23 +137,40 @@ export default function SavedPage() {
                       <h3
                         className="text-lg font-semibold cursor-pointer hover:underline"
                         onClick={() => {
-                          setEditingId(item.id)
-                          setEditedTitle(item.title)
+                          setEditingId(item.id);
+                          setEditedTitle(item.title);
                         }}
                       >
                         {item.title}
                       </h3>
                     )}
-
                     <p className="mt-2 text-sm whitespace-pre-wrap text-muted-foreground">
                       {item.content.slice(0, 200)}…
                     </p>
                   </div>
 
-                  <div className="mt-4 flex justify-end">
+                  <div className="mt-4 flex justify-between items-center">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <button
+                          onClick={() => setSelected(item)}
+                          className="flex items-center gap-1 text-xs px-3 py-1 rounded border border-accent text-accent hover:bg-accent hover:text-white transition"
+                        >
+                          <FiMaximize2 className="w-4 h-4" /> View Full
+                        </button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-xl">
+                        <DialogHeader>
+                          <DialogTitle>{selected?.title}</DialogTitle>
+                        </DialogHeader>
+                        <div className="text-sm whitespace-pre-wrap mt-2 text-muted-foreground">
+                          {selected?.content}
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                     <button
                       onClick={() => handleDelete(item.id)}
-                      className="flex items-center gap-1 text-xs px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white transition"
+                      className="flex items-center gap-1 text-sm px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white transition"
                     >
                       <FiTrash2 /> Delete
                     </button>
@@ -151,6 +181,25 @@ export default function SavedPage() {
           </div>
         ))
       )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center gap-2 mt-6">
+          {[...Array(totalPages)].map((_, idx) => (
+            <button
+              key={idx + 1}
+              onClick={() => setCurrentPage(idx + 1)}
+              className={`px-3 py-1 rounded-full text-sm font-medium transition border ${
+                currentPage === idx + 1
+                  ? 'bg-accent text-white border-accent'
+                  : 'bg-card text-foreground border-muted hover:bg-muted'
+              }`}
+            >
+              {idx + 1}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
-  )
+  );
 }

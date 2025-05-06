@@ -1,5 +1,3 @@
-// File: components/Sidebar.tsx
-
 'use client'
 
 import React from 'react'
@@ -26,7 +24,7 @@ export default function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <div className="bg-[#dbeafe] text-black w-20 sm:w-60 flex flex-col items-center sm:items-start py-6 px-2 sm:px-4 border-r border-blue-300">
+    <div className="bg-[#1992ff] text-white w-20 sm:w-64 flex flex-col items-center sm:items-start py-6 px-2 sm:px-4 min-h-screen">
       {/* Logo */}
       <div className="mb-10">
         <Link href="/dashboard" className="flex items-center gap-2">
@@ -39,15 +37,15 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex flex-col gap-4 w-full">
+      <nav className="flex flex-col gap-3 w-full">
         {navItems.map((item) => (
           <Link
             key={item.name}
             href={item.href}
-            className={`flex items-center gap-3 p-2 rounded-md transition text-sm font-medium ${
+            className={`flex items-center gap-3 px-4 py-2 rounded-md transition text-sm font-medium ${
               pathname === item.href
-                ? 'bg-blue-600 text-white'
-                : 'text-blue-900 hover:bg-blue-100 hover:text-blue-700'
+                ? 'bg-white text-black shadow'
+                : 'text-white hover:bg-white/20'
             }`}
           >
             <item.icon className="h-5 w-5" />
@@ -63,7 +61,7 @@ export default function Sidebar() {
             localStorage.removeItem('growfly_jwt')
             window.location.href = '/login'
           }}
-          className="flex items-center gap-3 w-full p-2 text-blue-800 hover:text-white hover:bg-blue-600 rounded-md transition"
+          className="flex items-center gap-3 w-full px-4 py-2 text-white hover:bg-white/20 rounded-md transition text-sm font-medium"
         >
           <HiOutlineLogout className="h-5 w-5" />
           <span className="hidden sm:inline">Logout</span>
