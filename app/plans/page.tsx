@@ -49,6 +49,11 @@ export default function PlansPage() {
   const handleSelect = async (planId: string) => {
     setLoadingPlan(planId)
 
+    if (planId === 'free') {
+      router.push('/signup?plan=free')
+      return
+    }
+
     if (planId === 'enterprise') {
       router.push('/contact')
       return
@@ -62,13 +67,14 @@ export default function PlansPage() {
       })
 
       const data = await res.json()
-      if (data.url) {
+      if (data?.url) {
         window.location.href = data.url
       } else {
-        alert('Failed to create Stripe session.')
+        alert(data.error || 'Failed to create Stripe session.')
       }
     } catch (err) {
-      alert('Error creating Stripe session.')
+      alert('Unexpected error creating Stripe session.')
+      console.error(err)
     } finally {
       setLoadingPlan(null)
     }
@@ -76,7 +82,7 @@ export default function PlansPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#020617] to-gray-900 text-white p-10">
-      <h1 className="text-4xl font-bold text-center mb-12">🚀 Choose Your Growfly Plan</h1>
+      <h1 className="text-4xl font-bold text-center mb-12">🚀 Manage Your Growfly Plan</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
         {plans.map((plan) => (
           <div
