@@ -39,7 +39,7 @@ const prompts = {
   'Growfly Feature Demos': [
     'How do I use the Collab Zone to brainstorm with a teammate?',
     'Remind me what I saved in Saved Mode this week.',
-    'Submit a new feature idea for Growfly’s Request Zone.',
+    'Submit a new feature idea for Growfly&rsquo;s Request Zone.',
     'How do I rename a saved response?',
     'How can I share a document from Collab Zone?',
   ],
@@ -93,8 +93,9 @@ export default function NerdModePage() {
       <motion.h1 className="text-4xl font-bold" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         🧠 Nerdify Me!
       </motion.h1>
+
       <p className="text-gray-300 text-lg max-w-3xl">
-        Growfly is your marketing and productivity assistant. Built by nerds, to help you launch faster, write better, strategise smarter, and save time. Whether you're an entrepreneur, freelancer, or scaling company — we're here to help.
+        Growfly is your marketing and productivity assistant. Built by nerds, to help you launch faster, write better, strategise smarter, and save time. Whether you&rsquo;re an entrepreneur, freelancer, or scaling company — we&rsquo;re here to help.
       </p>
 
       <section className="bg-white/5 p-6 rounded-xl border border-white/10">
@@ -110,11 +111,11 @@ export default function NerdModePage() {
       </section>
 
       <section className="bg-white/5 p-6 rounded-xl border border-white/10">
-        <h2 className="text-2xl font-semibold text-blue-400 mb-4">📚 What’s Inside Growfly?</h2>
+        <h2 className="text-2xl font-semibold text-blue-400 mb-4">📚 What&rsquo;s Inside Growfly?</h2>
         <ul className="text-sm text-gray-300 space-y-2">
           <li><strong>Collab Zone</strong>: Work on shared documents with colleagues or clients in real-time.</li>
           <li><strong>Saved Mode</strong>: Save useful AI responses to reference or edit later.</li>
-          <li><strong>Request Zone</strong>: Got ideas? Suggest features you’d love to see. The most upvoted ones go to our dev team!</li>
+          <li><strong>Request Zone</strong>: Got ideas? Suggest features you&rsquo;d love to see. The most upvoted ones go to our dev team!</li>
         </ul>
       </section>
 
