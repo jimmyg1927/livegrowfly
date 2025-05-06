@@ -13,9 +13,17 @@ interface Message {
   content: string
 }
 
+interface User {
+  name?: string
+  email: string
+  promptLimit: number
+  promptsUsed: number
+  subscriptionType?: string
+}
+
 export default function DashboardPage() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: "Hello, I'm Growfly — I’m here to help. How can I assist you today?" }
@@ -79,7 +87,7 @@ export default function DashboardPage() {
     const text = msg.trim()
     if (!text) return
 
-    if (usage >= user.promptLimit) {
+    if (usage >= (user?.promptLimit || 0)) {
       const refreshDate = getNextRefresh()
       setMessages((prev) => [
         ...prev,
@@ -105,6 +113,7 @@ export default function DashboardPage() {
         body: JSON.stringify({ message: text }),
       })
 
+      // eslint-disable-next-line no-constant-condition
       if (!response.body) throw new Error('No response body')
 
       const reader = response.body.getReader()
@@ -117,7 +126,6 @@ export default function DashboardPage() {
         if (done) break
 
         buffer += decoder.decode(value, { stream: true })
-
         const chunks = buffer.split('\n\n')
         buffer = chunks.pop() || ''
 
