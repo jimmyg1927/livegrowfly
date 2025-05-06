@@ -27,7 +27,6 @@ export default function DashboardPage() {
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null
 
-  // Next month start date string
   const getNextRefresh = () => {
     const now = new Date()
     const next = new Date(now.getFullYear(), now.getMonth() + 1, 1)
@@ -38,7 +37,6 @@ export default function DashboardPage() {
     })
   }
 
-  // Fetch user & usage
   useEffect(() => {
     if (!token) {
       router.push('/login')
@@ -62,14 +60,12 @@ export default function DashboardPage() {
       })
   }, [token, router])
 
-  // Redirect if no subscription
   useEffect(() => {
     if (user && (!user.subscriptionType || user.subscriptionType === 'none')) {
       router.push('/plans')
     }
   }, [user, router])
 
-  // Auto-scroll chat
   useEffect(() => {
     if (chatRef.current) {
       chatRef.current.scrollTo({
@@ -83,7 +79,6 @@ export default function DashboardPage() {
     const text = msg.trim()
     if (!text) return
 
-    // Check limit
     if (usage >= user.promptLimit) {
       const refreshDate = getNextRefresh()
       setMessages((prev) => [
@@ -97,30 +92,66 @@ export default function DashboardPage() {
       return
     }
 
-    // Append user message
-    setMessages((prev) => [...prev, { role: 'user', content: text }])
+    setMessages((prev) => [...prev, { role: 'user', content: text }, { role: 'assistant', content: '' }])
     setLoading(true)
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/ai`, {
+      const response = await fetch(`${API_BASE_URL}/api/ai`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        credentials: 'include',
         body: JSON.stringify({ message: text }),
       })
-      if (!res.ok) throw new Error('Server error')
-      const data = await res.json()
 
-      // Append AI response + follow-ups + bump usage
-      setMessages((prev) => [...prev, { role: 'assistant', content: data.response }])
-      setFollowUps(data.followUps || [])
+      if (!response.body) throw new Error('No response body')
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder('utf-8')
+      let buffer = ''
+      let assistantText = ''
+
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+
+        const chunks = buffer.split('\n\n')
+        buffer = chunks.pop() || ''
+
+        for (const chunk of chunks) {
+          if (chunk.startsWith('data:')) {
+            const payload = chunk.replace('data: ', '').trim()
+            if (payload === '[DONE]') continue
+
+            const parsed = JSON.parse(payload)
+
+            if (parsed.type === 'partial') {
+              assistantText += parsed.content
+              setMessages((prev) =>
+                prev.map((m, i) =>
+                  i === prev.length - 1
+                    ? { ...m, content: assistantText }
+                    : m
+                )
+              )
+            }
+
+            if (parsed.type === 'complete' && parsed.followUps) {
+              setFollowUps(parsed.followUps)
+            }
+          }
+        }
+      }
+
       setUsage((prev) => prev + 1)
     } catch (err: any) {
-      setMessages((prev) => [...prev, { role: 'assistant', content: `❌ ${err.message}` }])
-      setFollowUps([])
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: `❌ ${err.message}` },
+      ])
     } finally {
       setLoading(false)
       setInput('')
@@ -162,7 +193,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 px-4 md:px-8 lg:px-12 pb-10">
-      {/* HEADER */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <h1 className="text-xl font-semibold text-foreground">
           Welcome, {user.name || user.email}
@@ -182,7 +212,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* CHAT PANEL */}
       <div className="bg-card rounded-2xl p-4 space-y-4 shadow-sm border border-border">
         <div className="flex items-center space-x-2">
           <GrowflyBot size={24} />
@@ -211,7 +240,6 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* ACTIONS */}
         <div className="flex gap-2">
           <button
             onClick={handleSave}
@@ -227,7 +255,6 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        {/* FOLLOW-UPS */}
         {followUps.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {followUps.map((f, i) => (
@@ -242,7 +269,6 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* INPUT AREA */}
         <div className="flex space-x-2 items-center bg-muted-light p-2 rounded-lg">
           <input
             type="text"
