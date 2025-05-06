@@ -104,63 +104,44 @@ export default function DashboardPage() {
     setLoading(true)
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/ai`, {
+      const res = await fetch(`${API_BASE_URL}/api/ai`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({ message: text })
       })
 
-      // eslint-disable-next-line no-constant-condition
-      if (!response.body) throw new Error('No response body')
+      const reader = res.body?.getReader()
+      if (!reader) throw new Error('No response body')
 
-      const reader = response.body.getReader()
-      const decoder = new TextDecoder('utf-8')
+      const decoder = new TextDecoder()
       let buffer = ''
-      let assistantText = ''
+      let fullText = ''
 
       while (true) {
         const { value, done } = await reader.read()
         if (done) break
+        buffer += decoder.decode(value)
 
-        buffer += decoder.decode(value, { stream: true })
-        const chunks = buffer.split('\n\n')
-        buffer = chunks.pop() || ''
-
-        for (const chunk of chunks) {
-          if (chunk.startsWith('data:')) {
-            const payload = chunk.replace('data: ', '').trim()
-            if (payload === '[DONE]') continue
-
-            const parsed = JSON.parse(payload)
-
-            if (parsed.type === 'partial') {
-              assistantText += parsed.content
-              setMessages((prev) =>
-                prev.map((m, i) =>
-                  i === prev.length - 1
-                    ? { ...m, content: assistantText }
-                    : m
-                )
-              )
-            }
-
-            if (parsed.type === 'complete' && parsed.followUps) {
-              setFollowUps(parsed.followUps)
-            }
+        try {
+          const json = JSON.parse(buffer)
+          if (json.response) {
+            fullText += json.response
+            setMessages((prev) => prev.map((m, i) => i === prev.length - 1 ? { ...m, content: fullText } : m))
           }
+          if (json.followUps) {
+            setFollowUps(json.followUps)
+          }
+        } catch (err) {
+          // partial stream, ignore
         }
       }
 
       setUsage((prev) => prev + 1)
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Unexpected error'
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: `❌ ${errorMessage}` },
-      ])
+    } catch (err: any) {
+      setMessages((prev) => [...prev, { role: 'assistant', content: `❌ ${err.message}` }])
     } finally {
       setLoading(false)
       setInput('')
