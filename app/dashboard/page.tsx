@@ -35,6 +35,7 @@ export default function DashboardPage() {
     }
     fetch(`${API_BASE_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include', // ✅ required for CORS + cookies
     })
       .then((r) => {
         if (!r.ok) throw new Error('Not authenticated')
@@ -63,6 +64,7 @@ export default function DashboardPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
+        credentials: 'include', // ✅
         body: JSON.stringify({ message: msg }),
       })
       if (!res.ok) throw new Error('Server error')
@@ -85,6 +87,7 @@ export default function DashboardPage() {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
+      credentials: 'include', // ✅
       body: JSON.stringify({ content: response }),
     })
   }
@@ -96,6 +99,7 @@ export default function DashboardPage() {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
+      credentials: 'include', // ✅
       body: JSON.stringify({ content: response }),
     })
     router.push('/collab-zone')
