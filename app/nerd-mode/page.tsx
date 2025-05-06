@@ -6,60 +6,60 @@ import { motion } from 'framer-motion'
 
 const prompts = {
   'Marketing & Branding': [
-    'How can you help me today?',
     'Write 3 Instagram captions for a vegan skincare brand.',
-    'Create a slogan for a new eco shoe startup.',
-    'Give me 10 newsletter subject lines for a spring sale.',
-    'Explain how to position a personal brand for freelancers.',
-    'Suggest ways to improve my brand tone of voice.',
-    'Create a short USP for a luxury hair salon.',
+    'Give me a killer headline for a spring sale email campaign.',
+    'Explain how I can use storytelling to market my new app.',
+    'List 5 ways to promote a business with no marketing budget.',
+    'Create a content calendar for a fitness influencer.',
+    'Generate 10 social ad variations for a back-to-school offer.',
+    'What are 3 brand values for a startup aimed at Gen Z?',
   ],
   'Content Creation': [
-    'Summarise this blog post into 5 LinkedIn bullet points.',
-    'Write a script for a TikTok product demo.',
-    'Turn this feature list into a benefits-driven landing page.',
-    'Generate FAQ content for my homepage.',
-    'Give me ideas for a 5-part YouTube series on productivity.',
-    'Write a poll question for Instagram Stories.',
+    'Summarise this blog post into 5 bullet points for LinkedIn.',
+    'Write a 60-second video script introducing our new feature.',
+    'Turn this technical blog into something an intern would understand.',
+    'Give me 3 newsletter intros that hook the reader.',
+    'Create a tweet thread explaining our product in plain English.',
+    'Generate FAQ content from a product spec sheet.',
   ],
   'Entrepreneurship & Strategy': [
-    'Give me a SWOT analysis for a startup selling cold brew.',
-    'List 10 revenue streams for a digital product business.',
-    'Validate my business idea with 3 quick tests.',
-    'How do I pitch a new idea to investors in 3 sentences?',
-    'Suggest 3 new niches I could target based on my skills.',
-    'Build a 5-step go-to-market strategy.',
-  ],
-  'Finance & Budgeting': [
-    'Help me build a simple monthly budget.',
-    'What tools help track receipts and invoices?',
-    'How do I handle taxes as a UK freelancer?',
-    'List key expenses for a content creation business.',
-    'Create a simple pricing model for digital services.',
+    'Give me a SWOT analysis for a streetwear clothing startup.',
+    'Suggest 5 business names for a luxury home cleaning service.',
+    'How can I validate my business idea quickly and cheaply?',
+    'Write a mission statement for a tech-enabled dog-walking app.',
+    'Help me plan a side hustle I can launch in 30 days.',
   ],
   'Productivity & Planning': [
-    'Help me make a launch to-do list.',
-    'What should I do first when building a new product?',
-    'Turn this vague goal into clear steps.',
-    'Give me a weekly content calendar template.',
-    'How do I stay consistent as a solopreneur?',
+    'Help me write a to-do list for launching my new product.',
+    'Give me a weekly schedule for balancing work and side hustle.',
+    'How do I stop procrastinating and get stuff done today?',
+    'Build me a morning routine that fits my ADHD brain.',
+    'Create a quarterly goal tracker for my startup.',
   ],
   'Growfly Feature Demos': [
-    'How do I use the Collab Zone to plan with teammates?',
-    'Remind me what I saved recently in Saved Mode.',
-    'Submit a feature idea in the Suggestion Zone.',
-    'Explain how prompt usage limits work on Growfly.',
-    'Can I rename saved responses?',
-    'How does XP work on Growfly?',
+    'How do I use the Collab Zone to brainstorm with a teammate?',
+    'Remind me what I saved in Saved Mode this week.',
+    'Submit a new feature idea for Growfly’s Request Zone.',
+    'How do I rename a saved response?',
+    'How can I share a document from Collab Zone?',
+  ],
+  'Finance & Budgeting': [
+    'Help me set up a simple monthly budget for my small business.',
+    'What expenses should I track as a freelancer or consultant?',
+    'How do I create a basic profit and loss statement?',
+    'Give me 3 tools for managing business finances and receipts.',
+    'Explain how to estimate taxes owed as a UK sole trader.',
+    'Write an invoice email template for a freelance gig.',
+    'Help me forecast cash flow for a seasonal business.',
   ],
 }
 
 const nerdLevels = [
-  { level: 1, title: 'Curious Cat 🐱' },
-  { level: 2, title: 'Nerdlet 🧠' },
-  { level: 3, title: 'Prompt Prober 🔍' },
-  { level: 4, title: 'Nerdboss 🚀' },
-  { level: 5, title: 'Prompt Commander 🤹‍♂️' },
+  { level: 1, title: 'Curious Cat', emoji: '🐱' },
+  { level: 2, title: 'Nerdlet', emoji: '🧠' },
+  { level: 3, title: 'Prompt Prober', emoji: '🔍' },
+  { level: 4, title: 'Nerdboss', emoji: '🚀' },
+  { level: 5, title: 'Prompt Commander', emoji: '🤹‍♂️' },
 ]
 
 export default function NerdModePage() {
@@ -74,10 +74,7 @@ export default function NerdModePage() {
   }
 
   const toggleSection = (category: string) => {
-    setOpenSections((prev) => ({
-      ...prev,
-      [category]: !prev[category],
-    }))
+    setOpenSections((prev) => ({ ...prev, [category]: !prev[category] }))
   }
 
   const filteredPrompts = useMemo(() => {
@@ -92,47 +89,58 @@ export default function NerdModePage() {
   }, [searchTerm])
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10 text-white">
-      <motion.h1 className="text-4xl font-bold mb-2" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+    <div className="max-w-7xl mx-auto px-4 py-12 text-white space-y-10">
+      <motion.h1 className="text-4xl font-bold" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         🧠 Nerdify Me!
       </motion.h1>
-      <p className="text-base text-gray-300 mb-6 leading-relaxed max-w-3xl">
-        Growfly is your AI-powered marketing nerd. Ask questions, copy prompts, plan content, and share ideas with teammates using tools like the Collab Zone, Saved Mode, and Suggestion Zone. Whether you’re a solo founder, marketer, or team lead, Growfly will help you do more — faster, smarter, funnier.
+      <p className="text-gray-300 text-lg max-w-3xl">
+        Growfly is your marketing and productivity assistant. Built by nerds, to help you launch faster, write better, strategise smarter, and save time. Whether you're an entrepreneur, freelancer, or scaling company — we're here to help.
       </p>
 
-      <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3 mb-10">
-        {nerdLevels.map(({ title, level }) => (
-          <div
-            key={level}
-            className="bg-white/10 text-sm p-4 rounded-md border border-white/10 flex items-center justify-center text-center font-medium text-white"
-          >
-            {title}
-          </div>
-        ))}
-      </div>
+      <section className="bg-white/5 p-6 rounded-xl border border-white/10">
+        <h2 className="text-2xl font-semibold text-blue-400 mb-2">🎮 Increase Your Nerd Level</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center text-sm">
+          {nerdLevels.map(({ emoji, title }, i) => (
+            <div key={i} className="bg-white/10 rounded-lg py-4 px-2 border border-white/10">
+              <div className="text-2xl mb-1">{emoji}</div>
+              <div className="font-medium text-white/90 text-sm">{title}</div>
+            </div>
+          ))}
+        </div>
+      </section>
 
-      <div className="mb-12">
-        <h2 className="text-2xl font-semibold mb-3 text-blue-400">🔍 Explore Prompt Ideas</h2>
+      <section className="bg-white/5 p-6 rounded-xl border border-white/10">
+        <h2 className="text-2xl font-semibold text-blue-400 mb-4">📚 What’s Inside Growfly?</h2>
+        <ul className="text-sm text-gray-300 space-y-2">
+          <li><strong>Collab Zone</strong>: Work on shared documents with colleagues or clients in real-time.</li>
+          <li><strong>Saved Mode</strong>: Save useful AI responses to reference or edit later.</li>
+          <li><strong>Request Zone</strong>: Got ideas? Suggest features you’d love to see. The most upvoted ones go to our dev team!</li>
+        </ul>
+      </section>
+
+      <section className="mb-4">
         <input
           type="text"
-          placeholder="Search prompts…"
+          placeholder="Search prompts..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-4 py-2 rounded-md bg-white/10 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4"
+          className="w-full px-4 py-2 rounded-md bg-white/10 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-semibold text-blue-400 mb-4">📋 Prompt Library</h2>
         {Object.entries(filteredPrompts).map(([category, list]) => (
-          <div key={category} className="mb-4">
+          <div key={category} className="mb-6">
             <button
-              className={`w-full text-left font-semibold px-4 py-2 rounded-md flex justify-between items-center transition ${
-                openSections[category] ? 'bg-blue-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white'
-              }`}
+              className="w-full text-left font-medium text-white bg-white/10 px-4 py-2 rounded-md flex justify-between items-center hover:bg-white/20 transition"
               onClick={() => toggleSection(category)}
             >
               <span>{category}</span>
               <span>{openSections[category] ? '−' : '+'}</span>
             </button>
             {openSections[category] && (
-              <ul className="mt-2 space-y-2">
+              <ul className="mt-3 space-y-2">
                 {list.map((prompt) => (
                   <motion.li
                     key={prompt}
@@ -158,16 +166,14 @@ export default function NerdModePage() {
             )}
           </div>
         ))}
-      </div>
+      </section>
 
-      <div className="bg-white/5 p-6 rounded-xl border border-white/10 space-y-4">
-        <h2 className="text-2xl font-semibold text-blue-400">📘 What Are These Zones?</h2>
-        <div className="text-sm text-gray-300 space-y-2 leading-relaxed">
-          <p><strong>📂 Collab Zone</strong> — Work on AI-generated content with teammates, edit together, brainstorm ideas, and plan campaigns.</p>
-          <p><strong>💾 Saved Mode</strong> — Store your best AI responses, name them, and revisit your work later.</p>
-          <p><strong>💡 Suggestion Zone</strong> — Suggest new features, tools, or prompts you'd love Growfly to support. The most upvoted ideas get built.</p>
-        </div>
-      </div>
+      <section className="bg-white/5 p-6 rounded-xl border border-white/10">
+        <h2 className="text-2xl font-semibold text-blue-400 mb-3">✨ Pro Tip</h2>
+        <p className="text-sm text-gray-300 leading-relaxed">
+          Not sure where to start? Just type: <strong>How can you help me today?</strong> and let Growfly do the thinking.
+        </p>
+      </section>
     </div>
   )
 }
