@@ -155,10 +155,11 @@ export default function DashboardPage() {
       }
 
       setUsage((prev) => prev + 1)
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unexpected error'
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: `❌ ${err.message}` },
+        { role: 'assistant', content: `❌ ${errorMessage}` },
       ])
     } finally {
       setLoading(false)
