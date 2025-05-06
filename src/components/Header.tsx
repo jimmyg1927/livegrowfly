@@ -11,7 +11,7 @@ interface HeaderProps {
 }
 
 function getNerdLevel(xp: number | undefined) {
-  if (!xp || xp < 25) return { title: 'Just a lil curious', level: 1, max: 25 }
+  if (!xp || xp < 25) return { title: 'Curious Cat', level: 1, max: 25 }
   if (xp < 150) return { title: 'Nerdlet', level: 2, max: 150 }
   if (xp < 500) return { title: 'Prompt Prober', level: 3, max: 500 }
   if (xp < 850) return { title: 'Nerdboss', level: 4, max: 850 }
@@ -24,15 +24,15 @@ export default function Header({ name, xp = 0, hideUser }: HeaderProps) {
   const progress = Math.min((xp / max) * 100, 100)
 
   return (
-    <div className="flex justify-between items-center mb-4">
+    <div className="flex justify-between items-center mb-6 px-1">
       {!hideUser && (
         <div className="flex flex-col gap-1 text-textPrimary">
-          <div className="text-lg font-semibold">
+          <div className="text-sm sm:text-base font-semibold tracking-wide">
             🧠 {title} — {Math.floor(xp)} XP
           </div>
-          <div className="w-full bg-white/10 rounded-full h-2">
+          <div className="w-full bg-white/10 rounded-full h-2 sm:h-2.5 max-w-xs">
             <div
-              className="bg-blue-500 h-2 rounded-full transition-all"
+              className="bg-blue-500 h-2 sm:h-2.5 rounded-full transition-all"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -42,6 +42,7 @@ export default function Header({ name, xp = 0, hideUser }: HeaderProps) {
       <button
         onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
         className="bg-card text-textPrimary p-2 rounded hover:opacity-80 transition"
+        title="Toggle theme"
       >
         {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
       </button>
