@@ -10,12 +10,14 @@ import {
   HiOutlineDocumentText,
   HiOutlineUserGroup,
   HiOutlineCurrencyPound,
+  HiOutlineLightBulb,
 } from 'react-icons/hi'
 
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: HiOutlineHome },
   { name: 'Collab Zone', href: '/collab-zone', icon: HiOutlineUserGroup },
   { name: 'Saved', href: '/saved', icon: HiOutlineDocumentText },
+  { name: 'Nerdify Me!', href: '/nerd-mode', icon: HiOutlineLightBulb },
   { name: 'Settings', href: '/settings', icon: HiOutlineCog },
   { name: 'Change Plan', href: '/plans', icon: HiOutlineCurrencyPound },
 ]

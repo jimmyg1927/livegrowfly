@@ -2,31 +2,45 @@
 
 import React from 'react'
 import { useTheme } from 'next-themes'
-import { Moon, Sun, User } from 'lucide-react'
+import { Moon, Sun } from 'lucide-react'
 
 interface HeaderProps {
   name?: string
+  xp?: number
   hideUser?: boolean
 }
 
-export default function Header({ name, hideUser }: HeaderProps) {
-  const { theme, setTheme } = useTheme()
+function getNerdLevel(xp: number | undefined) {
+  if (!xp || xp < 25) return { title: 'Just a lil curious', level: 1, max: 25 }
+  if (xp < 150) return { title: 'Nerdlet', level: 2, max: 150 }
+  if (xp < 500) return { title: 'Prompt Prober', level: 3, max: 500 }
+  if (xp < 850) return { title: 'Nerdboss', level: 4, max: 850 }
+  return { title: 'Prompt Commander', level: 5, max: 1000 }
+}
 
-  const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light')
-  }
+export default function Header({ name, xp = 0, hideUser }: HeaderProps) {
+  const { theme, setTheme } = useTheme()
+  const { title, level, max } = getNerdLevel(xp)
+  const progress = Math.min((xp / max) * 100, 100)
 
   return (
     <div className="flex justify-between items-center mb-4">
       {!hideUser && (
-        <div className="text-lg font-semibold flex items-center gap-2 text-textPrimary">
-          <User size={20} />
-          {name}
+        <div className="flex flex-col gap-1 text-textPrimary">
+          <div className="text-lg font-semibold">
+            🧠 {title} — {Math.floor(xp)} XP
+          </div>
+          <div className="w-full bg-white/10 rounded-full h-2">
+            <div
+              className="bg-blue-500 h-2 rounded-full transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
         </div>
       )}
 
       <button
-        onClick={toggleTheme}
+        onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
         className="bg-card text-textPrimary p-2 rounded hover:opacity-80 transition"
       >
         {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
