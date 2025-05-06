@@ -17,6 +17,7 @@ interface UserProfile {
 
 export default function SettingsPage() {
   const router = useRouter()
+  const [token, setToken] = useState<string | null>(null)
   const [user, setUser] = useState<UserProfile | null>(null)
   const [form, setForm] = useState({
     name: '',
@@ -25,17 +26,21 @@ export default function SettingsPage() {
     industry: '',
     narrative: '',
   })
-
-  const token =
-    typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!token) {
+    const storedToken = localStorage.getItem('growfly_jwt')
+    if (!storedToken) {
       router.push('/login')
-      return
+    } else {
+      setToken(storedToken)
     }
+  }, [router])
 
-    fetch('/api/auth/me', {
+  useEffect(() => {
+    if (!token) return
+
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
@@ -51,6 +56,7 @@ export default function SettingsPage() {
           industry: data.industry || '',
           narrative: data.narrative || '',
         })
+        setLoading(false)
       })
       .catch(() => router.push('/login'))
   }, [token, router])
@@ -64,7 +70,7 @@ export default function SettingsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const res = await fetch('/api/user', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -82,7 +88,7 @@ export default function SettingsPage() {
     }
   }
 
-  if (!user) {
+  if (loading || !user) {
     return (
       <div className="flex items-center justify-center h-full">
         <p className="text-lg text-gray-500">Loading settings…</p>
@@ -105,7 +111,6 @@ export default function SettingsPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6 max-w-xl">
-        {/* Readonly Email */}
         <div>
           <label className="block mb-1 font-semibold">Email</label>
           <input
@@ -117,7 +122,6 @@ export default function SettingsPage() {
           />
         </div>
 
-        {/* Plan */}
         <div>
           <label className="block mb-1 font-semibold">Plan</label>
           <input
@@ -128,7 +132,6 @@ export default function SettingsPage() {
           />
         </div>
 
-        {/* Editable Fields */}
         <div>
           <label className="block mb-1 font-semibold">Name</label>
           <input
