@@ -8,7 +8,7 @@ import GrowflyBot from '@/components/GrowflyBot';
 import SaveModal from '@/components/SaveModal';
 import Header from '@/components/Header';
 import FeedbackModal from '@/components/FeedbackModal';
-import { Gift, UserCircle } from 'lucide-react';
+import { Gift, UserCircle, Save, Share2, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { API_BASE_URL } from '@/lib/constants';
 
 interface Message {
@@ -191,7 +191,6 @@ export default function DashboardPage() {
   };
 
   const handleSave = () => setShowSaveModal(true);
-
   const confirmSave = async (title: string) => {
     const token = localStorage.getItem('growfly_jwt');
     await fetch(`${API_BASE_URL}/api/saved`, {
@@ -289,6 +288,52 @@ export default function DashboardPage() {
               </div>
             </div>
           ))}
+        </div>
+
+        {followUps.length > 0 && (
+          <div className="flex flex-wrap gap-2 pt-2">
+            {followUps.map((text, i) => (
+              <button
+                key={i}
+                onClick={() => handleSend(text)}
+                className="text-xs bg-muted border border-border text-foreground px-3 py-1 rounded-full hover:bg-muted/70 transition"
+              >
+                {text}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 pt-4">
+          <input
+            className="flex-1 rounded-lg p-2 bg-background border border-border text-sm"
+            placeholder="Type your message..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend(input);
+              }
+            }}
+          />
+          <button
+            onClick={() => handleSend(input)}
+            disabled={loading}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+          >
+            {loading ? 'Thinking…' : 'Send'}
+          </button>
+          <button onClick={handleSave} title="Save Response">
+            <Save className="text-foreground hover:text-accent w-5 h-5" />
+          </button>
+          <button onClick={handleShare} title="Share to Collab Zone">
+            <Share2 className="text-foreground hover:text-accent w-5 h-5" />
+          </button>
+          <button onClick={openFeedbackModal} title="Give Feedback">
+            <ThumbsUp className="text-green-500 w-5 h-5" />
+            <ThumbsDown className="text-red-500 w-5 h-5 ml-1" />
+          </button>
         </div>
       </div>
 

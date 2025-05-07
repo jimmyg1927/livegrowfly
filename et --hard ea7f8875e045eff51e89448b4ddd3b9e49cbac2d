@@ -1,0 +1,2141 @@
+[33mcommit fb210a4f5db344ef38945eeeb7bd603f0ce12fd0[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed May 7 10:50:46 2025 +0000
+
+    Fix: FeedbackModal props and DashboardPage errors resolved
+
+[33mcommit ea7f8875e045eff51e89448b4ddd3b9e49cbac2d[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed May 7 10:02:46 2025 +0000
+
+    Deploy Growfly frontend to Vercel
+
+[33mcommit b08b8fb509eca41e11cbc772491fb7a9ec5f3307[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed May 7 09:41:17 2025 +0000
+
+    Fix: remove name prop from Header in settings page
+
+[33mcommit fea7bf7f9bca238594b4813b97448aac60a8faca[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed May 7 09:38:13 2025 +0000
+
+    Fix: removed invalid Header name prop from refer page
+
+[33mcommit af1eda65b00511568507c2853961f87b3c2a5c5f[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed May 7 09:35:38 2025 +0000
+
+    Fix: Removed 'name' prop from Header in feedback page
+
+[33mcommit c9a0f2d95614e5fa91f84a907e843ec8a5929a73[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed May 7 09:32:59 2025 +0000
+
+    Fix: Removed unused 'name' prop from Header in ClientLayout
+
+[33mcommit d954d03f36d9d3b847b1ac9ae038cd523bc1b5df[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed May 7 09:30:19 2025 +0000
+
+    Remove duplicate dashboard header and restyle top bar
+
+[33mcommit 8c3e34f15be501d4672298e77ca760083de447bc[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed May 7 09:21:15 2025 +0000
+
+    💄 Update Header styling to Growfly blue, fix XP display, and unify design
+
+[33mcommit ff6d64c89dd2e09416c969c460659e9bcad89d8b[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed May 7 09:11:52 2025 +0000
+
+    💄 Sidebar redesign: smaller width, centered logo, improved spacing
+
+[33mcommit 8b6a078a0e622f6877cfbf4dc901eba998760480[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed May 7 08:58:45 2025 +0000
+
+    💄 UI polish: improved sidebar layout, spacing, and item order
+
+[33mcommit 2b1261d32b465ddd2bc9e70565bdfc3527ab6ae0[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 15:58:51 2025 +0000
+
+    feat: hook up FeedbackModal & Wishlist in Dashboard
+
+[33mcommit 65271dfa5e618b1fa6dd8f9afe449d0e9b0005aa[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 14:55:57 2025 +0000
+
+    Fix unescaped apostrophes and improve Nerd Mode layout
+
+[33mcommit 209e1e72348fecae90a81465bce846a13f26c002[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 14:51:55 2025 +0000
+
+    Add upgraded Nerd Mode page with prompts, XP levels, and UI improvements
+
+[33mcommit a5deac08d9bfd4af0c0c865e1fdfdfd8f0502354[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 14:43:11 2025 +0000
+
+    Updated header with XP tracker, nerd levels, and better spacing
+
+[33mcommit 8541ddf0753ace7c76918ceb67801e14db9b14cf[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 14:18:28 2025 +0000
+
+    Trigger redeploy with cleared cache
+
+[33mcommit 9c7d96f10fc7b5250a1978a40d67095b9d051e3e[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 14:12:21 2025 +0000
+
+    Fix: update pnpm lockfile to match package.json
+
+[33mcommit 5fd738c46c7e84f005a8eaea13f92ed949eaf12e[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 14:10:42 2025 +0000
+
+    Update frontend with Nerd Mode XP view and new tab prep
+
+[33mcommit 27509ded3c90811f0aeeac5ffcc1cb5267176762[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 13:31:09 2025 +0000
+
+    💄 Updated dashboard styling for cleaner layout and Growfly branding
+
+[33mcommit ce312bf6c32914484e7e588e32a91f6a822b6e86[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 13:19:42 2025 +0000
+
+    💾 Updated saved tab with modal view, pagination, and visual polish
+
+[33mcommit 5489cc8a2f305b73f7bda5d0b4e0e860b1cba5e5[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 13:07:32 2025 +0000
+
+    Updated saved tab styling, dashboard UI, and sidebar improvements
+
+[33mcommit 1c12f291f4ee2ca27295850883cda56f64ecb367[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 12:20:34 2025 +0000
+
+    Fix: sync pnpm-lock.yaml after adding new packages
+
+[33mcommit edd424f8ed46f921b0076e721654f244a0cc9377[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 12:19:30 2025 +0000
+
+    Finalize SaveModal flow, sidebar styling, and saved tab redesign
+
+[33mcommit 8fabd8c08eb09901fccc702a7c082c4f211949bf[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 12:07:40 2025 +0000
+
+    Fix SaveModal integration, update Dashboard design, and chat color styling
+
+[33mcommit a6c164bbc9a96d7a180c21beeee6e380e6a2f49f[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 12:03:32 2025 +0000
+
+    Fix SaveModal missing onConfirm prop
+
+[33mcommit bd9617f4437ddedf18fc984cd8d2b1eb16840592[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 12:01:54 2025 +0000
+
+    Add SaveModal and improve saved tab UI
+
+[33mcommit 5fd760c1ebbf9a095adc66908c32531d637b09f0[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 11:44:04 2025 +0000
+
+    ✅ Fix streaming AI response + Vercel build error
+
+[33mcommit 7dd3bcb8ee617d61452eb4206fcde68ccac5e5b6[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 11:40:40 2025 +0000
+
+    Fix AI streaming frontend logic for live responses
+
+[33mcommit df44a3d387849622aad9f87d7583944fc34cb755[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 11:31:07 2025 +0000
+
+    Updated signup background and styles
+
+[33mcommit 53968ca05dfa6d8075704d73b61db1750da0e432[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 11:26:19 2025 +0000
+
+    Enable AI response streaming on dashboard
+
+[33mcommit 845c8c493513d81e1fe04cf76db0e99ab4ada524[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 11:20:07 2025 +0000
+
+    Fix: dashboard lint error + new
+
+[33mcommit d80f8cebe2a4c0e6b7d5b0e59b0b1653ca21fef4[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 11:17:53 2025 +0000
+
+    Fix: dashboard lint error + typed user state
+
+[33mcommit 78e5cf1c793fa1640b08908de758a78a3976d6c9[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 11:14:39 2025 +0000
+
+    Fix lint issues and add full AI streaming to dashboard
+
+[33mcommit 4e082096133a1569cf7c38efd24b10eb62bc030c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 11:11:53 2025 +0000
+
+    Upgrade: Add streaming AI support to Dashboard page
+
+[33mcommit d2e8368c21debc407bee9fb276ad3a15c178b162[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 11:04:03 2025 +0000
+
+    Fix: update settings and plans API calls to use NEXT_PUBLIC_API_URL
+
+[33mcommit 9d4a78d5349afc6f156474a437ef3a7541e579e5[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 11:00:06 2025 +0000
+
+    Fix: delay token check and prevent premature redirect on Settings page
+
+[33mcommit 1af3c4be40a84fb11d658eb1e3a661a18bbff557[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 10:53:11 2025 +0000
+
+    UI: Branded and upgraded Contact Us page for Enterprise
+
+[33mcommit d3950139bb08ca700f759367f83a74562ec4ac3b[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 10:48:20 2025 +0000
+
+    Style: Updated signup form with branding and back button
+
+[33mcommit 7b8fc4e8c0ea37a429274edacc1876aced8a8c8e[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 10:43:29 2025 +0000
+
+    UI Update: Improved plans and signup page branding and navigation
+
+[33mcommit 5d13191b7928699d818d4f723f9cef79187b8806[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 10:29:17 2025 +0000
+
+    fix: prevent pathname null error in ClientLayout
+
+[33mcommit b0f9d5035e3552095025016869cfbf8df1714e2c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 09:50:01 2025 +0000
+
+    chore: force redeploy
+
+[33mcommit 88b20bf9407ca81cfefed25702002672242fc25d[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 09:50:01 2025 +0000
+
+    feat: forgot-password flow + force redeploy
+
+[33mcommit 28a3626bf843901f80e3ad7c94f7e666bede227d[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 09:32:11 2025 +0000
+
+    fix: compile errors, limit-reached message, styled input box
+
+[33mcommit bd0e0bbb0345609dc241474b0d7968eba0993c0c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 09:21:10 2025 +0000
+
+    feat: live prompt tracker, auto-scroll chat, spinner on send, last-10 messages
+
+[33mcommit 7331f72a6aece46e81e83dfaab1944c12eee6d03[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue May 6 08:11:43 2025 +0000
+
+    ✅ Fix: Add credentials include to dashboard fetches for CORS
+
+[33mcommit 11a581e97e582bc5efabd99c1252b567f8fcb04c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 14:53:55 2025 +0000
+
+    Fix logout, sidebar, and login CORS fetch
+
+[33mcommit b25949c9708e8207066a3bbccc7f4a09650f2b74[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 14:13:21 2025 +0000
+
+    feat: deploy frontend with Saved Responses page and Collab Zone enhancements
+
+[33mcommit 7416af7aafaf86a49a3833ca291f21f6e9af8b9b[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 14:07:22 2025 +0000
+
+    feat: add email-share UI and calls to /share endpoint
+
+[33mcommit cd124a1cb2ca3491b4e9d2249554468a7274b1b1[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 14:01:39 2025 +0000
+
+    fix: remove faulty TypeH icons and add full toolbar
+
+[33mcommit 9df91c01c1e56cedfa2199cd4897ea47aa6f700f[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 13:45:13 2025 +0000
+
+    🎨 Full Collab Zone sidebar + toolbar + docs management
+
+[33mcommit ea9a24278a70f960d0ceeed2c1ae11c6fe6a0105[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 13:40:20 2025 +0000
+
+    ✨ Revamp Collab Zone page with Editor, Copy & Save
+
+[33mcommit 302fbc4bd9f44674f54b6c988e67657b02b5b99e[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 11:53:02 2025 +0000
+
+    🔧 Fix CollabZone import to use new editor/Editor path
+
+[33mcommit 089f6d1e062599741df50bf7cb7059becdda2c9a[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 11:51:40 2025 +0000
+
+    🐛 Fix relative import of EditorBubbleMenu in Editor.tsx
+
+[33mcommit 9f1efeaa8af792e630a040f3bc9195322a236f78[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 11:49:32 2025 +0000
+
+    🔧 Fix Collab Zone import to new editor/Editor path
+
+[33mcommit 691effad60a15c14a073a9faaa8f76fd9a163866[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 11:47:08 2025 +0000
+
+    ✨ Add EditorBubbleMenu in editor/ folder for Collab Zone
+
+[33mcommit c4648bcff9c3ee58a25350e4c63e7f0269113d78[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 11:36:22 2025 +0000
+
+    �� Use absolute import for EditorBubbleMenu to fix module resolution
+
+[33mcommit 7e3bbf405dc2278fd005aaa2ffd89bdfe26cf5f6[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 11:33:40 2025 +0000
+
+    �� Fix Editor.tsx import path for EditorBubbleMenu
+
+[33mcommit b3d5ef8f5eab291d2760643ffcb9ba7ce7360cbe[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 11:22:00 2025 +0000
+
+    🔧 Update tsconfig: restrict types to avoid missing @types errors
+
+[33mcommit 2e1caa4cc7523fd0ce60e52923c363f28f275384[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 11:08:00 2025 +0000
+
+    ✅ Fixed CollabZone UI and temporary user session mock
+
+[33mcommit d2ef76de4a311d8cab990a4ebca0691d6628a076[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 11:05:29 2025 +0000
+
+    ✅ Fix Editor component prop types and EditorBubbleMenu path
+
+[33mcommit cf20a17faaa06989931a305aa231fc5d43db6099[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 10:59:29 2025 +0000
+
+    ✅ Fix: correct import path for EditorBubbleMenu in Editor.tsx
+
+[33mcommit f4e9758ba3e9451ecea7d9ca203ab19ff6e5ba29[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 10:53:47 2025 +0000
+
+    🐛 Fix Editor.tsx import path to EditorBubbleMenu component
+
+[33mcommit 8f4d195210e9cf72ba0af47cbc0d844c99c0db8c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 10:17:50 2025 +0000
+
+    🔧 Fix: update pnpm-lock.yaml to match package.json
+
+[33mcommit 93d56b60c9742fdd7f3fe4b8583f03d0e506388e[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 10:14:34 2025 +0000
+
+    ✅ Connect Collab Zone to backend API for saving/loading docs
+
+[33mcommit e15406f3af505bb3e73d15528f39a81c0a2dfec8[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 09:22:02 2025 +0000
+
+    ✅ Dashboard redesign complete: refer button, layout polish, prompt actions
+
+[33mcommit 7a8cda97675810db9923aabf1c818fbb922f9014[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 08:27:19 2025 +0000
+
+    ✅ Step 8B: Added Saved & Collab-Zone pages + dashboard save/share actions
+
+[33mcommit ad69c933ed34d71229ba01fed52d1bf4c5e1b18c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 08:11:27 2025 +0000
+
+    ✅ Step 7 UI polish: logo + font size adjustments
+
+[33mcommit 3e142394169dcaf2bb0221e37a64b46624637d21[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri May 2 08:01:45 2025 +0000
+
+    💄 Step 2–4 UI redesign: prompt bar, suggestions, response bubble
+
+[33mcommit c367a3593c3e484573d75c0cfc9c1bbe15d71f4a[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 19:48:17 2025 +0000
+
+    Step 2: Logo only in sidebar, fix header bar with theme + profile icon
+
+[33mcommit 1b801571dd85746764bfc1b96c68d3a23366ed35[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 18:07:51 2025 +0000
+
+    Fix: mark FeedbackForm as client component and fix /feedback build crash
+
+[33mcommit 9c653ad588780fcd7531bc90cef69f1d74550778[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 17:51:47 2025 +0000
+
+    Fix: convert FeedbackForm to client component to fix build
+
+[33mcommit 6f35edaed740b32a6971af9972b380e7789d1b07[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 17:48:40 2025 +0000
+
+    Fix: optional name prop for Header + working ClientLayout
+
+[33mcommit 9e2ce46cb305835e3d1f82e4413f5959e68ef982[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 17:37:29 2025 +0000
+
+    Fix feedback page onCreated prop, restore Header and Sidebar functionality
+
+[33mcommit 43e6933c1b132c6d19d37a8199db70269be52461[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 17:12:30 2025 +0000
+
+    Fix feedback page Header props error
+
+[33mcommit d7a8b21bf1838e9ce2fd31c509eed150fac731cd[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 17:07:36 2025 +0000
+
+    Install react-icons for Sidebar icons
+
+[33mcommit 4c35b6e2aeb22d98922995962658cd307a6c3fda[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 17:04:23 2025 +0000
+
+    Update Sidebar and Header: remove Growfly text, enlarge logo, prep for AI/chat fixes
+
+[33mcommit bc037c4db1b4995297e00954bff3f60bd066bdea[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 16:53:48 2025 +0000
+
+    Fix: Added missing 'name' prop to Header component in ClientLayout
+
+[33mcommit 4cb6a65567a27ebb81376afa86f1248e1858350e[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 16:34:14 2025 +0000
+
+    Fix: remove duplicated Growfly logo from top-left
+
+[33mcommit 86ac5abd9cf824a9e00461dcaa7d189fba980537[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 16:26:29 2025 +0000
+
+    fix: header props for collab-zone
+
+[33mcommit 0f13bbec99e05940e8af3448937cf95ca617c003[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 16:21:22 2025 +0000
+
+    fix: restore globals.css and tailwind.config.js for custom classes
+
+[33mcommit beb14e5afc4682f490a27613682489c81392413e[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 16:17:42 2025 +0000
+
+    chore: wrap existing @apply rules in @layer base
+
+[33mcommit 044f38f530050dbcb3053cd26439d8305d9ae8f8[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 16:12:27 2025 +0000
+
+    Wrap @apply rules in @layer base
+
+[33mcommit 1e37a1e51fbe0e07796521029508610fb230f01e[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 16:07:00 2025 +0000
+
+    Force deploy updated design components
+
+[33mcommit 89f5d411d3d8c4b6d6635df720a289f415cf133e[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 14:40:07 2025 +0000
+
+    fix(feedback): remove invalid Header prop & add FeedbackForm component
+
+[33mcommit 920f2e8e5a147eb55ee7cb7594d880ec36b83235[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 14:24:53 2025 +0000
+
+    feat: wire up feedback form + voting components
+
+[33mcommit 5486fd3c1c12f487ed099ca3b2604d7f2b5db3f9[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 14:22:05 2025 +0000
+
+    Add FeedbackForm component
+
+[33mcommit 2d261ebbc7a466673e27b6a9efa10f67ab0aafa4[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 13:47:37 2025 +0000
+
+    chore: stop tracking .next and add to .gitignore
+
+[33mcommit 98954697b676311504cf15e3d9c1243140f0cde9[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 11:02:33 2025 +0000
+
+    🔧 Fix: use API_BASE_URL in dashboard for /me and /ai routes
+
+[33mcommit 5b56855726937f2fef711f09398389df9833dfd3[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 10:30:27 2025 +0000
+
+    🚀 Fix login flow and JWT persistence
+
+[33mcommit a6aa26e26a9933b788a940e3f88a5637afbdbbde[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 09:35:35 2025 +0000
+
+    🔧 Update frontend with referral support and me route integration
+
+[33mcommit eecc4a65bc06db8ea293cfca30325034dbb429ed[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 09:06:33 2025 +0000
+
+    Add CORS middleware to handle API preflight
+
+[33mcommit 4587d2ee8c31494cbc2e59577623ab90b0ffc034[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 08:55:01 2025 +0000
+
+    chore: add Next.js API proxy rewrite
+
+[33mcommit 48a3f1fe752658676ce3c5ba64deae61b6bd1356[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 08:38:26 2025 +0000
+
+    fix: ensure leading slash on /api fetches so Next proxy works
+
+[33mcommit 607b2785a14abeb261854281c4c67094104d533f[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 08:35:31 2025 +0000
+
+    fix(refer): move window access into useEffect to avoid SSR error
+
+[33mcommit 8aa5686705115ee64019b5a4a6bb6be26211164f[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu May 1 08:33:54 2025 +0000
+
+    fix(fetch): use relative /api/* paths so Next.js proxy avoids CORS
+
+[33mcommit e7372cd59a66995da2d87262f4d931eed1628d13[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 30 16:46:21 2025 +0000
+
+    chore: proxy /api through Next rewrites to avoid CORS
+
+[33mcommit a5066f0788b9082f0ddd88b7580f405ad590e446[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 30 16:34:28 2025 +0000
+
+    UX: add Refer-a-Friend everywhere, wrap prompt pills, progress bar, reorder sidebar
+
+[33mcommit dd96651a4719045194edbfa98d2ab161bf490474[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 30 16:22:10 2025 +0000
+
+    UX: remove per-page sidebars; clean up feedback, settings, change-plan pages
+
+[33mcommit f23ef200c87e570d29f3620bafb114a66c4b19b1[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 30 16:04:23 2025 +0000
+
+    🛠‍ Force redeploy old commit 52b4746
+
+[33mcommit 52b4746a15cd717856a6d9d848aab359dbca7a0c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 30 13:27:30 2025 +0000
+
+    Fix layout import: move ClientLayout up & restore sidebar + header wrapper
+
+[33mcommit 3270bd4cd4d617c71f09ef095994ba79de27d4a3[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 30 13:23:28 2025 +0000
+
+    Fix ClientLayout import path in app/layout.tsx
+
+[33mcommit 6668a70a2c15fd9c984566c642beb186bf9f49b0[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 30 13:19:47 2025 +0000
+
+    Wrap pages in ThemeContextProvider in RootLayout
+
+[33mcommit 73c7f79113c971d15489d83916ca4ab207365f4c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 30 13:17:54 2025 +0000
+
+    Fix GrowflyBot size prop and remove invalid Gear icon
+
+[33mcommit 1ed9f810de2dc1d6400604bc5ee4040a1001d9a1[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 30 12:37:56 2025 +0000
+
+    fix: optional Header props & typed GrowflyBot
+
+[33mcommit a8958bf50ea7b8574f4ff575e3b118e8996519ee[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 30 12:26:51 2025 +0000
+
+    feat: AI dashboard – clickable suggestion pills
+
+[33mcommit 2f80f70030ead0f88a28a88a88ad6af2fb8b186b[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 28 18:39:13 2025 +0000
+
+    ✨ Updated dashboard layout, chat flow, and prompt suggestions
+
+[33mcommit 541eea81477661f1c2b31d7fbe852810da18ee78[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 28 18:19:45 2025 +0000
+
+    Fixed mascot import and updated dashboard layout
+
+[33mcommit 5d759dc5ef7c3b478944d1f1c27997b878611c01[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 28 18:13:54 2025 +0000
+
+    ✨ Redesigned dashboard layout and AI chat flow
+
+[33mcommit b5d65ae9b1365827b37b646c380c7fc7736f41e4[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 28 17:57:49 2025 +0000
+
+    🚀 Fix: Safe followUps.split() check and AI prompt bug fix
+
+[33mcommit 0e06a0e20ad41bbb6751903c24d9c9518a8eaff9[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 28 17:37:43 2025 +0000
+
+    ✅ Fix AI endpoint path to /api/ai in page.tsx
+
+[33mcommit 624a9e581809aa02006d34870a6389c23cdc2829[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 28 17:29:52 2025 +0000
+
+    ✅ Fix followUps split error and prevent dashboard crash
+
+[33mcommit feb26862e78df062e9aab6d171ff4d39a5f8e0dc[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 28 17:02:23 2025 +0000
+
+    🔥 Fix login API route and JWT storage for Growfly
+
+[33mcommit 65f9ed7918167c8798f242eb7cabb0def3985bad[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 28 16:06:44 2025 +0000
+
+    Fixed AI route and cleaned up dashboard logic
+
+[33mcommit cf8ca7b93335113ef94f8f2a44c89d8473c34a5a[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 28 15:14:41 2025 +0000
+
+    ✅ Fix: payment-success page TypeScript error
+
+[33mcommit 2710dfe1f90cb6e6f7aeb6662e8d716754c739ac[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 28 15:08:43 2025 +0000
+
+    Fix: types installed, lint and build passing
+
+[33mcommit 53d0f3799ea5acbd5d554a74f6a764cf2a84777c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 28 14:44:42 2025 +0000
+
+    Fixed PostCSS config and Tailwind build issue
+
+[33mcommit 2092ba2edd026b3ded25a8f20e3c3b43772cdc8b[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 28 14:37:45 2025 +0000
+
+    final prep - working build ready for vercel
+
+[33mcommit eee27709a5145e75c81829605f5b5ca6bbff9eaf[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 23 17:12:54 2025 +0000
+
+    Fixed Tailwind CSS setup and configuration
+
+[33mcommit 9d052bb4a9ac27bdbf59f885ed24fe7f928fb03b[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 23 16:19:40 2025 +0000
+
+    fix: resolve tailwind postcss plugin issue
+
+[33mcommit 8325668de669539e9363159ead157577a2180bef[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 23 15:25:14 2025 +0000
+
+    🚀 Dashboard redesign + GrowflyBot positioning + sidebar improvements
+
+[33mcommit fc035db2091c6303b9fc6b28e9f8262d782ebd35[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 23 14:56:39 2025 +0000
+
+    🚀 Dashboard restyle, Growfly bot positioning, sidebar logo added, pre-made prompts live
+
+[33mcommit 91ab9b06e3afec44905d912ff91b6a0788631d15[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 23 13:29:21 2025 +0000
+
+    🚀 Push latest feedback feature and fixes
+
+[33mcommit 31ce32bf75f70d56b721da8c64b0608943ed177d[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 23 12:21:21 2025 +0000
+
+    🚀 Added feedback submission & admin approval system
+
+[33mcommit bc05d747abeb7b0e7e3d7678afb990d28f38a05a[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 23 11:01:25 2025 +0000
+
+    ✅ Fixed ThemeContext import and installed missing packages
+
+[33mcommit c15a6e0d6f0da2d64a8620c651dbdeb74180fa48[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 23 10:57:42 2025 +0000
+
+    ✅ Fixed ThemeContextProvider usage in layout.tsx
+
+[33mcommit a594c7705d0563acc496639a8e3afc211d14821e[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 23 10:44:22 2025 +0000
+
+    🚀 Integrated referral code tracking and ref param on signup
+
+[33mcommit c3b3929291478a9b37e1a8a8cafa46a886ef62d7[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 23 07:49:29 2025 +0000
+
+    ✅ Fix dashboard JWT token key and deploy
+
+[33mcommit 04d5731937bc34ca2bb738113987b0f530cb27ca[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 22 16:59:42 2025 +0000
+
+    ✅ Updated dashboard auth flow and fixed token handling
+
+[33mcommit 67104231e3d0e00f31a6c882fe3f05c3353e3254[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 22 16:45:56 2025 +0000
+
+    ✅ Fix signup page to avoid search param issues and auto-login to dashboard
+
+[33mcommit 3a6d7680a1a5e2a233b35267180c89cca2fc04f9[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 22 15:00:24 2025 +0000
+
+    ✅ Fix signup page build error with Suspense and client component
+
+[33mcommit 9acd92916445ff09177b607227975a6bbf922a79[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 22 14:58:00 2025 +0000
+
+    ✅ Fix /signup route with Suspense-compliant useSearchParams
+
+[33mcommit 3a74ca5be44518bea1754f126032a14c4eeedc4d[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 22 14:55:08 2025 +0000
+
+    ✅ Add /signup page for free and paid plan registration
+
+[33mcommit 3e4df388a80c615216b8d602bb0f8326e5c95c2f[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 22 13:23:02 2025 +0000
+
+    🚑 Fix: wrapped payment-success page in Suspense to resolve build error
+
+[33mcommit 145e6091864ca4d77583c5cfa334cce2cb7a8ddb[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 22 13:21:11 2025 +0000
+
+    ✅ Added payment-success page for Stripe confirm flow
+
+[33mcommit d6f83db3b7ddc9e5b7400d627dd3fa7087ec42cd[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 22 10:50:33 2025 +0000
+
+    Update plans page with enterprise plan and Tailwind fixes
+
+[33mcommit c2eb657ef8e40d641ffed901ea967f7b5c3a9974[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 22 09:53:13 2025 +0000
+
+    Fix useSearchParams issue on payment success page
+
+[33mcommit 657df8f8ea1c0aed1188ab735ad0e81cdc14ed74[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 22 09:51:08 2025 +0000
+
+    Updated plans page with correct placement
+
+[33mcommit e56b3a7295234f922a6c63c9428b55dd1994b694[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 22 08:48:15 2025 +0000
+
+    Fix SignUpForm import path in signup page
+
+[33mcommit 5cff262b8d8519925d666ff6e93b4b357a9b8b74[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 22 08:45:34 2025 +0000
+
+    ✅ Fix signup form import path
+
+[33mcommit ea043d77be2fab3417cd306eb56306675c329846[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 22 08:44:24 2025 +0000
+
+    ✅ Fix signup page: wrapped useSearchParams with Suspense boundary
+
+[33mcommit 74a4536f0fb1e86d15f5d29a7615c94b5d98dc37[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 22 08:43:06 2025 +0000
+
+    🔥 new style SignUpForm.tsx and wrapping with Client Component
+
+[33mcommit ff1aab98bfe6a403d044a905de824e88d8ec464f[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 22 08:13:11 2025 +0000
+
+    ✅ Fixed signup flow to correctly handle plan selection from URL
+
+[33mcommit 4cb54e9c518e68b6efe4546622b36beb0739e76b[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 22 07:45:54 2025 +0000
+
+    ✅ Final working plans page with plan selection logic
+
+[33mcommit 47d7009dafa0c320721486034d1d80a6309d8cc4[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 22 07:43:16 2025 +0000
+
+    Fixed plans page flow and Stripe integration
+
+[33mcommit c0ae94bb5a5b4fff3d11ff747359279aa62bf988[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 21 13:40:24 2025 +0000
+
+    🔥 Fix SSR error on signup by removing useSearchParams
+
+[33mcommit 9db3387b609e3ec3f73815d3902d11b765145df0[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 21 13:38:25 2025 +0000
+
+    Fix and new design
+
+[33mcommit e996dbde451d7d63188fbb8f09ab944f86252e13[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 21 13:36:20 2025 +0000
+
+    Fix signup to route to Stripe correctly
+
+[33mcommit 9aa95991467ae09dabda938780757a93dc139bd8[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 21 13:25:43 2025 +0000
+
+    Redesigned plans page and integrated Stripe sessions
+
+[33mcommit 8a6a702a7c0fac61346954ab77658adb6696221c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 21 13:13:41 2025 +0000
+
+    ✨ Added /contact page for Enterprise plan
+
+[33mcommit 47f810c304b0ff47448d18640e191f265c75787e[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 21 13:01:38 2025 +0000
+
+    Fix Stripe plan selection + error handling
+
+[33mcommit c8a84fc33550efa71270791323b1e6d45611e648[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 21 12:53:07 2025 +0000
+
+    Connect plan selection to Stripe checkout
+
+[33mcommit 1a7b45e566121d7fe3c4573851e85854cc0036c4[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 21 12:39:28 2025 +0000
+
+    🔥 Fix: removed useSearchParams and use sessionStorage to avoid build error
+
+[33mcommit 87358ec187b772b8353437631ecaaa79572af79b[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 21 12:37:37 2025 +0000
+
+    🚑 Fix signup build error with proper client component
+
+[33mcommit 562a74ee2f5b0f0be8a3dda15716e50f33aa07ff[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 21 12:35:59 2025 +0000
+
+    Fix SSR error by dynamically loading SignUpForm
+
+[33mcommit f4a6b5e95b3ebba66d4cfb0e41e4a45338a047ae[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 21 12:34:40 2025 +0000
+
+    Add SignUpForm client component
+
+[33mcommit 883dff68a5789ee84bed235166ab913013131e6b[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 21 12:24:02 2025 +0000
+
+    🎨 Add /change-plan page and plan switch logic
+
+[33mcommit f4e4465e3d24741af31a31a1dcfa2a4515f4c022[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 21 12:12:00 2025 +0000
+
+    🔗 Add link to Change Plan page in sidebar
+
+[33mcommit c63376f097b3e7ffbedc66686759db0319d299ee[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Apr 17 19:25:08 2025 +0000
+
+    🔧 Fix signup URL env and endpoint path
+
+[33mcommit 3547ad6f9f7bd96b9148578656886d31c5e2b5f0[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Apr 17 18:40:23 2025 +0000
+
+    ✅ Fix signup route + validations + UI
+
+[33mcommit 480aecc0efc52eadcff377de5faf053b6e06f0ee[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Apr 17 18:26:25 2025 +0000
+
+    ✅ Fixed signup form JSON crash and improved UI
+
+[33mcommit 2adb6130e3aa7d4e7ecae4ff936ec0148792d2b3[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Apr 17 18:21:53 2025 +0000
+
+    ✨ Modern signup form with validation
+
+[33mcommit 4ad3ce5e1f6d8d5f67b827ddd0c8b0e85e6a1b3d[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Apr 17 18:17:13 2025 +0000
+
+    ✅ Fix JSX errors in signup page
+
+[33mcommit f12d27acb62f1fe375c21b76db5a971ab33c05ec[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Apr 17 18:02:14 2025 +0000
+
+    🐛 Fix: added default export to signup page
+
+[33mcommit 10fcb8c149b0ecc17568cabaf4848a7e696b5108[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Apr 17 17:59:22 2025 +0000
+
+    ✅ Fixed VoteFeedback props and cleaned up test route
+
+[33mcommit e9128efe381bde00afd0a3b80b2ff6a0b386a086[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Apr 17 17:27:05 2025 +0000
+
+    Add Vercel Analytics
+
+[33mcommit 1a26fbe039f1ac8eb5963d9f0ccbe97793e6680f[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Apr 17 17:14:27 2025 +0000
+
+    Fix dashboard route and layout structure
+
+[33mcommit 8f9aeb98102e285b50e6c40f0445587067bdba2c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Apr 17 17:01:51 2025 +0000
+
+    🔥 Redesigned pricing plan page
+
+[33mcommit fe92b94cb3b3e1fc2731b393708ea86f4985da43[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Apr 17 16:41:24 2025 +0000
+
+    🔧 Rename global.css to globals.css for layout import
+
+[33mcommit b38a218eebfd245bd06afbcde61649d08a932563[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Apr 17 16:34:39 2025 +0000
+
+    ✅ Add missing components and fix global styles
+
+[33mcommit 7dfa78cf37a76bd841ef176f19d1e96946dbf679[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Apr 17 16:25:30 2025 +0000
+
+    🛠️ Fix React UMD imports + component alias paths
+
+[33mcommit 03c1588c513136a5b10f2a74cfc323c734b6a9bc[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Apr 17 15:58:58 2025 +0000
+
+    ➕ Add next.config.js to enable /dashboard and fix 404s
+
+[33mcommit 481c20229082935d0ca87bf9573e108f14e7fc9e[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Apr 17 15:49:58 2025 +0000
+
+    Fix testdashboard module export
+
+[33mcommit e6ef8da321ff04a7a68209e5c97f73bda96fc2b6[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Apr 17 15:48:17 2025 +0000
+
+    Add testdashboard route
+
+[33mcommit 5c6df6a5479d112cf01d28d53ce78023d94de682[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Apr 17 15:43:21 2025 +0000
+
+    Test dashboard route
+
+[33mcommit be0ce066f1b32d898125f0a3fa1221d838738251[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Apr 17 15:32:56 2025 +0000
+
+    Fix dashboard and apply Growfly styling
+
+[33mcommit cc49d49f675da495bc85cab99e4a615a5f06f81a[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Apr 17 15:09:56 2025 +0000
+
+    Trigger Vercel redeploy
+
+[33mcommit cb634517f1ff2447ab42a5337ca2798e4771e7c4[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Apr 17 15:04:21 2025 +0000
+
+    Updated plans page with branding and Entrepreneur highlight
+
+[33mcommit 8529da632a5ac35e34d0ff41f4ff7846beae17fe[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Apr 17 14:44:12 2025 +0000
+
+    Fix: add styled /plans route with branding and plan logic
+
+[33mcommit c8a1d1f9fb6513591ca5927b195dd3f239dd5c6c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Apr 17 14:31:28 2025 +0000
+
+    New signup & plan selection flow with validation and Growfly styling
+
+[33mcommit d0a133d15ff7cfd59cd993c879458b8373887712[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 14 14:35:17 2025 +0000
+
+    Remove legacy selectPlan.tsx file to fix routing
+
+[33mcommit 3db5d43f0187ad0c721fd565a1c6db5cd98eb70b[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 14 14:27:14 2025 +0000
+
+    Connect dashboard/page.tsx to DashboardClient and /api/user
+
+[33mcommit cd21dc7d2aed8e74fd6b2d244ee88ff8bd5ba73c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 14 13:51:08 2025 +0000
+
+    Fix 'use client' placement in select-plan page
+
+[33mcommit 43b54ffedd923a0f12bfb5e720b914bba5835ff1[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 14 13:49:09 2025 +0000
+
+    Fix client directive and finalize select-plan page
+
+[33mcommit 890ae89b82920d3bb2f87fe5ab92ca323cc5f4b6[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 14 13:46:43 2025 +0000
+
+    Remove old selectPlan file
+
+[33mcommit 7939a547b4005f9d3242648ab7db6354b4b856cf[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 14 13:38:06 2025 +0000
+
+    Fix route for select-plan page
+
+[33mcommit 403a5abb9607b98f08bf2d7b19a03ae16b45c6f4[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 14 13:34:12 2025 +0000
+
+    Update DashboardClient and related logic for deployment
+
+[33mcommit 2349cd0f131e3e841c6dbd7aedf2594e894a4d3a[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 14 12:57:12 2025 +0000
+
+    Trigger rebuild
+
+[33mcommit 0b4803226836693f2cdcfc8c565a594eba9ce54c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 14 12:06:48 2025 +0000
+
+    Add login and signup pages, plan selection component
+
+[33mcommit 84bd24e73f3efdbf00af2efe7626a3f06330cf41[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 14 11:22:58 2025 +0000
+
+    Deploy dashboard to Vercel
+
+[33mcommit 004fdc72f0f3b772f0e832eb28b04d31a7462cca[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 9 08:56:42 2025 +0000
+
+    🔥 Remove backend shopifyAuth.js from frontend
+
+[33mcommit 0fe10647b1850fd95b104979aab1bb6375774f19[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 9 08:30:56 2025 +0000
+
+    💥 Finalize index.js and Shopify auth integration
+
+[33mcommit c2729bd77a3070ccb0caf43ed4c5c76e4cd5ef64[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 8 16:01:37 2025 +0000
+
+    ✅ Connect frontend to backend with fetchWithAuth and JWT
+
+[33mcommit bce9cbb83c94699a8ceb12ec67cdf003da931d1e[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 8 15:00:32 2025 +0000
+
+    Fix: Installed dotenv and its types
+
+[33mcommit 2a28b6fb21ca9f196a0de6da55778acb9965667f[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 8 14:59:18 2025 +0000
+
+    Fix: Added @types/jsonwebtoken for TypeScript build
+
+[33mcommit 9eca5e6367fab2c78bb09bfea37e9a8898b62e47[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 8 14:57:00 2025 +0000
+
+    Fix: Added @types/node to support TypeScript on Vercel
+
+[33mcommit cd2cfdaa672b30d72f0b17bdf0d2f1df8da6132c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 8 11:29:50 2025 +0000
+
+    Fix path to globals.css for Vercel build
+
+[33mcommit 1e12c4d943ff88fe7e3612af04e6476ee49dd38b[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 8 11:23:37 2025 +0000
+
+    ✅ Fix missing ClientLayout import extension
+
+[33mcommit 51bbad8f85c7390037815b061deae2f01bac148c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 8 11:13:59 2025 +0000
+
+    ✅ Add React TypeScript types to fix JSX errors
+
+[33mcommit ec7a13f99d577ce009ab2eb117e817e009b329c6[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 8 11:04:51 2025 +0000
+
+    ✅ Add tsconfig with path alias support
+
+[33mcommit 518d375cf64146e376d5db4204329fde6281a780[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 8 10:49:37 2025 +0000
+
+    ✅ Final project structure ready for production
+
+[33mcommit 2278850634f4312ae0e8b7012c77e2fd86c9349c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 8 09:23:36 2025 +0000
+
+    🧹 Clean Tailwind/PostCSS config for Vercel
+
+[33mcommit c67a67f741def099d1944bb09a7a8e1e47d05a09[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 8 09:18:44 2025 +0000
+
+    💥 Fix Tailwind/PostCSS config for Vercel
+
+[33mcommit 9dc6c43e44c3ef479b16465541f0d665bc9ef6fb[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 8 09:00:29 2025 +0000
+
+    Force pushing latest changes to fix Vercel config
+
+[33mcommit 2e5bc99433ded6b3c025578e64af90c331ad6514[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Apr 8 08:57:02 2025 +0000
+
+    🔥 Reset Vercel config and removed prisma override
+
+[33mcommit 2fb2ac839be8bc870d690da6d341513f74cbd279[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 7 13:26:47 2025 +0000
+
+    🔥 Final cleanup: removed Prisma, added safe postinstall, ready for clean Vercel deploy
+
+[33mcommit 19d41d19f61df18b8cbb2b6085ab23549bfa025d[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 7 12:14:09 2025 +0000
+
+    🔥 Fully removed all Prisma traces from frontend
+
+[33mcommit d5f6440fd08b1d32a7de92caf5692a011bec7198[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 7 12:06:54 2025 +0000
+
+    Fixed Tailwind IntelliSense issues and cleaned VS Code settings
+
+[33mcommit 47df2b866faf89a899c2f1964b8057d6f453aa8c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 7 11:23:09 2025 +0000
+
+    Final Tailwind fix: cleaned postcss config and reloaded IntelliSense
+
+[33mcommit 0c2aaed8bebfdcccd52959bb0770f9eac584fc39[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 7 10:53:08 2025 +0000
+
+    Cleaned tsconfig and fixed type errors for estree/json-schema
+
+[33mcommit 0ad94a66867dca3cdbd0ae32b74f86d718d59fe7[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 7 10:42:42 2025 +0000
+
+    Removed Prisma completely from frontend and fixed TypeScript types
+
+[33mcommit edaf32d92ea83a2b4d63150708ac7f8e55e1727c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 7 10:32:59 2025 +0000
+
+    Fully removed all prisma files from frontend
+
+[33mcommit 6a03b31dabf1c7fd313150193bdd8d2c2a9c824b[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 7 10:28:55 2025 +0000
+
+    Cleaned up frontend package.json and skipped prisma
+
+[33mcommit c85f5de2bcd9be9bc431127d88a56ddc99d36186[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 7 10:25:36 2025 +0000
+
+    Trigger redeploy after setting Vercel root to frontend
+
+[33mcommit 39d6d287eacfb88e80f047fcb62c8885fad1508d[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Apr 7 10:07:10 2025 +0000
+
+    Restore full Shopify auth flow
+
+[33mcommit f29be0a62a5c25e763e2a9d44622644ac9b689de[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 2 16:55:33 2025 +0000
+
+    Update dashboard client with prompt input and API call
+
+[33mcommit 92783f7cc22c82af202a2cc5c321bdf41a1a9e9d[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 2 14:09:35 2025 +0000
+
+    Cleanup: removed old API and unused scripts
+
+[33mcommit c7014757a49bd57cfbeabfa3e4e59a9a5e1faab1[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Apr 2 11:25:08 2025 +0000
+
+    Update styles and components for testing
+
+[33mcommit b4d61b4ad2171d589ec1d00d1fb4e04a7884869e[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 31 10:56:25 2025 +0000
+
+    Restore correct shopifyAuth.js implementation
+
+[33mcommit c36e9aca06826893f1231f5d97c1950b4a001eb2[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 31 10:41:14 2025 +0000
+
+    Restore correct shopifyAuth.js implementation
+
+[33mcommit f6f96402cab25aa52c483bbe210bcf11c693637f[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 31 10:26:48 2025 +0000
+
+    Restore correct shopifyAuth.js implementation
+
+[33mcommit 4885bdcc5204871cbbfd47cb02a2675708758420[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 31 10:22:42 2025 +0000
+
+    Restore correct shopifyAuth.js implementation
+
+[33mcommit f2b89943e24142d9cfc42f6fec4d0c85d613c821[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 31 10:11:46 2025 +0000
+
+    Update shopifyAuth.js and other files for OAuth and routing fixes
+
+[33mcommit 59bfc667adc89d003aa5c33c7a731bacc9b1b296[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 31 09:01:18 2025 +0000
+
+    Update shopifyAuth.js and other files for OAuth and routing fixes
+
+[33mcommit 41753e99037e8dd343916cb9a0372045a628a545[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 31 08:53:48 2025 +0000
+
+    Update shopifyAuth.js and other files for OAuth and routing fixes
+
+[33mcommit 72a82a66616d0ba3a14b3f7e98a559202d2c04ec[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 31 08:47:28 2025 +0000
+
+    Update index.js with new Shopify and AI routes
+
+[33mcommit eb303505a40f6c130513743333141b58881a534c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 31 08:41:59 2025 +0000
+
+    Fix Prisma Client generation issueotherfierc4
+
+[33mcommit 2840b444cf54ceef87f4763624cac1856a6a6bfb[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 31 08:18:29 2025 +0000
+
+    Fix Prisma Client generation issue
+
+[33mcommit 493b386e86357e919058c25cde6b10c13fbfa9a0[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 31 08:03:53 2025 +0000
+
+    Fix ERR_HTTP_HEADERS_SENT in Shopify auth flow
+
+[33mcommit bc574177f4222107baccc1eca27cd59a65275a57[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 28 14:09:36 2025 +0000
+
+    ✅ Finalise Shopify OAuth with Node adapter for v11
+
+[33mcommit b6cb405968a9b177a5925e405dbbab898a395af5[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 28 13:31:12 2025 +0000
+
+    🐛 Fix: Prevent double response headers in /auth route
+
+[33mcommit 6f74286d61a0ef01dd7dbb64e394f306b5dabcc6[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 28 13:26:57 2025 +0000
+
+    Fix Prisma generation on Vercel
+
+[33mcommit 61117b2cbc05f77b2ec5e883ac1cabe02ce41c0f[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 28 13:23:09 2025 +0000
+
+    🔧 Final fix: Prisma + Vercel deployment config
+
+[33mcommit 770f90e358a93cbff0dc11f505a3c9b3e6e74837[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 28 13:14:44 2025 +0000
+
+    🔧 Final fix: Prisma + Vercel deployment config
+
+[33mcommit b087161b281f30b7ca9784a84dc831cf0b0a63c2[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 28 13:10:43 2025 +0000
+
+    🛠️ Fix: run Prisma generate on Vercel build
+
+[33mcommit 7e80f75468d2d2be7415d6f7e6856142ba5628a4[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 28 13:03:38 2025 +0000
+
+    ✅ Final adapter fix for Shopify v11.11.1
+
+[33mcommit a5d288e0049d982298e0ebcde31301d4bcefdb4a[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 28 12:58:20 2025 +0000
+
+    🔥 Fix: Register Shopify Node adapter for runtime
+
+[33mcommit 99caf94abaa8f8fc27b247e19123072988c5e905[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 28 12:49:30 2025 +0000
+
+    🛠️ Remove invalid register() usage
+
+[33mcommit 89810d161ade5f2251c1e508c86013f208e2641d[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 28 12:28:13 2025 +0000
+
+    Add @shopify/shopify-app-express for compatibility
+
+[33mcommit b1d1593aa6d303e613bc62222356c05ff7b90175[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 28 12:23:15 2025 +0000
+
+    ✅ Fix: Register Shopify Node adapter for v11 compatibility
+
+[33mcommit 6a474969e82e3c142d43b921757b5a149bfac086[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 28 12:09:32 2025 +0000
+
+    Fix Shopify API runtime adapter issue
+
+[33mcommit e170143a5893169633b90f1d20f26d806ddd8c94[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 28 11:06:03 2025 +0000
+
+    ✅ Fix NodeAdapter usage and session storage for Shopify SDK v11
+
+[33mcommit 9291a992e25eb009e30d3dd59533e7a7003ffb0f[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Mar 27 18:31:10 2025 +0000
+
+    Ensure /shopify/user-dashboard route is registered
+
+[33mcommit 8ddc5f8b8056980d85421affe54100c7fc424126[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Mar 27 18:23:31 2025 +0000
+
+    Fix node adapter and Shopify in-memory session
+
+[33mcommit c2a4b5f5dffe9b2832258ca70fa028af81631705[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Mar 27 18:18:35 2025 +0000
+
+    Fix NodeAdapter usage and in-memory session storage
+
+[33mcommit c062a48d4210bf5a324900f0281629647568de98[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Mar 27 18:02:53 2025 +0000
+
+    Fix Shopify custom session storage issue
+
+[33mcommit b9c25aeb04670725c498b77226b8fd0c6dd00b38[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Mar 27 17:53:51 2025 +0000
+
+    Fix Shopify NodeAdapter usage and install @shopify/shopify-api@11.11.1
+
+[33mcommit 5ee75a9243e7f97949ad0a5961418a7ed71221aa[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Mar 27 17:30:29 2025 +0000
+
+    Fix Shopify Node adapter issue
+
+[33mcommit f95c538dfcae0e5102f7dde656d640d21d770ed3[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 19:15:09 2025 +0000
+
+    Convert to CommonJS and fix Shopify integration
+
+[33mcommit a831e4af2c07b6ed425c973e2c12880d2951b6f7[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 18:36:41 2025 +0000
+
+    Fix Shopify adapter and session issue
+
+[33mcommit a4fe8b51998095b5b899c0b033fae3ddfe92c955[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 18:14:35 2025 +0000
+
+    Fix Shopify session import and prevent path export errors
+
+[33mcommit 008611655397dc4328dabeeb408cdb69f445b551[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 17:59:02 2025 +0000
+
+    Fix Shopify MemorySessionStorage import
+
+[33mcommit 86ffa3671c4e6cff31d96592e28798fef568bb7c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 17:54:02 2025 +0000
+
+    Convert project to CommonJS for Shopify compatibility
+
+[33mcommit 337bb6d4be0e482a970d75444c6d9908e7ccd1c3[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 17:42:51 2025 +0000
+
+    Fix ShopifyAuth.js for ES Modules using createRequire
+
+[33mcommit 6bb81416c994d894e8a8e8ab520820e67c3b2673[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 17:34:38 2025 +0000
+
+    Fix MemorySessionStorage import using proper ES module structure
+
+[33mcommit 67a31d50af7c2b2c8763897d3ab847563fdf0195[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 17:30:17 2025 +0000
+
+    Fix MemorySessionStorage import
+
+[33mcommit 6cd5d97932ef5cff70ef66f7b0a83fd3f9b34f39[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 17:26:31 2025 +0000
+
+    Fix Shopify API import for ES module compatibility
+
+[33mcommit 058aa9329818ccdf78c6b317da88021be8cc3fa7[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 17:13:16 2025 +0000
+
+    Fix import/export and ES module compatibility
+
+[33mcommit 326d3e730fa7bdd704e0a25028e527d2d17cce0e[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 14:39:09 2025 +0000
+
+    Convert to CommonJS to fix Vercel + Shopify SDK compatibility
+
+[33mcommit 09675bbc2068d79c061d3295cf99b8a2b8e17110[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 14:30:45 2025 +0000
+
+    Fix: CommonJS import for Shopify SDK
+
+[33mcommit a3ef9db3c94769e3fdd852fa3d8483a053eed7d6[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 14:25:16 2025 +0000
+
+    Fix: Use stable Shopify SDK and proper MemorySessionStorage import
+
+[33mcommit b228b735a3657b5e95d06c2b9108ad9a4837a2ab[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 13:26:15 2025 +0000
+
+    Fix Shopify MemorySessionStorage import
+
+[33mcommit db2a7ab3f95748280a8daa1bb907225b9bd5edb6[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 13:16:10 2025 +0000
+
+    Fix Shopify MemorySessionStorage import for Vercel
+
+[33mcommit 51ff5409ab645022c52afa621c99725c9b53b80c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 13:09:52 2025 +0000
+
+    Fix MemorySessionStorage import
+
+[33mcommit 860139e09a877bb1a41eaffe7cee4a433fcf0a00[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 13:05:05 2025 +0000
+
+    Fix Shopify session import
+
+[33mcommit 8d9f75ecb281f0282726270cc2d2398495c9b01c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 12:33:02 2025 +0000
+
+    Fix shopify session import bug
+
+[33mcommit 0842e8dee301488eee8acccd585230f62aab9d92[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 12:19:39 2025 +0000
+
+    Fix Shopify OAuth router export
+
+[33mcommit f1d4e0bf3627e1e761b486f6283aaaab6a0c1f3c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 12:14:41 2025 +0000
+
+    Fix Shopify auth route syntax error
+
+[33mcommit 8e59f3d460bd0a91a17c07a252afa0eda7accbe4[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 11:57:31 2025 +0000
+
+    Refactor OpenAI SDK import for Vercel compatibility
+
+[33mcommit 67c5f79b9d4d66863fe58260d005d465432195c9[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 11:41:02 2025 +0000
+
+    Add missing dashboard files and fix routes
+
+[33mcommit e104ab5588d7314674a6d7ca82faaaf48d19ed41[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 11:32:41 2025 +0000
+
+    Fix ESM imports for Vercel
+
+[33mcommit 313d5b59d68b4d50f6019a7f3cc083dcb8173e06[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 10:08:44 2025 +0000
+
+    Fix Shopify integration and dashboards
+
+[33mcommit 5fedb6cb2700094e4862b5049d11ea95228768ee[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 09:56:17 2025 +0000
+
+    ✅ Fixed Shopify Auth & RegExp issue
+
+[33mcommit edf1898312b17d4d89047f2f3b62a28dc8b50997[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 09:48:02 2025 +0000
+
+    ✅ Shopify API v5.0.0 installed for session compatibility
+
+[33mcommit 9f1f460746098a3e152de81061440b374d791031[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 09:28:35 2025 +0000
+
+    ✅ Fix Shopify session import fully for production
+
+[33mcommit d12313b13a4055b6e82dea18b81cb31a5b4972f4[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 09:16:32 2025 +0000
+
+    Fix: correct Shopify session import and OAuth setup
+
+[33mcommit 15cabd216dd44ee2f066605b9e99a664348a89a4[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 09:12:17 2025 +0000
+
+    Fix OpenAI crash by using version 4.20.0
+
+[33mcommit c33adf2547185aa0a11ece02b1c1d32774b83e9f[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 26 09:04:53 2025 +0000
+
+    Update Shopify .env variables
+
+[33mcommit 458e031af0a5abca38900edcceca9b138d32eb8b[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 24 16:56:43 2025 +0000
+
+    Fix Shopify auth Express implementation
+
+[33mcommit 5221344a7dc102af78f11e851a7a8e0e0cadbd34[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 24 16:52:08 2025 +0000
+
+    Fix crash on undefined SHOPIFY_APP_URL
+
+[33mcommit f606c32ea919050e8819e27347b32b5be553aa70[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 24 16:44:30 2025 +0000
+
+    Fix OpenAI import for SDK v4 and update chat completion calls
+
+[33mcommit 7a65ffe33255688e7517cf7782357eb264fd227f[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 24 16:36:44 2025 +0000
+
+    Convert Shopify auth from Koa to Express
+
+[33mcommit 7a925d05d357e53eb3bd2895030176832da94e0a[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 24 16:29:06 2025 +0000
+
+    Install Koa for ShopifyAuth middleware
+
+[33mcommit 6ab5714e03ff6fba9a0d809fdc6e07612605dc64[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 24 16:23:38 2025 +0000
+
+    Cleaned up dependencies and added @shopify/shopify-api
+
+[33mcommit f170c91728f53f58913153745d179a7195a54633[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 24 16:12:48 2025 +0000
+
+    Fix crashing /user-dashboard route with logging
+
+[33mcommit 420ec83ab8b47c963743055f087a648df2a243d2[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 24 16:05:05 2025 +0000
+
+    Fix follow-up string & brackets; cleaned up server code
+
+[33mcommit ed9fb44a902298915ec3d72aae325d734d1769f5[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 24 16:01:57 2025 +0000
+
+    Fix Vercel module import & improve error handling
+
+[33mcommit f18b148356101b1ed47833d35636d361bff7a58c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 24 15:55:17 2025 +0000
+
+    Add logging to /user-dashboard route
+
+[33mcommit cf14917523948208e7f2bf160e301c347b070444[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 24 15:13:31 2025 +0000
+
+    Fix Shopify integration and dashboards
+
+[33mcommit eead4242c1abd1dfca27e547178efe259387a82b[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 24 13:12:59 2025 +0000
+
+    Fix Shopify integration and dashboards
+
+[33mcommit b62a4e28ee576df9860298ea233e335a0540190f[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 24 13:00:35 2025 +0000
+
+    Add Shopify integration and dashboards
+
+[33mcommit 2ff9314aec1f3deed607c62d71952c2c5a34add7[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Mon Mar 24 12:25:13 2025 +0000
+
+    Add Shopify integration and dashboards
+
+[33mcommit 4b4206cb3d5e2dd63d54184565cff8affdc134e2[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Sat Mar 22 17:34:52 2025 +0000
+
+    Fix timeout, use gpt-3.5-turbo, AI follow-ups
+
+[33mcommit aa088e8e999c88913214f04ac6278326213d05af[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Sat Mar 22 17:30:20 2025 +0000
+
+    Fix Vercel timeout using legacy builds config
+
+[33mcommit 0ccbac37b3bf7ac80ad95aa4193a70a75eaac735[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Sat Mar 22 17:28:56 2025 +0000
+
+    Increase Vercel function timeout to 30s
+
+[33mcommit 03451b10d3fcf261088ce3c4c6bbbb4ececfbf07[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Sat Mar 22 17:22:58 2025 +0000
+
+    Fix OpenAI import and deploy GPT-4 Turbo endpoint
+
+[33mcommit 88d149387cd0235316fa093ef2bea21f1ccc46e6[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Sat Mar 22 17:18:04 2025 +0000
+
+    Final working GPT-4 Turbo endpoint with OpenAI SDK v4
+
+[33mcommit 4c710e58a52aac43a224f7acb8f5cec77108b105[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Sat Mar 22 16:59:20 2025 +0000
+
+    Deploy working AI chat endpoint to Vercel
+
+[33mcommit fe8beddd24441dca02db243a595ba7e25653a3ec[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Sat Mar 22 16:52:06 2025 +0000
+
+    Update API with dynamic follow-ups and OpenAI integration
+
+[33mcommit dfb6771151bde40cddc42616f5a4aa7ff4c964c7[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Sat Mar 22 16:32:56 2025 +0000
+
+    Update API to include context and follow-up questions
+
+[33mcommit 2bdf280dc327dbe6c555fd7de26cc8799bab6ee2[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Sat Mar 22 15:58:11 2025 +0000
+
+    Fix OpenAI chat integration
+
+[33mcommit b8ca3e188fd2a9075fe0fb018f6c92fc477f91d4[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Sat Mar 22 15:36:06 2025 +0000
+
+    Update API to make real request to OpenAI
+
+[33mcommit 330954ef4b59b4ff753fb317b4a070dd35919b0c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Sat Mar 22 15:23:53 2025 +0000
+
+    Fix Prisma and install dependencies
+
+[33mcommit 16be0ac4e82a7099f07c18b79e1e7e5fcdcbf810[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 18:31:54 2025 +0000
+
+    Updated authentication and JWT handling
+
+[33mcommit 243ab066a59fa287856f1d310b0dc89322108cd6[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 17:47:15 2025 +0000
+
+    Fix file organization and dependencies
+
+[33mcommit 41e3a0d15749dbaa3da9aa63e46c881292aa3765[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 14:53:17 2025 +0000
+
+    Fix authentication and deployment configuration
+
+[33mcommit ef82219fc57b4a98c98d3a2f2318bd62bf12fd84[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 13:48:24 2025 +0000
+
+    Fix authentication and deployment configuration
+
+[33mcommit 93d4f31b3c893cba782ca695028f45444852a6c5[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 13:44:52 2025 +0000
+
+    Fix authentication and deployment configuration
+
+[33mcommit 803641eee70fda7f2c7df1317604f358e0d5ced5[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 13:31:58 2025 +0000
+
+    Fix authentication and deployment configuration
+
+[33mcommit 33048ee070aafdc33fd1750d204ceed219e67717[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 13:27:03 2025 +0000
+
+    Fix authentication and deployment configuration
+
+[33mcommit 666058b1890845ef9b6795d3f1f7f5510eea241f[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 13:20:33 2025 +0000
+
+    Remove output directory requirement
+
+[33mcommit e6b389ca5d393fd9f25bbad8c66f50fb3023ae7b[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 13:17:55 2025 +0000
+
+    Fix vercel.json configuration
+
+[33mcommit ce8ce6a6ba82296266abf6bb08a2d01f47a103be[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 13:16:00 2025 +0000
+
+    Fix build configuration and optimize schema
+
+[33mcommit 2eab8d29362d8f17f3ce00bf8e86e082f433794b[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 13:14:20 2025 +0000
+
+    Remove output directory requirement
+
+[33mcommit 17b93e6abecf99b1a60dbfcec73f6d776f6ca3f1[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 12:59:55 2025 +0000
+
+    Setup Vercel deployment configuration
+
+[33mcommit c837a60a8ad61ec3414fd329c51dc3772204449f[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 12:50:37 2025 +0000
+
+    Switch to zero-config deployment
+
+[33mcommit fffa80fbd15baed0ebc6a0bc596602446ccc5ced[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 12:39:27 2025 +0000
+
+    Fix routing configuration in vercel.json
+
+[33mcommit 2d6c38a578a7e3f1fb862970e9d67e160d2542c9[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 12:38:37 2025 +0000
+
+    Simplify Vercel configuration with rewrites
+
+[33mcommit 4e33d10eb9ab1b4444e9ff1cc19804c2cd36ca0d[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 12:35:38 2025 +0000
+
+    Simplify Vercel configuration
+
+[33mcommit cfac723cb06a5cdce4fcf7777a3b56d398f6ecdd[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 12:33:29 2025 +0000
+
+    Fix JSON syntax in configuration files
+
+[33mcommit e13c9b39a4ce8ea7b7b59951be0a07a41d19df76[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 12:05:58 2025 +0000
+
+    Remove framework from vercel.json
+
+[33mcommit 82f9845bd80cfeb3d95584eeb07e3507d7ddf1ef[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 11:22:30 2025 +0000
+
+    Update Vercel configuration
+
+[33mcommit 5a1e6f2e9d2b3d6492285a034c05bf85b5240012[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 11:17:14 2025 +0000
+
+    Remove functions property from vercel.json
+
+[33mcommit 7843d9476f9ed8f2e09fa643e057d40adc8272ac[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 11:15:35 2025 +0000
+
+    Update Vercel configuration for API deployment
+
+[33mcommit 0e673d16fcf749b8a67289bc21bb5f2a25f4d26e[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 10:45:00 2025 +0000
+
+    Update Vercel configuration
+
+[33mcommit 76d7a218cb62fa9c12c612ce69f376ee49615e04[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 10:23:53 2025 +0000
+
+    Fix vercel.json configuration
+
+[33mcommit f7490953d7ffd6046ed18d8ca0597c6b46a27ef3[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Fri Mar 21 10:14:49 2025 +0000
+
+    Fix vercel.json configuration
+
+[33mcommit fe55dc675bbcff8059a3ae533ea1ba1dc36a8744[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Mar 20 16:45:37 2025 +0000
+
+    Update build configuration for Vercel deployment
+
+[33mcommit 68d4a61aa60158a1ecbc99faac6a28229d8c663a[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Thu Mar 20 16:41:51 2025 +0000
+
+    Fix build configuration and optimize schema
+
+[33mcommit deaf98847829a3f249c50e5856eef91a427b6fea[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 19 08:41:39 2025 +0000
+
+    Simplify JSON parsing and add better error handling
+
+[33mcommit e4e6f0967a36f92e703fdf1304a27b0cd3f20cbb[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 19 08:33:21 2025 +0000
+
+    Improve JSON parsing error handling
+
+[33mcommit 2d8253d0e48e2d17a3760742432f46d07417c562[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 19 08:30:56 2025 +0000
+
+    Fix Node.js version compatibility and use latest @vercel/node
+
+[33mcommit f0a0ac7714873796b0ad21e03a4e36e07dffc984[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 19 08:28:07 2025 +0000
+
+    Fix Node.js version compatibility
+
+[33mcommit a4dd8017bafd7dd6524a01dd48c7888364868acd[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Wed Mar 19 08:25:02 2025 +0000
+
+    Enable auto deployments
+
+[33mcommit 05b8a5f53b0804d5ff645746e387cb348655222f[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 14:16:00 2025 +0000
+
+    Update Node.js version and configuration
+
+[33mcommit 9935cc3ed4bd6eada9afa0b3b343fb8504acf297[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 14:13:37 2025 +0000
+
+    Fix Node.js version specification
+
+[33mcommit 72ce9752cb361686c7e877933290765b069917e4[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 14:07:29 2025 +0000
+
+    Update Node.js engine requirements
+
+[33mcommit b79f4fc3abd912141a4b6b5a9ff1c449e5129c4e[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 13:53:11 2025 +0000
+
+    Add better error handling for JSON parsing
+
+[33mcommit 72336895a66592b50a8040828410b2f6f93c2416[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 13:49:20 2025 +0000
+
+    Remove specific @vercel/node version to fix deployment error
+
+[33mcommit c6ac52311a0da27e22d94f723d6acf52833a83da[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 13:48:03 2025 +0000
+
+    Fix Vercel configuration warnings
+
+[33mcommit 444df1a4d71b35492241c339798323873acf1015[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 13:44:44 2025 +0000
+
+    Fix Vercel configuration warnings
+
+[33mcommit 417c1b2d3a41e39af344a69a33f2b1f87f7ba503[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 13:35:56 2025 +0000
+
+    Prepare for Vercel deployment
+
+[33mcommit 58c572d0eb1ac2ed670bafc5f9a5385997501a45[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 13:20:24 2025 +0000
+
+    Your commit message
+
+[33mcommit 9fa28a9919e61042776b06a0cbd7f68d0bc77b43[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 13:19:02 2025 +0000
+
+    version69
+
+[33mcommit 513d3b2cf451decb940a819e300c30e3633bcec0[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 12:38:30 2025 +0000
+
+    Fix function runtime & Node.js version for Vercel
+
+[33mcommit 3b2cc4305817de219450f6c9d348a7911d37754c[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 12:32:04 2025 +0000
+
+    Fix function runtime and node version
+
+[33mcommit 2f77d49f852d62a29e91d9b3d2bb1b91d0b48495[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 12:31:05 2025 +0000
+
+    Fix function runtime + Node.js 18 version
+
+[33mcommit 38c87c129e92bd4955e2ed318000f23108752d05[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 12:28:39 2025 +0000
+
+    Fix function runtime issue
+
+[33mcommit 6060c2b5c5e2a466b72cdfc187251a824afaa3b6[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 12:16:58 2025 +0000
+
+    Final fix: Vercel runtime issue + API fixes
+
+[33mcommit a746f1872f609e354bda2b51d2ff34b3e6a5e5af[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 12:14:49 2025 +0000
+
+    Fix API import, routing, and deployment issues
+
+[33mcommit 54555d1ee01137bfe5bb19ed2ac95dc735ec7497[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 12:09:56 2025 +0000
+
+    Fix API import issues
+
+[33mcommit e4ea9c23829da639805b6b67b28e362083632a0b[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 12:00:44 2025 +0000
+
+    Fix OpenAI import issue and ensure correct module type
+
+[33mcommit 05b228023ec24ebc844966477918a2b7ef9b112e[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 11:53:43 2025 +0000
+
+    Fix import issues and ensure correct API route
+
+[33mcommit 67e8c4a991df465aedb6bd75421c890ac9009e4e[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 10:36:34 2025 +0000
+
+    Fix import issues and ensure correct API route
+
+[33mcommit 77f199213f52fea0257e3c21bb7b57a82a565045[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 10:27:03 2025 +0000
+
+    Fix runtime and module issues
+
+[33mcommit 4baede04a9cc1b013e9d7a0926595ec9ad142edf[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 10:17:49 2025 +0000
+
+    Fix Vercel runtime issue
+
+[33mcommit a5563307658c94e203a5101ff29b31fa70b02c47[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 10:15:01 2025 +0000
+
+    Fixed Vercel deployment issues
+
+[33mcommit 5bf31d599a4a35c224c7d9376c37991a58e681b0[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 09:56:26 2025 +0000
+
+    Initial commit with working API
+
+[33mcommit 17ce4eb33b3c11c3ec430d346ad59e6cb4048909[m
+Author: jimmyg1927 <jimmy@streamz.store>
+Date:   Tue Mar 18 08:19:26 2025 +0000
+
+    Initial commit
