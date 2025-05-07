@@ -15,33 +15,33 @@ import {
 } from 'react-icons/hi'
 
 const navItems = [
-  { name: 'Dashboard',    href: '/dashboard',    icon: HiOutlineHome       },
-  { name: 'Collab Zone',  href: '/collab-zone',  icon: HiOutlineUserGroup  },
+  { name: 'Dashboard',    href: '/dashboard',    icon: HiOutlineHome },
   { name: 'Saved',        href: '/saved',        icon: HiOutlineDocumentText },
-  { name: 'Nerdify Me!',  href: '/nerd-mode',    icon: HiOutlineLightBulb  },
-  { name: 'Wishlist',     href: '/wishlist',     icon: HiOutlineHeart      },
-  { name: 'Settings',     href: '/settings',     icon: HiOutlineCog        },
+  { name: 'Collab Zone',  href: '/collab-zone',  icon: HiOutlineUserGroup },
+  { name: 'Wishlist',     href: '/wishlist',     icon: HiOutlineHeart },
+  { name: 'Nerdify Me!',  href: '/nerd-mode',    icon: HiOutlineLightBulb },
   { name: 'Change Plan',  href: '/plans',        icon: HiOutlineCurrencyPound },
+  { name: 'Settings',     href: '/settings',     icon: HiOutlineCog },
 ]
 
 export default function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <div className="bg-[#1992ff] text-white w-20 sm:w-64 flex flex-col items-center sm:items-start py-6 px-2 sm:px-4 min-h-screen">
+    <div className="bg-[#1992ff] text-white w-20 sm:w-64 flex flex-col items-center sm:items-start py-4 px-2 sm:px-4 min-h-screen">
       {/* Logo */}
-      <div className="mb-10">
+      <div className="mb-6 sm:mb-4">
         <Link href="/dashboard" className="flex items-center gap-2">
           <img
             src="/growfly-logo.png"
             alt="Growfly"
-            className="w-14 h-14 sm:w-16 sm:h-16 object-contain"
+            className="w-20 h-20 sm:w-20 sm:h-20 object-contain"
           />
         </Link>
       </div>
 
       {/* Navigation */}
-      <nav className="flex flex-col gap-3 w-full">
+      <nav className="flex flex-col gap-2 w-full">
         {navItems.map((item) => {
           const isActive = pathname === item.href
           return (

@@ -30,10 +30,10 @@ export default function Header({
   const progress = Math.min((xp / max) * 100, 100);
 
   return (
-    <div className="flex justify-between items-center bg-[#2a2a2a] px-4 py-3 rounded-xl shadow-sm border border-border mb-6">
+    <div className="flex justify-between items-center bg-[#2a2a2a] px-6 py-4 rounded-2xl shadow border border-border text-white">
       {!hideUser && (
-        <div className="flex flex-col gap-1 text-textPrimary">
-          <div className="text-sm sm:text-base font-medium">
+        <div className="flex flex-col gap-1">
+          <div className="text-sm sm:text-base font-semibold">
             🧠 {title} — {Math.floor(xp)} XP
           </div>
           <div className="w-full bg-white/10 rounded-full h-2 sm:h-2.5 max-w-xs">
@@ -46,12 +46,12 @@ export default function Header({
       )}
 
       <div className="flex items-center gap-4">
-        <span className="text-xs text-white/70 bg-white/10 px-3 py-1 rounded-full">
+        <span className="text-xs sm:text-sm text-white/80 bg-white/10 px-3 py-1 rounded-full font-medium">
           Subscription: {subscriptionType}
         </span>
         <button
           onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-          className="bg-white/10 text-white p-2 rounded hover:opacity-80 transition"
+          className="bg-white/10 text-white p-2 rounded-lg hover:opacity-80 transition"
           title="Toggle theme"
         >
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
