@@ -3,11 +3,7 @@
 import React from 'react';
 import { useTheme } from 'next-themes';
 import { Moon, Sun } from 'lucide-react';
-
-interface HeaderProps {
-  xp?: number;
-  subscriptionType?: string;
-}
+import { useUserStore } from '@/lib/store';
 
 function getNerdLevel(xp: number = 0) {
   if (xp < 25) return { title: 'Curious Cat', emoji: '🐱', max: 25 };
@@ -17,19 +13,15 @@ function getNerdLevel(xp: number = 0) {
   return { title: 'Prompt Commander', emoji: '🚀', max: 1000 };
 }
 
-export default function Header({
-  xp = 0,
-  subscriptionType = 'Free',
-}: HeaderProps) {
+export default function Header() {
   const { theme, setTheme } = useTheme();
+  const xp = useUserStore((state) => state.xp);
+  const subscriptionType = useUserStore((state) => state.subscriptionType);
   const { title, emoji, max } = getNerdLevel(xp);
   const progress = Math.min((xp / max) * 100, 100);
 
   return (
-    <header
-      className="flex items-center justify-between bg-[#1992ff] text-white px-6 py-4"
-      style={{ borderRadius: 0, marginLeft: 0 }}
-    >
+    <header className="flex items-center justify-between bg-[#1992ff] text-white px-6 py-4">
       <div className="flex items-center gap-6">
         <div className="text-lg font-semibold">
           {emoji} {title} — {Math.floor(xp)} XP
