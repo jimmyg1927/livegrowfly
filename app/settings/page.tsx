@@ -98,7 +98,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 bg-background text-textPrimary rounded-2xl p-6">
-      <Header name={user.email} />
+      <Header />
 
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Your Settings</h1>
