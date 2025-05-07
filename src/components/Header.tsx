@@ -10,11 +10,11 @@ interface HeaderProps {
 }
 
 function getNerdLevel(xp: number = 0) {
-  if (xp < 25) return { title: 'Curious Cat', max: 25 };
-  if (xp < 150) return { title: 'Nerdlet', max: 150 };
-  if (xp < 500) return { title: 'Prompt Prober', max: 500 };
-  if (xp < 850) return { title: 'Nerdboss', max: 850 };
-  return { title: 'Prompt Commander', max: 1000 };
+  if (xp < 25) return { title: 'Curious Cat', emoji: '🐱', max: 25 };
+  if (xp < 150) return { title: 'Nerdlet', emoji: '🧪', max: 150 };
+  if (xp < 500) return { title: 'Prompt Prober', emoji: '🧠', max: 500 };
+  if (xp < 850) return { title: 'Nerdboss', emoji: '🧙‍♂️', max: 850 };
+  return { title: 'Prompt Commander', emoji: '🚀', max: 1000 };
 }
 
 export default function Header({
@@ -22,7 +22,7 @@ export default function Header({
   subscriptionType = 'Free',
 }: HeaderProps) {
   const { theme, setTheme } = useTheme();
-  const { title, max } = getNerdLevel(xp);
+  const { title, emoji, max } = getNerdLevel(xp);
   const progress = Math.min((xp / max) * 100, 100);
 
   return (
@@ -32,7 +32,7 @@ export default function Header({
     >
       <div className="flex items-center gap-6">
         <div className="text-lg font-semibold">
-          🧠 {title} — {Math.floor(xp)} XP
+          {emoji} {title} — {Math.floor(xp)} XP
         </div>
         <div className="w-48 bg-white/30 rounded-full h-2">
           <div

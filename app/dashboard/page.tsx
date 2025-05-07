@@ -55,12 +55,12 @@ export default function DashboardPage() {
     });
   };
 
-  // Fetch user + XP
   useEffect(() => {
     if (!token) {
       router.push('/login');
       return;
     }
+
     fetch(`${API_BASE_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
       credentials: 'include',
@@ -72,7 +72,7 @@ export default function DashboardPage() {
       .then((data) => {
         setUser(data);
         setUsage(data.promptsUsed);
-        setXp((data.promptsUsed || 0) * 2.5); // 2.5 XP per prompt
+        setXp(data.totalXP || 0); // updated XP from backend
       })
       .catch(() => {
         localStorage.removeItem('growfly_jwt');
@@ -80,14 +80,12 @@ export default function DashboardPage() {
       });
   }, [token, router]);
 
-  // Redirect if no plan
   useEffect(() => {
     if (user && (!user.subscriptionType || user.subscriptionType === 'none')) {
       router.push('/plans');
     }
   }, [user, router]);
 
-  // Auto scroll
   useEffect(() => {
     if (chatRef.current) {
       chatRef.current.scrollTo({
@@ -177,6 +175,7 @@ export default function DashboardPage() {
       }
 
       setUsage((prev) => prev + 1);
+      setXp((prev) => prev + 2.5); // optimistic XP update
     } catch (err: any) {
       setMessages((prev) => [
         ...prev,
@@ -189,6 +188,7 @@ export default function DashboardPage() {
   };
 
   const handleSave = () => setShowSaveModal(true);
+
   const confirmSave = async (title: string) => {
     await fetch(`${API_BASE_URL}/api/saved`, {
       method: 'POST',
@@ -228,10 +228,8 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 px-4 md:px-8 lg:px-12 pb-10 bg-[#111] min-h-screen">
-      {/* only one Header, no mini‐header inside the card */}
       <Header xp={xp} subscriptionType={user.subscriptionType} />
 
-      {/* top controls */}
       <div className="flex items-center space-x-4">
         <PromptTracker used={usage} limit={user.promptLimit} />
         <Link
@@ -246,19 +244,9 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      {/* chat card */}
       <div className="bg-[#1e1e1e] rounded-3xl p-6 space-y-4 shadow-md">
-        <div className="flex items-center space-x-2">
-          <GrowflyBot size={24} />
-          <h2 className="text-base font-medium text-foreground">Your AI Sidekick</h2>
-        </div>
-
         <div className="flex flex-wrap gap-2">
-          {[
-            'Give me a 7-day launch plan',
-            'Audit my Instagram bio',
-            'Suggest hashtags for my niche',
-          ].map((p, i) => (
+          {['Give me a 7-day launch plan', 'Audit my Instagram bio', 'Suggest hashtags for my niche'].map((p, i) => (
             <button
               key={i}
               onClick={() => handleSend(p)}
