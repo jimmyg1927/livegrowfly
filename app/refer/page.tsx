@@ -21,7 +21,6 @@ export default function ReferPage() {
       .then((data) => {
         if (data.referralCode) {
           setCode(data.referralCode)
-          // Only access window in the browser
           setShareUrl(`${window.location.origin}/signup?ref=${data.referralCode}`)
         }
       })
@@ -32,7 +31,7 @@ export default function ReferPage() {
 
   return (
     <div className="space-y-6">
-      <Header name="Refer a Friend" />
+      <Header />
 
       <div className="bg-card rounded-2xl p-6 space-y-4">
         <h2 className="text-xl font-bold">Refer a Friend</h2>
