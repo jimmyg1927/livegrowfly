@@ -30,16 +30,16 @@ export default function Header({
   const progress = isNaN(xp) ? 0 : Math.min((xp / max) * 100, 100);
 
   return (
-    <div className="flex justify-between items-center bg-[#2a2a2a] px-6 py-4 rounded-2xl shadow border border-border text-white">
+    <div className="flex justify-between items-center bg-[#1992ff] px-6 py-4 rounded-2xl shadow border border-[#157cd4] text-white">
       {!hideUser && (
         <div className="flex flex-col gap-1">
           <div className="text-sm sm:text-base font-semibold">
             🧠 {title} — {Math.floor(xp) || 0} XP
           </div>
-          <div className="w-full bg-white/10 rounded-full h-2 sm:h-2.5 max-w-xs">
+          <div className="w-full bg-white/30 rounded-full h-2 sm:h-2.5 max-w-xs">
             <div
               className={`h-2 sm:h-2.5 rounded-full transition-all ${
-                progress === 0 ? 'bg-gray-400' : 'bg-blue-500'
+                progress === 0 ? 'bg-gray-100' : 'bg-white'
               }`}
               style={{ width: `${progress}%` }}
             />
@@ -48,12 +48,12 @@ export default function Header({
       )}
 
       <div className="flex items-center gap-4">
-        <span className="text-xs sm:text-sm text-white/80 bg-white/10 px-3 py-1 rounded-full font-medium">
+        <span className="text-xs sm:text-sm text-[#1992ff] bg-white px-3 py-1 rounded-full font-medium">
           Subscription: {subscriptionType}
         </span>
         <button
           onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-          className="bg-white/10 text-white p-2 rounded-lg hover:opacity-80 transition"
+          className="bg-white text-[#1992ff] p-2 rounded-lg hover:opacity-80 transition"
           title="Toggle theme"
         >
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}

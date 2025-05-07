@@ -68,7 +68,7 @@ export default function DashboardPage() {
       .then((data) => {
         setUser(data);
         setUsage(data.promptsUsed);
-        setXp((data.promptsUsed || 0) * 2.5); // ✅ XP is now promptUsed * 2.5
+        setXp((data.promptsUsed || 0) * 2.5);
       })
       .catch(() => {
         localStorage.removeItem('growfly_jwt');
@@ -205,9 +205,9 @@ export default function DashboardPage() {
 
       <div className="-mt-4 flex items-center space-x-4">
         <PromptTracker used={usage} limit={user.promptLimit} />
-        <Link href="/refer" className="flex items-center gap-2 bg-[#2563eb] text-white px-5 py-3 rounded-xl shadow hover:bg-blue-700 transition">
-          <Gift size={20} />
-          <span className="text-sm font-medium">Refer a Friend</span>
+        <Link href="/refer" className="flex items-center gap-2 bg-[#1992ff] text-white px-6 py-3 rounded-xl shadow hover:bg-blue-700 transition">
+          <Gift size={22} />
+          <span className="text-sm font-semibold">Refer a Friend</span>
         </Link>
         <Link href="/settings">
           <UserCircle className="text-foreground hover:text-accent transition w-7 h-7" />
