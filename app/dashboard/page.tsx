@@ -8,7 +8,7 @@ import GrowflyBot from '@/components/GrowflyBot';
 import SaveModal from '@/components/SaveModal';
 import Header from '@/components/Header';
 import FeedbackModal from '@/components/FeedbackModal';
-import { Gift, UserCircle, Save, Share2, Loader } from 'lucide-react';
+import { Gift, UserCircle } from 'lucide-react';
 import { API_BASE_URL } from '@/lib/constants';
 
 interface Message {
@@ -43,8 +43,6 @@ export default function DashboardPage() {
   const [feedbackResponseId, setFeedbackResponseId] = useState('');
   const chatRef = useRef<HTMLDivElement>(null);
 
-  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null;
-
   const getNextRefresh = () => {
     const now = new Date();
     const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
@@ -56,6 +54,7 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
+    const token = localStorage.getItem('growfly_jwt');
     if (!token) {
       router.push('/login');
       return;
@@ -72,13 +71,13 @@ export default function DashboardPage() {
       .then((data) => {
         setUser(data);
         setUsage(data.promptsUsed);
-        setXp(data.totalXP || 0); // updated XP from backend
+        setXp(data.totalXP || 0);
       })
       .catch(() => {
         localStorage.removeItem('growfly_jwt');
         router.push('/login');
       });
-  }, [token, router]);
+  }, [router]);
 
   useEffect(() => {
     if (user && (!user.subscriptionType || user.subscriptionType === 'none')) {
@@ -96,6 +95,7 @@ export default function DashboardPage() {
   }, [messages]);
 
   const handleSend = async (msg: string) => {
+    const token = localStorage.getItem('growfly_jwt');
     const text = msg.trim();
     if (!text || !user) return;
 
@@ -129,6 +129,10 @@ export default function DashboardPage() {
         body: JSON.stringify({ message: text }),
       });
 
+      if (!res.ok) {
+        throw new Error('AI request failed.');
+      }
+
       const reader = res.body?.getReader();
       if (!reader) throw new Error('No response body');
 
@@ -142,7 +146,7 @@ export default function DashboardPage() {
 
         if (value) {
           const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n\n');
+          const lines = chunk.split('\n');
           for (const line of lines) {
             const clean = line.trim();
             if (!clean.startsWith('data:')) continue;
@@ -161,10 +165,9 @@ export default function DashboardPage() {
                 );
               }
               if (parsed.type === 'complete') {
-                setFollowUps(parsed.followUps || []);
+                if (parsed.followUps) setFollowUps(parsed.followUps);
                 if (parsed.responseId) {
                   setFeedbackResponseId(parsed.responseId);
-                  setShowFeedback(true);
                 }
               }
             } catch (err) {
@@ -175,7 +178,7 @@ export default function DashboardPage() {
       }
 
       setUsage((prev) => prev + 1);
-      setXp((prev) => prev + 2.5); // optimistic XP update
+      setXp((prev) => prev + 2.5);
     } catch (err: any) {
       setMessages((prev) => [
         ...prev,
@@ -190,6 +193,7 @@ export default function DashboardPage() {
   const handleSave = () => setShowSaveModal(true);
 
   const confirmSave = async (title: string) => {
+    const token = localStorage.getItem('growfly_jwt');
     await fetch(`${API_BASE_URL}/api/saved`, {
       method: 'POST',
       headers: {
@@ -206,6 +210,7 @@ export default function DashboardPage() {
   };
 
   const handleShare = async () => {
+    const token = localStorage.getItem('growfly_jwt');
     await fetch(`${API_BASE_URL}/api/collab`, {
       method: 'POST',
       headers: {
@@ -216,6 +221,15 @@ export default function DashboardPage() {
       body: JSON.stringify({ content: messages.slice(-1)[0]?.content || '' }),
     });
     router.push('/collab-zone');
+  };
+
+  const openFeedbackModal = () => setShowFeedback(true);
+  const closeFeedbackModal = () => setShowFeedback(false);
+
+  const handleFeedbackSubmit = () => {
+    setTimeout(() => {
+      setShowFeedback(false);
+    }, 2000);
   };
 
   if (!user) {
@@ -267,7 +281,7 @@ export default function DashboardPage() {
               className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}
             >
               <div
-                className={`p-3 rounded-lg max-w-[80%] ${
+                className={`p-3 rounded-lg max-w-[80%] break-words ${
                   m.role === 'assistant' ? 'bg-blue-100 text-black' : 'bg-blue-600 text-white'
                 }`}
               >
@@ -276,66 +290,19 @@ export default function DashboardPage() {
             </div>
           ))}
         </div>
-
-        {followUps.length > 0 && (
-          <div className="flex flex-wrap gap-2 justify-start">
-            {followUps.map((f, i) => (
-              <button
-                key={i}
-                onClick={() => handleSend(f)}
-                className="text-xs bg-blue-100 text-blue-800 border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 transition"
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div className="flex gap-2">
-          <button
-            onClick={handleSave}
-            className="flex items-center gap-1 text-xs px-3 py-1 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition"
-          >
-            <Save size={14} /> Save
-          </button>
-          <button
-            onClick={handleShare}
-            className="flex items-center gap-1 text-xs px-3 py-1 rounded-full bg-green-600 text-white hover:bg-green-700 transition"
-          >
-            <Share2 size={14} /> Share to Collab Zone
-          </button>
-        </div>
-
-        <div className="flex space-x-2 items-center bg-[#1f1f1f] border border-border p-2 rounded-lg">
-          <input
-            type="text"
-            placeholder="What would you like help with today?"
-            className="flex-1 px-4 py-2 bg-[#2a2a2a] text-white text-sm rounded focus:outline-none"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSend(input);
-              }
-            }}
-            disabled={loading}
-          />
-          <button
-            onClick={() => handleSend(input)}
-            disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded w-16 flex items-center justify-center"
-          >
-            {loading ? <Loader className="animate-spin w-5 h-5" /> : 'Send'}
-          </button>
-        </div>
       </div>
 
-      <SaveModal open={showSaveModal} onClose={() => setShowSaveModal(false)} onConfirm={confirmSave} />
+      <SaveModal
+        open={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        onConfirm={confirmSave}
+      />
+
       <FeedbackModal
-        responseId={feedbackResponseId}
         open={showFeedback}
-        onClose={() => setShowFeedback(false)}
+        onClose={closeFeedbackModal}
+        onSubmit={handleFeedbackSubmit}
+        responseId={feedbackResponseId}
       />
     </div>
   );
