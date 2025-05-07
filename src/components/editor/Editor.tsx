@@ -12,7 +12,6 @@ import BulletList from '@tiptap/extension-bullet-list'
 import OrderedList from '@tiptap/extension-ordered-list'
 import Blockquote from '@tiptap/extension-blockquote'
 import CodeBlock from '@tiptap/extension-code-block'
-import History from '@tiptap/extension-history'
 import {
   Bold,
   Italic,
@@ -37,7 +36,6 @@ interface Props {
 export default function Editor({ content, setContent }: Props) {
   const editor = useEditor({
     extensions: [
-      History,
       StarterKit.configure({ heading: false }),
       Underline,
       LinkExtension,

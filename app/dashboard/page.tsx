@@ -22,7 +22,7 @@ export default function DashboardPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: "Hello, I'm Growfly — I’m here to help. How can I assist you today?",
+      content: "Hello, I'm Growfly — I’m here to help your organisation grow. How can I assist you today?",
     },
   ]);
   const [followUps, setFollowUps] = useState<string[]>([]);
@@ -240,7 +240,11 @@ export default function DashboardPage() {
 
       <div className="bg-[#1e1e1e] rounded-3xl p-6 space-y-4 shadow-md">
         <div className="flex flex-wrap gap-2">
-          {['Give me a 7-day launch plan', 'Audit my Instagram bio', 'Suggest hashtags for my niche'].map((p, i) => (
+          {[
+            'How can growfly.io help me with my business?',
+            'Help me with my accounts',
+            'Come up with a social media plan for my business',
+          ].map((p, i) => (
             <button
               key={i}
               onClick={() => handleSend(p)}
