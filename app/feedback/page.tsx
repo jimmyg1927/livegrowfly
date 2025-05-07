@@ -13,7 +13,7 @@ export default function FeedbackPage() {
     <div className="flex min-h-screen">
       <Sidebar />
       <div className="flex-1 flex flex-col">
-        <Header name="Feedback" />
+        <Header />
         <main className="p-6 overflow-y-auto">
           {submitted ? (
             <p className="text-green-600">Thank you for your feedback!</p>
