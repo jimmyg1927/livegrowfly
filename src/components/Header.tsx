@@ -27,18 +27,20 @@ export default function Header({
 }: HeaderProps) {
   const { theme, setTheme } = useTheme();
   const { title, max } = getNerdLevel(xp);
-  const progress = Math.min((xp / max) * 100, 100);
+  const progress = isNaN(xp) ? 0 : Math.min((xp / max) * 100, 100);
 
   return (
     <div className="flex justify-between items-center bg-[#2a2a2a] px-6 py-4 rounded-2xl shadow border border-border text-white">
       {!hideUser && (
         <div className="flex flex-col gap-1">
           <div className="text-sm sm:text-base font-semibold">
-            🧠 {title} — {Math.floor(xp)} XP
+            🧠 {title} — {Math.floor(xp) || 0} XP
           </div>
           <div className="w-full bg-white/10 rounded-full h-2 sm:h-2.5 max-w-xs">
             <div
-              className="bg-blue-500 h-2 sm:h-2.5 rounded-full transition-all"
+              className={`h-2 sm:h-2.5 rounded-full transition-all ${
+                progress === 0 ? 'bg-gray-400' : 'bg-blue-500'
+              }`}
               style={{ width: `${progress}%` }}
             />
           </div>

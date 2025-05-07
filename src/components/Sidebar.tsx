@@ -28,20 +28,21 @@ export default function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <div className="bg-[#1992ff] text-white w-20 sm:w-64 flex flex-col items-center sm:items-start py-4 px-2 sm:px-4 min-h-screen">
+    <div className="bg-[#1992ff] text-white w-20 sm:w-56 flex flex-col items-center sm:items-start py-5 px-2 sm:px-4 min-h-screen">
+      
       {/* Logo */}
-      <div className="mb-6 sm:mb-4">
-        <Link href="/dashboard" className="flex items-center gap-2">
+      <div className="mb-4 w-full flex justify-center sm:justify-center">
+        <Link href="/dashboard" className="w-full flex justify-center">
           <img
             src="/growfly-logo.png"
             alt="Growfly"
-            className="w-20 h-20 sm:w-20 sm:h-20 object-contain"
+            className="w-20 h-20 object-contain"
           />
         </Link>
       </div>
 
       {/* Navigation */}
-      <nav className="flex flex-col gap-2 w-full">
+      <nav className="flex flex-col gap-1 w-full">
         {navItems.map((item) => {
           const isActive = pathname === item.href
           return (

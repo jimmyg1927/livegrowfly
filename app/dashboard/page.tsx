@@ -68,7 +68,7 @@ export default function DashboardPage() {
       .then((data) => {
         setUser(data);
         setUsage(data.promptsUsed);
-        setXp(data.totalXP || 0);
+        setXp((data.promptsUsed || 0) * 2.5); // ✅ XP is now promptUsed * 2.5
       })
       .catch(() => {
         localStorage.removeItem('growfly_jwt');
@@ -201,21 +201,17 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 px-4 md:px-8 lg:px-12 pb-10 bg-[#111] min-h-screen">
-      <div className="pt-6">
-        <Header xp={xp} subscriptionType={user.subscriptionType} />
-      </div>
+      <Header xp={xp} subscriptionType={user.subscriptionType} />
 
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center space-x-4">
-          <PromptTracker used={usage} limit={user.promptLimit} />
-          <Link href="/refer" className="flex items-center gap-2 bg-[#2563eb] text-white px-4 py-3 rounded-xl shadow-sm hover:bg-blue-600 transition">
-            <Gift size={18} />
-            <span className="text-sm font-medium">Refer a Friend</span>
-          </Link>
-          <Link href="/settings">
-            <UserCircle className="text-foreground hover:text-accent transition w-7 h-7" />
-          </Link>
-        </div>
+      <div className="-mt-4 flex items-center space-x-4">
+        <PromptTracker used={usage} limit={user.promptLimit} />
+        <Link href="/refer" className="flex items-center gap-2 bg-[#2563eb] text-white px-5 py-3 rounded-xl shadow hover:bg-blue-700 transition">
+          <Gift size={20} />
+          <span className="text-sm font-medium">Refer a Friend</span>
+        </Link>
+        <Link href="/settings">
+          <UserCircle className="text-foreground hover:text-accent transition w-7 h-7" />
+        </Link>
       </div>
 
       <div className="bg-[#1e1e1e] rounded-3xl p-6 space-y-4 shadow-md">
