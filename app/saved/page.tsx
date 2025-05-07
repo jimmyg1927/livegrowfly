@@ -1,4 +1,3 @@
-// /app/saved/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -30,15 +29,15 @@ export default function SavedPage() {
   const router = useRouter();
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null;
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
-    if (!token) {
+    if (!token || !API_BASE) {
       router.push('/login');
       return;
     }
 
-    // Fetch saved responses from the backend
-    fetch('/api/saved', {
+    fetch(`${API_BASE}/api/saved`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
@@ -50,13 +49,13 @@ export default function SavedPage() {
       })
       .catch(() => alert('Failed to load saved responses'))
       .finally(() => setLoading(false));
-  }, [token, router]);
+  }, [token, router, API_BASE]);
 
   const handleDelete = async (id: string) => {
-    if (!token) return;
+    if (!token || !API_BASE) return;
     if (!confirm('Delete this saved response?')) return;
 
-    const res = await fetch(`/api/saved/${id}`, {
+    const res = await fetch(`${API_BASE}/api/saved/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -69,9 +68,9 @@ export default function SavedPage() {
   };
 
   const handleRename = async (id: string) => {
-    if (!token) return;
+    if (!token || !API_BASE) return;
 
-    const res = await fetch(`/api/saved/${id}`, {
+    const res = await fetch(`${API_BASE}/api/saved/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
