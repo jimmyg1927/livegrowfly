@@ -14,7 +14,7 @@ interface FeedbackModalProps {
   responseId: string
   open: boolean
   onClose: () => void
-  onSubmit?: () => void // ✅ optional onSubmit callback
+  onSubmit?: () => void
 }
 
 export default function FeedbackModal({
@@ -46,7 +46,7 @@ export default function FeedbackModal({
         }),
       })
       setSubmitted(true)
-      onSubmit?.() // ✅ Call optional callback if provided
+      onSubmit?.()
       setTimeout(onClose, 2000)
     } catch (err) {
       console.error(err)
@@ -61,7 +61,7 @@ export default function FeedbackModal({
       <DialogTrigger asChild>
         <></>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md bg-background text-textPrimary">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">
             {submitted ? 'Thanks for your feedback!' : 'How did we do?'}
@@ -70,20 +70,22 @@ export default function FeedbackModal({
 
         {!submitted && (
           <div className="space-y-4">
-            <div className="flex justify-center gap-8 text-2xl">
+            <div className="flex justify-center gap-8 text-3xl">
               <button
                 onClick={() => setRating('positive')}
-                className={`p-2 rounded-full transition ${
-                  rating === 'positive' ? 'bg-green-500 text-white' : 'bg-gray-200'
+                className={`p-3 rounded-full transition shadow ${
+                  rating === 'positive' ? 'bg-green-500 text-white' : 'bg-gray-300 text-black'
                 }`}
+                title="Thumbs Up"
               >
                 <HiThumbUp />
               </button>
               <button
                 onClick={() => setRating('negative')}
-                className={`p-2 rounded-full transition ${
-                  rating === 'negative' ? 'bg-red-500 text-white' : 'bg-gray-200'
+                className={`p-3 rounded-full transition shadow ${
+                  rating === 'negative' ? 'bg-red-500 text-white' : 'bg-gray-300 text-black'
                 }`}
+                title="Thumbs Down"
               >
                 <HiThumbDown />
               </button>
@@ -92,13 +94,13 @@ export default function FeedbackModal({
               placeholder="Any comments?"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              className="w-full p-2 border rounded focus:outline-none"
+              className="w-full p-3 border border-border rounded-lg bg-muted focus:outline-none"
               rows={4}
             />
             <div className="flex justify-end gap-2">
               <button
                 onClick={onClose}
-                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400"
                 disabled={submitting}
               >
                 Cancel

@@ -16,11 +16,24 @@ interface Message {
   id?: string;
 }
 
+interface User {
+  email: string;
+  promptLimit: number;
+  promptsUsed: number;
+  totalXP?: number;
+  subscriptionType?: string;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
+  const { setUser, setXp, setSubscriptionType } = useUserStore();
+  const [user, setUserLocal] = useState<User | null>(null);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: "Hello, I'm Growfly — I’m here to help. How can I assist you today?" }
+    {
+      role: 'assistant',
+      content: "Hello, I'm Growfly — I’m here to help. How can I assist you today?",
+    },
   ]);
   const [followUps, setFollowUps] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -30,29 +43,32 @@ export default function DashboardPage() {
   const [feedbackResponseId, setFeedbackResponseId] = useState('');
   const chatRef = useRef<HTMLDivElement>(null);
 
-  const { setUser, setXp, setSubscriptionType, user, xp, subscriptionType } = useUserStore();
-
   const getNextRefresh = () => {
     const now = new Date();
     const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    return next.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    return next.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
   };
 
-  // Load user on mount
+  // Auth + load user
   useEffect(() => {
     const token = localStorage.getItem('growfly_jwt');
     if (!token) return router.push('/login');
 
     fetch(`${API_BASE_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
-      credentials: 'include'
+      credentials: 'include',
     })
-      .then(res => {
-        if (!res.ok) throw new Error();
-        return res.json();
+      .then((r) => {
+        if (!r.ok) throw new Error();
+        return r.json();
       })
-      .then(data => {
+      .then((data) => {
         setUser(data);
+        setUserLocal(data);
         setUsage(data.promptsUsed);
         setXp(data.totalXP || 0);
         setSubscriptionType(data.subscriptionType || 'Free');
@@ -63,31 +79,46 @@ export default function DashboardPage() {
       });
   }, [router, setUser, setXp, setSubscriptionType]);
 
+  // Redirect if no plan
   useEffect(() => {
-    if (subscriptionType === 'none') {
+    if (user && (!user.subscriptionType || user.subscriptionType === 'none')) {
       router.push('/plans');
     }
-  }, [subscriptionType, router]);
+  }, [user, router]);
 
+  // Auto scroll
   useEffect(() => {
-    if (chatRef.current) {
-      chatRef.current.scrollTo({ top: chatRef.current.scrollHeight, behavior: 'smooth' });
-    }
+    if (!chatRef.current) return;
+    chatRef.current.scrollTo({
+      top: chatRef.current.scrollHeight,
+      behavior: 'smooth',
+    });
   }, [messages]);
 
+  // Send prompt
   const handleSend = async (msg: string) => {
     const token = localStorage.getItem('growfly_jwt');
     const text = msg.trim();
     if (!text || !user) return;
 
-    if (usage >= 5) {
+    if (usage >= user.promptLimit) {
       const refresh = getNextRefresh();
-      setMessages(prev => [...prev, { role: 'assistant', content: `🚫 You’ve hit your monthly limit. Wait until ${refresh}.` }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: `🚫 You’ve hit your monthly limit. Wait until ${refresh}.`,
+        },
+      ]);
       setInput('');
       return;
     }
 
-    setMessages(prev => [...prev, { role: 'user', content: text }, { role: 'assistant', content: '' }]);
+    setMessages((prev) => [
+      ...prev,
+      { role: 'user', content: text },
+      { role: 'assistant', content: '' },
+    ]);
     setLoading(true);
 
     try {
@@ -95,9 +126,9 @@ export default function DashboardPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ message: text })
+        body: JSON.stringify({ message: text }),
       });
 
       if (!res.ok) throw new Error('AI request failed.');
@@ -124,13 +155,22 @@ export default function DashboardPage() {
             const p = JSON.parse(jsonStr);
             if (p.type === 'partial') {
               full += p.content;
-              setMessages(prev => prev.map((m, i) => i === prev.length - 1 ? { ...m, content: full } : m));
+              setMessages((prev) =>
+                prev.map((m, i) =>
+                  i === prev.length - 1 ? { ...m, content: full } : m
+                )
+              );
             }
+
             if (p.type === 'complete') {
               if (p.followUps) setFollowUps(p.followUps);
               if (p.responseId) {
                 setFeedbackResponseId(p.responseId);
-                setMessages(prev => prev.map((m, i) => i === prev.length - 1 ? { ...m, id: p.responseId } : m));
+                setMessages((prev) =>
+                  prev.map((m, i) =>
+                    i === prev.length - 1 ? { ...m, id: p.responseId } : m
+                  )
+                );
               }
             }
           } catch (e) {
@@ -139,10 +179,16 @@ export default function DashboardPage() {
         }
       }
 
-      setUsage(u => u + 1);
-      setXp(xp + 2.5); // ✅ CORRECT usage
+      setUsage((u) => u + 1);
+      setXp(useUserStore.getState().xp + 2.5);
     } catch (err: any) {
-      setMessages(prev => [...prev, { role: 'assistant', content: `❌ ${err.message}` }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: `❌ ${err.message}`,
+        },
+      ]);
     } finally {
       setLoading(false);
       setInput('');
@@ -156,10 +202,13 @@ export default function DashboardPage() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       credentials: 'include',
-      body: JSON.stringify({ content: messages.slice(-1)[0]?.content || '', title })
+      body: JSON.stringify({
+        content: messages.slice(-1)[0]?.content || '',
+        title,
+      }),
     });
     setShowSaveModal(false);
   };
@@ -170,10 +219,12 @@ export default function DashboardPage() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       credentials: 'include',
-      body: JSON.stringify({ content: messages.slice(-1)[0]?.content || '' })
+      body: JSON.stringify({
+        content: messages.slice(-1)[0]?.content || '',
+      }),
     });
     router.push('/collab-zone');
   };
@@ -184,12 +235,24 @@ export default function DashboardPage() {
   };
   const closeFeedbackModal = () => setShowFeedback(false);
 
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-screen text-textSecondary">
+        Loading…
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 px-4 md:px-8 lg:px-12 pb-10 bg-[#111] min-h-screen">
       <div className="flex items-center space-x-4">
-        <PromptTracker used={usage} limit={5} />
-        <Link href="/refer" className="flex items-center gap-2 bg-[#1992ff] text-white px-6 py-3 rounded-xl shadow hover:bg-[#007ac1] transition">
-          <Gift size={22} /><span className="text-sm font-semibold">Refer a Friend</span>
+        <PromptTracker used={usage} limit={user.promptLimit} />
+        <Link
+          href="/refer"
+          className="flex items-center gap-2 bg-[#1992ff] text-white px-6 py-[14px] rounded-xl shadow hover:bg-[#007ac1] transition"
+        >
+          <Gift size={22} />
+          <span className="text-sm font-semibold">Refer a Friend</span>
         </Link>
         <Link href="/settings">
           <UserCircle className="text-foreground hover:text-accent transition w-7 h-7" />
@@ -198,40 +261,55 @@ export default function DashboardPage() {
 
       <div className="bg-[#1e1e1e] rounded-3xl p-6 space-y-4 shadow-md">
         <div className="flex flex-wrap gap-2">
-          {['Give me a 7-day launch plan', 'Audit my Instagram bio', 'Suggest hashtags for my niche'].map((p, i) =>
-            <button key={i} onClick={() => handleSend(p)} className="text-xs bg-muted border border-border text-foreground px-3 py-1 rounded-full hover:bg-muted/70 transition">
+          {['Give me a 7-day launch plan', 'Audit my Instagram bio', 'Suggest hashtags for my niche'].map((p, i) => (
+            <button
+              key={i}
+              onClick={() => handleSend(p)}
+              className="text-xs bg-muted border border-border text-foreground px-3 py-1 rounded-full hover:bg-muted/70 transition"
+            >
               {p}
             </button>
-          )}
+          ))}
         </div>
 
-        <div ref={chatRef} className="max-h-[60vh] overflow-y-auto space-y-4 bg-[#151515] p-4 rounded-xl text-sm leading-relaxed whitespace-pre-wrap">
-          {messages.slice(-10).map((m, i) =>
+        <div
+          ref={chatRef}
+          className="max-h-[60vh] overflow-y-auto space-y-4 bg-[#151515] p-4 rounded-xl text-sm leading-relaxed whitespace-pre-wrap"
+        >
+          {messages.slice(-10).map((m, i) => (
             <div key={i} className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
-              <div className={`p-3 rounded-lg max-w-[80%] break-words ${m.role === 'assistant' ? 'bg-blue-100 text-black' : 'bg-blue-600 text-white'}`}>
+              <div
+                className={`p-3 rounded-lg max-w-[80%] break-words ${
+                  m.role === 'assistant' ? 'bg-blue-100 text-black' : 'bg-blue-600 text-white'
+                }`}
+              >
                 {m.content}
               </div>
               {m.role === 'assistant' && m.id && (
                 <div className="flex space-x-2 items-center ml-2">
-                  <button onClick={() => openFeedbackModalWith(m.id!)} className="p-1 bg-green-500 rounded-full hover:bg-green-600 transition" title="👍">
+                  <button onClick={() => openFeedbackModalWith(m.id)} className="p-1 bg-green-500 rounded-full hover:bg-green-600 transition" title="👍">
                     <ThumbsUp className="w-4 h-4 text-white" />
                   </button>
-                  <button onClick={() => openFeedbackModalWith(m.id!)} className="p-1 bg-red-600 rounded-full hover:bg-red-500 transition" title="👎">
+                  <button onClick={() => openFeedbackModalWith(m.id)} className="p-1 bg-red-600 rounded-full hover:bg-red-500 transition" title="👎">
                     <ThumbsDown className="w-4 h-4 text-white" />
                   </button>
                 </div>
               )}
             </div>
-          )}
+          ))}
         </div>
 
         {followUps.length > 0 && (
           <div className="flex flex-wrap gap-2 pt-2">
-            {followUps.map((t, i) =>
-              <button key={i} onClick={() => handleSend(t)} className="text-xs bg-muted border border-border text-foreground px-3 py-1 rounded-full hover:bg-muted/70 transition">
+            {followUps.map((t, i) => (
+              <button
+                key={i}
+                onClick={() => handleSend(t)}
+                className="text-xs bg-muted border border-border text-foreground px-3 py-1 rounded-full hover:bg-muted/70 transition"
+              >
                 {t}
               </button>
-            )}
+            ))}
           </div>
         )}
 
@@ -240,10 +318,19 @@ export default function DashboardPage() {
             className="flex-1 rounded-lg p-2 bg-background border border-border text-sm"
             placeholder="Type your message…"
             value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(input); } }}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend(input);
+              }
+            }}
           />
-          <button onClick={() => handleSend(input)} disabled={loading} className="px-4 py-2 bg-[#1992ff] text-white rounded-lg hover:bg-[#007ac1] transition disabled:opacity-50">
+          <button
+            onClick={() => handleSend(input)}
+            disabled={loading}
+            className="px-4 py-2 bg-[#1992ff] text-white rounded-lg hover:bg-[#007ac1] transition disabled:opacity-50"
+          >
             {loading ? 'Thinking…' : 'Send'}
           </button>
           <button onClick={handleSave} title="Save" className="p-2 bg-[#58A6FF] rounded hover:bg-[#3d85d1] transition">
@@ -256,12 +343,7 @@ export default function DashboardPage() {
       </div>
 
       <SaveModal open={showSaveModal} onClose={() => setShowSaveModal(false)} onConfirm={confirmSave} />
-      <FeedbackModal
-        open={showFeedback}
-        onClose={closeFeedbackModal}
-        onSubmit={() => setShowFeedback(false)}
-        responseId={feedbackResponseId}
-      />
+      <FeedbackModal open={showFeedback} onClose={closeFeedbackModal} onSubmit={() => setShowFeedback(false)} responseId={feedbackResponseId} />
     </div>
   );
 }
