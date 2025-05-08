@@ -1,4 +1,5 @@
 'use client'
+export const dynamic = 'force-dynamic'
 
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
@@ -49,12 +50,12 @@ export default function ResetPasswordPage() {
         throw new Error(data.error || 'Password reset failed')
       }
 
-      setSuccess('Your password has been reset successfully.')
+      setSuccess('✅ Your password has been reset successfully.')
       setTimeout(() => {
         router.push('/login')
       }, 2000)
     } catch (err: any) {
-      setError(err.message)
+      setError(`❌ ${err.message}`)
     }
   }
 
@@ -84,8 +85,8 @@ export default function ResetPasswordPage() {
         >
           Reset Password
         </button>
-        {error && <p className="text-red-500">{error}</p>}
-        {success && <p className="text-green-500">{success}</p>}
+        {error && <p className="text-red-500 mt-2">{error}</p>}
+        {success && <p className="text-green-500 mt-2">{success}</p>}
       </form>
     </div>
   )
