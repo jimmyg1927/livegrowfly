@@ -11,29 +11,43 @@ export default function PlansPage() {
     {
       id: 'free',
       name: 'Free',
-      price: '£0/month',
-      prompts: '5 prompts/month',
+      price: '£0 / month',
+      prompts: '20 prompts/month',
       users: '1 user',
-      features: ['Basic AI support'],
+      features: [
+        'Access to Collab Zone',
+        'Save & edit documents',
+        'Upgrade anytime',
+      ],
       buttonText: 'Use Free',
     },
     {
       id: 'personal',
       name: 'Personal',
-      price: '£8.99/month',
-      prompts: '150 prompts/month',
+      price: '£8.99 / month',
+      prompts: '300 prompts/month',
       users: '1 user',
-      features: ['Priority AI speed', 'Prompt history'],
+      features: [
+        'Priority AI response speed',
+        'Prompt history & saved replies',
+        'Download responses',
+      ],
       buttonText: 'Upgrade to Personal',
     },
     {
       id: 'business',
       name: 'Business',
-      price: '£38.99/month',
-      prompts: '500 prompts/month',
+      price: '£38.99 / month',
+      prompts: '2000 prompts/month',
       users: '3 users',
-      features: ['Team workspace', 'Unlimited prompts'],
-      buttonText: 'Upgrade to Business',
+      features: [
+        'Shared team workspace',
+        'Advanced collaboration tools',
+        'High-speed AI processing',
+        'Unlimited saved docs',
+      ],
+      buttonText: 'Most Popular',
+      highlight: true,
     },
     {
       id: 'enterprise',
@@ -81,17 +95,28 @@ export default function PlansPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#020617] to-gray-900 text-white p-10">
-      <h1 className="text-4xl font-bold text-center mb-12">🚀 Manage Your Growfly Plan</h1>
+    <div className="min-h-screen bg-gradient-to-b from-[#020617] to-[#0f172a] text-white py-12 px-6">
+      <h1 className="text-4xl font-bold text-center mb-2">🧠 Upgrade Your Growfly Plan</h1>
+      <p className="text-center text-gray-400 mb-10">Compare plans & unlock more power.</p>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
         {plans.map((plan) => (
           <div
             key={plan.id}
-            className="bg-white text-black rounded-2xl shadow-xl p-6 flex flex-col justify-between hover:ring-4 hover:ring-blue-500 transition-all"
+            className={`relative rounded-2xl p-6 shadow-lg border transition-all duration-300 flex flex-col justify-between ${
+              plan.highlight
+                ? 'bg-blue-600 text-white border-blue-400 scale-[1.02]'
+                : 'bg-white text-black hover:ring-4 hover:ring-blue-500'
+            }`}
           >
+            {plan.highlight && (
+              <div className="absolute top-0 right-0 bg-yellow-300 text-black text-xs font-bold px-3 py-1 rounded-bl-xl">
+                ⭐ Most Popular
+              </div>
+            )}
             <div>
               <h2 className="text-2xl font-bold mb-1">{plan.name}</h2>
-              <p className="text-lg font-semibold text-blue-700 mb-3">{plan.price}</p>
+              <p className="text-lg font-semibold text-accent mb-3">{plan.price}</p>
               <ul className="space-y-2 text-sm mb-4">
                 <li>✔ {plan.prompts}</li>
                 <li>✔ {plan.users}</li>
@@ -103,11 +128,11 @@ export default function PlansPage() {
             <button
               onClick={() => handleSelect(plan.id)}
               disabled={loadingPlan === plan.id}
-              className={`mt-4 w-full py-2 rounded-xl text-white font-semibold ${
-                loadingPlan === plan.id
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-800 transition'
-              }`}
+              className={`mt-4 w-full py-2 rounded-xl font-semibold transition ${
+                plan.highlight
+                  ? 'bg-yellow-400 text-black hover:bg-yellow-300'
+                  : 'bg-blue-600 text-white hover:bg-blue-800'
+              } ${loadingPlan === plan.id ? 'cursor-not-allowed opacity-60' : ''}`}
             >
               {loadingPlan === plan.id ? 'Redirecting...' : plan.buttonText}
             </button>
