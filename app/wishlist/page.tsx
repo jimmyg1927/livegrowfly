@@ -23,12 +23,10 @@ export default function WishlistPage() {
   const [submitting, setSubmitting] = useState(false)
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!token) router.push('/login')
   }, [token, router])
 
-  // Fetch and sort
   const fetchItems = async () => {
     setLoading(true)
     try {
@@ -50,12 +48,10 @@ export default function WishlistPage() {
     if (token) fetchItems()
   }, [token])
 
-  // Handle form input
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
   }
 
-  // Submit new item
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const { title, body } = form
@@ -80,7 +76,6 @@ export default function WishlistPage() {
     }
   }
 
-  // Voting
   const handleVote = async (id: string, vote: 'positive' | 'negative') => {
     if (!token) return
     try {
@@ -100,53 +95,59 @@ export default function WishlistPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-8">
-      <h1 className="text-4xl font-bold">🎯 Wishlist</h1>
+    <div className="max-w-6xl mx-auto px-6 py-12 text-white">
+      <h1 className="text-5xl font-bold mb-8">🎯 Wishlist</h1>
 
-      {/* New Suggestion Form */}
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-4 bg-white/5 p-6 rounded-xl border border-white/20 shadow-sm"
-      >
-        <h2 className="text-2xl font-semibold">Suggest a Feature</h2>
-
-        <input
-          name="title"
-          placeholder="Title (short & punchy)"
-          value={form.title}
-          onChange={handleChange}
-          className="w-full px-4 py-2 bg-[#2a2a2a] rounded text-white focus:outline-none"
-          required
-        />
-
-        <input
-          name="subtitle"
-          placeholder="Subheading (optional)"
-          value={form.subtitle}
-          onChange={handleChange}
-          className="w-full px-4 py-2 bg-[#2a2a2a] rounded text-white focus:outline-none"
-        />
-
-        <textarea
-          name="body"
-          placeholder="Describe your request in detail..."
-          value={form.body}
-          onChange={handleChange}
-          rows={4}
-          className="w-full px-4 py-2 bg-[#2a2a2a] rounded text-white focus:outline-none"
-          required
-        />
-
-        <button
-          type="submit"
-          disabled={submitting}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4 bg-white/5 p-6 rounded-xl border border-white/20 shadow-lg"
         >
-          {submitting ? 'Posting…' : 'Add to Wishlist'}
-        </button>
-      </form>
+          <h2 className="text-2xl font-semibold mb-2">🚀 Suggest a Feature</h2>
+          <input
+            name="title"
+            placeholder="Feature title (short & punchy)"
+            value={form.title}
+            onChange={handleChange}
+            className="w-full px-4 py-2 bg-[#2a2a2a] rounded text-white focus:outline-none"
+            required
+          />
+          <input
+            name="subtitle"
+            placeholder="Optional subtitle (adds context)"
+            value={form.subtitle}
+            onChange={handleChange}
+            className="w-full px-4 py-2 bg-[#2a2a2a] rounded text-white focus:outline-none"
+          />
+          <textarea
+            name="body"
+            placeholder="Describe your idea in detail..."
+            value={form.body}
+            onChange={handleChange}
+            rows={5}
+            className="w-full px-4 py-2 bg-[#2a2a2a] rounded text-white focus:outline-none"
+            required
+          />
+          <button
+            type="submit"
+            disabled={submitting}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          >
+            {submitting ? 'Posting…' : 'Add to Wishlist'}
+          </button>
+        </form>
 
-      {/* List of Requests */}
+        <div className="bg-white/5 p-6 rounded-xl border border-white/10">
+          <h2 className="text-xl font-semibold mb-2 text-blue-400">📝 Why Your Feedback Matters</h2>
+          <p className="text-sm text-gray-300">
+            This wishlist is powered by you. Your feature suggestions shape the future of Growfly. Tell us what
+            would make your workflow smoother, smarter, and more magical.
+          </p>
+        </div>
+      </div>
+
+      <h2 className="text-2xl font-semibold mb-4 text-blue-300">💡 Most Requested Features</h2>
+
       {loading ? (
         <p className="text-center">Loading…</p>
       ) : items.length === 0 ? (
@@ -158,19 +159,14 @@ export default function WishlistPage() {
               key={item.id}
               className="bg-white/5 p-6 rounded-xl border border-white/10 hover:shadow-md transition"
             >
-              <h3 className="text-2xl font-semibold">{item.title}</h3>
-              {item.subtitle && (
-                <p className="text-sm text-gray-400 mb-2">{item.subtitle}</p>
-              )}
-              <p className="mb-4 text-gray-300">{item.body}</p>
-
+              <h3 className="text-2xl font-semibold text-white mb-1">{item.title}</h3>
+              {item.subtitle && <p className="text-sm text-gray-400 mb-2">{item.subtitle}</p>}
+              <p className="mb-4 text-gray-300 text-sm leading-relaxed">{item.body}</p>
               <div className="flex gap-4">
                 <button
                   onClick={() => handleVote(item.id, 'positive')}
-                  className={`flex items-center gap-1 px-4 py-2 rounded-full transition ${
-                    item.userVote === 'positive'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-blue-600'
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition ${
+                    item.userVote === 'positive' ? 'bg-blue-600 text-white' : 'bg-white text-blue-600'
                   }`}
                 >
                   <HiThumbUp className="w-5 h-5" />
@@ -178,10 +174,8 @@ export default function WishlistPage() {
                 </button>
                 <button
                   onClick={() => handleVote(item.id, 'negative')}
-                  className={`flex items-center gap-1 px-4 py-2 rounded-full transition ${
-                    item.userVote === 'negative'
-                      ? 'bg-red-600 text-white'
-                      : 'bg-white text-red-600'
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition ${
+                    item.userVote === 'negative' ? 'bg-red-600 text-white' : 'bg-white text-red-600'
                   }`}
                 >
                   <HiThumbDown className="w-5 h-5" />
