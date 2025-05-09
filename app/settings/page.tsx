@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Header from '../../src/components/Header';
 import { API_BASE_URL } from '@/lib/constants';
 
 interface UserProfile {
@@ -116,7 +115,6 @@ export default function SettingsPage() {
 
   return (
     <div className="bg-[#0d1117] text-white min-h-screen px-6 py-10">
-      <Header />
       <div className="max-w-5xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Your Settings</h1>

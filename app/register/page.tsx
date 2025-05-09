@@ -1,11 +1,10 @@
-// app/register/page.tsx
-'use client';
+'use client'
 
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 export default function RegisterPage() {
-  const router = useRouter();
+  const router = useRouter()
 
   const plans = [
     {
@@ -25,9 +24,9 @@ export default function RegisterPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ planId: 'personal' }),
-        });
-        const { url } = await res.json();
-        window.location.href = url;
+        })
+        const { url } = await res.json()
+        window.location.href = url
       },
     },
     {
@@ -40,9 +39,9 @@ export default function RegisterPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ planId: 'business' }),
-        });
-        const { url } = await res.json();
-        window.location.href = url;
+        })
+        const { url } = await res.json()
+        window.location.href = url
       },
     },
     {
@@ -52,18 +51,22 @@ export default function RegisterPage() {
       button: 'Contact Us',
       onClick: () => router.push('/contact'),
     },
-  ];
+  ]
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-start py-20 px-4">
-      <Image src="/growfly-logo-white.png" alt="Growfly" width={180} height={50} className="mb-6" />
+    <main className="min-h-screen flex flex-col items-center justify-start py-20 px-4 bg-gradient-to-br from-blue-900 via-black to-blue-900 text-white">
+      <Image
+        src="/growfly-logo.png"
+        alt="Growfly"
+        width={160}
+        height={40}
+        className="mb-6"
+      />
       <h1 className="text-4xl md:text-5xl font-bold mb-4 text-center">
-        Supercharge Your Writing with Growfly
+        Supercharge Your Output with Growfly
       </h1>
-      <p className="text-lg md:text-xl text-gray-200 mb-12 max-w-2xl text-center">
-        Growfly uses cutting-edge AI to help professionals draft emails, reports, and
-        presentations faster than ever. Pick a plan that fits your needs—and get started in
-        seconds.
+      <p className="text-lg md:text-xl text-gray-300 mb-12 max-w-2xl text-center">
+        Growfly uses cutting-edge AI to help professionals draft emails, reports, and presentations faster than ever. Pick a plan that fits your needs—and get started in seconds.
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 w-full max-w-6xl">
@@ -78,7 +81,7 @@ export default function RegisterPage() {
               <ul className="text-sm text-gray-200 space-y-2 mb-6">
                 {plan.features.map((f) => (
                   <li key={f} className="flex items-center">
-                    <span className="mr-2 text-green-400">✔</span>
+                    <span className="mr-2 text-violet-400">✓</span>
                     {f}
                   </li>
                 ))}
@@ -94,5 +97,5 @@ export default function RegisterPage() {
         ))}
       </div>
     </main>
-  );
+  )
 }

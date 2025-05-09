@@ -7,7 +7,9 @@ import Header from '@/components/Header'
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const hideUI = ['/login', '/signup'].includes(pathname || '')
+
+  // ✅ Add '/register' to the list of pages that should NOT show sidebar/header
+  const hideUI = ['/login', '/signup', '/register'].includes(pathname || '')
 
   return (
     <div className="flex h-screen bg-background text-textPrimary">
