@@ -22,6 +22,8 @@ const navItems = [
   { name: 'Nerdify Me!',  href: '/nerd-mode',    icon: HiOutlineLightBulb },
   { name: 'Change Plan',  href: '/plans',        icon: HiOutlineCurrencyPound },
   { name: 'Settings',     href: '/settings',     icon: HiOutlineCog },
+  // ✅ NEW: Brand Settings tab directly after Settings
+  { name: 'Brand Settings', href: '/brand-settings', icon: HiOutlineCog },
 ]
 
 export default function Sidebar() {
