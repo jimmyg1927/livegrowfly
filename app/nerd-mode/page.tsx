@@ -1,8 +1,8 @@
-'use client'
+'use client';
 
-import React, { useState, useMemo } from 'react'
-import { HiClipboard, HiCheckCircle } from 'react-icons/hi'
-import { motion } from 'framer-motion'
+import React, { useState, useMemo } from 'react';
+import { HiClipboard, HiCheckCircle } from 'react-icons/hi';
+import { motion } from 'framer-motion';
 
 const prompts = {
   'Marketing & Branding': [
@@ -52,7 +52,7 @@ const prompts = {
     'Write an invoice email template for a freelance gig.',
     'Help me forecast cash flow for a seasonal business.',
   ],
-}
+};
 
 const nerdLevels = [
   { level: 1, title: 'Curious Cat', emoji: '🐱' },
@@ -60,46 +60,51 @@ const nerdLevels = [
   { level: 3, title: 'Prompt Prober', emoji: '🔍' },
   { level: 4, title: 'Nerdboss', emoji: '🚀' },
   { level: 5, title: 'Prompt Commander', emoji: '🤹‍♂️' },
-]
+];
 
 export default function NerdModePage() {
-  const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null)
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({})
-  const [searchTerm, setSearchTerm] = useState('')
+  const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text)
-    setCopiedPrompt(text)
-    setTimeout(() => setCopiedPrompt(null), 1500)
-  }
+    navigator.clipboard.writeText(text);
+    setCopiedPrompt(text);
+    setTimeout(() => setCopiedPrompt(null), 1500);
+  };
 
   const toggleSection = (category: string) => {
-    setOpenSections((prev) => ({ ...prev, [category]: !prev[category] }))
-  }
+    setOpenSections((prev) => ({ ...prev, [category]: !prev[category] }));
+  };
 
   const filteredPrompts = useMemo(() => {
-    if (!searchTerm) return prompts
-    const lower = searchTerm.toLowerCase()
-    const result: Record<string, string[]> = {}
+    if (!searchTerm) return prompts;
+    const lower = searchTerm.toLowerCase();
+    const result: Record<string, string[]> = {};
     Object.entries(prompts).forEach(([category, list]) => {
-      const filtered = list.filter((p) => p.toLowerCase().includes(lower))
-      if (filtered.length) result[category] = filtered
-    })
-    return result
-  }, [searchTerm])
+      const filtered = list.filter((p) => p.toLowerCase().includes(lower));
+      if (filtered.length) result[category] = filtered;
+    });
+    return result;
+  }, [searchTerm]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12 text-white space-y-10">
-      <motion.h1 className="text-4xl font-bold" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+    <div className="max-w-7xl mx-auto px-4 py-10 text-white space-y-10">
+      <motion.h1 className="text-3xl font-bold" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         🧠 Nerdify Me!
       </motion.h1>
 
-      <p className="text-gray-300 text-lg max-w-3xl">
-        Growfly is your marketing and productivity assistant. Built by nerds, to help you launch faster, write better, strategise smarter, and save time. Whether you&rsquo;re an entrepreneur, freelancer, or scaling company — we&rsquo;re here to help.
+      <p className="text-gray-300 text-base max-w-3xl">
+        Growfly is your AI marketing and productivity assistant. Built by nerds, for nerds—to help you launch faster,
+        write better, strategise smarter, and scale with confidence.
+        Whether you’re an entrepreneur, freelancer, or scaling team—we’ve got your back.
       </p>
 
       <section className="bg-white/5 p-6 rounded-xl border border-white/10">
-        <h2 className="text-2xl font-semibold text-blue-400 mb-2">🎮 Increase Your Nerd Level</h2>
+        <h2 className="text-xl font-semibold text-blue-400 mb-2">🎮 XP & Nerd Levels</h2>
+        <p className="text-sm text-gray-400 mb-4">
+          Every prompt you use earns you XP (experience points). As you gain XP, your Nerd Level rises. Higher levels unlock more credibility, exclusive features, and bragging rights.
+        </p>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center text-sm">
           {nerdLevels.map(({ emoji, title }, i) => (
             <div key={i} className="bg-white/10 rounded-lg py-4 px-2 border border-white/10">
@@ -111,11 +116,19 @@ export default function NerdModePage() {
       </section>
 
       <section className="bg-white/5 p-6 rounded-xl border border-white/10">
-        <h2 className="text-2xl font-semibold text-blue-400 mb-4">📚 What&rsquo;s Inside Growfly?</h2>
+        <h2 className="text-xl font-semibold text-blue-400 mb-3">🎨 Brand Settings</h2>
+        <p className="text-sm text-gray-300">
+          Don’t forget to fill in your <strong>Brand Settings</strong>—this includes your tone of voice, audience, goals and more. Doing so allows Growfly to give hyper-personalised answers every time. Feel free to update it regularly as your brand evolves!
+        </p>
+      </section>
+
+      <section className="bg-white/5 p-6 rounded-xl border border-white/10">
+        <h2 className="text-xl font-semibold text-blue-400 mb-4">📚 What&rsquo;s Inside Growfly?</h2>
         <ul className="text-sm text-gray-300 space-y-2">
-          <li><strong>Collab Zone</strong>: Work on shared documents with colleagues or clients in real-time.</li>
-          <li><strong>Saved Mode</strong>: Save useful AI responses to reference or edit later.</li>
-          <li><strong>Request Zone</strong>: Got ideas? Suggest features you&rsquo;d love to see. The most upvoted ones go to our dev team!</li>
+          <li><strong>Collab Zone</strong>: Brainstorm and co-write with team members live.</li>
+          <li><strong>Saved Mode</strong>: Store great answers and edit them whenever you like.</li>
+          <li><strong>Request Zone</strong>: Vote and suggest new features—yes, we’re listening!</li>
+          <li><strong>Nerdify Mode</strong>: Use guided prompts and shortcuts based on your level and goals.</li>
         </ul>
       </section>
 
@@ -130,7 +143,7 @@ export default function NerdModePage() {
       </section>
 
       <section>
-        <h2 className="text-2xl font-semibold text-blue-400 mb-4">📋 Prompt Library</h2>
+        <h2 className="text-xl font-semibold text-blue-400 mb-4">📋 Prompt Library</h2>
         {Object.entries(filteredPrompts).map(([category, list]) => (
           <div key={category} className="mb-6">
             <button
@@ -170,11 +183,11 @@ export default function NerdModePage() {
       </section>
 
       <section className="bg-white/5 p-6 rounded-xl border border-white/10">
-        <h2 className="text-2xl font-semibold text-blue-400 mb-3">✨ Pro Tip</h2>
+        <h2 className="text-xl font-semibold text-blue-400 mb-3">✨ Pro Tip</h2>
         <p className="text-sm text-gray-300 leading-relaxed">
-          Not sure where to start? Just type: <strong>How can you help me today?</strong> and let Growfly do the thinking.
+          Not sure where to start? Just type: <strong>“How can you help me today?”</strong> and let Growfly do the rest.
         </p>
       </section>
     </div>
-  )
+  );
 }
