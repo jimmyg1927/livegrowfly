@@ -3,29 +3,43 @@
 @tailwind utilities;
 
 @layer base {
-  /* Default light theme */
+  /* Light Theme */
   :root {
-    --background: #F9FAFB;
-    --textPrimary: #111827;
+    --background: #f8fafc;
+    --textPrimary: #111111;
     --accent: #1992FF;
-    --card: #FFFFFF;
-    --muted: #F3F4F6;
-    --primary: #FFFFFF;
+    --accent-foreground: #ffffff;
+    --card: #ffffff;
+    --card-foreground: #111111;
+    --muted: #f1f5f9;
+    --muted-foreground: #4b5563;
+    --primary: #ffffff;
+    --primary-foreground: #1992FF;
+    --border: #e2e8f0;
+    --input: #e2e8f0;
+    --highlight: #e0f2ff;
   }
 
-  /* Dark theme override */
+  /* Dark Theme */
   .dark {
-    --background: #0D1117;
-    --textPrimary: #E6EDF3;
-    --accent: #58A6FF;
-    --card: #161B22;
-    --muted: #21262D;
-    --primary: #161B22;
+    --background: #0d1117;
+    --textPrimary: #e6edf3;
+    --accent: #1992FF;
+    --accent-foreground: #0d1117;
+    --card: #161b22;
+    --card-foreground: #ffffff;
+    --muted: #21262d;
+    --muted-foreground: #9ca3af;
+    --primary: #1992FF;
+    --primary-foreground: #ffffff;
+    --border: #30363d;
+    --input: #2d333b;
+    --highlight: #003566;
   }
 
   html {
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-                'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+      'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
   }
 
   body {
@@ -36,10 +50,14 @@
 /* Optional spinner */
 .spinner {
   border: 4px solid rgba(255, 255, 255, 0.1);
-  border-left-color: #38bdf8;
+  border-left-color: #1992FF;
   border-radius: 50%;
   width: 40px;
   height: 40px;
   animation: spin 1s linear infinite;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
