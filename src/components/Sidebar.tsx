@@ -12,18 +12,21 @@ import {
   HiOutlineCurrencyPound,
   HiOutlineLightBulb,
   HiOutlineHeart,
+  HiOutlineUserAdd,
+  HiOutlineShieldCheck,
 } from 'react-icons/hi'
 
 const navItems = [
-  { name: 'Dashboard',    href: '/dashboard',    icon: HiOutlineHome },
-  { name: 'Saved',        href: '/saved',        icon: HiOutlineDocumentText },
-  { name: 'Collab Zone',  href: '/collab-zone',  icon: HiOutlineUserGroup },
-  { name: 'Wishlist',     href: '/wishlist',     icon: HiOutlineHeart },
-  { name: 'Nerdify Me!',  href: '/nerd-mode',    icon: HiOutlineLightBulb },
-  { name: 'Change Plan',  href: '/plans',        icon: HiOutlineCurrencyPound },
-  { name: 'Settings',     href: '/settings',     icon: HiOutlineCog },
-  // ✅ NEW: Brand Settings tab directly after Settings
+  { name: 'Dashboard', href: '/dashboard', icon: HiOutlineHome },
+  { name: 'Saved', href: '/saved', icon: HiOutlineDocumentText },
+  { name: 'Collab Zone', href: '/collab-zone', icon: HiOutlineUserGroup },
+  { name: 'Wishlist', href: '/wishlist', icon: HiOutlineHeart },
+  { name: 'Nerdify Me!', href: '/nerd-mode', icon: HiOutlineLightBulb },
+  { name: 'Refer a Friend', href: '/refer', icon: HiOutlineUserAdd }, // ✅ New tab
+  { name: 'Change Plan', href: '/plans', icon: HiOutlineCurrencyPound },
+  { name: 'Settings', href: '/settings', icon: HiOutlineCog },
   { name: 'Brand Settings', href: '/brand-settings', icon: HiOutlineCog },
+  { name: 'Trusted Partners', href: '/trusted-partners', icon: HiOutlineShieldCheck }, // ✅ New tab
 ]
 
 export default function Sidebar() {
