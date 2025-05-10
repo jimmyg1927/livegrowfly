@@ -1,4 +1,4 @@
-'use client';
+'use client'
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -111,7 +111,7 @@ export default function SavedPage() {
         placeholder="Search saved titles…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="w-full max-w-md px-4 py-2 border rounded bg-card border-muted focus:outline-none focus:ring-2 focus:ring-accent"
+        className="w-full max-w-md px-4 py-2 border border-border rounded bg-card text-textPrimary focus:outline-none focus:ring-2 focus:ring-accent"
       />
 
       {loading ? (
@@ -121,16 +121,16 @@ export default function SavedPage() {
       ) : (
         Object.entries(grouped).map(([date, items]) => (
           <div key={date} className="space-y-3">
-            <h2 className="text-lg font-semibold text-blue-400">{date}</h2>
+            <h2 className="text-lg font-semibold text-accent">{date}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {items.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-card border border-muted rounded-xl p-4 shadow-sm hover:shadow-md transition"
+                  className="bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition"
                 >
                   {editingId === item.id ? (
                     <input
-                      className="mb-2 w-full px-3 py-1 rounded border border-muted bg-background focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="mb-2 w-full px-3 py-1 rounded border border-border bg-background text-textPrimary focus:outline-none focus:ring-2 focus:ring-accent"
                       value={editedTitle}
                       onChange={(e) => setEditedTitle(e.target.value)}
                       onBlur={() => handleRename(item.id)}

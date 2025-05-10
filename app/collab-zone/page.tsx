@@ -24,25 +24,20 @@ interface Doc {
 
 export default function CollabZonePage() {
   const router = useRouter()
-  const [docs, setDocs] = useState<Doc[]>([]) // Your docs
-  const [sharedDocs, setSharedDocs] = useState<Doc[]>([]) // Docs shared with you
+  const [docs, setDocs] = useState<Doc[]>([])
+  const [sharedDocs, setSharedDocs] = useState<Doc[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
   const [content, setContent] = useState('')
   const [titleEditId, setTitleEditId] = useState<string | null>(null)
   const [newTitle, setNewTitle] = useState('')
   const [sharing, setSharing] = useState(false)
   const [shareEmail, setShareEmail] = useState('')
-  const [statusMsg, setStatusMsg] = useState<{
-    type: 'success' | 'error'
-    text: string
-  } | null>(null)
+  const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  // Fetch documents and shared docs
   useEffect(() => {
     const token = localStorage.getItem('growfly_jwt')
     if (!token) return router.push('/login')
-    
-    // Fetch created docs
+
     fetch(`${API_URL}/api/collab`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then((all: Doc[]) => {
@@ -54,12 +49,9 @@ export default function CollabZonePage() {
       })
       .catch(() => setDocs([]))
 
-    // Fetch docs shared with user
     fetch(`${API_URL}/api/collab/shared`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
-      .then((allShared: Doc[]) => {
-        setSharedDocs(allShared)
-      })
+      .then((allShared: Doc[]) => setSharedDocs(allShared))
       .catch(() => setSharedDocs([]))
   }, [router])
 
@@ -177,22 +169,22 @@ export default function CollabZonePage() {
   }
 
   const handleDownload = (id: string) => {
-    // This would ideally trigger a backend API route that converts the document to PDF or Word
     window.open(`${API_URL}/api/collab/${id}/download`, '_blank');
   }
 
   return (
-    <div className="flex h-full">
-      <aside className="w-64 border-r bg-background p-4 space-y-3 overflow-auto">
-        <button onClick={handleNew} className="flex items-center gap-1 px-3 py-2 bg-blue-600 text-white rounded">
+    <div className="flex h-full bg-background text-textPrimary">
+      <aside className="w-64 border-r border-border bg-card p-4 space-y-3 overflow-auto">
+        <button onClick={handleNew} className="flex items-center gap-1 px-3 py-2 bg-accent text-white rounded hover:brightness-110 transition">
           <FiPlus /> New Doc
         </button>
-        {/* Sidebar for owned documents */}
         <div className="font-bold text-lg">Your Docs</div>
         {docs.map(doc => (
           <div
             key={doc.id}
-            className={`flex items-center justify-between px-2 py-1 rounded cursor-pointer ${doc.id === activeId ? 'bg-accent/20' : 'hover:bg-muted'}`}
+            className={`flex items-center justify-between px-2 py-1 rounded cursor-pointer ${
+              doc.id === activeId ? 'bg-accent/20' : 'hover:bg-muted'
+            }`}
             onClick={() => setActiveId(doc.id)}
           >
             <span>{doc.title}</span>
@@ -202,16 +194,17 @@ export default function CollabZonePage() {
             </div>
           </div>
         ))}
-        {/* Sidebar for shared documents */}
         <div className="font-bold text-lg">Shared with You</div>
         {sharedDocs.map(doc => (
           <div
             key={doc.id}
-            className={`flex items-center justify-between px-2 py-1 rounded cursor-pointer ${doc.id === activeId ? 'bg-accent/20' : 'hover:bg-muted'}`}
+            className={`flex items-center justify-between px-2 py-1 rounded cursor-pointer ${
+              doc.id === activeId ? 'bg-accent/20' : 'hover:bg-muted'
+            }`}
             onClick={() => setActiveId(doc.id)}
           >
             <span>{doc.title}</span>
-            <button onClick={() => handleDownload(doc.id)} className="ml-2 text-blue-500">
+            <button onClick={() => handleDownload(doc.id)} className="ml-2 text-accent hover:underline">
               <FiDownload /> Download
             </button>
           </div>
@@ -221,11 +214,11 @@ export default function CollabZonePage() {
       <main className="flex-1 p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Collab Zone</h1>
-          <button onClick={startShare} className="flex items-center gap-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded">
+          <button onClick={startShare} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110 transition">
             <FiMail /> Share This Doc
           </button>
         </div>
-        <p className="text-gray-400 text-sm">
+        <p className="text-muted-foreground text-sm">
           Share and collaborate on Growfly responses. Edit, comment, and download as needed.
         </p>
 
@@ -236,26 +229,30 @@ export default function CollabZonePage() {
               value={shareEmail}
               placeholder="Enter colleague’s email"
               onChange={e => setShareEmail(e.target.value)}
-              className="flex-1 px-3 py-2 border rounded"
+              className="flex-1 px-3 py-2 border border-muted bg-background rounded"
             />
-            <button onClick={confirmShare} className="px-4 py-2 bg-blue-600 text-white rounded flex items-center gap-1">
+            <button onClick={confirmShare} className="px-4 py-2 bg-accent text-white rounded flex items-center gap-1 hover:brightness-110 transition">
               <FiCheckCircle /> Send
             </button>
           </div>
         )}
 
         {statusMsg && (
-          <div className={`flex items-center gap-2 px-3 py-2 rounded ${statusMsg.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+          <div className={`flex items-center gap-2 px-3 py-2 rounded ${
+            statusMsg.type === 'success'
+              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'
+              : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'
+          }`}>
             {statusMsg.type === 'success' ? <FiCheckCircle /> : <FiAlertCircle />}
             <span>{statusMsg.text}</span>
           </div>
         )}
 
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border border-border rounded-lg overflow-hidden bg-card">
           <Editor content={content} setContent={setContent} />
         </div>
 
-        <button onClick={handleSave} className="flex items-center gap-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded">
+        <button onClick={handleSave} className="flex items-center gap-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">
           <FiSave /> Save
         </button>
       </main>

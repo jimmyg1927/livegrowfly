@@ -1,30 +1,27 @@
-'use client'
+'use client';
 
-import React from 'react'
-import Header from '../../src/components/Header'
+import React from 'react';
 
 export default function TrustedPartnersPage() {
   return (
-    <div className="space-y-6">
-      <Header />
-
-      <div className="bg-card rounded-2xl p-6 space-y-4">
-        <h2 className="text-2xl font-bold text-primary">Trusted Partners (Coming Soon)</h2>
-
-        <p className="text-base text-muted">
-          We&apos;re working on creating a <strong>Trusted Partners</strong> page, bringing our Growfly Community the most trusted, discounted professional services for those times when technology or AI can&apos;t help you.
+    <div className="space-y-6 max-w-3xl mx-auto">
+      <div className="bg-[#1b1b1b] text-white rounded-2xl p-6 space-y-5 shadow-md">
+        <h2 className="text-2xl font-bold">🤝 Trusted Partners (Coming Soon)</h2>
+        <p className="text-sm text-muted">
+          We're building a dedicated <strong>Trusted Partners</strong> network inside Growfly —
+          so when AI can't solve your problem, our hand-picked professionals can.
         </p>
 
-        <ul className="list-disc pl-6 text-muted space-y-1">
-          <li>Need a videographer?</li>
-          <li>An accountant to check over your finances?</li>
-          <li>A manufacturer to create your prototype?</li>
+        <ul className="list-disc pl-5 text-sm space-y-1 text-muted">
+          <li>Need a videographer or creative team?</li>
+          <li>Want a qualified accountant to look over your finances?</li>
+          <li>Looking for someone to help you prototype or manufacture?</li>
         </ul>
 
-        <p className="text-base text-muted">
-          We’ll be able to help you — <strong>check back soon</strong> for our new Trusted Partner Hub.
+        <p className="text-sm text-muted">
+          We’ve got you covered — <strong>check back soon</strong> to access your personalised support hub.
         </p>
       </div>
     </div>
-  )
+  );
 }

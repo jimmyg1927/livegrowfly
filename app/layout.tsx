@@ -1,7 +1,7 @@
 // app/layout.tsx
 import './globals.css'
 import { ReactNode } from 'react'
-import ThemeContextProvider from '../src/context/ThemeContext'
+import { ThemeProvider } from 'next-themes'
 import ClientLayout from './ClientLayout'
 import { Inter } from 'next/font/google'
 
@@ -18,11 +18,11 @@ export default function RootLayout({
   children: ReactNode
 }) {
   return (
-    <html lang="en" className={inter.className}>
-      <body>
-        <ThemeContextProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className}>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <ClientLayout>{children}</ClientLayout>
-        </ThemeContextProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

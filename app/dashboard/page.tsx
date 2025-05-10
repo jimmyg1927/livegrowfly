@@ -217,22 +217,22 @@ export default function DashboardPage() {
   const closeFeedbackModal = () => setShowFeedback(false);
 
   return (
-    <div className="space-y-6 px-4 md:px-8 lg:px-12 pb-10 bg-[#0f0f0f] text-white min-h-screen">
+    <div className="space-y-6 px-4 md:px-8 lg:px-12 pb-10 bg-background text-textPrimary min-h-screen">
       <div className="flex items-center space-x-4">
         <PromptTracker used={user.promptsUsed} limit={user.promptLimit} />
         <Link
           href="/refer"
-          className="flex items-center gap-2 bg-[#1992ff] text-white px-6 py-3 rounded-xl shadow hover:bg-[#007ac1] transition"
+          className="flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-xl shadow hover:brightness-110 transition"
         >
           <Gift size={22} />
           <span className="text-sm font-semibold">Refer a Friend</span>
         </Link>
         <Link href="/settings">
-          <UserCircle className="text-white hover:text-blue-300 transition w-7 h-7" />
+          <UserCircle className="text-textPrimary hover:text-accent transition w-7 h-7" />
         </Link>
       </div>
 
-      <div className="bg-[#151515] rounded-3xl p-6 space-y-4 shadow-md">
+      <div className="bg-card rounded-3xl p-6 space-y-4 shadow-md">
         <div className="flex flex-wrap gap-3">
           {[
             'How can Growfly help me?',
@@ -244,7 +244,7 @@ export default function DashboardPage() {
             <button
               key={i}
               onClick={() => handleSend(p)}
-              className="text-xs bg-[#3a3a3a] text-white px-4 py-2 rounded-full border border-[#444] hover:bg-[#1992ff1a] hover:scale-105 transition"
+              className="text-xs px-4 py-2 rounded-full border border-muted bg-muted text-muted-foreground hover:bg-accent/10 hover:scale-105 transition"
             >
               {p}
             </button>
@@ -253,13 +253,15 @@ export default function DashboardPage() {
 
         <div
           ref={chatRef}
-          className="max-h-[60vh] overflow-y-auto space-y-4 bg-[#111] p-4 rounded-xl text-sm leading-relaxed whitespace-pre-wrap"
+          className="max-h-[60vh] overflow-y-auto space-y-4 bg-muted p-4 rounded-xl text-sm leading-relaxed whitespace-pre-wrap"
         >
           {messages.slice(-10).map((m, i) => (
             <div key={i} className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
               <div
                 className={`p-3 rounded-lg shadow max-w-[80%] break-words ${
-                  m.role === 'assistant' ? 'bg-blue-100 text-black' : 'bg-blue-600 text-white'
+                  m.role === 'assistant'
+                    ? 'bg-blue-100 text-black dark:bg-blue-900 dark:text-white'
+                    : 'bg-blue-600 text-white'
                 }`}
               >
                 {m.content}
@@ -292,7 +294,7 @@ export default function DashboardPage() {
               <button
                 key={i}
                 onClick={() => handleSend(t)}
-                className="text-xs bg-[#3a3a3a] text-white px-3 py-2 rounded-full border border-[#444] hover:bg-[#1992ff1a] hover:scale-105 transition"
+                className="text-xs px-3 py-2 rounded-full border border-muted bg-muted text-muted-foreground hover:bg-accent/10 hover:scale-105 transition"
               >
                 {t}
               </button>
@@ -302,7 +304,7 @@ export default function DashboardPage() {
 
         <div className="flex items-center gap-2 pt-4">
           <input
-            className="flex-1 rounded-lg p-2 bg-[#181818] border border-[#333] text-white text-sm"
+            className="flex-1 rounded-lg p-2 bg-background border border-border text-textPrimary text-sm"
             placeholder="Type your message…"
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -316,14 +318,14 @@ export default function DashboardPage() {
           <button
             onClick={() => handleSend(input)}
             disabled={loading}
-            className="px-4 py-2 bg-[#1992ff] text-white rounded-lg hover:bg-[#007ac1] transition disabled:opacity-50"
+            className="px-4 py-2 bg-accent text-white rounded-lg hover:brightness-110 transition disabled:opacity-50"
           >
             {loading ? 'Thinking…' : 'Send'}
           </button>
-          <button onClick={handleSave} title="Save" className="p-2 bg-[#58A6FF] rounded hover:bg-[#3d85d1] transition">
+          <button onClick={handleSave} title="Save" className="p-2 bg-accent rounded hover:brightness-110 transition">
             <Save className="w-5 h-5 text-white" />
           </button>
-          <button onClick={handleShare} title="Share" className="p-2 bg-[#58A6FF] rounded hover:bg-[#3d85d1] transition">
+          <button onClick={handleShare} title="Share" className="p-2 bg-accent rounded hover:brightness-110 transition">
             <Share2 className="w-5 h-5 text-white" />
           </button>
         </div>
