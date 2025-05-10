@@ -235,9 +235,11 @@ export default function DashboardPage() {
       <div className="bg-[#151515] rounded-3xl p-6 space-y-4 shadow-md">
         <div className="flex flex-wrap gap-3">
           {[
-            'How can growfly.io help me with my business?',
-            'Help me with my accounts',
-            'Come up with a social media plan for my business',
+            'How can Growfly help me?',
+            'How can you help me with my finances?',
+            'How can you help me get more customers?',
+            'How can you help me with documents and HR?',
+            'What marketing should I do today?'
           ].map((p, i) => (
             <button
               key={i}
