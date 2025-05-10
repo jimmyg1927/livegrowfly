@@ -8,28 +8,29 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background:      'hsl(var(--background))',
-        textPrimary:     'hsl(var(--textPrimary))',
+        background: 'hsl(var(--background))',
+        textPrimary: 'hsl(var(--textPrimary))',
         accent: {
-          DEFAULT:       'hsl(var(--accent))',
-          foreground:    'hsl(var(--accent-foreground))',
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
         },
         card: {
-          DEFAULT:       'hsl(var(--card))',
-          foreground:    'hsl(var(--card-foreground))',
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
         },
-        muted: {
-          DEFAULT:       'hsl(var(--muted))',
-          foreground:    'hsl(var(--muted-foreground))',
-        },
-        border:          'hsl(var(--border))',
-        input:           'hsl(var(--input))',
-        highlight:       'hsl(var(--highlight))',
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        'input-border': 'hsl(var(--input-border))',
+        'input-focus': 'hsl(var(--input-focus))',
+        highlight: 'hsl(var(--highlight))',
+      },
+      boxShadow: {
+        focus: '0 0 0 3px rgba(25, 146, 255, 0.3)',
       },
       borderRadius: {
-        lg:             'var(--radius)',
-        md:             'calc(var(--radius) - 2px)',
-        sm:             'calc(var(--radius) - 4px)',
+        DEFAULT: '0.5rem',
+        md: '0.375rem',
+        sm: '0.25rem',
       },
     },
   },
