@@ -12,7 +12,7 @@ export default function TrustedPartnersPage() {
         <h2 className="text-2xl font-bold text-primary">Trusted Partners (Coming Soon)</h2>
 
         <p className="text-base text-muted">
-          We're working on creating a <strong>Trusted Partners</strong> page, bringing our Growfly Community the most trusted, discounted professional services for those times when technology or AI can&apos;t help you.
+          We&apos;re working on creating a <strong>Trusted Partners</strong> page, bringing our Growfly Community the most trusted, discounted professional services for those times when technology or AI can&apos;t help you.
         </p>
 
         <ul className="list-disc pl-6 text-muted space-y-1">
