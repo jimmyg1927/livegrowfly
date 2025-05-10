@@ -1,10 +1,10 @@
-'use client'
+'use client';
 
 import React from 'react';
-import { useTheme } from 'next-themes';
-import { Moon, Sun } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 import { useUserStore } from '@/lib/store';
 import Link from 'next/link';
+import { useTheme } from '@/context/ThemeContext';
 
 function getNerdLevel(xp: number = 0) {
   if (xp < 25) return { title: 'Curious Cat', emoji: '🐱', max: 25 };
@@ -15,14 +15,14 @@ function getNerdLevel(xp: number = 0) {
 }
 
 export default function Header() {
-  const { theme, setTheme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const xp = useUserStore((state) => state.xp);
   const subscriptionType = useUserStore((state) => state.subscriptionType);
   const { title, emoji, max } = getNerdLevel(xp);
   const progress = Math.min((xp / max) * 100, 100);
 
   return (
-    <header className="flex items-center justify-between bg-[#1992ff] text-white px-6 py-4" style={{ borderRadius: 0, marginLeft: 0 }}>
+    <header className="flex items-center justify-between bg-[#1992ff] text-white px-6 py-4">
       <div className="flex items-center gap-6">
         <div className="text-lg font-semibold">
           {emoji} {title} — {Math.floor(xp)} XP
@@ -42,7 +42,7 @@ export default function Header() {
           </span>
         </Link>
         <button
-          onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+          onClick={toggleTheme}
           aria-label="Toggle theme"
           className="bg-white text-[#1992ff] p-2 rounded"
         >
