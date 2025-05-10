@@ -1,61 +1,61 @@
-'use client'
+'use client';
 
-import React, { useEffect, useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import PromptTracker from '@/components/PromptTracker'
-import SaveModal from '@/components/SaveModal'
-import FeedbackModal from '@/components/FeedbackModal'
-import { Gift, UserCircle, Save, Share2, ThumbsUp, ThumbsDown } from 'lucide-react'
-import { API_BASE_URL } from '@/lib/constants'
-import { useUserStore } from '@/lib/store'
+import React, { useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import PromptTracker from '@/components/PromptTracker';
+import SaveModal from '@/components/SaveModal';
+import FeedbackModal from '@/components/FeedbackModal';
+import { Gift, UserCircle, Save, Share2, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { API_BASE_URL } from '@/lib/constants';
+import { useUserStore } from '@/lib/store';
 
 interface Message {
-  role: 'assistant' | 'user'
-  content: string
-  id?: string
+  role: 'assistant' | 'user';
+  content: string;
+  id?: string;
 }
 
 export default function DashboardPage() {
-  const router = useRouter()
-  const [input, setInput] = useState('')
+  const router = useRouter();
+  const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
       content: "Hello, I'm Growfly — I’m here to help your organisation grow. How can I assist you today?",
     },
-  ])
-  const [followUps, setFollowUps] = useState<string[]>([])
-  const [loading, setLoading] = useState(false)
-  const [showSaveModal, setShowSaveModal] = useState(false)
-  const [showFeedback, setShowFeedback] = useState(false)
-  const [feedbackResponseId, setFeedbackResponseId] = useState('')
-  const chatRef = useRef<HTMLDivElement>(null)
+  ]);
+  const [followUps, setFollowUps] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackResponseId, setFeedbackResponseId] = useState('');
+  const chatRef = useRef<HTMLDivElement>(null);
 
-  const setUser = useUserStore((state) => state.setUser)
-  const setXp = useUserStore((state) => state.setXp)
-  const setSubscriptionType = useUserStore((state) => state.setSubscriptionType)
-  const subscriptionType = useUserStore((state) => state.subscriptionType)
-  const xp = useUserStore((state) => state.xp)
-  const user = useUserStore((state) => state.user)
+  const setUser = useUserStore((state) => state.setUser);
+  const setXp = useUserStore((state) => state.setXp);
+  const setSubscriptionType = useUserStore((state) => state.setSubscriptionType);
+  const subscriptionType = useUserStore((state) => state.subscriptionType);
+  const xp = useUserStore((state) => state.xp);
+  const user = useUserStore((state) => state.user);
 
   const getNextRefresh = () => {
-    const now = new Date()
-    const next = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-    return next.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
-  }
+    const now = new Date();
+    const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return next.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  };
 
   useEffect(() => {
-    const token = localStorage.getItem('growfly_jwt')
-    if (!token) return router.push('/login')
+    const token = localStorage.getItem('growfly_jwt');
+    if (!token) return router.push('/login');
 
     fetch(`${API_BASE_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
       credentials: 'include',
     })
       .then((r) => {
-        if (!r.ok) throw new Error()
-        return r.json()
+        if (!r.ok) throw new Error();
+        return r.json();
       })
       .then((data) => {
         setUser({
@@ -63,50 +63,50 @@ export default function DashboardPage() {
           name: data.name,
           promptLimit: data.promptLimit,
           promptsUsed: data.promptsUsed,
-        })
-        setXp(data.totalXP || 0)
-        setSubscriptionType(data.subscriptionType || 'Free')
+        });
+        setXp(data.totalXP || 0);
+        setSubscriptionType(data.subscriptionType || 'Free');
       })
       .catch(() => {
-        localStorage.removeItem('growfly_jwt')
-        router.push('/login')
-      })
-  }, [router, setUser, setXp, setSubscriptionType])
+        localStorage.removeItem('growfly_jwt');
+        router.push('/login');
+      });
+  }, [router, setUser, setXp, setSubscriptionType]);
 
   useEffect(() => {
     if (user && (!subscriptionType || subscriptionType === 'none')) {
-      router.push('/plans')
+      router.push('/plans');
     }
-  }, [user, subscriptionType, router])
+  }, [user, subscriptionType, router]);
 
   useEffect(() => {
-    if (!chatRef.current) return
+    if (!chatRef.current) return;
     chatRef.current.scrollTo({
       top: chatRef.current.scrollHeight,
       behavior: 'smooth',
-    })
-  }, [messages])
+    });
+  }, [messages]);
 
   const handleSend = async (msg: string) => {
-    const token = localStorage.getItem('growfly_jwt')
-    const text = msg.trim()
-    if (!text || !user) return
+    const token = localStorage.getItem('growfly_jwt');
+    const text = msg.trim();
+    if (!text || !user) return;
 
     if (user.promptsUsed >= user.promptLimit) {
-      const refresh = getNextRefresh()
+      const refresh = getNextRefresh();
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
           content: `🚫 You’ve hit your monthly limit. Wait until ${refresh}.`,
         },
-      ])
-      setInput('')
-      return
+      ]);
+      setInput('');
+      return;
     }
 
-    setMessages((prev) => [...prev, { role: 'user', content: text }, { role: 'assistant', content: '' }])
-    setLoading(true)
+    setMessages((prev) => [...prev, { role: 'user', content: text }, { role: 'assistant', content: '' }]);
+    setLoading(true);
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/ai`, {
@@ -116,66 +116,68 @@ export default function DashboardPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ message: text }),
-      })
+      });
+      if (!res.ok) throw new Error('AI request failed.');
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('No response body');
 
-      if (!res.ok) throw new Error('AI request failed.')
-      const reader = res.body?.getReader()
-      if (!reader) throw new Error('No response body')
-
-      const decoder = new TextDecoder()
-      let full = ''
-      let done = false
+      const decoder = new TextDecoder();
+      let full = '';
+      let done = false;
 
       while (!done) {
-        const { value, done: rd } = await reader.read()
-        done = rd
-        if (!value) continue
-        const chunk = decoder.decode(value, { stream: true })
+        const { value, done: rd } = await reader.read();
+        done = rd;
+        if (!value) continue;
+        const chunk = decoder.decode(value, { stream: true });
         for (const line of chunk.split('\n')) {
-          const c = line.trim()
-          if (!c.startsWith('data:')) continue
-          const jsonStr = c.replace(/^data:\s*/, '')
-          if (jsonStr === '[DONE]') continue
+          const c = line.trim();
+          if (!c.startsWith('data:')) continue;
+          const jsonStr = c.replace(/^data:\s*/, '');
+          if (jsonStr === '[DONE]') continue;
           try {
-            const p = JSON.parse(jsonStr)
+            const p = JSON.parse(jsonStr);
             if (p.type === 'partial') {
-              full += p.content
+              full += p.content;
               setMessages((prev) =>
                 prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: full } : m))
-              )
+              );
             }
             if (p.type === 'complete') {
-              if (p.followUps) setFollowUps(p.followUps)
+              if (p.followUps) setFollowUps(p.followUps);
               if (p.responseId) {
-                setFeedbackResponseId(p.responseId)
+                setFeedbackResponseId(p.responseId);
                 setMessages((prev) =>
                   prev.map((m, i) => (i === prev.length - 1 ? { ...m, id: p.responseId } : m))
-                )
+                );
               }
             }
           } catch (e) {
-            console.error(e)
+            console.error(e);
           }
         }
       }
 
-      setXp(xp + 2.5)
-      setUser({ ...user, promptsUsed: user.promptsUsed + 1 })
+      setXp(xp + 2.5);
+      setUser({
+        ...user,
+        promptsUsed: user.promptsUsed + 1,
+      });
     } catch (err: any) {
       setMessages((prev) => [
         ...prev,
         { role: 'assistant', content: `❌ ${err.message}` },
-      ])
+      ]);
     } finally {
-      setLoading(false)
-      setInput('')
+      setLoading(false);
+      setInput('');
     }
-  }
+  };
 
-  const handleSave = () => setShowSaveModal(true)
+  const handleSave = () => setShowSaveModal(true);
 
   const confirmSave = async (title: string) => {
-    const token = localStorage.getItem('growfly_jwt')
+    const token = localStorage.getItem('growfly_jwt');
     await fetch(`${API_BASE_URL}/api/saved`, {
       method: 'POST',
       headers: {
@@ -187,12 +189,12 @@ export default function DashboardPage() {
         content: messages.slice(-1)[0]?.content || '',
         title,
       }),
-    })
-    setShowSaveModal(false)
-  }
+    });
+    setShowSaveModal(false);
+  };
 
   const handleShare = async () => {
-    const token = localStorage.getItem('growfly_jwt')
+    const token = localStorage.getItem('growfly_jwt');
     await fetch(`${API_BASE_URL}/api/collab`, {
       method: 'POST',
       headers: {
@@ -203,16 +205,16 @@ export default function DashboardPage() {
       body: JSON.stringify({
         content: messages.slice(-1)[0]?.content || '',
       }),
-    })
-    router.push('/collab-zone')
-  }
+    });
+    router.push('/collab-zone');
+  };
 
   const openFeedbackModalWith = (id: string) => {
-    setFeedbackResponseId(id)
-    setShowFeedback(true)
-  }
+    setFeedbackResponseId(id);
+    setShowFeedback(true);
+  };
 
-  const closeFeedbackModal = () => setShowFeedback(false)
+  const closeFeedbackModal = () => setShowFeedback(false);
 
   return (
     <div className="space-y-6 px-4 md:px-8 lg:px-12 pb-10 bg-[#0f0f0f] text-white min-h-screen">
@@ -230,7 +232,7 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      <div className="bg-[#1b1b1b] rounded-3xl p-6 space-y-4 shadow-md">
+      <div className="bg-[#151515] rounded-3xl p-6 space-y-4 shadow-md">
         <div className="flex flex-wrap gap-3">
           {[
             'How can growfly.io help me with my business?',
@@ -240,7 +242,7 @@ export default function DashboardPage() {
             <button
               key={i}
               onClick={() => handleSend(p)}
-              className="text-xs bg-[#2c2c2c] text-white px-4 py-2 rounded-full border border-[#444] hover:bg-[#333] transition"
+              className="text-xs bg-[#3a3a3a] text-white px-4 py-2 rounded-full border border-[#444] hover:bg-[#1992ff1a] hover:scale-105 transition"
             >
               {p}
             </button>
@@ -288,7 +290,7 @@ export default function DashboardPage() {
               <button
                 key={i}
                 onClick={() => handleSend(t)}
-                className="text-xs bg-[#2c2c2c] text-white px-3 py-2 rounded-full border border-[#444] hover:bg-[#333] transition"
+                className="text-xs bg-[#3a3a3a] text-white px-3 py-2 rounded-full border border-[#444] hover:bg-[#1992ff1a] hover:scale-105 transition"
               >
                 {t}
               </button>
@@ -304,8 +306,8 @@ export default function DashboardPage() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                handleSend(input)
+                e.preventDefault();
+                handleSend(input);
               }
             }}
           />
@@ -333,5 +335,5 @@ export default function DashboardPage() {
         responseId={feedbackResponseId}
       />
     </div>
-  )
+  );
 }
