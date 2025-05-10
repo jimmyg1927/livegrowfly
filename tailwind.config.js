@@ -1,40 +1,45 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: ['class'],
+  // Use the user’s OS theme setting rather than a forced “.dark” class
+  darkMode: 'media',
+
   content: [
     './app/**/*.{js,ts,jsx,tsx}',
     './src/**/*.{js,ts,jsx,tsx}',
   ],
+
   theme: {
     extend: {
       colors: {
-        background: 'hsl(var(--background))',
-        textPrimary: 'hsl(var(--textPrimary))',
+        background: 'var(--background)',
+        textPrimary: 'var(--textPrimary)',
         accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
+          DEFAULT: 'var(--accent)',
+          foreground: 'var(--accent-foreground)',
         },
         card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
+          DEFAULT: 'var(--card)',
+          foreground: 'var(--card-foreground)',
         },
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        'input-border': 'hsl(var(--input-border))',
-        'input-focus': 'hsl(var(--input-focus))',
-        highlight: 'hsl(var(--highlight))',
+        border: 'var(--border)',
+        input: 'var(--input)',
+        'input-border': 'var(--input-border)',
+        'input-focus': 'var(--input-focus)',
+        highlight: 'var(--highlight)',
       },
       boxShadow: {
-        focus: '0 0 0 3px rgba(25, 146, 255, 0.3)',
+        // keep a subtle default shadow
+        DEFAULT: '0 1px 2px rgba(0,0,0,0.05)',
       },
       borderRadius: {
-        DEFAULT: '0.5rem',
+        lg: 'var(--radius)',
         md: '0.375rem',
         sm: '0.25rem',
       },
     },
   },
+
   plugins: [
     require('tailwindcss-animate'),
   ],
-}
+};
