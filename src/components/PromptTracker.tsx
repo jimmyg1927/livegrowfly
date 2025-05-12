@@ -7,14 +7,14 @@ export default function PromptTracker({ used, limit }: { used: number; limit: nu
   const isFull = used >= limit
 
   return (
-    <div className="w-full max-w-xs bg-muted p-4 rounded-2xl shadow-sm flex flex-col gap-2 border border-border">
-      <div className="flex justify-between items-center text-xs font-medium text-foreground/80">
+    <div className="flex flex-col text-xs font-medium text-foreground/80">
+      <div className="flex items-center gap-2">
         <span>Prompts Used</span>
-        <span className="text-foreground">{used} / {limit}</span>
+        <span className="text-foreground font-semibold">{used} / {limit}</span>
       </div>
-      <div className="w-full h-2 rounded-full bg-border overflow-hidden">
+      <div className="w-40 h-2 rounded-full bg-border overflow-hidden mt-1">
         <div
-          className={`h-full ${isFull ? 'bg-red-500' : 'bg-primary'} transition-all duration-500 ease-in-out`}
+          className={`h-full ${isFull ? 'bg-red-500' : 'bg-blue-500'} transition-all duration-500 ease-in-out`}
           style={{ width: `${pct}%` }}
         />
       </div>

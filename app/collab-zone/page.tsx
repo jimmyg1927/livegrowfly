@@ -3,14 +3,8 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  FiPlus,
-  FiTrash2,
-  FiEdit3,
-  FiSave,
-  FiMail,
-  FiCheckCircle,
-  FiAlertCircle,
-  FiDownload,
+  FiPlus, FiTrash2, FiEdit3, FiSave, FiMail,
+  FiCheckCircle, FiAlertCircle, FiDownload,
 } from 'react-icons/fi'
 import Editor from '@/components/editor/Editor'
 
@@ -20,6 +14,7 @@ interface Doc {
   id: string
   title: string
   content: string
+  updatedAt: string
 }
 
 export default function CollabZonePage() {
@@ -28,9 +23,9 @@ export default function CollabZonePage() {
   const [sharedDocs, setSharedDocs] = useState<Doc[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
   const [content, setContent] = useState('')
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null)
   const [titleEditId, setTitleEditId] = useState<string | null>(null)
   const [newTitle, setNewTitle] = useState('')
-  const [sharing, setSharing] = useState(false)
   const [shareEmail, setShareEmail] = useState('')
   const [showComments, setShowComments] = useState(true)
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -46,6 +41,7 @@ export default function CollabZonePage() {
         if (all.length) {
           setActiveId(all[0].id)
           setContent(all[0].content)
+          setLastUpdated(all[0].updatedAt)
         }
       })
 
@@ -57,8 +53,32 @@ export default function CollabZonePage() {
   useEffect(() => {
     if (!activeId) return
     const doc = [...docs, ...sharedDocs].find(d => d.id === activeId)
-    if (doc) setContent(doc.content)
+    if (doc) {
+      setContent(doc.content)
+      setLastUpdated(doc.updatedAt)
+    }
   }, [activeId, docs, sharedDocs])
+
+  // 🔄 Poll every 5 seconds
+  useEffect(() => {
+    if (!activeId) return
+    const token = localStorage.getItem('growfly_jwt')
+
+    const interval = setInterval(async () => {
+      const res = await fetch(`${API_URL}/api/collab/${activeId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const latest = await res.json()
+
+      if (latest.updatedAt !== lastUpdated) {
+        setContent(latest.content)
+        setLastUpdated(latest.updatedAt)
+        console.log('[🔄] Synced from server.')
+      }
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [activeId, lastUpdated])
 
   const handleNew = async () => {
     const token = localStorage.getItem('growfly_jwt')!
@@ -74,6 +94,7 @@ export default function CollabZonePage() {
     setDocs(d => [created, ...d])
     setActiveId(created.id)
     setContent('')
+    setLastUpdated(created.updatedAt)
   }
 
   const handleSave = async () => {
@@ -83,12 +104,13 @@ export default function CollabZonePage() {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+        Authorization: `Bearer ${token}` },
       body: JSON.stringify({ content, title: docs.find(d => d.id === activeId)?.title }),
     })
     if (res.ok) {
-      setDocs(d => d.map(doc => doc.id === activeId ? { ...doc, content } : doc))
+      const updated = await res.json()
+      setDocs(d => d.map(doc => doc.id === activeId ? updated : doc))
+      setLastUpdated(updated.updatedAt)
       setStatusMsg({ type: 'success', text: 'Saved!' })
     } else {
       setStatusMsg({ type: 'error', text: 'Save failed.' })
@@ -105,7 +127,8 @@ export default function CollabZonePage() {
       body: JSON.stringify({ title: newTitle }),
     })
     if (res.ok) {
-      setDocs(d => d.map(doc => doc.id === id ? { ...doc, title: newTitle } : doc))
+      const updated = await res.json()
+      setDocs(d => d.map(doc => doc.id === id ? updated : doc))
       setTitleEditId(null)
       setStatusMsg({ type: 'success', text: 'Renamed!' })
     } else {
@@ -122,8 +145,7 @@ export default function CollabZonePage() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+        Authorization: `Bearer ${token}` },
       body: JSON.stringify({ email: shareEmail }),
     })
     if (res.ok) {
@@ -138,11 +160,12 @@ export default function CollabZonePage() {
 
   return (
     <div className="flex h-full bg-background text-textPrimary">
-      <aside className="w-64 border-r border-border bg-card p-4 space-y-3 overflow-auto">
-        <button onClick={handleNew} className="flex items-center gap-1 px-3 py-2 bg-accent text-white rounded hover:brightness-110 transition">
+      <aside className="w-52 border-r border-border bg-card p-3 space-y-3 overflow-auto text-sm">
+        <button onClick={handleNew} className="w-full flex items-center gap-1 px-2 py-2 bg-accent text-white rounded hover:brightness-110 transition text-xs">
           <FiPlus /> New Doc
         </button>
-        <div className="font-bold text-lg">Your Docs</div>
+
+        <div className="font-bold text-sm">Your Docs</div>
         {docs.map(doc => (
           <div
             key={doc.id}
@@ -154,7 +177,7 @@ export default function CollabZonePage() {
             {titleEditId === doc.id ? (
               <input
                 type="text"
-                className="flex-1 mr-2 px-1 py-1 text-sm rounded border border-muted bg-background text-textPrimary"
+                className="flex-1 mr-2 px-1 py-1 text-xs rounded border border-muted bg-background text-textPrimary"
                 value={newTitle}
                 onChange={e => setNewTitle(e.target.value)}
                 onBlur={() => handleRename(doc.id)}
@@ -162,17 +185,17 @@ export default function CollabZonePage() {
               />
             ) : (
               <>
-                <span className="flex-1">{doc.title}</span>
+                <span className="flex-1 truncate text-xs">{doc.title}</span>
                 <div className="flex gap-1">
-                  <FiEdit3 className="cursor-pointer" onClick={() => { setTitleEditId(doc.id); setNewTitle(doc.title) }} />
-                  <FiTrash2 className="cursor-pointer text-red-600" />
+                  <FiEdit3 className="cursor-pointer" onClick={() => { setTitleEditId(doc.id); setNewTitle(doc.title) }} size={12} />
+                  <FiTrash2 className="cursor-pointer text-red-600" size={12} />
                 </div>
               </>
             )}
           </div>
         ))}
 
-        <div className="font-bold text-lg pt-4">Shared with You</div>
+        <div className="font-bold text-sm pt-2">Shared with You</div>
         {sharedDocs.map(doc => (
           <div
             key={doc.id}
@@ -181,9 +204,9 @@ export default function CollabZonePage() {
             }`}
             onClick={() => setActiveId(doc.id)}
           >
-            <span>{doc.title}</span>
-            <button className="ml-2 text-accent hover:underline">
-              <FiDownload />
+            <span className="truncate text-xs">{doc.title}</span>
+            <button className="ml-1 text-accent hover:underline">
+              <FiDownload size={12} />
             </button>
           </div>
         ))}
@@ -191,15 +214,15 @@ export default function CollabZonePage() {
 
       <main className="flex-1 p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Collab Zone</h1>
+          <h1 className="text-xl font-semibold">Collab Zone</h1>
           <div className="flex gap-2">
-            <button onClick={() => setShowComments(!showComments)} className="px-3 py-2 rounded bg-muted hover:bg-muted/70">
+            <button onClick={() => setShowComments(!showComments)} className="px-3 py-2 rounded bg-muted hover:bg-muted/70 text-sm">
               {showComments ? 'Hide Comments' : 'Show Comments'}
             </button>
-            <button onClick={confirmShare} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110 transition">
+            <button onClick={confirmShare} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110 transition text-sm">
               <FiMail /> Share
             </button>
-            <button onClick={handleSave} className="flex items-center gap-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">
+            <button onClick={handleSave} className="flex items-center gap-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm">
               <FiSave /> Save
             </button>
           </div>

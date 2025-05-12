@@ -19,7 +19,7 @@ export default function BrandSettingsPage() {
     platformFocus: '',
     primaryProducts: '',
     USP: '',
-    inspiredBy: '', // New field
+    inspiredBy: '', // ✅ New field
   })
 
   const [loading, setLoading] = useState(true)
@@ -28,7 +28,11 @@ export default function BrandSettingsPage() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await axios.get('/api/user/settings')
+        const res = await axios.get('/api/user/settings', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('growfly_jwt')}`,
+          },
+        })
         if (res.data) {
           setFormData(prev => ({
             ...prev,
@@ -51,7 +55,11 @@ export default function BrandSettingsPage() {
   const handleSave = async () => {
     try {
       setSaving(true)
-      await axios.put('/api/user/settings', formData)
+      await axios.put('/api/user/settings', formData, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('growfly_jwt')}`,
+        },
+      })
       toast.success('Brand settings saved!')
     } catch {
       toast.error('Something went wrong saving your settings.')

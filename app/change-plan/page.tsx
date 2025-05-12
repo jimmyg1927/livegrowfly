@@ -56,7 +56,6 @@ export default function ChangePlanPage() {
         throw new Error(data.error || 'Checkout session failed.')
       }
 
-      // Redirect user
       window.location.href = data.url
     } catch (err: any) {
       console.error(err)
@@ -65,7 +64,7 @@ export default function ChangePlanPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground px-4 py-10 flex flex-col items-center">
+    <div className="min-h-screen bg-background text-textPrimary px-4 py-10 flex flex-col items-center">
       <h1 className="text-3xl font-bold mb-2">Upgrade Your Growfly Plan</h1>
       <p className="text-sm text-muted-foreground mb-8">Compare plans & unlock more power.</p>
 
@@ -75,8 +74,8 @@ export default function ChangePlanPage() {
             key={plan.id}
             onClick={() => setSelectedPlan(plan.id)}
             className={`rounded-xl p-6 border shadow transition cursor-pointer whitespace-pre-line
-              ${selectedPlan === plan.id ? 'border-blue-600 ring-2 ring-blue-300 scale-105' : 'border-border'}
-              ${plan.popular ? 'bg-blue-600 text-white' : 'bg-card text-card-foreground'}
+              ${selectedPlan === plan.id ? 'border-accent ring-2 ring-accent/30 scale-105' : 'border-border'}
+              ${plan.popular ? 'bg-accent text-accent-foreground' : 'bg-card text-card-foreground'}
             `}
           >
             <div className="flex justify-between items-center mb-2">
@@ -89,7 +88,7 @@ export default function ChangePlanPage() {
             {plan.custom && (
               <button
                 onClick={() => router.push('/contact')}
-                className="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded text-sm font-medium"
+                className="mt-4 w-full bg-accent hover:bg-accent/90 text-accent-foreground py-2 px-4 rounded text-sm font-medium"
               >
                 Contact Us
               </button>
@@ -101,7 +100,7 @@ export default function ChangePlanPage() {
       {!plans.find(p => p.id === selectedPlan)?.custom && (
         <button
           onClick={handlePlanChange}
-          className="mt-8 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded text-sm font-medium transition"
+          className="mt-8 bg-accent hover:bg-accent/90 text-accent-foreground px-6 py-2 rounded text-sm font-medium transition"
         >
           Update Plan
         </button>

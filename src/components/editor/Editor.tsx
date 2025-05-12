@@ -13,8 +13,12 @@ import OrderedList from '@tiptap/extension-ordered-list'
 import Blockquote from '@tiptap/extension-blockquote'
 import CodeBlock from '@tiptap/extension-code-block'
 
-import EditorBubbleMenu from './EditorBubbleMenu'
-import { Download, MessageCircleMore, Trash } from 'lucide-react'
+import {
+  Bold, Italic, Underline as Under, Strikethrough, List, ListOrdered, Quote, Code,
+  Link as LinkIcon, AlignLeft, AlignCenter, AlignRight, AlignJustify,
+  Download, MessageCircleMore, Trash
+} from 'lucide-react'
+
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { saveAs } from 'file-saver'
@@ -87,8 +91,7 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+        Authorization: `Bearer ${token}` },
       body: JSON.stringify({
         docId,
         text: newComment,
@@ -119,71 +122,92 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
     setComments(prev => prev.filter(c => c.id !== id))
   }
 
-  const handleExportPDF = async () => {
-    const editorElement = document.querySelector('.editor-output')
-    if (!editorElement) return
-
-    const canvas = await html2canvas(editorElement as HTMLElement)
-    const imgData = canvas.toDataURL('image/png')
-    const pdf = new jsPDF('p', 'mm', 'a4')
-    const imgProps = pdf.getImageProperties(imgData)
+  const exportPDF = async () => {
+    const editorEl = document.querySelector('.editor-output')
+    if (!editorEl) return
+    const canvas = await html2canvas(editorEl as HTMLElement)
+    const img = canvas.toDataURL('image/png')
+    const pdf = new jsPDF()
     const pdfWidth = pdf.internal.pageSize.getWidth()
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width
+    pdf.addImage(img, 'PNG', 0, 0, pdfWidth, pdfHeight)
     pdf.save('growfly-doc.pdf')
   }
 
-  const handleExportDocx = () => {
-    const content = document.querySelector('.editor-output')?.innerHTML
-    if (!content) return
-    const blob = new Blob(
-      [
-        `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>${content}</body></html>`,
-      ],
-      { type: 'application/msword' }
-    )
+  const exportDocx = () => {
+    const html = document.querySelector('.editor-output')?.innerHTML || ''
+    const blob = new Blob([html], { type: 'application/msword' })
     saveAs(blob, 'growfly-doc.doc')
   }
 
+  const toolbarBtn = (action: () => void, active: boolean, icon: React.ReactNode) => (
+    <button onClick={action} className={`p-1 rounded ${active ? 'bg-accent/40' : ''}`}>
+      {icon}
+    </button>
+  )
+
   return (
     <div className="flex gap-6">
-      <div className="flex-1 relative">
-        {editor && <EditorBubbleMenu editor={editor} />}
+      <div className="flex-1">
+        {editor && (
+          <div className="flex flex-wrap gap-1 p-2 border-b bg-card mb-2 rounded">
+            {toolbarBtn(() => editor.chain().focus().toggleBold().run(), editor.isActive('bold'), <Bold size={16} />)}
+            {toolbarBtn(() => editor.chain().focus().toggleItalic().run(), editor.isActive('italic'), <Italic size={16} />)}
+            {toolbarBtn(() => editor.chain().focus().toggleUnderline().run(), editor.isActive('underline'), <Under size={16} />)}
+            {toolbarBtn(() => editor.chain().focus().toggleStrike().run(), editor.isActive('strike'), <Strikethrough size={16} />)}
+            {toolbarBtn(() => editor.chain().focus().toggleHeading({ level: 1 }).run(), editor.isActive('heading', { level: 1 }), <span className="font-semibold">H1</span>)}
+            {toolbarBtn(() => editor.chain().focus().toggleHeading({ level: 2 }).run(), editor.isActive('heading', { level: 2 }), <span className="font-semibold">H2</span>)}
+            {toolbarBtn(() => editor.chain().focus().toggleBulletList().run(), editor.isActive('bulletList'), <List size={16} />)}
+            {toolbarBtn(() => editor.chain().focus().toggleOrderedList().run(), editor.isActive('orderedList'), <ListOrdered size={16} />)}
+            {toolbarBtn(() => editor.chain().focus().toggleBlockquote().run(), editor.isActive('blockquote'), <Quote size={16} />)}
+            {toolbarBtn(() => editor.chain().focus().toggleCodeBlock().run(), editor.isActive('codeBlock'), <Code size={16} />)}
+            {toolbarBtn(() => {
+              const url = prompt('Enter URL')
+              if (url) editor.chain().focus().setLink({ href: url }).run()
+            }, editor.isActive('link'), <LinkIcon size={16} />)}
+            {toolbarBtn(() => editor.chain().focus().setTextAlign('left').run(), editor.isActive({ textAlign: 'left' }), <AlignLeft size={16} />)}
+            {toolbarBtn(() => editor.chain().focus().setTextAlign('center').run(), editor.isActive({ textAlign: 'center' }), <AlignCenter size={16} />)}
+            {toolbarBtn(() => editor.chain().focus().setTextAlign('right').run(), editor.isActive({ textAlign: 'right' }), <AlignRight size={16} />)}
+            {toolbarBtn(() => editor.chain().focus().setTextAlign('justify').run(), editor.isActive({ textAlign: 'justify' }), <AlignJustify size={16} />)}
+          </div>
+        )}
 
-        <EditorContent
-          editor={editor}
-          className="editor-output min-h-[50vh] p-4 overflow-auto bg-background text-textPrimary border rounded"
-        />
+        {editor && (
+          <EditorContent
+            editor={editor}
+            className="editor-output min-h-[55vh] p-4 overflow-auto border rounded bg-background text-textPrimary"
+          />
+        )}
 
         {activeRange && (
-          <div className="absolute top-2 right-2 z-10 bg-white dark:bg-card shadow p-3 rounded w-72 border space-y-2">
+          <div className="mt-3 bg-muted border rounded p-3">
             <textarea
-              className="w-full border rounded p-2 text-sm bg-background text-textPrimary"
-              placeholder="Add comment on selection"
               value={newComment}
               onChange={e => setNewComment(e.target.value)}
+              className="w-full p-2 rounded border text-sm mb-2"
+              placeholder="Add comment on selection..."
             />
             <button
               onClick={addComment}
               className="px-3 py-1 text-sm bg-accent text-white rounded hover:brightness-110"
             >
-              Add Comment
+              Comment
             </button>
           </div>
         )}
 
         <div className="mt-4 flex gap-4">
-          <button onClick={handleExportPDF} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110 transition">
+          <button onClick={exportPDF} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110">
             <Download size={16} /> Export PDF
           </button>
-          <button onClick={handleExportDocx} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110 transition">
+          <button onClick={exportDocx} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110">
             <Download size={16} /> Export Word
           </button>
         </div>
       </div>
 
       {showComments && (
-        <aside className="w-80 border-l pl-4 space-y-3">
+        <aside className="w-80 pl-4 border-l space-y-3">
           <h2 className="text-lg font-semibold flex items-center gap-1">
             <MessageCircleMore size={18} /> Comments
           </h2>
