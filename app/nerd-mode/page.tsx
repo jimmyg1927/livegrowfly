@@ -5,13 +5,6 @@ import { HiClipboard, HiCheckCircle } from 'react-icons/hi';
 import { motion } from 'framer-motion';
 
 const prompts = {
-  'Growfly Feature Demos': [
-    'How do I use the Collab Zone to brainstorm with a teammate?',
-    'Remind me what I saved in Saved Mode this week.',
-    'Submit a new feature idea for Growfly’s Request Zone.',
-    'How do I rename a saved response?',
-    'How can I share a document from Collab Zone?',
-  ],
   'Marketing & Branding': [
     'Write 3 Instagram captions for a vegan skincare brand.',
     'Give me a killer headline for a spring sale email campaign.',
@@ -82,6 +75,29 @@ const prompts = {
   ],
 };
 
+const growflyFaqs = [
+  {
+    question: 'How do I use the Collab Zone to brainstorm with a teammate?',
+    answer: 'Open the Collab Zone tab, create a shared document, and invite a teammate by email. You’ll both see real-time edits and can collaborate live.',
+  },
+  {
+    question: 'Remind me what I saved in Saved Mode this week.',
+    answer: 'Go to the Saved tab in your sidebar. All AI responses you’ve bookmarked are stored there. You can rename or delete them any time.',
+  },
+  {
+    question: 'Submit a new feature idea for Growfly’s Request Zone.',
+    answer: 'Head to the Wishlist page and type in your idea. You can also vote up existing ideas — we use this to guide the roadmap.',
+  },
+  {
+    question: 'How do I rename a saved response?',
+    answer: 'In the Saved tab, click the pencil/edit icon next to any saved title to rename it.',
+  },
+  {
+    question: 'How can I share a document from Collab Zone?',
+    answer: 'Click the “Share” button on any Collab Zone doc. You can invite people by email or generate a shareable link.',
+  },
+];
+
 const nerdLevels = [
   { level: 1, title: 'Curious Cat', emoji: '🐱' },
   { level: 2, title: 'Nerdlet', emoji: '🧠' },
@@ -143,12 +159,14 @@ export default function NerdModePage() {
       </section>
 
       <section className="bg-card p-6 rounded-xl border border-border">
-        <h2 className="text-xl font-semibold text-accent mb-3">🚀 Growfly Feature Demos</h2>
-        <ul className="space-y-4 text-sm">
-          <li><strong>Collab Zone:</strong> Open the Collab Zone tab, create a new shared doc, and invite a teammate by email. You’ll both see live edits for real-time collaboration.</li>
-          <li><strong>Saved Mode:</strong> Every AI reply has a save icon. Click it to store a response under the &quot;Saved&quot; tab. You can rename, edit, or delete later.</li>
-          <li><strong>Request Zone:</strong> Go to &quot;Wishlist&quot; and suggest new ideas. Vote up others too—our devs watch this closely for roadmap planning.</li>
-          <li><strong>Prompt XP:</strong> Each prompt you send adds XP to your profile. The more you use Growfly, the more you unlock. Check your XP in the top bar.</li>
+        <h2 className="text-xl font-semibold text-accent mb-3">💡 Growfly Feature FAQs</h2>
+        <ul className="space-y-6 text-sm">
+          {growflyFaqs.map(({ question, answer }, i) => (
+            <li key={i}>
+              <p className="font-semibold">{question}</p>
+              <p className="text-muted mt-1">{answer}</p>
+            </li>
+          ))}
         </ul>
       </section>
 
@@ -167,7 +185,7 @@ export default function NerdModePage() {
         {Object.entries(filteredPrompts).map(([category, list]) => (
           <div key={category} className="mb-6">
             <button
-              className="w-full text-left font-medium bg-input px-4 py-2 rounded-md flex justify-between items-center hover:bg-highlight transition"
+              className="w-full text-left font-medium bg-input px-4 py-2 rounded-md flex justify-between items-center hover:bg-highlight transition text-foreground"
               onClick={() => toggleSection(category)}
             >
               <span>{category}</span>
