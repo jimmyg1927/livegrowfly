@@ -205,7 +205,7 @@ export default function NerdModePage() {
       <section className="bg-card p-6 rounded-xl border border-border">
         <h2 className="text-xl font-semibold text-accent mb-3">💡 Pro Tip</h2>
         <p className="text-sm text-muted leading-relaxed">
-          Not sure where to start? Just type: <strong>“How can you help me today?”</strong> and let Growfly guide your journey.
+          Not sure where to start? Just type: <strong>"How can you help me today?"</strong> and let Growfly guide your journey.
         </p>
       </section>
     </div>
