@@ -1,83 +1,90 @@
-/* === globals.css === */
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Light Theme */
-:root {
-  --background: #F5F7FA;
-  --textPrimary: #111111;
-  --accent: #1992FF;
-  --accent-foreground: #ffffff;
-  --card: #ffffff;
-  --card-foreground: #111111;
-  --border: #D1D5DB;
-  --input: #ffffff;
-  --input-border: #CBD5E0;
-  --input-focus: #1992FF;
-  --highlight: #E0F2FF;
-}
+@layer base {
+  /* Light Theme */
+  :root {
+    --background: #F5F7FA;
+    --textPrimary: #111111;
+    --accent: #1992FF;
+    --accent-foreground: #ffffff;
+    --card: #ffffff;
+    --card-foreground: #111111;
+    --border: #D1D5DB;
+    --input: #ffffff;
+    --input-border: #CBD5E0;
+    --input-focus: #1992FF;
+    --highlight: #E0F2FF;
+  }
 
-/* Dark Theme */
-.dark {
-  --background: #0D1117;
-  --textPrimary: #E6EDF3;
-  --accent: #1992FF;
-  --accent-foreground: #0D1117;
-  --card: #161B22;
-  --card-foreground: #ffffff;
-  --border: #30363D;
-  --input: #2D333B;
-  --input-border: #484F58;
-  --input-focus: #58A6FF;
-  --highlight: #003566;
-}
+  /* Dark Theme */
+  .dark {
+    --background: #0D1117;
+    --textPrimary: #E6EDF3;
+    --accent: #1992FF;
+    --accent-foreground: #0D1117;
+    --card: #161B22;
+    --card-foreground: #ffffff;
+    --border: #30363D;
+    --input: #2D333B;
+    --input-border: #484F58;
+    --input-focus: #58A6FF;
+    --highlight: #003566;
+  }
 
-html {
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-}
+  html {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+      "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  }
 
-body {
-  @apply bg-[var(--background)] text-[var(--textPrimary)];
-}
+  body {
+    @apply bg-[var(--background)] text-[var(--textPrimary)];
+  }
 
-.card {
-  background-color: var(--card);
-  color: var(--card-foreground);
-  border: 1px solid var(--border);
-}
+  .card {
+    background-color: var(--card);
+    color: var(--card-foreground);
+    border: 1px solid var(--border);
+  }
 
-input,
-textarea,
-.input {
-  background-color: var(--input);
-  border: 1px solid var(--input-border);
-  color: var(--textPrimary);
-}
+  input,
+  textarea,
+  .input {
+    background-color: var(--input);
+    border: 1px solid var(--input-border);
+    color: var(--textPrimary);
+  }
 
-input:focus,
-textarea:focus,
-.input:focus {
-  border-color: var(--input-focus);
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(25, 146, 255, 0.3);
-}
+  input::placeholder,
+  textarea::placeholder {
+    color: #888;
+    opacity: 1;
+  }
 
-.btn,
-button {
-  background-color: var(--accent);
-  color: var(--accent-foreground);
-}
+  input:focus,
+  textarea:focus,
+  .input:focus {
+    border-color: var(--input-focus);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(25, 146, 255, 0.3);
+  }
 
-.btn:hover,
-button:hover {
-  background-color: #147ACC;
-}
+  .btn,
+  button {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+  }
 
-.ai-reply {
-  background-color: var(--highlight);
-  color: var(--textPrimary);
+  .btn:hover,
+  button:hover {
+    background-color: #147ACC;
+  }
+
+  .ai-reply {
+    background-color: var(--highlight);
+    color: var(--textPrimary);
+  }
 }
 
 .spinner {
