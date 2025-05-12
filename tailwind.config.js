@@ -1,13 +1,13 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  // Use the user’s OS theme setting rather than a forced “.dark” class
-  darkMode: 'media',
+  // switch from media-based dark mode…
+- darkMode: 'media',
++ darkMode: ['class'],
 
   content: [
     './app/**/*.{js,ts,jsx,tsx}',
     './src/**/*.{js,ts,jsx,tsx}',
   ],
-
   theme: {
     extend: {
       colors: {
@@ -28,7 +28,6 @@ module.exports = {
         highlight: 'var(--highlight)',
       },
       boxShadow: {
-        // keep a subtle default shadow
         DEFAULT: '0 1px 2px rgba(0,0,0,0.05)',
       },
       borderRadius: {
@@ -38,7 +37,6 @@ module.exports = {
       },
     },
   },
-
   plugins: [
     require('tailwindcss-animate'),
   ],
