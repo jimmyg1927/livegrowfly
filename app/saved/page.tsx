@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -157,7 +157,7 @@ export default function SavedPage() {
                       <DialogTrigger asChild>
                         <button
                           onClick={() => setSelected(item)}
-                          className="flex items-center gap-1 text-xs px-3 py-1 rounded border border-accent text-accent hover:bg-accent hover:text-white transition"
+                          className="flex items-center gap-1 text-xs px-3 py-1 rounded bg-accent text-white hover:bg-accent/90 transition"
                         >
                           <FiMaximize2 className="w-4 h-4" /> View Full
                         </button>
