@@ -1,89 +1,85 @@
+/* === globals.css === */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  /* Light Theme */
-  :root {
-    --background: #F5F7FA;          /* off-white page */
-    --textPrimary: #111111;         /* pure black text */
-    --accent: #1992FF;              /* Growfly blue */
-    --accent-foreground: #ffffff;   /* white text on blue buttons */
-    --card: #ffffff;                /* white cards */
-    --card-foreground: #111111;     /* black text in cards */
-    --border: #D1D5DB;              /* soft gray border */
-    --input: #FFFFFF;               /* **white inputs** */
-    --input-border: #CBD5E0;        /* light gray input borders */
-    --input-focus: #1992FF;         /* blue on focus */
-    --highlight: #E0F2FF;           /* pale blue AI reply bg */
-  }
-
-  /* Dark Theme (class-based) */
-  .dark {
-    --background: #0D1117;
-    --textPrimary: #E6EDF3;
-    --accent: #1992FF;
-    --accent-foreground: #0D1117;
-    --card: #161B22;
-    --card-foreground: #ffffff;
-    --border: #30363D;
-    --input: #2D333B;               /* **dark inputs** */
-    --input-border: #484F58;
-    --input-focus: #58A6FF;
-    --highlight: #003566;
-  }
-
-  html {
-    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-      "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-  }
-
-  body {
-    @apply bg-[var(--background)] text-[var(--textPrimary)];
-  }
-
-  /* Card wrapper */
-  .card {
-    background-color: var(--card);
-    color: var(--card-foreground);
-    border: 1px solid var(--border);
-  }
-
-  /* Inputs & textareas */
-  input,
-  textarea,
-  .input {
-    background-color: var(--input);
-    border: 1px solid var(--input-border);
-    color: var(--textPrimary);
-  }
-  input:focus,
-  textarea:focus,
-  .input:focus {
-    border-color: var(--input-focus);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(25, 146, 255, 0.3);
-  }
-
-  /* Primary buttons */
-  .btn,
-  button {
-    background-color: var(--accent);
-    color: var(--accent-foreground);
-  }
-  .btn:hover,
-  button:hover {
-    background-color: #147ACC;
-  }
-
-  /* AI reply highlight */
-  .ai-reply {
-    background-color: var(--highlight);
-    color: var(--textPrimary);
-  }
+/* Light Theme */
+:root {
+  --background: #F5F7FA;
+  --textPrimary: #111111;
+  --accent: #1992FF;
+  --accent-foreground: #ffffff;
+  --card: #ffffff;
+  --card-foreground: #111111;
+  --border: #D1D5DB;
+  --input: #ffffff;
+  --input-border: #CBD5E0;
+  --input-focus: #1992FF;
+  --highlight: #E0F2FF;
 }
 
-/* Spinner (if still used) */
+/* Dark Theme */
+.dark {
+  --background: #0D1117;
+  --textPrimary: #E6EDF3;
+  --accent: #1992FF;
+  --accent-foreground: #0D1117;
+  --card: #161B22;
+  --card-foreground: #ffffff;
+  --border: #30363D;
+  --input: #2D333B;
+  --input-border: #484F58;
+  --input-focus: #58A6FF;
+  --highlight: #003566;
+}
+
+html {
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+}
+
+body {
+  @apply bg-[var(--background)] text-[var(--textPrimary)];
+}
+
+.card {
+  background-color: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+}
+
+input,
+textarea,
+.input {
+  background-color: var(--input);
+  border: 1px solid var(--input-border);
+  color: var(--textPrimary);
+}
+
+input:focus,
+textarea:focus,
+.input:focus {
+  border-color: var(--input-focus);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(25, 146, 255, 0.3);
+}
+
+.btn,
+button {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.btn:hover,
+button:hover {
+  background-color: #147ACC;
+}
+
+.ai-reply {
+  background-color: var(--highlight);
+  color: var(--textPrimary);
+}
+
 .spinner {
   border: 4px solid rgba(255, 255, 255, 0.1);
   border-left-color: var(--accent);
@@ -92,6 +88,7 @@
   height: 40px;
   animation: spin 1s linear infinite;
 }
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
