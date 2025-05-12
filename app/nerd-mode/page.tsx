@@ -146,8 +146,8 @@ export default function NerdModePage() {
         <h2 className="text-xl font-semibold text-accent mb-3">🚀 Growfly Feature Demos</h2>
         <ul className="space-y-4 text-sm">
           <li><strong>Collab Zone:</strong> Open the Collab Zone tab, create a new shared doc, and invite a teammate by email. You’ll both see live edits for real-time collaboration.</li>
-          <li><strong>Saved Mode:</strong> Every AI reply has a save icon. Click it to store a response under the "Saved" tab. You can rename, edit, or delete later.</li>
-          <li><strong>Request Zone:</strong> Go to "Wishlist" and suggest new ideas. Vote up others too—our devs watch this closely for roadmap planning.</li>
+          <li><strong>Saved Mode:</strong> Every AI reply has a save icon. Click it to store a response under the &quot;Saved&quot; tab. You can rename, edit, or delete later.</li>
+          <li><strong>Request Zone:</strong> Go to &quot;Wishlist&quot; and suggest new ideas. Vote up others too—our devs watch this closely for roadmap planning.</li>
           <li><strong>Prompt XP:</strong> Each prompt you send adds XP to your profile. The more you use Growfly, the more you unlock. Check your XP in the top bar.</li>
         </ul>
       </section>
@@ -205,7 +205,7 @@ export default function NerdModePage() {
       <section className="bg-card p-6 rounded-xl border border-border">
         <h2 className="text-xl font-semibold text-accent mb-3">💡 Pro Tip</h2>
         <p className="text-sm text-muted leading-relaxed">
-          Not sure where to start? Just type: <strong>"How can you help me today?"</strong> and let Growfly guide your journey.
+          Not sure where to start? Just type: <strong>&quot;How can you help me today?&quot;</strong> and let Growfly guide your journey.
         </p>
       </section>
     </div>
