@@ -185,7 +185,7 @@ export default function NerdModePage() {
         {Object.entries(filteredPrompts).map(([category, list]) => (
           <div key={category} className="mb-6">
             <button
-              className="w-full text-left font-medium bg-input px-4 py-2 rounded-md flex justify-between items-center hover:bg-highlight transition text-foreground"
+              className="w-full text-left font-medium bg-input px-4 py-2 rounded-md flex justify-between items-center hover:bg-highlight transition text-textPrimary"
               onClick={() => toggleSection(category)}
             >
               <span>{category}</span>
