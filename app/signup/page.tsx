@@ -40,7 +40,7 @@ export default function SignupPage() {
       <div className="w-full max-w-xl bg-card rounded-2xl shadow-xl p-8">
         <h1 className="text-2xl font-bold text-center mb-6">Create your Growfly account</h1>
         <p className="text-center text-sm text-muted-foreground mb-6">
-          You're signing up for the <span className="font-semibold">{selectedPlan}</span> plan.
+          You&apos;re signing up for the <span className="font-semibold">{selectedPlan}</span> plan.
         </p>
 
         {message && <p className="text-red-400 text-center text-sm mb-4">{message}</p>}
