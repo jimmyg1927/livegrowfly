@@ -1,10 +1,10 @@
-'use client';
+'use client'
 
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 export default function RegisterPage() {
-  const router = useRouter();
+  const router = useRouter()
 
   const plans = [
     {
@@ -17,22 +17,27 @@ export default function RegisterPage() {
     {
       name: 'Personal',
       price: '£8.99/month',
-      features: ['150 prompts/month', 'Priority AI speed', 'Prompt history'],
+      features: ['400 prompts/month', 'Priority AI speed', 'Prompt history'],
       button: 'Choose Personal',
       onClick: async () => {
         const res = await fetch('/api/checkout/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ planId: 'personal' }),
-        });
-        const { url } = await res.json();
-        window.location.href = url;
+        })
+        const { url } = await res.json()
+        if (url) window.location.href = url
       },
     },
     {
       name: 'Business',
       price: '£38.99/month',
-      features: ['500 prompts/month', '3 users', 'Team workspace', 'Priority support'],
+      features: [
+        '2000 prompts/month',
+        '3 users',
+        'Team workspace',
+        'Priority support',
+      ],
       button: 'Choose Business',
       highlight: true,
       onClick: async () => {
@@ -40,9 +45,9 @@ export default function RegisterPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ planId: 'business' }),
-        });
-        const { url } = await res.json();
-        window.location.href = url;
+        })
+        const { url } = await res.json()
+        if (url) window.location.href = url
       },
     },
     {
@@ -52,46 +57,56 @@ export default function RegisterPage() {
       button: 'Contact Us',
       onClick: () => router.push('/contact'),
     },
-  ];
+  ]
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-start py-10 px-4">
-      <Image src="/growfly-logo.png" alt="Growfly" width={140} height={40} className="mb-4" />
-      <h1 className="text-3xl md:text-4xl font-bold mb-2 text-center">
-        Supercharge Your Output with Growfly
-      </h1>
-      <p className="text-md md:text-lg text-gray-200 mb-10 max-w-2xl text-center">
-        Growfly uses cutting-edge AI to help professionals draft emails, reports, and presentations faster than ever. Pick a plan that fits your needs—and get started in seconds.
-      </p>
+    <main className="min-h-screen px-4 py-10 bg-background text-textPrimary">
+      <div className="flex flex-col items-center text-center mb-10">
+        <Image
+          src="/growfly-logo.png"
+          alt="Growfly"
+          width={140}
+          height={40}
+          className="mb-4"
+        />
+        <h1 className="text-3xl md:text-4xl font-bold mb-2">
+          Supercharge Your Output with Growfly
+        </h1>
+        <p className="text-md md:text-lg text-muted-foreground max-w-2xl">
+          Growfly uses cutting-edge AI to help professionals draft emails,
+          reports, and presentations faster than ever. Pick a plan that fits
+          your needs—and get started in seconds.
+        </p>
+      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-6xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto w-full">
         {plans.map((plan) => (
           <div
             key={plan.name}
-            className={`relative bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 flex flex-col justify-between hover:scale-105 transition-transform duration-300 ${
-              plan.highlight ? 'border-2 border-blue-500 shadow-lg' : ''
+            className={`relative rounded-xl p-6 transition shadow border text-card-foreground ${
+              plan.highlight
+                ? 'border-accent ring-2 ring-accent/30 bg-accent text-accent-foreground'
+                : 'bg-card border-border'
             }`}
           >
             {plan.highlight && (
-              <div className="absolute -top-3 right-3 bg-blue-500 text-white text-xs px-2 py-1 rounded-md font-semibold">
+              <div className="absolute -top-3 right-3 bg-yellow-300 text-black text-xs px-2 py-1 rounded font-semibold">
                 Most Popular
               </div>
             )}
-            <div>
-              <h2 className="text-xl font-semibold mb-1">{plan.name}</h2>
-              <p className="text-lg font-bold text-blue-300 mb-4">{plan.price}</p>
-              <ul className="text-sm text-gray-200 space-y-2 mb-6">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-center">
-                    <span className="mr-2 text-blue-400">✓</span>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <h2 className="text-xl font-semibold mb-1">{plan.name}</h2>
+            <p className="text-lg font-bold mb-4">{plan.price}</p>
+            <ul className="text-sm space-y-2 mb-6 whitespace-pre-line">
+              {plan.features.map((f) => (
+                <li key={f} className="flex items-start">
+                  <span className="mr-2 text-accent">✓</span>
+                  {f}
+                </li>
+              ))}
+            </ul>
             <button
               onClick={plan.onClick}
-              className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors"
+              className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-2 px-4 rounded text-sm font-medium transition"
             >
               {plan.button}
             </button>
@@ -99,5 +114,5 @@ export default function RegisterPage() {
         ))}
       </div>
     </main>
-  );
+  )
 }

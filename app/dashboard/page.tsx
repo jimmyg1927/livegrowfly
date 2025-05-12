@@ -53,10 +53,7 @@ export default function DashboardPage() {
       headers: { Authorization: `Bearer ${token}` },
       credentials: 'include',
     })
-      .then((r) => {
-        if (!r.ok) throw new Error()
-        return r.json()
-      })
+      .then((r) => r.ok ? r.json() : Promise.reject())
       .then((data) => {
         setUser({
           email: data.email,
@@ -159,15 +156,9 @@ export default function DashboardPage() {
       }
 
       setXp(xp + 2.5)
-      setUser({
-        ...user,
-        promptsUsed: user.promptsUsed + 1,
-      })
+      setUser({ ...user, promptsUsed: user.promptsUsed + 1 })
     } catch (err: any) {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: `❌ ${err.message}` },
-      ])
+      setMessages((prev) => [...prev, { role: 'assistant', content: `❌ ${err.message}` }])
     } finally {
       setLoading(false)
       setInput('')
@@ -175,7 +166,6 @@ export default function DashboardPage() {
   }
 
   const handleSave = () => setShowSaveModal(true)
-
   const confirmSave = async (title: string) => {
     const token = localStorage.getItem('growfly_jwt')
     await fetch(`${API_BASE_URL}/api/saved`, {
@@ -220,7 +210,7 @@ export default function DashboardPage() {
     <div className="space-y-6 px-4 md:px-8 lg:px-12 pb-10 bg-background text-textPrimary min-h-screen">
       <div className="flex items-center gap-6">
         <PromptTracker used={user.promptsUsed} limit={user.promptLimit} />
-        <Link href="/refer" className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow text-sm font-semibold">
+        <Link href="/refer" className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow text-sm font-semibold">
           <Gift size={18} />
           Refer a Friend
         </Link>
@@ -229,8 +219,8 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      <div className="card rounded-2xl p-6 space-y-4">
-        <div className="flex flex-wrap gap-2">
+      <div className="card rounded-3xl p-6 space-y-5">
+        <div className="flex flex-wrap gap-3">
           {[
             'How can Growfly help me?',
             'How can you help me with my finances?',
@@ -248,10 +238,10 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        <div ref={chatRef} className="max-h-[60vh] overflow-y-auto space-y-4 bg-input p-4 rounded-xl text-sm leading-relaxed whitespace-pre-wrap">
+        <div ref={chatRef} className="max-h-[60vh] overflow-y-auto space-y-4 bg-input p-4 rounded-3xl text-sm leading-relaxed whitespace-pre-wrap">
           {messages.slice(-10).map((m, i) => (
             <div key={i} className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
-              <div className={`p-3 rounded-xl shadow max-w-[80%] break-words ${m.role === 'assistant' ? 'ai-reply text-textPrimary' : 'bg-accent text-white'}`}>
+              <div className={`p-3 rounded-2xl shadow max-w-[80%] break-words ${m.role === 'assistant' ? 'ai-reply text-textPrimary' : 'bg-accent text-white'}`}>
                 {m.content}
               </div>
               {m.role === 'assistant' && m.id && (
@@ -284,7 +274,7 @@ export default function DashboardPage() {
 
         <div className="flex items-center gap-2 pt-4">
           <input
-            className="flex-1 input p-2 text-sm rounded-lg"
+            className="flex-1 input p-2 text-sm rounded-full"
             placeholder="Type your message…"
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -298,14 +288,14 @@ export default function DashboardPage() {
           <button
             onClick={() => handleSend(input)}
             disabled={loading}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition disabled:opacity-50"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-sm font-medium transition disabled:opacity-50"
           >
             {loading ? 'Thinking…' : 'Send'}
           </button>
-          <button onClick={handleSave} title="Save" className="p-2 rounded-lg bg-border hover:bg-muted transition">
+          <button onClick={handleSave} title="Save" className="p-2 rounded-full bg-border hover:bg-muted transition">
             <Save className="w-5 h-5 text-blue-600" />
           </button>
-          <button onClick={handleShare} title="Share" className="p-2 rounded-lg bg-border hover:bg-muted transition">
+          <button onClick={handleShare} title="Share" className="p-2 rounded-full bg-border hover:bg-muted transition">
             <Share2 className="w-5 h-5 text-blue-600" />
           </button>
         </div>

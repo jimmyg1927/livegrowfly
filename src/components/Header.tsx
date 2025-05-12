@@ -22,7 +22,7 @@ export default function Header() {
   const progress = Math.min((xp / max) * 100, 100)
 
   return (
-    <header className="flex items-center justify-between bg-[#1992ff] text-white px-6 py-4 rounded-t-2xl">
+    <header className="flex items-center justify-between bg-[#1992ff] text-white px-6 py-4 rounded-b-xl shadow-md transition-all">
       <div className="flex items-center gap-6">
         <div className="text-lg font-semibold">
           {emoji} {title} — {Math.floor(xp)} XP
@@ -44,7 +44,7 @@ export default function Header() {
         <button
           onClick={toggleTheme}
           aria-label="Toggle theme"
-          className="bg-white text-[#1992ff] p-2 rounded-full"
+          className="bg-white text-[#1992ff] p-2 rounded-full shadow hover:brightness-105"
         >
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>
