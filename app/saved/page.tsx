@@ -91,6 +91,28 @@ export default function SavedPage() {
     }
   };
 
+  const handleShareToCollab = async (item: SavedItem) => {
+    if (!token || !API_BASE) return;
+
+    const res = await fetch(`${API_BASE}/api/collabdocs`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        title: item.title,
+        content: item.content,
+      }),
+    });
+
+    if (res.ok) {
+      alert('Shared to Collab Zone!');
+    } else {
+      alert('Failed to share.');
+    }
+  };
+
   const filtered = saved.filter((item) =>
     item.title.toLowerCase().includes(search.toLowerCase())
   );
@@ -152,25 +174,34 @@ export default function SavedPage() {
                     {item.content.slice(0, 200)}...
                   </p>
 
-                  <div className="mt-4 flex justify-between items-center">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <button
-                          onClick={() => setSelected(item)}
-                          className="flex items-center gap-1 text-xs px-3 py-1 rounded bg-accent text-white hover:bg-accent/90 transition"
-                        >
-                          <FiMaximize2 className="w-4 h-4" /> View Full
-                        </button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-xl">
-                        <DialogHeader>
-                          <DialogTitle>{selected?.title}</DialogTitle>
-                        </DialogHeader>
-                        <div className="text-sm whitespace-pre-wrap mt-2 text-muted-foreground">
-                          {selected?.content}
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                  <div className="mt-4 flex justify-between items-center gap-2 flex-wrap">
+                    <div className="flex gap-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <button
+                            onClick={() => setSelected(item)}
+                            className="flex items-center gap-1 text-xs px-3 py-1 rounded bg-accent text-white hover:bg-accent/90 transition"
+                          >
+                            <FiMaximize2 className="w-4 h-4" /> View Full
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-xl max-h-[80vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>{selected?.title}</DialogTitle>
+                          </DialogHeader>
+                          <div className="text-sm whitespace-pre-wrap mt-2 text-muted-foreground">
+                            {selected?.content}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+
+                      <button
+                        onClick={() => handleShareToCollab(item)}
+                        className="flex items-center gap-1 text-xs px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white transition"
+                      >
+                        📤 Share
+                      </button>
+                    </div>
 
                     <button
                       onClick={() => handleDelete(item.id)}
