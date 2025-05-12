@@ -1,4 +1,3 @@
-// src/components/Sidebar.tsx
 'use client'
 
 import React from 'react'
@@ -24,7 +23,7 @@ const navItems = [
   { name: 'Wishlist', href: '/wishlist', icon: HiOutlineHeart },
   { name: 'Nerdify Me!', href: '/nerd-mode', icon: HiOutlineLightBulb },
   { name: 'Refer a Friend', href: '/refer', icon: HiOutlineUserAdd },
-  { name: 'Change Plan', href: '/plans', icon: HiOutlineCurrencyPound },
+  { name: 'Change Plan', href: '/change-plan', icon: HiOutlineCurrencyPound }, // ✅ fixed route
   { name: 'Settings', href: '/settings', icon: HiOutlineCog },
   { name: 'Brand Settings', href: '/brand-settings', icon: HiOutlineCog },
   { name: 'Trusted Partners', href: '/trusted-partners', icon: HiOutlineShieldCheck },

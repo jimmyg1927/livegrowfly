@@ -1,154 +1,115 @@
-'use client';
+// File: app/signup/SignupClient.tsx
+'use client'
 
-import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function SignupClient() {
-  const router = useRouter();
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [message, setMessage] = useState('')
+  const [plan, setPlan] = useState('Free')
 
-  const [plan, setPlan] = useState('free');
-  const [referrerCode, setReferrerCode] = useState<string | null>(null);
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const selectedPlan = params.get('plan') || 'free';
-    const refCode = params.get('ref') || null;
-
-    setPlan(selectedPlan);
-    setReferrerCode(refCode);
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.');
-      return;
+    const planFromURL = searchParams?.get('plan')
+    if (planFromURL) {
+      const capitalizedPlan = planFromURL.charAt(0).toUpperCase() + planFromURL.slice(1)
+      setPlan(capitalizedPlan)
     }
+  }, [searchParams])
 
-    setLoading(true);
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (password !== confirmPassword) {
+      setMessage('Passwords do not match!')
+      return
+    }
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
+      const res = await fetch('/api/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name, subscriptionType: plan, referrerCode }),
-      });
-
-      const contentType = res.headers.get('content-type');
-
-      if (!res.ok) {
-        if (contentType && contentType.includes('application/json')) {
-          const data = await res.json();
-          setError(data.error || 'Something went wrong.');
-        } else {
-          setError('Unexpected server error. Please try again.');
-        }
-        return;
-      }
-
-      const data = await res.json();
-
-      if (data.token) {
-        localStorage.setItem('growfly_jwt', data.token);
-        router.push('/dashboard');
-      } else {
-        setError('Signup succeeded but no token returned.');
-      }
-    } catch (err) {
-      setError('Network error or server is unreachable.');
-    } finally {
-      setLoading(false);
+        body: JSON.stringify({ name, email, password }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Signup failed')
+      router.push('/welcome')
+    } catch (err: any) {
+      setMessage(`❌ ${err.message}`)
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-[#0f172a] to-[#1e293b] flex items-center justify-center px-4 py-12 text-white">
-      <div className="bg-[#111827] text-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-[#2c3e50]">
-        <button
-          onClick={() => router.push('/plans')}
-          className="text-sm text-blue-400 hover:underline mb-4"
-        >
-          ← Back to Plans
-        </button>
+    <div className="w-full max-w-4xl bg-card p-8 rounded-xl shadow-lg">
+      <h1 className="text-3xl font-semibold mb-6 text-center text-textPrimary">
+        Sign Up for {plan} Plan
+      </h1>
 
-        <h1 className="text-2xl font-bold mb-4 text-center">
-          🚀 Sign Up for {plan.charAt(0).toUpperCase() + plan.slice(1)} Plan
-        </h1>
+      {message && <p className="text-red-600 text-center">{message}</p>}
 
-        {referrerCode && (
-          <p className="text-sm text-green-400 mb-4 text-center">
-            🎉 You were referred! Referrer Code: <strong>{referrerCode}</strong>
-          </p>
-        )}
+      <form onSubmit={handleSignup} className="space-y-6">
+        <div>
+          <label htmlFor="name" className="text-lg text-textPrimary">Name</label>
+          <input
+            type="text"
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            className="w-full p-3 rounded-md border border-input-border bg-input text-textPrimary"
+          />
+        </div>
 
-        {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
+        <div>
+          <label htmlFor="email" className="text-lg text-textPrimary">Email</label>
+          <input
+            type="email"
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="w-full p-3 rounded-md border border-input-border bg-input text-textPrimary"
+          />
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block mb-1 font-semibold text-sm">Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-600 rounded-lg bg-[#1f2937] text-white focus:outline-accent"
-              required
-            />
-          </div>
+        <div>
+          <label htmlFor="password" className="text-lg text-textPrimary">Password</label>
+          <input
+            type="password"
+            id="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="w-full p-3 rounded-md border border-input-border bg-input text-textPrimary"
+          />
+        </div>
 
-          <div>
-            <label className="block mb-1 font-semibold text-sm">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-600 rounded-lg bg-[#1f2937] text-white focus:outline-accent"
-              required
-            />
-          </div>
+        <div>
+          <label htmlFor="confirmPassword" className="text-lg text-textPrimary">Confirm Password</label>
+          <input
+            type="password"
+            id="confirmPassword"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            className="w-full p-3 rounded-md border border-input-border bg-input text-textPrimary"
+          />
+        </div>
 
-          <div>
-            <label className="block mb-1 font-semibold text-sm">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-600 rounded-lg bg-[#1f2937] text-white focus:outline-accent"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block mb-1 font-semibold text-sm">Confirm Password</label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-600 rounded-lg bg-[#1f2937] text-white focus:outline-accent"
-              required
-            />
-          </div>
-
+        <div>
           <button
             type="submit"
-            disabled={loading}
-            className={`w-full py-2 rounded-lg text-white font-semibold ${
-              loading
-                ? 'bg-gray-600 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700 transition'
-            }`}
+            className="w-full bg-accent hover:bg-accent/90 text-white py-2 rounded-lg transition-colors"
           >
-            {loading ? 'Creating Account...' : 'Create Account'}
+            Create Account
           </button>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
-  );
+  )
 }
