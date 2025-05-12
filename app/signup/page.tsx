@@ -6,8 +6,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function SignupPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const selectedPlan = (searchParams?.get('plan') ?? 'free').toLowerCase()
+  const params = useSearchParams()
+  const selectedPlan = (params?.get('plan') ?? 'free').toLowerCase()
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
