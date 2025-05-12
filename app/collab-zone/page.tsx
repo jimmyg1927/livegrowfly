@@ -1,4 +1,3 @@
-// file: src/app/collab-zone/page.tsx
 'use client'
 
 import React, { useEffect, useState } from 'react'
@@ -218,7 +217,7 @@ export default function CollabZonePage() {
         )}
 
         <div className="border border-border rounded-lg bg-card p-2 min-h-[60vh] overflow-y-auto">
-          <Editor content={content} setContent={setContent} />
+          <Editor content={content} setContent={setContent} docId={activeId} showComments={showComments} />
         </div>
       </main>
     </div>

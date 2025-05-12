@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
@@ -12,33 +12,37 @@ import BulletList from '@tiptap/extension-bullet-list'
 import OrderedList from '@tiptap/extension-ordered-list'
 import Blockquote from '@tiptap/extension-blockquote'
 import CodeBlock from '@tiptap/extension-code-block'
-import {
-  Bold,
-  Italic,
-  Underline as Under,
-  Strikethrough,
-  List,
-  ListOrdered,
-  Quote,
-  Code,
-  Link as LinkIcon,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
-  Download,
-} from 'lucide-react'
 
+import EditorBubbleMenu from './EditorBubbleMenu'
+import { Download, MessageCircleMore, Trash } from 'lucide-react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { saveAs } from 'file-saver'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL
+
 interface Props {
   content: string
   setContent: (html: string) => void
+  docId: string | null
+  showComments: boolean
 }
 
-export default function Editor({ content, setContent }: Props) {
+interface Comment {
+  id: string
+  text: string
+  from: number
+  to: number
+  resolved: boolean
+}
+
+export default function Editor({ content, setContent, docId, showComments }: Props) {
+  const [comments, setComments] = useState<Comment[]>([])
+  const [newComment, setNewComment] = useState('')
+  const [activeRange, setActiveRange] = useState<{ from: number; to: number } | null>(null)
+
+  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: false }),
@@ -56,23 +60,64 @@ export default function Editor({ content, setContent }: Props) {
     onUpdate: ({ editor }) => {
       setContent(editor.getHTML())
     },
+    onSelectionUpdate: ({ editor }) => {
+      const { from, to, empty } = editor.state.selection
+      if (!empty && from !== to) {
+        setActiveRange({ from, to })
+      } else {
+        setActiveRange(null)
+      }
+    },
   })
 
-  if (!editor) return null
+  useEffect(() => {
+    if (!docId || !token) return
+    fetch(`${API_URL}/api/comments/${docId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(res => res.json())
+      .then(setComments)
+      .catch(() => setComments([]))
+  }, [docId])
 
-  const btn = (
-    action: () => void,
-    active: boolean,
-    child: React.ReactNode
-  ) => (
-    <button
-      type="button"
-      onClick={action}
-      className={`p-1 rounded hover:bg-muted transition ${active ? 'bg-accent/40' : ''}`}
-    >
-      {child}
-    </button>
-  )
+  const addComment = async () => {
+    if (!editor || !docId || !activeRange || !newComment.trim()) return
+
+    const res = await fetch(`${API_URL}/api/comments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        docId,
+        text: newComment,
+        from: activeRange.from,
+        to: activeRange.to,
+      }),
+    })
+
+    const created = await res.json()
+    setComments(prev => [...prev, created])
+    setNewComment('')
+    setActiveRange(null)
+  }
+
+  const resolveComment = async (id: string) => {
+    await fetch(`${API_URL}/api/comments/${id}`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    setComments(prev => prev.map(c => (c.id === id ? { ...c, resolved: true } : c)))
+  }
+
+  const deleteComment = async (id: string) => {
+    await fetch(`${API_URL}/api/comments/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    setComments(prev => prev.filter(c => c.id !== id))
+  }
 
   const handleExportPDF = async () => {
     const editorElement = document.querySelector('.editor-output')
@@ -101,44 +146,63 @@ export default function Editor({ content, setContent }: Props) {
   }
 
   return (
-    <div>
-      {/* Toolbar */}
-      <div className="flex flex-wrap gap-1 p-2 border-b bg-card rounded-t">
-        {btn(() => editor.chain().focus().toggleBold().run(), editor.isActive('bold'), <Bold size={16} />)}
-        {btn(() => editor.chain().focus().toggleItalic().run(), editor.isActive('italic'), <Italic size={16} />)}
-        {btn(() => editor.chain().focus().toggleUnderline().run(), editor.isActive('underline'), <Under size={16} />)}
-        {btn(() => editor.chain().focus().toggleStrike().run(), editor.isActive('strike'), <Strikethrough size={16} />)}
-        {btn(() => editor.chain().focus().toggleHeading({ level: 1 }).run(), editor.isActive('heading', { level: 1 }), <span className="font-semibold">H1</span>)}
-        {btn(() => editor.chain().focus().toggleHeading({ level: 2 }).run(), editor.isActive('heading', { level: 2 }), <span className="font-semibold">H2</span>)}
-        {btn(() => editor.chain().focus().toggleBulletList().run(), editor.isActive('bulletList'), <List size={16} />)}
-        {btn(() => editor.chain().focus().toggleOrderedList().run(), editor.isActive('orderedList'), <ListOrdered size={16} />)}
-        {btn(() => editor.chain().focus().toggleBlockquote().run(), editor.isActive('blockquote'), <Quote size={16} />)}
-        {btn(() => editor.chain().focus().toggleCodeBlock().run(), editor.isActive('codeBlock'), <Code size={16} />)}
-        {btn(() => {
-          const url = prompt('Enter URL')
-          if (url) editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
-        }, editor.isActive('link'), <LinkIcon size={16} />)}
-        {btn(() => editor.chain().focus().setTextAlign('left').run(), editor.isActive({ textAlign: 'left' }), <AlignLeft size={16} />)}
-        {btn(() => editor.chain().focus().setTextAlign('center').run(), editor.isActive({ textAlign: 'center' }), <AlignCenter size={16} />)}
-        {btn(() => editor.chain().focus().setTextAlign('right').run(), editor.isActive({ textAlign: 'right' }), <AlignRight size={16} />)}
-        {btn(() => editor.chain().focus().setTextAlign('justify').run(), editor.isActive({ textAlign: 'justify' }), <AlignJustify size={16} />)}
+    <div className="flex gap-6">
+      <div className="flex-1 relative">
+        {editor && <EditorBubbleMenu editor={editor} />}
+
+        <EditorContent
+          editor={editor}
+          className="editor-output min-h-[50vh] p-4 overflow-auto bg-background text-textPrimary border rounded"
+        />
+
+        {activeRange && (
+          <div className="absolute top-2 right-2 z-10 bg-white dark:bg-card shadow p-3 rounded w-72 border space-y-2">
+            <textarea
+              className="w-full border rounded p-2 text-sm bg-background text-textPrimary"
+              placeholder="Add comment on selection"
+              value={newComment}
+              onChange={e => setNewComment(e.target.value)}
+            />
+            <button
+              onClick={addComment}
+              className="px-3 py-1 text-sm bg-accent text-white rounded hover:brightness-110"
+            >
+              Add Comment
+            </button>
+          </div>
+        )}
+
+        <div className="mt-4 flex gap-4">
+          <button onClick={handleExportPDF} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110 transition">
+            <Download size={16} /> Export PDF
+          </button>
+          <button onClick={handleExportDocx} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110 transition">
+            <Download size={16} /> Export Word
+          </button>
+        </div>
       </div>
 
-      {/* Editor area */}
-      <EditorContent
-        editor={editor}
-        className="editor-output min-h-[50vh] p-4 overflow-auto bg-background text-textPrimary rounded-b"
-      />
-
-      {/* Export buttons */}
-      <div className="mt-4 flex gap-4">
-        <button onClick={handleExportPDF} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110 transition">
-          <Download size={16} /> Export as PDF
-        </button>
-        <button onClick={handleExportDocx} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110 transition">
-          <Download size={16} /> Export as Word
-        </button>
-      </div>
+      {showComments && (
+        <aside className="w-80 border-l pl-4 space-y-3">
+          <h2 className="text-lg font-semibold flex items-center gap-1">
+            <MessageCircleMore size={18} /> Comments
+          </h2>
+          {comments.length === 0 && <p className="text-sm text-muted-foreground">No comments yet.</p>}
+          {comments.map(c => (
+            <div key={c.id} className={`border rounded p-2 ${c.resolved ? 'opacity-60 line-through' : ''}`}>
+              <p className="text-sm">{c.text}</p>
+              <div className="flex gap-2 mt-2">
+                {!c.resolved && (
+                  <button onClick={() => resolveComment(c.id)} className="text-green-600 text-xs">Resolve</button>
+                )}
+                <button onClick={() => deleteComment(c.id)} className="text-red-600 text-xs">
+                  <Trash size={14} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </aside>
+      )}
     </div>
   )
 }

@@ -19,6 +19,7 @@ export default function BrandSettingsPage() {
     platformFocus: '',
     primaryProducts: '',
     USP: '',
+    inspiredBy: '', // New field
   })
 
   const [loading, setLoading] = useState(true)
@@ -28,7 +29,12 @@ export default function BrandSettingsPage() {
     const fetchSettings = async () => {
       try {
         const res = await axios.get('/api/user/settings')
-        if (res.data) setFormData(res.data)
+        if (res.data) {
+          setFormData(prev => ({
+            ...prev,
+            ...res.data
+          }))
+        }
       } catch {
         toast.error('Failed to load brand settings.')
       } finally {
@@ -62,10 +68,10 @@ export default function BrandSettingsPage() {
     textarea = false
   ) => (
     <div className="mb-6">
-      <label htmlFor={name} className="block text-sm font-semibold text-white mb-1">
+      <label htmlFor={name} className="block text-sm font-semibold text-foreground mb-1">
         {label}
       </label>
-      <p className="text-xs text-gray-400 mb-2">{description}</p>
+      <p className="text-xs text-muted-foreground mb-2">{description}</p>
       {textarea ? (
         <textarea
           id={name}
@@ -73,7 +79,7 @@ export default function BrandSettingsPage() {
           value={formData[name]}
           onChange={handleChange}
           placeholder={placeholder}
-          className="w-full rounded-md border border-gray-700 bg-gray-900 text-white p-3 text-sm resize-none"
+          className="w-full rounded-md border border-border bg-background text-foreground p-3 text-sm resize-none"
           rows={4}
         />
       ) : (
@@ -84,7 +90,7 @@ export default function BrandSettingsPage() {
           value={formData[name]}
           onChange={handleChange}
           placeholder={placeholder}
-          className="w-full rounded-md border border-gray-700 bg-gray-900 text-white p-3 text-sm"
+          className="w-full rounded-md border border-border bg-background text-foreground p-3 text-sm"
         />
       )}
     </div>
@@ -92,26 +98,25 @@ export default function BrandSettingsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 text-sm text-gray-300">
+      <div className="flex items-center justify-center py-20 text-sm text-muted-foreground">
         <Loader2 className="animate-spin h-5 w-5 mr-2" /> Loading brand settings...
       </div>
     )
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-12 text-white">
+    <div className="max-w-6xl mx-auto px-6 py-12 text-foreground">
       <h1 className="text-3xl font-bold mb-3">Brand Settings</h1>
-      <p className="text-sm text-gray-400 mb-10">
+      <p className="text-sm text-muted-foreground mb-10">
         Help Growfly generate better results by sharing your brand’s tone, audience, and mission. The more you tell us,
         the smarter your responses become. <br />
         <span className="text-xs italic">You can update this anytime.</span>
       </p>
 
-      {/* Sections */}
       <div className="space-y-14">
         {/* Brand Identity */}
         <section>
-          <h2 className="text-xl font-semibold mb-6 border-b border-gray-700 pb-2">🏷️ Brand Identity</h2>
+          <h2 className="text-xl font-semibold mb-6 border-b border-border pb-2">🏷️ Brand Identity</h2>
           <div className="grid md:grid-cols-2 gap-8">
             {renderField('Brand Name', 'brandName', 'Growfly Ltd', 'Used in bios, intros, and tone')}
             {renderField('Tone of Voice', 'brandTone', 'Bold, friendly, expert', 'How should the AI speak on your behalf?')}
@@ -119,12 +124,13 @@ export default function BrandSettingsPage() {
             {renderField('Core Values', 'brandValues', 'Trust, Innovation, Simplicity', 'List your values', true)}
             {renderField('Brand Personality', 'brandVoice', 'Witty and clever', 'Describe your brand like a personality', true)}
             {renderField('Mission', 'brandMission', 'Make marketing more accessible', 'What drives your brand?', true)}
+            {renderField('Inspired By', 'inspiredBy', 'Put the companies you are inspired by in this text box, separate them with commas', 'Who are your brand inspirations?', true)}
           </div>
         </section>
 
         {/* Audience */}
         <section>
-          <h2 className="text-xl font-semibold mb-6 border-b border-gray-700 pb-2">👥 Audience</h2>
+          <h2 className="text-xl font-semibold mb-6 border-b border-border pb-2">👥 Audience</h2>
           <div className="grid md:grid-cols-2 gap-8">
             {renderField('Who is your audience?', 'audienceType', 'Startup founders, content creators', 'Demographics or job titles', true)}
             {renderField('Audience Goals or Challenges', 'audienceInterests', 'Affordable, fast content support', 'What are they trying to achieve?', true)}
@@ -134,7 +140,7 @@ export default function BrandSettingsPage() {
 
         {/* Strategy */}
         <section>
-          <h2 className="text-xl font-semibold mb-6 border-b border-gray-700 pb-2">📣 Marketing Strategy</h2>
+          <h2 className="text-xl font-semibold mb-6 border-b border-border pb-2">📣 Marketing Strategy</h2>
           <div className="grid md:grid-cols-2 gap-8">
             {renderField('Primary Marketing Channels', 'platformFocus', 'Instagram, LinkedIn, Email', 'Where do you primarily publish content?', true)}
             {renderField('Main Products or Services', 'primaryProducts', 'Prompt engine, audits, templates', 'List your top 2–3 offerings', true)}
@@ -143,7 +149,6 @@ export default function BrandSettingsPage() {
         </section>
       </div>
 
-      {/* Save Button */}
       <div className="mt-14 flex justify-center">
         <button
           onClick={handleSave}

@@ -1,25 +1,25 @@
-'use client';
+'use client'
 
-import React from 'react';
-import { Sun, Moon } from 'lucide-react';
-import { useUserStore } from '@/lib/store';
-import Link from 'next/link';
-import { useTheme } from '@/context/ThemeContext';
+import React from 'react'
+import { Sun, Moon } from 'lucide-react'
+import { useUserStore } from '@/lib/store'
+import Link from 'next/link'
+import { useTheme } from '@/context/ThemeContext'
 
 function getNerdLevel(xp: number = 0) {
-  if (xp < 25) return { title: 'Curious Cat', emoji: '🐱', max: 25 };
-  if (xp < 150) return { title: 'Nerdlet', emoji: '🧪', max: 150 };
-  if (xp < 500) return { title: 'Prompt Prober', emoji: '🧠', max: 500 };
-  if (xp < 850) return { title: 'Nerdboss', emoji: '🧙‍♂️', max: 850 };
-  return { title: 'Prompt Commander', emoji: '🚀', max: 1000 };
+  if (xp < 25) return { title: 'Curious Cat', emoji: '🐱', max: 25 }
+  if (xp < 150) return { title: 'Nerdlet', emoji: '🧪', max: 150 }
+  if (xp < 500) return { title: 'Prompt Prober', emoji: '🧠', max: 500 }
+  if (xp < 850) return { title: 'Nerdboss', emoji: '🧙‍♂️', max: 850 }
+  return { title: 'Prompt Commander', emoji: '🚀', max: 1000 }
 }
 
 export default function Header() {
-  const { theme, toggleTheme } = useTheme();
-  const xp = useUserStore((state) => state.xp);
-  const subscriptionType = useUserStore((state) => state.subscriptionType);
-  const { title, emoji, max } = getNerdLevel(xp);
-  const progress = Math.min((xp / max) * 100, 100);
+  const { theme, toggleTheme } = useTheme()
+  const xp = useUserStore((state) => state.xp)
+  const subscriptionType = useUserStore((state) => state.subscriptionType)
+  const { title, emoji, max } = getNerdLevel(xp)
+  const progress = Math.min((xp / max) * 100, 100)
 
   return (
     <header className="flex items-center justify-between bg-[#1992ff] text-white px-6 py-4">
@@ -37,7 +37,7 @@ export default function Header() {
 
       <div className="flex items-center gap-4">
         <Link href="/change-plan">
-          <span className="bg-white text-[#1992ff] px-3 py-1 rounded-full font-medium text-sm hover:underline">
+          <span className="bg-white text-[#1992ff] px-3 py-1 rounded-full font-medium text-sm hover:underline cursor-pointer">
             Subscription: {subscriptionType.toLowerCase()}
           </span>
         </Link>
@@ -50,5 +50,5 @@ export default function Header() {
         </button>
       </div>
     </header>
-  );
+  )
 }
