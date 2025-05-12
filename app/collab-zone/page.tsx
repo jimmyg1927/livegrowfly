@@ -1,3 +1,4 @@
+// file: src/app/collab-zone/page.tsx
 'use client'
 
 import React, { useEffect, useState } from 'react'
@@ -32,6 +33,7 @@ export default function CollabZonePage() {
   const [newTitle, setNewTitle] = useState('')
   const [sharing, setSharing] = useState(false)
   const [shareEmail, setShareEmail] = useState('')
+  const [showComments, setShowComments] = useState(true)
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   useEffect(() => {
@@ -47,12 +49,10 @@ export default function CollabZonePage() {
           setContent(all[0].content)
         }
       })
-      .catch(() => setDocs([]))
 
     fetch(`${API_URL}/api/collab/shared`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then((allShared: Doc[]) => setSharedDocs(allShared))
-      .catch(() => setSharedDocs([]))
   }, [router])
 
   useEffect(() => {
@@ -102,8 +102,7 @@ export default function CollabZonePage() {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+        Authorization: `Bearer ${token}` },
       body: JSON.stringify({ title: newTitle }),
     })
     if (res.ok) {
@@ -113,36 +112,6 @@ export default function CollabZonePage() {
     } else {
       setStatusMsg({ type: 'error', text: 'Rename failed.' })
     }
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this document?')) return
-    const token = localStorage.getItem('growfly_jwt')!
-    const res = await fetch(`${API_URL}/api/collab/${id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    if (res.ok) {
-      const remaining = docs.filter(d => d.id !== id)
-      setDocs(remaining)
-      if (activeId === id) {
-        if (remaining.length) {
-          setActiveId(remaining[0].id)
-          setContent(remaining[0].content)
-        } else {
-          setActiveId(null)
-          setContent('')
-        }
-      }
-    } else {
-      setStatusMsg({ type: 'error', text: 'Delete failed.' })
-    }
-  }
-
-  const startShare = () => {
-    setSharing(true)
-    setShareEmail('')
-    setStatusMsg(null)
   }
 
   const confirmShare = async () => {
@@ -168,10 +137,6 @@ export default function CollabZonePage() {
     }
   }
 
-  const handleDownload = (id: string) => {
-    window.open(`${API_URL}/api/collab/${id}/download`, '_blank');
-  }
-
   return (
     <div className="flex h-full bg-background text-textPrimary">
       <aside className="w-64 border-r border-border bg-card p-4 space-y-3 overflow-auto">
@@ -187,14 +152,28 @@ export default function CollabZonePage() {
             }`}
             onClick={() => setActiveId(doc.id)}
           >
-            <span>{doc.title}</span>
-            <div className="flex gap-1">
-              <FiEdit3 className="cursor-pointer" onClick={() => { setTitleEditId(doc.id); setNewTitle(doc.title) }} />
-              <FiTrash2 className="cursor-pointer text-red-600" onClick={() => handleDelete(doc.id)} />
-            </div>
+            {titleEditId === doc.id ? (
+              <input
+                type="text"
+                className="flex-1 mr-2 px-1 py-1 text-sm rounded border border-muted bg-background text-textPrimary"
+                value={newTitle}
+                onChange={e => setNewTitle(e.target.value)}
+                onBlur={() => handleRename(doc.id)}
+                autoFocus
+              />
+            ) : (
+              <>
+                <span className="flex-1">{doc.title}</span>
+                <div className="flex gap-1">
+                  <FiEdit3 className="cursor-pointer" onClick={() => { setTitleEditId(doc.id); setNewTitle(doc.title) }} />
+                  <FiTrash2 className="cursor-pointer text-red-600" />
+                </div>
+              </>
+            )}
           </div>
         ))}
-        <div className="font-bold text-lg">Shared with You</div>
+
+        <div className="font-bold text-lg pt-4">Shared with You</div>
         {sharedDocs.map(doc => (
           <div
             key={doc.id}
@@ -204,8 +183,8 @@ export default function CollabZonePage() {
             onClick={() => setActiveId(doc.id)}
           >
             <span>{doc.title}</span>
-            <button onClick={() => handleDownload(doc.id)} className="ml-2 text-accent hover:underline">
-              <FiDownload /> Download
+            <button className="ml-2 text-accent hover:underline">
+              <FiDownload />
             </button>
           </div>
         ))}
@@ -214,28 +193,18 @@ export default function CollabZonePage() {
       <main className="flex-1 p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Collab Zone</h1>
-          <button onClick={startShare} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110 transition">
-            <FiMail /> Share This Doc
-          </button>
-        </div>
-        <p className="text-muted-foreground text-sm">
-          Share and collaborate on Growfly responses. Edit, comment, and download as needed.
-        </p>
-
-        {sharing && (
-          <div className="flex items-center gap-2">
-            <input
-              type="email"
-              value={shareEmail}
-              placeholder="Enter colleague’s email"
-              onChange={e => setShareEmail(e.target.value)}
-              className="flex-1 px-3 py-2 border border-muted bg-background rounded"
-            />
-            <button onClick={confirmShare} className="px-4 py-2 bg-accent text-white rounded flex items-center gap-1 hover:brightness-110 transition">
-              <FiCheckCircle /> Send
+          <div className="flex gap-2">
+            <button onClick={() => setShowComments(!showComments)} className="px-3 py-2 rounded bg-muted hover:bg-muted/70">
+              {showComments ? 'Hide Comments' : 'Show Comments'}
+            </button>
+            <button onClick={confirmShare} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110 transition">
+              <FiMail /> Share
+            </button>
+            <button onClick={handleSave} className="flex items-center gap-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">
+              <FiSave /> Save
             </button>
           </div>
-        )}
+        </div>
 
         {statusMsg && (
           <div className={`flex items-center gap-2 px-3 py-2 rounded ${
@@ -248,13 +217,9 @@ export default function CollabZonePage() {
           </div>
         )}
 
-        <div className="border border-border rounded-lg overflow-hidden bg-card">
+        <div className="border border-border rounded-lg bg-card p-2 min-h-[60vh] overflow-y-auto">
           <Editor content={content} setContent={setContent} />
         </div>
-
-        <button onClick={handleSave} className="flex items-center gap-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">
-          <FiSave /> Save
-        </button>
       </main>
     </div>
   )

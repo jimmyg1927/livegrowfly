@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FiTrash2, FiMaximize2 } from 'react-icons/fi';
+import { FiTrash2, FiMaximize2, FiEdit } from 'react-icons/fi';
 import { format } from 'date-fns';
 import {
   Dialog,
@@ -94,7 +94,7 @@ export default function SavedPage() {
   const handleShareToCollab = async (item: SavedItem) => {
     if (!token || !API_BASE) return;
 
-    const res = await fetch(`${API_BASE}/api/collabdocs`, {
+    const res = await fetch(`${API_BASE}/api/collab`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -107,7 +107,8 @@ export default function SavedPage() {
     });
 
     if (res.ok) {
-      alert('Shared to Collab Zone!');
+      const newDoc = await res.json();
+      router.push(`/collab-zone?doc=${newDoc.id}`);
     } else {
       alert('Failed to share.');
     }
@@ -174,8 +175,8 @@ export default function SavedPage() {
                     {item.content.slice(0, 200)}...
                   </p>
 
-                  <div className="mt-4 flex justify-between items-center gap-2 flex-wrap">
-                    <div className="flex gap-2">
+                  <div className="mt-4 flex flex-wrap gap-2 justify-between items-center">
+                    <div className="flex gap-2 flex-wrap">
                       <Dialog>
                         <DialogTrigger asChild>
                           <button
@@ -197,9 +198,9 @@ export default function SavedPage() {
 
                       <button
                         onClick={() => handleShareToCollab(item)}
-                        className="flex items-center gap-1 text-xs px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white transition"
+                        className="flex items-center gap-1 text-xs px-3 py-1 rounded bg-violet-600 hover:bg-violet-700 text-white transition"
                       >
-                        📤 Share
+                        <FiEdit className="w-4 h-4" /> Edit in Collab Zone
                       </button>
                     </div>
 
