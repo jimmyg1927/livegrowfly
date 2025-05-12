@@ -5,6 +5,13 @@ import { HiClipboard, HiCheckCircle } from 'react-icons/hi';
 import { motion } from 'framer-motion';
 
 const prompts = {
+  'Growfly Feature Demos': [
+    'How do I use the Collab Zone to brainstorm with a teammate?',
+    'Remind me what I saved in Saved Mode this week.',
+    'Submit a new feature idea for Growfly’s Request Zone.',
+    'How do I rename a saved response?',
+    'How can I share a document from Collab Zone?',
+  ],
   'Marketing & Branding': [
     'Write 3 Instagram captions for a vegan skincare brand.',
     'Give me a killer headline for a spring sale email campaign.',
@@ -36,13 +43,6 @@ const prompts = {
     'Build me a morning routine that fits my ADHD brain.',
     'Create a quarterly goal tracker for my startup.',
   ],
-  'Growfly Feature Demos': [
-    'How do I use the Collab Zone to brainstorm with a teammate?',
-    'Remind me what I saved in Saved Mode this week.',
-    'Submit a new feature idea for Growfly&rsquo;s Request Zone.',
-    'How do I rename a saved response?',
-    'How can I share a document from Collab Zone?',
-  ],
   'Finance & Budgeting': [
     'Help me set up a simple monthly budget for my small business.',
     'What expenses should I track as a freelancer or consultant?',
@@ -51,6 +51,34 @@ const prompts = {
     'Explain how to estimate taxes owed as a UK sole trader.',
     'Write an invoice email template for a freelance gig.',
     'Help me forecast cash flow for a seasonal business.',
+  ],
+  'HR & Admin': [
+    'Write an onboarding checklist for a new remote employee.',
+    'Draft a professional out-of-office reply for holiday leave.',
+    'Create a company-wide announcement about a policy change.',
+    'How can I streamline recruitment using AI?',
+    'Generate 3 ideas to boost internal staff engagement.',
+  ],
+  'Law & Legal': [
+    'Summarise a GDPR privacy policy in simple language.',
+    'What are the legal essentials for a UK online business?',
+    'Draft a basic NDA agreement template.',
+    'What clauses should a freelance contract include?',
+    'Explain IP protection for a product concept.',
+  ],
+  'Product Dev & Design': [
+    'Suggest a design sprint outline for a new mobile app.',
+    'List 5 UX mistakes to avoid in onboarding flows.',
+    'What are 3 great onboarding UX examples from SaaS tools?',
+    'Write a product update changelog for a new release.',
+    'How do I prioritise new features from user feedback?',
+  ],
+  'Business & Market Research': [
+    'Give me a competitor comparison table for CRM tools.',
+    'How do I find my market positioning in the beauty space?',
+    'Generate 3 customer personas for a meal prep service.',
+    'Suggest a pricing strategy for a new subscription app.',
+    'What metrics matter most for B2B SaaS growth?',
   ],
 };
 
@@ -89,65 +117,57 @@ export default function NerdModePage() {
   }, [searchTerm]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10 text-white space-y-10">
-      <motion.h1 className="text-3xl font-bold" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+    <div className="max-w-7xl mx-auto px-4 py-10 space-y-10 text-textPrimary">
+      <motion.h1 className="text-2xl font-bold" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         🧠 Nerdify Me!
       </motion.h1>
 
-      <p className="text-gray-300 text-base max-w-3xl">
-        Growfly is your AI marketing and productivity assistant. Built by nerds, for nerds—to help you launch faster,
-        write better, strategise smarter, and scale with confidence.
-        Whether you’re an entrepreneur, freelancer, or scaling team—we’ve got your back.
+      <p className="text-base text-muted">
+        The Nerdify Me zone is your personal Growfly learning centre. Here you’ll find AI-powered prompt suggestions,
+        productivity tips, and feature tutorials – all designed to help you master Growfly faster and make smarter business moves with confidence.
       </p>
 
-      <section className="bg-white/5 p-6 rounded-xl border border-white/10">
-        <h2 className="text-xl font-semibold text-blue-400 mb-2">🎮 XP & Nerd Levels</h2>
-        <p className="text-sm text-gray-400 mb-4">
-          Every prompt you use earns you XP (experience points). As you gain XP, your Nerd Level rises. Higher levels unlock more credibility, exclusive features, and bragging rights.
+      <section className="bg-card p-6 rounded-xl border border-border">
+        <h2 className="text-xl font-semibold text-accent mb-2">🎮 XP & Nerd Levels</h2>
+        <p className="text-sm text-muted mb-4">
+          Every prompt you use earns you XP. As your Nerd Level rises, you unlock credibility, bragging rights, and future features.
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center text-sm">
           {nerdLevels.map(({ emoji, title }, i) => (
-            <div key={i} className="bg-white/10 rounded-lg py-4 px-2 border border-white/10">
+            <div key={i} className="bg-muted/10 rounded-lg py-4 px-2 border border-border">
               <div className="text-2xl mb-1">{emoji}</div>
-              <div className="font-medium text-white/90 text-sm">{title}</div>
+              <div className="font-medium">{title}</div>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="bg-white/5 p-6 rounded-xl border border-white/10">
-        <h2 className="text-xl font-semibold text-blue-400 mb-3">🎨 Brand Settings</h2>
-        <p className="text-sm text-gray-300">
-          Don’t forget to fill in your <strong>Brand Settings</strong>—this includes your tone of voice, audience, goals and more. Doing so allows Growfly to give hyper-personalised answers every time. Feel free to update it regularly as your brand evolves!
-        </p>
-      </section>
-
-      <section className="bg-white/5 p-6 rounded-xl border border-white/10">
-        <h2 className="text-xl font-semibold text-blue-400 mb-4">📚 What&rsquo;s Inside Growfly?</h2>
-        <ul className="text-sm text-gray-300 space-y-2">
-          <li><strong>Collab Zone</strong>: Brainstorm and co-write with team members live.</li>
-          <li><strong>Saved Mode</strong>: Store great answers and edit them whenever you like.</li>
-          <li><strong>Request Zone</strong>: Vote and suggest new features—yes, we’re listening!</li>
-          <li><strong>Nerdify Mode</strong>: Use guided prompts and shortcuts based on your level and goals.</li>
+      <section className="bg-card p-6 rounded-xl border border-border">
+        <h2 className="text-xl font-semibold text-accent mb-3">🚀 Growfly Feature Demos</h2>
+        <ul className="space-y-4 text-sm">
+          <li><strong>Collab Zone:</strong> Open the Collab Zone tab, create a new shared doc, and invite a teammate by email. You’ll both see live edits for real-time collaboration.</li>
+          <li><strong>Saved Mode:</strong> Every AI reply has a save icon. Click it to store a response under the "Saved" tab. You can rename, edit, or delete later.</li>
+          <li><strong>Request Zone:</strong> Go to "Wishlist" and suggest new ideas. Vote up others too—our devs watch this closely for roadmap planning.</li>
+          <li><strong>Prompt XP:</strong> Each prompt you send adds XP to your profile. The more you use Growfly, the more you unlock. Check your XP in the top bar.</li>
         </ul>
       </section>
 
-      <section className="mb-4">
+      <section>
         <input
           type="text"
           placeholder="Search prompts..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-4 py-2 rounded-md bg-white/10 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="w-full px-4 py-2 rounded-md bg-input text-sm placeholder-muted text-textPrimary border border-input-border focus:outline-none focus:ring-2 focus:ring-accent"
         />
       </section>
 
       <section>
-        <h2 className="text-xl font-semibold text-blue-400 mb-4">📋 Prompt Library</h2>
+        <h2 className="text-xl font-semibold text-accent mb-4">📋 Prompt Library</h2>
         {Object.entries(filteredPrompts).map(([category, list]) => (
           <div key={category} className="mb-6">
             <button
-              className="w-full text-left font-medium text-white bg-white/10 px-4 py-2 rounded-md flex justify-between items-center hover:bg-white/20 transition"
+              className="w-full text-left font-medium bg-input px-4 py-2 rounded-md flex justify-between items-center hover:bg-highlight transition"
               onClick={() => toggleSection(category)}
             >
               <span>{category}</span>
@@ -158,14 +178,14 @@ export default function NerdModePage() {
                 {list.map((prompt) => (
                   <motion.li
                     key={prompt}
-                    className="flex items-center justify-between bg-white/5 px-4 py-2 rounded-md text-sm text-gray-200 hover:bg-white/10"
+                    className="flex items-center justify-between bg-highlight px-4 py-2 rounded-md text-sm hover:opacity-90"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                   >
                     <span>{prompt}</span>
                     <button
                       onClick={() => handleCopy(prompt)}
-                      className="ml-4 text-white hover:text-green-400 transition"
+                      className="ml-4 hover:text-green-500 transition"
                       title="Copy prompt"
                     >
                       {copiedPrompt === prompt ? (
@@ -182,10 +202,10 @@ export default function NerdModePage() {
         ))}
       </section>
 
-      <section className="bg-white/5 p-6 rounded-xl border border-white/10">
-        <h2 className="text-xl font-semibold text-blue-400 mb-3">✨ Pro Tip</h2>
-        <p className="text-sm text-gray-300 leading-relaxed">
-          Not sure where to start? Just type: <strong>“How can you help me today?”</strong> and let Growfly do the rest.
+      <section className="bg-card p-6 rounded-xl border border-border">
+        <h2 className="text-xl font-semibold text-accent mb-3">💡 Pro Tip</h2>
+        <p className="text-sm text-muted leading-relaxed">
+          Not sure where to start? Just type: <strong>“How can you help me today?”</strong> and let Growfly guide your journey.
         </p>
       </section>
     </div>
