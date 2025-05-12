@@ -1,18 +1,23 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
-export default function SignupPage() {
+export default function SignupForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const selectedPlan = searchParams?.get('plan') || 'free'
 
+  const [selectedPlan, setSelectedPlan] = useState('free')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [message, setMessage] = useState('')
+
+  useEffect(() => {
+    const plan = searchParams?.get('plan')
+    if (plan) setSelectedPlan(plan)
+  }, [searchParams])
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -20,6 +25,7 @@ export default function SignupPage() {
       setMessage('❌ Passwords do not match!')
       return
     }
+
     try {
       const res = await fetch('/api/signup', {
         method: 'POST',
@@ -30,78 +36,76 @@ export default function SignupPage() {
       if (!res.ok) throw new Error(data.error || 'Signup failed')
 
       router.push('/welcome')
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setMessage(`❌ ${err.message}`)
-      } else {
-        setMessage('❌ An unknown error occurred.')
-      }
+    } catch (err: any) {
+      setMessage(`❌ ${err.message}`)
     }
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-black flex items-center justify-center px-4 text-white">
-      <div className="w-full max-w-xl bg-card rounded-2xl shadow-xl p-8">
-        <h1 className="text-2xl font-bold text-center mb-6">Create your Growfly account</h1>
-        <p className="text-center text-sm text-muted-foreground mb-6">
-          You&apos;re signing up for the <span className="font-semibold">{selectedPlan}</span> plan.
-        </p>
+    <Suspense fallback={<div className="text-center p-10">Loading...</div>}>
+      <main className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-black flex items-center justify-center px-4 text-white">
+        <div className="w-full max-w-xl bg-card rounded-2xl shadow-xl p-8">
+          <h1 className="text-2xl font-bold text-center mb-6">Create your Growfly account</h1>
+          <p className="text-center text-sm text-muted-foreground mb-6">
+            You're signing up for the <span className="font-semibold">{selectedPlan}</span> plan.
+          </p>
 
-        {message && <p className="text-red-400 text-center text-sm mb-4">{message}</p>}
+          {message && <p className="text-red-400 text-center text-sm mb-4">{message}</p>}
 
-        <form onSubmit={handleSignup} className="space-y-5">
-          <div>
-            <label htmlFor="name" className="block mb-1 text-sm font-medium">Name</label>
-            <input
-              type="text"
-              id="name"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full p-3 rounded-md border border-border bg-input text-textPrimary"
-            />
-          </div>
-          <div>
-            <label htmlFor="email" className="block mb-1 text-sm font-medium">Email</label>
-            <input
-              type="email"
-              id="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 rounded-md border border-border bg-input text-textPrimary"
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="block mb-1 text-sm font-medium">Password</label>
-            <input
-              type="password"
-              id="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 rounded-md border border-border bg-input text-textPrimary"
-            />
-          </div>
-          <div>
-            <label htmlFor="confirmPassword" className="block mb-1 text-sm font-medium">Confirm Password</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              required
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full p-3 rounded-md border border-border bg-input text-textPrimary"
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-accent hover:bg-accent/90 text-white font-semibold py-3 rounded-lg transition"
-          >
-            Create Account
-          </button>
-        </form>
-      </div>
-    </main>
+          <form onSubmit={handleSignup} className="space-y-5">
+            <div>
+              <label htmlFor="name" className="block mb-1 text-sm font-medium">Name</label>
+              <input
+                type="text"
+                id="name"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full p-3 rounded-md border border-border bg-input text-textPrimary"
+              />
+            </div>
+            <div>
+              <label htmlFor="email" className="block mb-1 text-sm font-medium">Email</label>
+              <input
+                type="email"
+                id="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full p-3 rounded-md border border-border bg-input text-textPrimary"
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="block mb-1 text-sm font-medium">Password</label>
+              <input
+                type="password"
+                id="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full p-3 rounded-md border border-border bg-input text-textPrimary"
+              />
+            </div>
+            <div>
+              <label htmlFor="confirmPassword" className="block mb-1 text-sm font-medium">Confirm Password</label>
+              <input
+                type="password"
+                id="confirmPassword"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full p-3 rounded-md border border-border bg-input text-textPrimary"
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-accent hover:bg-accent/90 text-white font-semibold py-3 rounded-lg transition"
+            >
+              Create Account
+            </button>
+          </form>
+        </div>
+      </main>
+    </Suspense>
   )
 }
