@@ -91,7 +91,8 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}` },
+        Authorization: `Bearer ${token}`
+      },
       body: JSON.stringify({
         docId,
         text: newComment,
@@ -103,10 +104,9 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
     const created = await res.json()
     setComments(prev => [...prev, created])
     setNewComment('')
-
-    // Add highlight directly
-    editor.chain().focus().setTextSelection({ from: created.from, to: created.to }).run()
     setActiveRange(null)
+
+    editor.commands.setTextSelection({ from: created.to, to: created.to })
   }
 
   const resolveComment = async (id: string) => {
@@ -150,8 +150,8 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
   )
 
   return (
-    <div className="flex gap-6">
-      <div className="flex-1">
+    <div className="flex gap-6 max-w-full">
+      <div className="flex-1 min-w-0">
         {editor && (
           <div className="flex flex-wrap gap-1 p-2 border-b bg-card mb-2 rounded">
             {toolbarBtn(() => editor.chain().focus().toggleBold().run(), editor.isActive('bold'), <Bold size={16} />)}
@@ -202,11 +202,11 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
         <p className="text-xs text-muted-foreground mt-3 italic">💬 Highlight any text above to add a comment.</p>
 
         <div className="mt-4 flex gap-4">
-          <button onClick={exportPDF} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110">
-            <Download size={16} /> Export PDF
+          <button onClick={exportPDF} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110 text-sm">
+            <Download size={14} /> Export PDF
           </button>
-          <button onClick={exportDocx} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110">
-            <Download size={16} /> Export Word
+          <button onClick={exportDocx} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110 text-sm">
+            <Download size={14} /> Export Word
           </button>
         </div>
       </div>
