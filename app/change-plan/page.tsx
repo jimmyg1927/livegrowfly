@@ -79,11 +79,15 @@ export default function ChangePlanPage() {
     }
 
     try {
-      const res = await fetch('/api/checkout/create-checkout-session', {
+      const res = await fetch('/api/change-plan', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ plan: planId }),
       })
+
       const data = await res.json()
       if (data?.url) {
         window.location.href = data.url
@@ -97,10 +101,10 @@ export default function ChangePlanPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#0a0a23] to-[#1e3a8a] text-white px-6 py-12">
-      <div className="flex flex-col items-center text-center mb-10">
-        <h1 className="text-3xl md:text-4xl font-bold mb-2">Change Your Growfly Plan</h1>
-        <p className="text-md md:text-lg text-white/80 max-w-2xl">
+    <main className="min-h-screen bg-background text-textPrimary px-6 py-12">
+      <div className="text-center mb-10">
+        <h1 className="text-3xl font-bold">Change Your Growfly Plan</h1>
+        <p className="text-muted-foreground text-sm mt-2">
           Select the plan that best fits your workflow and upgrade instantly.
         </p>
       </div>
@@ -109,10 +113,10 @@ export default function ChangePlanPage() {
         {plans.map((plan) => (
           <div
             key={plan.id}
-            className={`relative rounded-xl p-6 transition shadow-md border text-black ${
+            className={`relative rounded-xl p-6 transition shadow-md border text-sm ${
               plan.popular
-                ? 'bg-blue-600 text-white border-blue-400'
-                : 'bg-white border-border hover:ring-4 hover:ring-blue-300'
+                ? 'bg-blue-600 text-white border-blue-500'
+                : 'bg-card text-card-foreground border-border hover:ring-4 hover:ring-blue-300'
             }`}
           >
             {plan.popular && (
@@ -122,7 +126,7 @@ export default function ChangePlanPage() {
             )}
             <h2 className="text-xl font-semibold mb-1">{plan.name}</h2>
             <p className="text-lg font-bold mb-4">{plan.price}</p>
-            <ul className="text-sm space-y-2 mb-6">
+            <ul className="mb-6 space-y-2">
               {plan.description.map((f, i) => (
                 <li key={i}>✓ {f}</li>
               ))}
@@ -130,11 +134,11 @@ export default function ChangePlanPage() {
             <button
               onClick={() => handleSelect(plan.id)}
               disabled={selectedPlan === plan.id}
-              className={`w-full py-2 px-4 rounded font-medium text-sm transition ${
+              className={`w-full py-2 px-4 rounded font-semibold transition text-sm ${
                 plan.popular
                   ? 'bg-yellow-300 text-black hover:bg-yellow-200'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              } ${selectedPlan === plan.id ? 'cursor-not-allowed opacity-70' : ''}`}
+                  : 'bg-accent text-white hover:bg-accent/90'
+              } ${selectedPlan === plan.id ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {plan.custom
                 ? 'Contact Us'
@@ -147,7 +151,7 @@ export default function ChangePlanPage() {
       </div>
 
       {message && (
-        <p className="text-center text-sm mt-6 text-red-400 font-medium">{message}</p>
+        <p className="text-center text-sm mt-6 text-red-500 font-medium">{message}</p>
       )}
     </main>
   )
