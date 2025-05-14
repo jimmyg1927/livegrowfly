@@ -97,20 +97,22 @@ export default function ChangePlanPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a0a23] to-[#1e3a8a] text-white px-4 py-12">
-      <div className="max-w-7xl mx-auto text-center mb-10">
-        <h1 className="text-3xl font-bold">Change Your Growfly Plan</h1>
-        <p className="text-sm text-white/70 mt-2">Select the best plan for your business.</p>
+    <main className="min-h-screen bg-gradient-to-b from-[#0a0a23] to-[#1e3a8a] text-white px-6 py-12">
+      <div className="flex flex-col items-center text-center mb-10">
+        <h1 className="text-3xl md:text-4xl font-bold mb-2">Change Your Growfly Plan</h1>
+        <p className="text-md md:text-lg text-white/80 max-w-2xl">
+          Select the plan that best fits your workflow and upgrade instantly.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto w-full">
         {plans.map((plan) => (
           <div
             key={plan.id}
-            className={`relative rounded-2xl p-6 border transition shadow-md flex flex-col justify-between text-sm ${
+            className={`relative rounded-xl p-6 transition shadow-md border text-black ${
               plan.popular
-                ? 'bg-blue-600 text-white border-blue-500'
-                : 'bg-white text-black border-gray-200'
+                ? 'bg-blue-600 text-white border-blue-400'
+                : 'bg-white border-border hover:ring-4 hover:ring-blue-300'
             }`}
           >
             {plan.popular && (
@@ -118,31 +120,27 @@ export default function ChangePlanPage() {
                 Most Popular
               </div>
             )}
-            <div>
-              <h2 className="text-xl font-bold mb-1">{plan.name}</h2>
-              <p className="text-lg font-semibold mb-3">{plan.price}</p>
-              <ul className="mb-6 space-y-2">
-                {plan.description.map((line) => (
-                  <li key={line}>✓ {line}</li>
-                ))}
-              </ul>
-            </div>
+            <h2 className="text-xl font-semibold mb-1">{plan.name}</h2>
+            <p className="text-lg font-bold mb-4">{plan.price}</p>
+            <ul className="text-sm space-y-2 mb-6">
+              {plan.description.map((f, i) => (
+                <li key={i}>✓ {f}</li>
+              ))}
+            </ul>
             <button
               onClick={() => handleSelect(plan.id)}
               disabled={selectedPlan === plan.id}
-              className={`mt-auto w-full py-2 px-4 rounded-xl text-sm font-semibold transition ${
+              className={`w-full py-2 px-4 rounded font-medium text-sm transition ${
                 plan.popular
-                  ? 'bg-yellow-400 text-black hover:bg-yellow-300'
+                  ? 'bg-yellow-300 text-black hover:bg-yellow-200'
                   : 'bg-blue-600 text-white hover:bg-blue-700'
-              } ${selectedPlan === plan.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+              } ${selectedPlan === plan.id ? 'cursor-not-allowed opacity-70' : ''}`}
             >
               {plan.custom
                 ? 'Contact Us'
                 : selectedPlan === plan.id
                 ? 'Redirecting...'
-                : plan.id === 'free'
-                ? 'Use Free'
-                : `Choose ${plan.name}`}
+                : 'Change Plan'}
             </button>
           </div>
         ))}
@@ -151,6 +149,6 @@ export default function ChangePlanPage() {
       {message && (
         <p className="text-center text-sm mt-6 text-red-400 font-medium">{message}</p>
       )}
-    </div>
+    </main>
   )
 }
