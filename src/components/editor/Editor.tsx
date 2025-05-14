@@ -172,8 +172,15 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
           </div>
         )}
 
+        {!activeRange && (
+          <p className="text-sm text-muted-foreground mt-2">
+            💬 Select some text to add a comment.
+          </p>
+        )}
+
         {editor && (
           <EditorContent
+            key={docId}
             editor={editor}
             className="editor-output min-h-[55vh] p-4 overflow-auto border rounded bg-background text-textPrimary"
           />
