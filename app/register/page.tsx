@@ -35,16 +35,21 @@ export default function RegisterPage() {
       button: 'Choose Personal',
       onClick: async () => {
         setLoadingPlan('personal')
-        const res = await fetch('/api/checkout/create-checkout-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ planId: 'personal' }),
-        })
-        const data = await res.json()
-        if (data?.url) {
-          window.location.href = data.url
-        } else {
-          alert(data.error || 'Failed to create session.')
+        try {
+          const res = await fetch('https://glowfly-api-production.up.railway.app/api/checkout/create-checkout-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ planId: 'personal' }),
+          })
+          const data = await res.json()
+          if (data?.url) {
+            window.location.href = data.url
+          } else {
+            alert(data.error || 'Failed to create session.')
+            setLoadingPlan(null)
+          }
+        } catch (err) {
+          alert('Stripe error. Please try again.')
           setLoadingPlan(null)
         }
       },
@@ -64,16 +69,21 @@ export default function RegisterPage() {
       highlight: true,
       onClick: async () => {
         setLoadingPlan('business')
-        const res = await fetch('/api/checkout/create-checkout-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ planId: 'business' }),
-        })
-        const data = await res.json()
-        if (data?.url) {
-          window.location.href = data.url
-        } else {
-          alert(data.error || 'Failed to create session.')
+        try {
+          const res = await fetch('https://glowfly-api-production.up.railway.app/api/checkout/create-checkout-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ planId: 'business' }),
+          })
+          const data = await res.json()
+          if (data?.url) {
+            window.location.href = data.url
+          } else {
+            alert(data.error || 'Failed to create session.')
+            setLoadingPlan(null)
+          }
+        } catch (err) {
+          alert('Stripe error. Please try again.')
           setLoadingPlan(null)
         }
       },

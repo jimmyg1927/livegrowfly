@@ -1,8 +1,7 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
+import { useEffect, useState } from 'react'
 
 const plans = [
   {
@@ -12,7 +11,8 @@ const plans = [
     features: [
       '20 prompts/month',
       '1 user',
-      'Access Saved Mode',
+      'Access to Collab Zone',
+      'Save & edit documents',
       'Upgrade anytime',
     ],
     button: 'Use Free',
@@ -23,6 +23,7 @@ const plans = [
     price: '£8.99/month',
     features: [
       '400 prompts/month',
+      '1 user',
       'Priority AI speed',
       'Prompt history',
       'Download responses',
@@ -40,8 +41,8 @@ const plans = [
       'Priority support',
       'Unlimited saved docs',
     ],
-    button: 'Change to Business',
     highlight: true,
+    button: 'Change to Business',
   },
   {
     id: 'enterprise',
@@ -60,10 +61,17 @@ const plans = [
 export default function ChangePlanPage() {
   const router = useRouter()
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
-  const [message, setMessage] = useState<string>('')
+  const [message, setMessage] = useState('')
+
+  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null
+
+  useEffect(() => {
+    if (!token) router.push('/login')
+  }, [token, router])
 
   const handleSelect = async (planId: string) => {
     setSelectedPlan(planId)
+    setMessage('')
 
     if (planId === 'free') {
       router.push('/signup?plan=free')
@@ -75,18 +83,12 @@ export default function ChangePlanPage() {
       return
     }
 
-    const token = localStorage.getItem('growfly_jwt')
-    if (!token) {
-      setMessage('You must be logged in to change your plan.')
-      return
-    }
-
     try {
-      const res = await fetch('/api/change-plan', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/change-plan`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ plan: planId }),
       })
@@ -106,20 +108,12 @@ export default function ChangePlanPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background text-textPrimary px-6 py-16">
-      <div className="flex flex-col items-center text-center mb-10">
-        <Image
-          src="/growfly-logo.png"
-          alt="Growfly"
-          width={140}
-          height={40}
-          className="mb-4"
-        />
-        <h1 className="text-3xl md:text-4xl font-bold mb-2">
-          Change Your Growfly Plan
-        </h1>
-        <p className="text-md md:text-lg text-muted-foreground max-w-2xl">
-          Upgrade or downgrade your subscription plan anytime. Paid plans provide more prompts, team access, and enhanced tools.
+    <main className="min-h-screen px-6 py-12 bg-background text-textPrimary">
+      <div className="flex flex-col items-center text-center mb-12">
+        <h1 className="text-3xl md:text-4xl font-bold mb-2">Change Your Growfly Plan</h1>
+        <p className="text-muted-foreground max-w-2xl text-sm">
+          Upgrade or downgrade your subscription plan anytime. Paid plans provide more prompts,
+          team access, and enhanced tools.
         </p>
       </div>
 
@@ -127,10 +121,10 @@ export default function ChangePlanPage() {
         {plans.map((plan) => (
           <div
             key={plan.id}
-            className={`relative rounded-xl p-6 transition shadow-md border text-black flex flex-col justify-between ${
+            className={`relative rounded-xl p-6 transition shadow-md border flex flex-col justify-between ${
               plan.highlight
-                ? 'bg-blue-600 text-white border-blue-400'
-                : 'bg-white border-border hover:ring-4 hover:ring-blue-300'
+                ? 'bg-blue-600 text-white border-blue-500'
+                : 'bg-white text-black border-gray-200 hover:ring-4 hover:ring-blue-200'
             }`}
           >
             {plan.highlight && (
@@ -138,21 +132,23 @@ export default function ChangePlanPage() {
                 Most Popular
               </div>
             )}
-            <h2 className="text-xl font-semibold mb-1">{plan.name}</h2>
-            <p className="text-lg font-bold mb-4">{plan.price}</p>
-            <ul className="text-sm space-y-2 mb-6">
-              {plan.features.map((f, i) => (
-                <li key={i}>✓ {f}</li>
-              ))}
-            </ul>
+            <div>
+              <h2 className="text-xl font-bold mb-1">{plan.name}</h2>
+              <p className="text-lg font-semibold mb-4">{plan.price}</p>
+              <ul className="mb-6 space-y-2 text-sm">
+                {plan.features.map((line) => (
+                  <li key={line}>✓ {line}</li>
+                ))}
+              </ul>
+            </div>
             <button
               onClick={() => handleSelect(plan.id)}
               disabled={selectedPlan === plan.id}
-              className={`w-full py-2 px-4 rounded font-medium text-sm transition ${
+              className={`mt-auto w-full py-2 px-4 rounded-md text-sm font-semibold transition ${
                 plan.highlight
                   ? 'bg-yellow-300 text-black hover:bg-yellow-200'
                   : 'bg-blue-600 text-white hover:bg-blue-700'
-              } ${selectedPlan === plan.id ? 'cursor-not-allowed opacity-70' : ''}`}
+              } ${selectedPlan === plan.id ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {selectedPlan === plan.id ? 'Redirecting...' : plan.button}
             </button>
@@ -161,7 +157,7 @@ export default function ChangePlanPage() {
       </div>
 
       {message && (
-        <p className="text-center text-red-500 font-medium text-sm mt-6">{message}</p>
+        <p className="text-center text-sm mt-6 text-red-500 font-medium">{message}</p>
       )}
     </main>
   )

@@ -6,7 +6,7 @@ import Link from 'next/link'
 import PromptTracker from '@/components/PromptTracker'
 import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
-import { Gift, UserCircle, Save, Share2, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { Gift, UserCircle, Save, Share2, ThumbsUp, ThumbsDown, BarChart2, Users, FileText, Briefcase } from 'lucide-react'
 import { API_BASE_URL } from '@/lib/constants'
 import { useUserStore } from '@/lib/store'
 
@@ -15,6 +15,14 @@ interface Message {
   content: string
   id?: string
 }
+
+const promptOptions = [
+  { text: 'How can Growfly help me?', icon: <Briefcase size={14} /> },
+  { text: 'How can you help me with my finances?', icon: <BarChart2 size={14} /> },
+  { text: 'How can you help me get more customers?', icon: <Users size={14} /> },
+  { text: 'How can you help me with documents and HR?', icon: <FileText size={14} /> },
+  { text: 'What marketing should I do today?', icon: <Briefcase size={14} /> },
+]
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -207,97 +215,97 @@ export default function DashboardPage() {
   const closeFeedbackModal = () => setShowFeedback(false)
 
   return (
-    <div className="space-y-6 px-4 md:px-8 lg:px-12 pb-10 bg-background text-textPrimary min-h-screen">
-      <div className="flex items-center gap-6">
-        <PromptTracker used={user.promptsUsed} limit={user.promptLimit} />
-        <Link href="/refer" className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow text-sm font-semibold">
-          <Gift size={18} />
-          Refer a Friend
-        </Link>
-        <Link href="/settings" className="ml-auto">
-          <UserCircle className="text-textPrimary hover:text-accent transition w-6 h-6" />
-        </Link>
-      </div>
-
-      <div className="card rounded-3xl p-6 space-y-5">
-        <div className="flex flex-wrap gap-3">
-          {[
-            'How can Growfly help me?',
-            'How can you help me with my finances?',
-            'How can you help me get more customers?',
-            'How can you help me with documents and HR?',
-            'What marketing should I do today?',
-          ].map((p, i) => (
-            <button
-              key={i}
-              onClick={() => handleSend(p)}
-              className="text-xs px-4 py-2 rounded-full border border-border bg-input text-textPrimary hover:bg-accent/10 transition"
-            >
-              {p}
-            </button>
-          ))}
+    <div className="px-4 md:px-8 pb-10 bg-background text-textPrimary min-h-screen">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex items-center gap-6">
+          <PromptTracker used={user.promptsUsed} limit={user.promptLimit} />
+          <Link
+            href="/refer"
+            className="flex items-center gap-2 bg-[var(--accent)] hover:brightness-110 text-white px-4 py-2 rounded-full shadow-md text-sm font-semibold transition"
+          >
+            <Gift size={18} />
+            Refer a Friend
+          </Link>
+          <Link href="/settings" className="ml-auto">
+            <UserCircle className="text-textPrimary hover:text-accent transition w-6 h-6" />
+          </Link>
         </div>
 
-        <div ref={chatRef} className="max-h-[60vh] overflow-y-auto space-y-4 bg-input p-4 rounded-3xl text-sm leading-relaxed whitespace-pre-wrap">
-          {messages.slice(-10).map((m, i) => (
-            <div key={i} className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
-              <div className={`p-3 rounded-2xl shadow max-w-[80%] break-words ${m.role === 'assistant' ? 'ai-reply text-textPrimary' : 'bg-accent text-white'}`}>
-                {m.content}
-              </div>
-              {m.role === 'assistant' && m.id && (
-                <div className="flex space-x-2 items-center ml-2">
-                  <button onClick={() => openFeedbackModalWith(m.id!)} className="p-1 bg-green-500 rounded-full hover:bg-green-600 transition" title="👍">
-                    <ThumbsUp className="w-4 h-4 text-white" />
-                  </button>
-                  <button onClick={() => openFeedbackModalWith(m.id!)} className="p-1 bg-red-600 rounded-full hover:bg-red-500 transition" title="👎">
-                    <ThumbsDown className="w-4 h-4 text-white" />
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {followUps.length > 0 && (
-          <div className="flex flex-wrap gap-2 pt-2">
-            {followUps.map((t, i) => (
+        <div className="bg-card rounded-3xl p-6 shadow space-y-5">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            {promptOptions.map((p, i) => (
               <button
                 key={i}
-                onClick={() => handleSend(t)}
-                className="text-xs px-3 py-2 rounded-full border border-border bg-input text-textPrimary hover:bg-accent/10 transition"
+                onClick={() => handleSend(p.text)}
+                className="flex items-center gap-1 text-xs px-4 py-2 rounded-full border border-[var(--accent)] bg-white text-textPrimary hover:bg-[var(--accent)] hover:text-white transition"
               >
-                {t}
+                {p.icon}
+                {p.text}
               </button>
             ))}
           </div>
-        )}
 
-        <div className="flex items-center gap-2 pt-4">
-          <input
-            className="flex-1 input p-2 text-sm rounded-full"
-            placeholder="Type your message…"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                handleSend(input)
-              }
-            }}
-          />
-          <button
-            onClick={() => handleSend(input)}
-            disabled={loading}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-sm font-medium transition disabled:opacity-50"
-          >
-            {loading ? 'Thinking…' : 'Send'}
-          </button>
-          <button onClick={handleSave} title="Save" className="p-2 rounded-full bg-border hover:bg-muted transition">
-            <Save className="w-5 h-5 text-blue-600" />
-          </button>
-          <button onClick={handleShare} title="Share" className="p-2 rounded-full bg-border hover:bg-muted transition">
-            <Share2 className="w-5 h-5 text-blue-600" />
-          </button>
+          <div ref={chatRef} className="max-h-[60vh] overflow-y-auto space-y-4 p-4 bg-input rounded-3xl text-sm leading-relaxed whitespace-pre-wrap">
+            {messages.slice(-10).map((m, i) => (
+              <div key={i} className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
+                <div className={`p-3 rounded-2xl shadow max-w-[80%] break-words ${m.role === 'assistant' ? 'bg-[var(--highlight)] text-[var(--textPrimary)]' : 'bg-[var(--accent)] text-white'}`}>
+                  {m.content}
+                </div>
+                {m.role === 'assistant' && m.id && (
+                  <div className="flex space-x-2 items-center ml-2">
+                    <button onClick={() => openFeedbackModalWith(m.id!)} className="p-1 bg-green-500 rounded-full hover:bg-green-600 transition" title="👍">
+                      <ThumbsUp className="w-4 h-4 text-white" />
+                    </button>
+                    <button onClick={() => openFeedbackModalWith(m.id!)} className="p-1 bg-red-600 rounded-full hover:bg-red-500 transition" title="👎">
+                      <ThumbsDown className="w-4 h-4 text-white" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {followUps.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-2">
+              {followUps.map((t, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleSend(t)}
+                  className="text-xs px-3 py-2 rounded-full border border-border bg-input text-textPrimary hover:bg-accent/10 transition"
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 pt-4">
+            <input
+              className="flex-1 p-2 text-sm rounded-full bg-[var(--input)] border border-[var(--input-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              placeholder="Type your message…"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  handleSend(input)
+                }
+              }}
+            />
+            <button
+              onClick={() => handleSend(input)}
+              disabled={loading}
+              className="px-4 py-2 bg-[var(--accent)] hover:brightness-110 text-white rounded-full text-sm font-medium transition disabled:opacity-50"
+            >
+              {loading ? 'Thinking…' : 'Send'}
+            </button>
+            <button onClick={handleSave} title="Save" className="p-2 rounded-full bg-[var(--accent)] hover:brightness-110 transition">
+              <Save className="w-5 h-5 text-white" />
+            </button>
+            <button onClick={handleShare} title="Share" className="p-2 rounded-full bg-[var(--accent)] hover:brightness-110 transition">
+              <Share2 className="w-5 h-5 text-white" />
+            </button>
+          </div>
         </div>
       </div>
 

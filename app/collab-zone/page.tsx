@@ -36,18 +36,30 @@ export default function CollabZonePage() {
 
     fetch(`${API_URL}/api/collab`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
-      .then((all: Doc[]) => {
-        setDocs(all)
-        if (all.length) {
-          setActiveId(all[0].id)
-          setContent(all[0].content)
-          setLastUpdated(all[0].updatedAt)
+      .then((all: any) => {
+        if (Array.isArray(all)) {
+          setDocs(all)
+          if (all.length) {
+            setActiveId(all[0].id)
+            setContent(all[0].content)
+            setLastUpdated(all[0].updatedAt)
+          }
+        } else {
+          console.error('[❌] Invalid response for /collab', all)
+          setDocs([])
         }
       })
 
     fetch(`${API_URL}/api/collab/shared`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
-      .then((allShared: Doc[]) => setSharedDocs(allShared))
+      .then((allShared: any) => {
+        if (Array.isArray(allShared)) {
+          setSharedDocs(allShared)
+        } else {
+          console.error('[❌] Invalid response for /collab/shared', allShared)
+          setSharedDocs([])
+        }
+      })
   }, [router])
 
   useEffect(() => {
@@ -59,24 +71,20 @@ export default function CollabZonePage() {
     }
   }, [activeId, docs, sharedDocs])
 
-  // 🔄 Poll every 5 seconds
   useEffect(() => {
     if (!activeId) return
     const token = localStorage.getItem('growfly_jwt')
-
     const interval = setInterval(async () => {
       const res = await fetch(`${API_URL}/api/collab/${activeId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       const latest = await res.json()
-
       if (latest.updatedAt !== lastUpdated) {
         setContent(latest.content)
         setLastUpdated(latest.updatedAt)
         console.log('[🔄] Synced from server.')
       }
     }, 5000)
-
     return () => clearInterval(interval)
   }, [activeId, lastUpdated])
 
@@ -166,7 +174,7 @@ export default function CollabZonePage() {
         </button>
 
         <div className="font-bold text-sm">Your Docs</div>
-        {docs.map(doc => (
+        {Array.isArray(docs) && docs.map(doc => (
           <div
             key={doc.id}
             className={`flex items-center justify-between px-2 py-1 rounded cursor-pointer ${
@@ -196,7 +204,7 @@ export default function CollabZonePage() {
         ))}
 
         <div className="font-bold text-sm pt-2">Shared with You</div>
-        {sharedDocs.map(doc => (
+        {Array.isArray(sharedDocs) && sharedDocs.map(doc => (
           <div
             key={doc.id}
             className={`flex items-center justify-between px-2 py-1 rounded cursor-pointer ${
