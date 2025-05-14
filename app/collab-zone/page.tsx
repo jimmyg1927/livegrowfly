@@ -37,18 +37,20 @@ export default function CollabZonePage() {
       .then((all: any) => {
         if (Array.isArray(all)) {
           setDocs(all)
-          if (all.length) setActiveDoc(all[0])
+          if (!activeDoc && all.length) {
+            setActiveDoc(all[0])
+          }
         }
       })
 
     fetch(`${API_URL}/api/collab/shared`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
-      .then((allShared: any) => {
-        if (Array.isArray(allShared)) {
-          setSharedDocs(allShared)
+      .then((shared: any) => {
+        if (Array.isArray(shared)) {
+          setSharedDocs(shared)
         }
       })
-  }, [router])
+  }, [])
 
   const handleNew = async () => {
     const token = localStorage.getItem('growfly_jwt')!
@@ -61,7 +63,7 @@ export default function CollabZonePage() {
       body: JSON.stringify({ title: 'Untitled', content: '' }),
     })
     const created = await res.json()
-    setDocs(d => [created, ...d])
+    setDocs(prev => [created, ...prev])
     setActiveDoc(created)
   }
 
@@ -72,17 +74,18 @@ export default function CollabZonePage() {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ content: activeDoc.content, title: activeDoc.title }),
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        content: activeDoc.content,
+        title: activeDoc.title,
+      }),
     })
-    if (res.ok) {
-      const updated = await res.json()
-      setDocs(d => d.map(doc => doc.id === updated.id ? updated : doc))
-      setActiveDoc(updated)
-      setStatusMsg({ type: 'success', text: 'Saved!' })
-    } else {
-      setStatusMsg({ type: 'error', text: 'Save failed.' })
-    }
+
+    const updated = await res.json()
+    setDocs(prev => prev.map(doc => doc.id === updated.id ? updated : doc))
+    setActiveDoc(updated)
+    setStatusMsg({ type: 'success', text: 'Saved!' })
   }
 
   const handleRename = async (id: string) => {
@@ -91,34 +94,47 @@ export default function CollabZonePage() {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}` },
+        Authorization: `Bearer ${token}`
+      },
       body: JSON.stringify({ title: newTitle }),
     })
-    if (res.ok) {
-      const updated = await res.json()
-      setDocs(d => d.map(doc => doc.id === id ? updated : doc))
-      if (activeDoc?.id === id) setActiveDoc(updated)
-      setTitleEditId(null)
-      setStatusMsg({ type: 'success', text: 'Renamed!' })
-    } else {
-      setStatusMsg({ type: 'error', text: 'Rename failed.' })
-    }
+
+    const updated = await res.json()
+    setDocs(prev => prev.map(doc => doc.id === id ? updated : doc))
+    if (activeDoc?.id === id) setActiveDoc(updated)
+    setTitleEditId(null)
+    setStatusMsg({ type: 'success', text: 'Renamed!' })
+  }
+
+  const confirmDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this document?')) return
+    const token = localStorage.getItem('growfly_jwt')!
+    await fetch(`${API_URL}/api/collab/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    setDocs(prev => prev.filter(doc => doc.id !== id))
+    if (activeDoc?.id === id) setActiveDoc(null)
+    setStatusMsg({ type: 'success', text: 'Deleted.' })
   }
 
   const shareByEmail = async () => {
     if (!activeDoc || !shareEmail.includes('@')) {
       return setStatusMsg({ type: 'error', text: 'Enter a valid email.' })
     }
+
     const token = localStorage.getItem('growfly_jwt')!
     const res = await fetch(`${API_URL}/api/collab/${activeDoc.id}/share`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}` },
+        Authorization: `Bearer ${token}`
+      },
       body: JSON.stringify({ email: shareEmail }),
     })
+
     if (res.ok) {
-      setStatusMsg({ type: 'success', text: 'Shared via email!' })
+      setStatusMsg({ type: 'success', text: 'Shared & link copied!' })
     } else {
       const { error } = await res.json().catch(() => ({}))
       setStatusMsg({ type: 'error', text: error || 'Share failed.' })
@@ -135,7 +151,10 @@ export default function CollabZonePage() {
   return (
     <div className="flex h-full bg-background text-textPrimary">
       <aside className="w-52 border-r border-border bg-card p-3 space-y-3 overflow-auto text-sm">
-        <button onClick={handleNew} className="w-full flex items-center gap-1 px-2 py-2 bg-accent text-white rounded hover:brightness-110 transition text-xs">
+        <button
+          onClick={handleNew}
+          className="w-full flex items-center gap-1 px-2 py-2 bg-accent text-white rounded hover:brightness-110 transition text-xs"
+        >
           <FiPlus /> New Doc
         </button>
 
@@ -143,29 +162,35 @@ export default function CollabZonePage() {
         {docs.map(doc => (
           <div
             key={doc.id}
-            className={`flex items-center justify-between px-2 py-1 rounded cursor-pointer ${
+            className={`flex flex-col px-2 py-1 rounded ${
               doc.id === activeDoc?.id ? 'bg-accent/20' : 'hover:bg-muted'
             }`}
-            onClick={() => setActiveDoc(doc)}
           >
-            {titleEditId === doc.id ? (
-              <input
-                type="text"
-                className="flex-1 mr-2 px-1 py-1 text-xs rounded border border-muted bg-background text-textPrimary"
-                value={newTitle}
-                onChange={e => setNewTitle(e.target.value)}
-                onBlur={() => handleRename(doc.id)}
-                autoFocus
-              />
-            ) : (
-              <>
-                <span className="flex-1 truncate text-xs">{doc.title}</span>
-                <div className="flex gap-1">
-                  <FiEdit3 className="cursor-pointer" onClick={() => { setTitleEditId(doc.id); setNewTitle(doc.title) }} size={12} />
-                  <FiTrash2 className="cursor-pointer text-red-600" size={12} />
+            <div onClick={() => setActiveDoc(doc)} className="truncate text-xs cursor-pointer">
+              {titleEditId === doc.id ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    value={newTitle}
+                    onChange={e => setNewTitle(e.target.value)}
+                    className="flex-1 px-1 text-xs border rounded"
+                  />
+                  <button
+                    onClick={() => handleRename(doc.id)}
+                    className="text-green-600 text-xs"
+                  >
+                    Save
+                  </button>
                 </div>
-              </>
-            )}
+              ) : (
+                <span className="flex justify-between items-center gap-2">
+                  {doc.title}
+                  <span className="flex items-center gap-1">
+                    <FiEdit3 size={12} onClick={() => { setTitleEditId(doc.id); setNewTitle(doc.title) }} className="cursor-pointer" />
+                    <FiTrash2 size={12} onClick={() => confirmDelete(doc.id)} className="cursor-pointer text-red-600" />
+                  </span>
+                </span>
+              )}
+            </div>
           </div>
         ))}
 
@@ -198,7 +223,7 @@ export default function CollabZonePage() {
             <button onClick={shareByEmail} className="px-3 py-2 bg-accent text-white rounded text-sm">
               <FiMail size={14} className="inline mr-1" /> Share
             </button>
-            <button onClick={copyLink} className="px-3 py-2 bg-muted text-sm rounded hover:bg-muted/80">
+            <button onClick={copyLink} className="px-3 py-2 bg-muted rounded text-sm">
               <FiLink size={14} className="inline mr-1" /> Copy Link
             </button>
             <button onClick={handleSave} className="px-3 py-2 bg-green-600 text-white rounded text-sm">
