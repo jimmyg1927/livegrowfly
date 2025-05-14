@@ -20,7 +20,7 @@ interface Doc {
 export default function CollabZonePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const initialDocId = searchParams?.get('doc') ?? null
+  const initialDocId = searchParams?.get('doc') || null
 
   const [docs, setDocs] = useState<Doc[]>([])
   const [sharedDocs, setSharedDocs] = useState<Doc[]>([])
@@ -37,20 +37,20 @@ export default function CollabZonePage() {
 
     fetch(`${API_URL}/api/collab`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
-      .then((all: Doc[]) => {
-        setDocs(all)
-        if (initialDocId) {
-          const doc = all.find(d => d.id === initialDocId)
-          if (doc) setActiveDoc(doc)
-        } else if (!activeDoc && all.length) {
-          setActiveDoc(all[0])
+      .then((all: any) => {
+        if (Array.isArray(all)) {
+          setDocs(all)
+          const docToLoad = all.find((d: any) => d.id === initialDocId) || all[0]
+          if (docToLoad) setActiveDoc(docToLoad)
         }
       })
 
     fetch(`${API_URL}/api/collab/shared`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
-      .then((shared: Doc[]) => {
-        setSharedDocs(shared)
+      .then((shared: any) => {
+        if (Array.isArray(shared)) {
+          setSharedDocs(shared)
+        }
       })
   }, [])
 
@@ -152,7 +152,7 @@ export default function CollabZonePage() {
 
   return (
     <div className="flex h-screen bg-background text-textPrimary overflow-hidden">
-      <aside className="w-56 border-r border-border bg-card p-3 space-y-4 overflow-y-auto text-sm">
+      <aside className="w-64 border-r border-border bg-card p-4 space-y-4 overflow-y-auto text-sm">
         <button
           onClick={handleNew}
           className="w-full flex items-center gap-1 px-3 py-2 bg-accent text-white rounded hover:brightness-110 transition text-xs"
@@ -160,13 +160,11 @@ export default function CollabZonePage() {
           <FiPlus /> New Doc
         </button>
 
-        <div className="font-bold text-sm mt-2">Your Docs</div>
+        <div className="font-bold text-sm">Your Docs</div>
         {docs.map(doc => (
           <div
             key={doc.id}
-            className={`flex flex-col px-2 py-1 rounded ${
-              doc.id === activeDoc?.id ? 'bg-accent/20' : 'hover:bg-muted'
-            }`}
+            className={`flex flex-col px-2 py-1 rounded ${doc.id === activeDoc?.id ? 'bg-accent/20' : 'hover:bg-muted'}`}
           >
             <div onClick={() => setActiveDoc(doc)} className="truncate text-xs cursor-pointer">
               {titleEditId === doc.id ? (
@@ -200,9 +198,7 @@ export default function CollabZonePage() {
         {sharedDocs.map(doc => (
           <div
             key={doc.id}
-            className={`flex items-center justify-between px-2 py-1 rounded cursor-pointer ${
-              doc.id === activeDoc?.id ? 'bg-accent/20' : 'hover:bg-muted'
-            }`}
+            className={`flex items-center justify-between px-2 py-1 rounded cursor-pointer ${doc.id === activeDoc?.id ? 'bg-accent/20' : 'hover:bg-muted'}`}
             onClick={() => setActiveDoc(doc)}
           >
             <span className="truncate text-xs">{doc.title}</span>
@@ -211,10 +207,10 @@ export default function CollabZonePage() {
         ))}
       </aside>
 
-      <main className="flex-1 p-4 space-y-4 overflow-auto">
+      <main className="flex-1 p-6 space-y-4 overflow-auto">
         <div className="flex flex-wrap gap-2 items-center justify-between">
           <h1 className="text-xl font-semibold">Collab Zone</h1>
-          <div className="flex flex-wrap gap-2 items-center text-sm">
+          <div className="flex flex-wrap gap-2 items-center">
             <input
               type="email"
               placeholder="email to share with"
@@ -222,23 +218,23 @@ export default function CollabZonePage() {
               onChange={e => setShareEmail(e.target.value)}
               className="px-2 py-1 border border-border rounded text-sm"
             />
-            <button onClick={shareByEmail} className="px-2 py-1 bg-accent text-white rounded">
+            <button onClick={shareByEmail} className="px-3 py-2 bg-accent text-white rounded text-sm">
               <FiMail size={14} className="inline mr-1" /> Share
             </button>
-            <button onClick={copyLink} className="px-2 py-1 bg-muted rounded">
+            <button onClick={copyLink} className="px-3 py-2 bg-muted rounded text-sm">
               <FiLink size={14} className="inline mr-1" /> Copy Link
             </button>
-            <button onClick={handleSave} className="px-2 py-1 bg-green-600 text-white rounded">
+            <button onClick={handleSave} className="px-3 py-2 bg-green-600 text-white rounded text-sm">
               <FiSave size={14} className="inline mr-1" /> Save
             </button>
-            <button onClick={() => setShowComments(!showComments)} className="px-2 py-1 bg-muted rounded">
+            <button onClick={() => setShowComments(!showComments)} className="px-3 py-2 bg-muted rounded text-sm">
               {showComments ? 'Hide Comments' : 'Show Comments'}
             </button>
           </div>
         </div>
 
         {statusMsg && (
-          <div className={`flex items-center gap-2 px-3 py-2 rounded text-sm ${
+          <div className={`flex items-center gap-2 px-3 py-2 rounded ${
             statusMsg.type === 'success'
               ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'
               : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'
