@@ -33,7 +33,7 @@ export default function ReferPage() {
     <div className="p-6 max-w-3xl mx-auto">
       <h1 className="text-3xl font-bold mb-4">Refer a Friend 💙</h1>
       <p className="text-muted mb-6">
-        Invite your friends to Growfly — they'll get <b>20 free prompts</b> and you'll earn <b>20 bonus prompts</b> for every signup.
+        Invite your friends to Growfly — they’ll get <b>20 free prompts</b> and you’ll earn <b>20 bonus prompts</b> for every signup.
       </p>
 
       <div className="bg-card p-6 rounded-xl shadow space-y-4">
