@@ -1,14 +1,14 @@
 // File: app/signup/page.tsx
 import { Suspense } from 'react'
-import dynamic from 'next/dynamic'
+import SignupClient from './SignupClient'
 
-// ✅ Do NOT use `export const dynamic` here — `ssr: false` already disables prerendering
-const SignupClient = dynamic(() => import('./SignupClient'), { ssr: false })
+// ✅ This is a valid App Router pattern: read searchParams server-side
+export default function SignupPage({ searchParams }: { searchParams: { plan?: string } }) {
+  const selectedPlan = (searchParams.plan || 'free').toLowerCase()
 
-export default function SignupPage() {
   return (
     <Suspense fallback={<div className="text-white text-center p-10">Loading signup form...</div>}>
-      <SignupClient />
+      <SignupClient plan={selectedPlan} />
     </Suspense>
   )
 }

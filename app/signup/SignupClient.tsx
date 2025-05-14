@@ -1,14 +1,11 @@
-// app/signup/SignupClient.tsx
+// File: app/signup/SignupClient.tsx
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 
-export default function SignupClient() {
+export default function SignupClient({ plan }: { plan: string }) {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const planFromUrl = searchParams?.get('plan') || 'free'
-
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -25,7 +22,7 @@ export default function SignupClient() {
       const res = await fetch('/api/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, plan: planFromUrl }),
+        body: JSON.stringify({ name, email, password, plan }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Signup failed')
@@ -37,53 +34,56 @@ export default function SignupClient() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-black flex items-center justify-center px-4 text-white">
-      <div className="w-full max-w-md bg-card rounded-2xl shadow-xl p-8">
-        <h1 className="text-2xl font-bold text-center mb-4">
-          Sign Up for {planFromUrl.charAt(0).toUpperCase() + planFromUrl.slice(1)} Plan
-        </h1>
-        {message && <p className="text-red-400 text-center mb-4">{message}</p>}
+      <div className="w-full max-w-xl bg-card rounded-2xl shadow-xl p-8">
+        <h1 className="text-2xl font-bold text-center mb-6">Create your Growfly account</h1>
+        <p className="text-center text-sm text-muted-foreground mb-6">
+          You&apos;re signing up for the <span className="font-semibold capitalize">{plan}</span> plan.
+        </p>
+
+        {message && <p className="text-red-400 text-center text-sm mb-4">{message}</p>}
+
         <form onSubmit={handleSignup} className="space-y-5">
           <div>
-            <label htmlFor="name" className="block mb-1">Name</label>
+            <label htmlFor="name" className="block mb-1 text-sm font-medium">Name</label>
             <input
-              id="name"
               type="text"
+              id="name"
               required
               value={name}
-              onChange={e => setName(e.target.value)}
+              onChange={(e) => setName(e.target.value)}
               className="w-full p-3 rounded-md border border-border bg-input text-textPrimary"
             />
           </div>
           <div>
-            <label htmlFor="email" className="block mb-1">Email</label>
+            <label htmlFor="email" className="block mb-1 text-sm font-medium">Email</label>
             <input
-              id="email"
               type="email"
+              id="email"
               required
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full p-3 rounded-md border border-border bg-input text-textPrimary"
             />
           </div>
           <div>
-            <label htmlFor="password" className="block mb-1">Password</label>
+            <label htmlFor="password" className="block mb-1 text-sm font-medium">Password</label>
             <input
-              id="password"
               type="password"
+              id="password"
               required
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full p-3 rounded-md border border-border bg-input text-textPrimary"
             />
           </div>
           <div>
-            <label htmlFor="confirmPassword" className="block mb-1">Confirm Password</label>
+            <label htmlFor="confirmPassword" className="block mb-1 text-sm font-medium">Confirm Password</label>
             <input
-              id="confirmPassword"
               type="password"
+              id="confirmPassword"
               required
               value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full p-3 rounded-md border border-border bg-input text-textPrimary"
             />
           </div>
