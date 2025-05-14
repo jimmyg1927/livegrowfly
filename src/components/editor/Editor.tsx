@@ -12,6 +12,7 @@ import BulletList from '@tiptap/extension-bullet-list'
 import OrderedList from '@tiptap/extension-ordered-list'
 import Blockquote from '@tiptap/extension-blockquote'
 import CodeBlock from '@tiptap/extension-code-block'
+import Highlight from '@tiptap/extension-highlight'
 
 import {
   Bold, Italic, Underline as Under, Strikethrough, List, ListOrdered, Quote, Code,
@@ -38,6 +39,7 @@ interface Comment {
   from: number
   to: number
   resolved: boolean
+  createdAt?: string
 }
 
 export default function Editor({ content, setContent, docId, showComments }: Props) {
@@ -59,6 +61,7 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
       OrderedList,
       Blockquote,
       CodeBlock,
+      Highlight.configure({ multicolor: true }),
     ],
     content,
     onUpdate: ({ editor }) => {
@@ -91,8 +94,7 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
+        Authorization: `Bearer ${token}` },
       body: JSON.stringify({
         docId,
         text: newComment,
@@ -104,9 +106,13 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
     const created = await res.json()
     setComments(prev => [...prev, created])
     setNewComment('')
+    editor
+      .chain()
+      .focus()
+      .setTextSelection({ from: created.from, to: created.to })
+      .setHighlight({ color: '#f43f5e' })
+      .run()
     setActiveRange(null)
-
-    editor.commands.setTextSelection({ from: created.to, to: created.to })
   }
 
   const resolveComment = async (id: string) => {
@@ -150,8 +156,8 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
   )
 
   return (
-    <div className="flex gap-6 max-w-full">
-      <div className="flex-1 min-w-0">
+    <div className="flex gap-4">
+      <div className="flex-1">
         {editor && (
           <div className="flex flex-wrap gap-1 p-2 border-b bg-card mb-2 rounded">
             {toolbarBtn(() => editor.chain().focus().toggleBold().run(), editor.isActive('bold'), <Bold size={16} />)}
@@ -202,24 +208,27 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
         <p className="text-xs text-muted-foreground mt-3 italic">💬 Highlight any text above to add a comment.</p>
 
         <div className="mt-4 flex gap-4">
-          <button onClick={exportPDF} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110 text-sm">
-            <Download size={14} /> Export PDF
+          <button onClick={exportPDF} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110">
+            <Download size={16} /> Export PDF
           </button>
-          <button onClick={exportDocx} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110 text-sm">
-            <Download size={14} /> Export Word
+          <button onClick={exportDocx} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110">
+            <Download size={16} /> Export Word
           </button>
         </div>
       </div>
 
       {showComments && (
-        <aside className="w-80 pl-4 border-l space-y-3">
-          <h2 className="text-lg font-semibold flex items-center gap-1">
-            <MessageCircleMore size={18} /> Comments
+        <aside className="w-64 pl-4 border-l space-y-3 text-sm">
+          <h2 className="text-base font-semibold flex items-center gap-1">
+            <MessageCircleMore size={16} /> Comments
           </h2>
-          {comments.length === 0 && <p className="text-sm text-muted-foreground">No comments yet.</p>}
+          {comments.length === 0 && <p className="text-muted-foreground text-xs">No comments yet.</p>}
           {comments.map(c => (
-            <div key={c.id} className={`border rounded p-3 text-sm shadow-sm ${c.resolved ? 'opacity-50 line-through' : ''}`}>
+            <div key={c.id} className={`border rounded p-3 shadow-sm ${c.resolved ? 'opacity-40 line-through' : ''}`}>
               <p>{c.text}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {c.createdAt ? new Date(c.createdAt).toLocaleString() : ''}
+              </p>
               <div className="flex gap-3 mt-2">
                 {!c.resolved && (
                   <button onClick={() => resolveComment(c.id)} className="text-green-600 text-xs">Resolve</button>
