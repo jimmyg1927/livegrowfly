@@ -49,6 +49,7 @@ export default function DashboardPage() {
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)
   const [feedbackResponseId, setFeedbackResponseId] = useState('')
+  const [savingContent, setSavingContent] = useState('')
   const chatRef = useRef<HTMLDivElement>(null)
 
   const setUser = useUserStore((state) => state.setUser)
@@ -184,7 +185,10 @@ export default function DashboardPage() {
     }
   }
 
-  const handleSave = () => setShowSaveModal(true)
+  const handleSave = (content: string) => {
+    setSavingContent(content)
+    setShowSaveModal(true)
+  }
 
   const confirmSave = async (title: string) => {
     const token = localStorage.getItem('growfly_jwt')
@@ -192,29 +196,22 @@ export default function DashboardPage() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+        Authorization: `Bearer ${token}` },
       credentials: 'include',
-      body: JSON.stringify({
-        content: messages.slice(-1)[0]?.content || '',
-        title,
-      }),
+      body: JSON.stringify({ content: savingContent, title }),
     })
     setShowSaveModal(false)
   }
 
-  const handleShare = async () => {
+  const handleShare = async (content: string) => {
     const token = localStorage.getItem('growfly_jwt')
     await fetch(`${API_BASE_URL}/api/collab`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+        Authorization: `Bearer ${token}` },
       credentials: 'include',
-      body: JSON.stringify({
-        content: messages.slice(-1)[0]?.content || '',
-      }),
+      body: JSON.stringify({ content }),
     })
     router.push('/collab-zone')
   }
@@ -228,7 +225,7 @@ export default function DashboardPage() {
 
   return (
     <div className="px-4 md:px-8 pb-10 bg-background text-textPrimary min-h-screen">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex items-center gap-6">
           <PromptTracker used={user.promptsUsed} limit={user.promptLimit} />
           <Link
@@ -257,31 +254,36 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          <div
-            ref={chatRef}
-            className="max-h-[60vh] overflow-y-auto space-y-4 bg-input p-4 rounded-3xl text-sm leading-relaxed whitespace-pre-wrap"
-          >
+          <div ref={chatRef} className="max-h-[60vh] overflow-y-auto space-y-4">
             {messages.slice(-10).map((m, i) => (
               <div key={i} className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
-                <div
-                  className={`p-3 rounded-2xl shadow max-w-[80%] break-words ${
-                    m.role === 'assistant'
-                      ? 'bg-[var(--highlight)] text-[var(--textPrimary)]'
-                      : 'bg-[var(--accent)] text-white'
-                  }`}
-                >
-                  {m.content}
-                </div>
-                {m.role === 'assistant' && m.id && (
-                  <div className="flex space-x-2 items-center ml-2">
-                    <button onClick={() => openFeedbackModalWith(m.id!)} className="p-1 bg-green-500 rounded-full hover:bg-green-600 transition" title="👍">
-                      <ThumbsUp className="w-4 h-4 text-white" />
-                    </button>
-                    <button onClick={() => openFeedbackModalWith(m.id!)} className="p-1 bg-red-600 rounded-full hover:bg-red-500 transition" title="👎">
-                      <ThumbsDown className="w-4 h-4 text-white" />
-                    </button>
+                <div className="space-y-1 max-w-[80%]">
+                  <div
+                    className={`p-4 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap shadow ${
+                      m.role === 'assistant'
+                        ? 'bg-[var(--highlight)] text-[var(--textPrimary)]'
+                        : 'bg-[var(--accent)] text-white'
+                    }`}
+                  >
+                    {m.content}
                   </div>
-                )}
+                  {m.role === 'assistant' && m.id && (
+                    <div className="flex gap-2 items-center ml-1">
+                      <button onClick={() => openFeedbackModalWith(m.id!)} className="p-1 bg-green-500 rounded-full hover:bg-green-600 transition" title="Thumbs up">
+                        <ThumbsUp className="w-4 h-4 text-white" />
+                      </button>
+                      <button onClick={() => openFeedbackModalWith(m.id!)} className="p-1 bg-red-600 rounded-full hover:bg-red-500 transition" title="Thumbs down">
+                        <ThumbsDown className="w-4 h-4 text-white" />
+                      </button>
+                      <button onClick={() => handleSave(m.content)} title="Save this response" className="p-1 bg-blue-500 rounded-full hover:bg-blue-600 transition">
+                        <Save className="w-4 h-4 text-white" />
+                      </button>
+                      <button onClick={() => handleShare(m.content)} title="Share to Collab Zone" className="p-1 bg-purple-500 rounded-full hover:bg-purple-600 transition">
+                        <Share2 className="w-4 h-4 text-white" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -319,12 +321,6 @@ export default function DashboardPage() {
               className="px-4 py-2 bg-[var(--accent)] hover:brightness-110 text-white rounded-full text-sm font-medium transition disabled:opacity-50"
             >
               {loading ? 'Thinking…' : 'Send'}
-            </button>
-            <button onClick={handleSave} title="Save" className="p-2 rounded-full bg-[var(--accent)] hover:brightness-110 transition">
-              <Save className="w-5 h-5 text-white" />
-            </button>
-            <button onClick={handleShare} title="Share" className="p-2 rounded-full bg-[var(--accent)] hover:brightness-110 transition">
-              <Share2 className="w-5 h-5 text-white" />
             </button>
           </div>
         </div>

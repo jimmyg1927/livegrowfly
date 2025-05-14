@@ -149,8 +149,8 @@ export default function CollabZonePage() {
   }
 
   return (
-    <div className="flex h-full bg-background text-textPrimary">
-      <aside className="w-64 border-r border-border bg-card p-4 space-y-4 overflow-auto text-sm">
+    <div className="flex h-screen bg-background text-textPrimary overflow-hidden">
+      <aside className="w-64 border-r border-border bg-card p-4 space-y-4 overflow-y-auto text-sm">
         <button
           onClick={handleNew}
           className="w-full flex items-center gap-1 px-3 py-2 bg-accent text-white rounded hover:brightness-110 transition text-xs"
@@ -247,7 +247,7 @@ export default function CollabZonePage() {
         )}
 
         <div className="border border-border rounded-lg bg-card p-2 min-h-[60vh] overflow-y-auto">
-          {activeDoc && (
+          {activeDoc ? (
             <Editor
               key={activeDoc.id}
               content={activeDoc.content}
@@ -255,6 +255,10 @@ export default function CollabZonePage() {
               docId={activeDoc.id}
               showComments={showComments}
             />
+          ) : (
+            <p className="text-muted-foreground p-10 text-sm text-center">
+              Select or create a document to begin editing.
+            </p>
           )}
         </div>
       </main>

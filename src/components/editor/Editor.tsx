@@ -103,6 +103,9 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
     const created = await res.json()
     setComments(prev => [...prev, created])
     setNewComment('')
+
+    // Add highlight directly
+    editor.chain().focus().setTextSelection({ from: created.from, to: created.to }).run()
     setActiveRange(null)
   }
 
@@ -141,7 +144,9 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
   }
 
   const toolbarBtn = (action: () => void, active: boolean, icon: React.ReactNode) => (
-    <button onClick={action} className={`p-1 rounded ${active ? 'bg-accent/40' : ''}`}>{icon}</button>
+    <button onClick={action} className={`p-1 rounded ${active ? 'bg-accent/40' : ''}`}>
+      {icon}
+    </button>
   )
 
   return (
@@ -172,7 +177,6 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
 
         {editor && (
           <EditorContent
-            key={docId}
             editor={editor}
             className="editor-output min-h-[55vh] p-4 overflow-auto border rounded bg-background text-textPrimary"
           />
@@ -184,7 +188,7 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
               value={newComment}
               onChange={e => setNewComment(e.target.value)}
               className="w-full p-2 rounded border text-sm mb-2"
-              placeholder="Write your comment here..."
+              placeholder="Add comment on selected text..."
             />
             <button
               onClick={addComment}
@@ -195,11 +199,7 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
           </div>
         )}
 
-        {!activeRange && (
-          <p className="text-sm text-muted-foreground mt-2 italic">
-            💬 Highlight any text above to add a comment.
-          </p>
-        )}
+        <p className="text-xs text-muted-foreground mt-3 italic">💬 Highlight any text above to add a comment.</p>
 
         <div className="mt-4 flex gap-4">
           <button onClick={exportPDF} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110">
@@ -212,15 +212,15 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
       </div>
 
       {showComments && (
-        <aside className="w-80 pl-4 border-l space-y-4">
+        <aside className="w-80 pl-4 border-l space-y-3">
           <h2 className="text-lg font-semibold flex items-center gap-1">
             <MessageCircleMore size={18} /> Comments
           </h2>
           {comments.length === 0 && <p className="text-sm text-muted-foreground">No comments yet.</p>}
           {comments.map(c => (
-            <div key={c.id} className={`border rounded p-3 ${c.resolved ? 'opacity-60 line-through' : ''}`}>
-              <p className="text-sm mb-2">{c.text}</p>
-              <div className="flex gap-2">
+            <div key={c.id} className={`border rounded p-3 text-sm shadow-sm ${c.resolved ? 'opacity-50 line-through' : ''}`}>
+              <p>{c.text}</p>
+              <div className="flex gap-3 mt-2">
                 {!c.resolved && (
                   <button onClick={() => resolveComment(c.id)} className="text-green-600 text-xs">Resolve</button>
                 )}
