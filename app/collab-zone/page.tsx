@@ -150,10 +150,10 @@ export default function CollabZonePage() {
 
   return (
     <div className="flex h-full bg-background text-textPrimary">
-      <aside className="w-52 border-r border-border bg-card p-3 space-y-3 overflow-auto text-sm">
+      <aside className="w-64 border-r border-border bg-card p-4 space-y-4 overflow-auto text-sm">
         <button
           onClick={handleNew}
-          className="w-full flex items-center gap-1 px-2 py-2 bg-accent text-white rounded hover:brightness-110 transition text-xs"
+          className="w-full flex items-center gap-1 px-3 py-2 bg-accent text-white rounded hover:brightness-110 transition text-xs"
         >
           <FiPlus /> New Doc
         </button>
@@ -209,10 +209,10 @@ export default function CollabZonePage() {
         ))}
       </aside>
 
-      <main className="flex-1 p-6 space-y-4">
-        <div className="flex items-center justify-between">
+      <main className="flex-1 p-6 space-y-4 overflow-auto">
+        <div className="flex flex-wrap gap-2 items-center justify-between">
           <h1 className="text-xl font-semibold">Collab Zone</h1>
-          <div className="flex gap-2 items-center">
+          <div className="flex flex-wrap gap-2 items-center">
             <input
               type="email"
               placeholder="email to share with"
@@ -249,6 +249,7 @@ export default function CollabZonePage() {
         <div className="border border-border rounded-lg bg-card p-2 min-h-[60vh] overflow-y-auto">
           {activeDoc && (
             <Editor
+              key={activeDoc.id}
               content={activeDoc.content}
               setContent={(html: string) => setActiveDoc({ ...activeDoc, content: html })}
               docId={activeDoc.id}

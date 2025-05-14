@@ -141,9 +141,7 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
   }
 
   const toolbarBtn = (action: () => void, active: boolean, icon: React.ReactNode) => (
-    <button onClick={action} className={`p-1 rounded ${active ? 'bg-accent/40' : ''}`}>
-      {icon}
-    </button>
+    <button onClick={action} className={`p-1 rounded ${active ? 'bg-accent/40' : ''}`}>{icon}</button>
   )
 
   return (
@@ -172,12 +170,6 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
           </div>
         )}
 
-        {!activeRange && (
-          <p className="text-sm text-muted-foreground mt-2">
-            💬 Select some text to add a comment.
-          </p>
-        )}
-
         {editor && (
           <EditorContent
             key={docId}
@@ -192,7 +184,7 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
               value={newComment}
               onChange={e => setNewComment(e.target.value)}
               className="w-full p-2 rounded border text-sm mb-2"
-              placeholder="Add comment on selection..."
+              placeholder="Write your comment here..."
             />
             <button
               onClick={addComment}
@@ -201,6 +193,12 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
               Comment
             </button>
           </div>
+        )}
+
+        {!activeRange && (
+          <p className="text-sm text-muted-foreground mt-2 italic">
+            💬 Highlight any text above to add a comment.
+          </p>
         )}
 
         <div className="mt-4 flex gap-4">
@@ -214,15 +212,15 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
       </div>
 
       {showComments && (
-        <aside className="w-80 pl-4 border-l space-y-3">
+        <aside className="w-80 pl-4 border-l space-y-4">
           <h2 className="text-lg font-semibold flex items-center gap-1">
             <MessageCircleMore size={18} /> Comments
           </h2>
           {comments.length === 0 && <p className="text-sm text-muted-foreground">No comments yet.</p>}
           {comments.map(c => (
-            <div key={c.id} className={`border rounded p-2 ${c.resolved ? 'opacity-60 line-through' : ''}`}>
-              <p className="text-sm">{c.text}</p>
-              <div className="flex gap-2 mt-2">
+            <div key={c.id} className={`border rounded p-3 ${c.resolved ? 'opacity-60 line-through' : ''}`}>
+              <p className="text-sm mb-2">{c.text}</p>
+              <div className="flex gap-2">
                 {!c.resolved && (
                   <button onClick={() => resolveComment(c.id)} className="text-green-600 text-xs">Resolve</button>
                 )}
