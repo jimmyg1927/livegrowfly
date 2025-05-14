@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import {
   FiPlus, FiTrash2, FiEdit3, FiSave, FiMail,
   FiCheckCircle, FiAlertCircle, FiDownload, FiLink
@@ -19,9 +19,6 @@ interface Doc {
 
 export default function CollabZonePage() {
   const router = useRouter()
-  const params = useSearchParams()
-  const docParamId = params?.get('doc')
-
   const [docs, setDocs] = useState<Doc[]>([])
   const [sharedDocs, setSharedDocs] = useState<Doc[]>([])
   const [activeDoc, setActiveDoc] = useState<Doc | null>(null)
@@ -37,22 +34,23 @@ export default function CollabZonePage() {
 
     fetch(`${API_URL}/api/collab`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
-      .then((all: any) => {
+      .then((all: Doc[]) => {
         if (Array.isArray(all)) {
           setDocs(all)
-          const initial = all.find(doc => doc.id === docParamId) || all[0]
-          setActiveDoc(initial)
+          if (!activeDoc && all.length) {
+            setActiveDoc(all[0])
+          }
         }
       })
 
     fetch(`${API_URL}/api/collab/shared`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
-      .then((shared: any) => {
-        const docsArray = Array.isArray(shared) ? shared : (shared ? [shared] : [])
-        setSharedDocs(docsArray)
+      .then((shared: Doc[]) => {
+        if (Array.isArray(shared)) {
+          setSharedDocs(shared)
+        }
       })
-      .catch(() => setSharedDocs([]))
-  }, [docParamId])
+  }, [])
 
   const handleNew = async () => {
     const token = localStorage.getItem('growfly_jwt')!
@@ -214,7 +212,7 @@ export default function CollabZonePage() {
       <main className="flex-1 p-6 space-y-4 overflow-auto">
         <div className="flex flex-wrap gap-2 items-center justify-between">
           <h1 className="text-xl font-semibold">Collab Zone</h1>
-          <div className="flex flex-wrap gap-2 items-center text-sm">
+          <div className="flex flex-wrap gap-2 items-center">
             <input
               type="email"
               placeholder="email to share with"
@@ -222,16 +220,16 @@ export default function CollabZonePage() {
               onChange={e => setShareEmail(e.target.value)}
               className="px-2 py-1 border border-border rounded text-sm"
             />
-            <button onClick={shareByEmail} className="px-3 py-2 bg-accent text-white rounded text-xs">
+            <button onClick={shareByEmail} className="px-3 py-2 bg-accent text-white rounded text-sm">
               <FiMail size={14} className="inline mr-1" /> Share
             </button>
-            <button onClick={copyLink} className="px-3 py-2 bg-muted rounded text-xs">
+            <button onClick={copyLink} className="px-3 py-2 bg-muted rounded text-sm">
               <FiLink size={14} className="inline mr-1" /> Copy Link
             </button>
-            <button onClick={handleSave} className="px-3 py-2 bg-green-600 text-white rounded text-xs">
+            <button onClick={handleSave} className="px-3 py-2 bg-green-600 text-white rounded text-sm">
               <FiSave size={14} className="inline mr-1" /> Save
             </button>
-            <button onClick={() => setShowComments(!showComments)} className="px-3 py-2 bg-muted rounded text-xs">
+            <button onClick={() => setShowComments(!showComments)} className="px-3 py-2 bg-muted rounded text-sm">
               {showComments ? 'Hide Comments' : 'Show Comments'}
             </button>
           </div>
