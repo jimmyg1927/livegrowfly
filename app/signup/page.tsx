@@ -6,7 +6,6 @@ import { useState, useEffect } from 'react'
 export default function SignupPage() {
   const router = useRouter()
 
-  // ✅ Extract ?plan= from URL manually (client-safe)
   const [selectedPlan, setSelectedPlan] = useState('free')
 
   useEffect(() => {
@@ -42,14 +41,14 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-black flex items-center justify-center px-4 text-white">
-      <div className="w-full max-w-xl bg-card rounded-2xl shadow-xl p-8">
-        <h1 className="text-2xl font-bold text-center mb-6">Create your Growfly account</h1>
+    <main className="min-h-screen bg-gradient-to-b from-[#0a0a23] to-[#1e3a8a] flex items-center justify-center px-4 py-12 text-white">
+      <div className="w-full max-w-xl bg-card rounded-2xl shadow-lg p-8 border border-border text-textPrimary">
+        <h1 className="text-3xl font-bold text-center mb-4">Create your Growfly account</h1>
         <p className="text-center text-sm text-muted-foreground mb-6">
-          You&apos;re signing up for the <span className="font-semibold capitalize">{selectedPlan}</span> plan.
+          You're signing up for the <span className="font-semibold capitalize">{selectedPlan}</span> plan.
         </p>
 
-        {message && <p className="text-red-400 text-center text-sm mb-4">{message}</p>}
+        {message && <p className="text-red-500 text-center text-sm mb-4">{message}</p>}
 
         <form onSubmit={handleSignup} className="space-y-5">
           <div>
@@ -60,7 +59,7 @@ export default function SignupPage() {
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full p-3 rounded-md border border-border bg-input text-textPrimary"
+              className="w-full p-3 rounded-md border border-input-border bg-input text-textPrimary"
             />
           </div>
           <div>
@@ -71,7 +70,7 @@ export default function SignupPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 rounded-md border border-border bg-input text-textPrimary"
+              className="w-full p-3 rounded-md border border-input-border bg-input text-textPrimary"
             />
           </div>
           <div>
@@ -82,7 +81,7 @@ export default function SignupPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 rounded-md border border-border bg-input text-textPrimary"
+              className="w-full p-3 rounded-md border border-input-border bg-input text-textPrimary"
             />
           </div>
           <div>
@@ -93,12 +92,12 @@ export default function SignupPage() {
               required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full p-3 rounded-md border border-border bg-input text-textPrimary"
+              className="w-full p-3 rounded-md border border-input-border bg-input text-textPrimary"
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-accent hover:bg-accent/90 text-white font-semibold py-3 rounded-lg transition"
+            className="w-full bg-accent hover:bg-accent/90 text-white font-semibold py-3 rounded-md transition"
           >
             Create Account
           </button>

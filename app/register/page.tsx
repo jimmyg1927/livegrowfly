@@ -35,7 +35,7 @@ export default function RegisterPage() {
       button: 'Choose Personal',
       onClick: async () => {
         setLoadingPlan('personal')
-        const res = await fetch('/api/create-checkout-session', {
+        const res = await fetch('/api/checkout/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ planId: 'personal' }),
@@ -64,7 +64,7 @@ export default function RegisterPage() {
       highlight: true,
       onClick: async () => {
         setLoadingPlan('business')
-        const res = await fetch('/api/create-checkout-session', {
+        const res = await fetch('/api/checkout/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ planId: 'business' }),
