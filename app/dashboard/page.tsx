@@ -6,7 +6,18 @@ import Link from 'next/link'
 import PromptTracker from '@/components/PromptTracker'
 import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
-import { Gift, UserCircle, Save, Share2, ThumbsUp, ThumbsDown, BarChart2, Users, FileText, Briefcase } from 'lucide-react'
+import {
+  Gift,
+  UserCircle,
+  Save,
+  Share2,
+  ThumbsUp,
+  ThumbsDown,
+  BarChart2,
+  Users,
+  FileText,
+  Briefcase,
+} from 'lucide-react'
 import { API_BASE_URL } from '@/lib/constants'
 import { useUserStore } from '@/lib/store'
 
@@ -61,7 +72,7 @@ export default function DashboardPage() {
       headers: { Authorization: `Bearer ${token}` },
       credentials: 'include',
     })
-      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data) => {
         setUser({
           email: data.email,
@@ -174,6 +185,7 @@ export default function DashboardPage() {
   }
 
   const handleSave = () => setShowSaveModal(true)
+
   const confirmSave = async (title: string) => {
     const token = localStorage.getItem('growfly_jwt')
     await fetch(`${API_BASE_URL}/api/saved`, {
@@ -232,12 +244,12 @@ export default function DashboardPage() {
         </div>
 
         <div className="bg-card rounded-3xl p-6 shadow space-y-5">
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          <div className="flex flex-wrap gap-2">
             {promptOptions.map((p, i) => (
               <button
                 key={i}
                 onClick={() => handleSend(p.text)}
-                className="flex items-center gap-1 text-xs px-4 py-2 rounded-full border border-[var(--accent)] bg-white text-textPrimary hover:bg-[var(--accent)] hover:text-white transition"
+                className="flex items-center gap-1 text-xs px-4 py-2 rounded-full bg-[var(--accent)] text-white hover:brightness-110 transition"
               >
                 {p.icon}
                 {p.text}
@@ -245,10 +257,19 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          <div ref={chatRef} className="max-h-[60vh] overflow-y-auto space-y-4 p-4 bg-input rounded-3xl text-sm leading-relaxed whitespace-pre-wrap">
+          <div
+            ref={chatRef}
+            className="max-h-[60vh] overflow-y-auto space-y-4 bg-input p-4 rounded-3xl text-sm leading-relaxed whitespace-pre-wrap"
+          >
             {messages.slice(-10).map((m, i) => (
               <div key={i} className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
-                <div className={`p-3 rounded-2xl shadow max-w-[80%] break-words ${m.role === 'assistant' ? 'bg-[var(--highlight)] text-[var(--textPrimary)]' : 'bg-[var(--accent)] text-white'}`}>
+                <div
+                  className={`p-3 rounded-2xl shadow max-w-[80%] break-words ${
+                    m.role === 'assistant'
+                      ? 'bg-[var(--highlight)] text-[var(--textPrimary)]'
+                      : 'bg-[var(--accent)] text-white'
+                  }`}
+                >
                   {m.content}
                 </div>
                 {m.role === 'assistant' && m.id && (
