@@ -40,11 +40,11 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[var(--background)] flex items-center justify-center px-4 py-16 text-[var(--textPrimary)]">
-      <div className="w-full max-w-lg bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-xl p-10">
-        <h1 className="text-3xl font-bold text-center mb-2">Create your Growfly account</h1>
-        <p className="text-center text-sm text-muted-foreground mb-6">
-          You're signing up for the{' '}
+    <main className="min-h-screen bg-[#2cc2ff] flex items-center justify-center px-4 py-16 text-black">
+      <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-10 border border-gray-200">
+        <h1 className="text-3xl font-bold text-center mb-4">Create your Growfly account</h1>
+        <p className="text-center text-sm text-gray-600 mb-6">
+          You&apos;re signing up for the{' '}
           <span className="font-semibold capitalize">{selectedPlan}</span> plan.
         </p>
 
@@ -63,7 +63,7 @@ export default function SignupPage() {
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full p-3 rounded-md border border-[var(--input-border)] bg-[var(--input)] text-[var(--textPrimary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              className="w-full p-3 border rounded-md bg-white text-black border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
           <div>
@@ -76,7 +76,7 @@ export default function SignupPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 rounded-md border border-[var(--input-border)] bg-[var(--input)] text-[var(--textPrimary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              className="w-full p-3 border rounded-md bg-white text-black border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
           <div>
@@ -89,7 +89,7 @@ export default function SignupPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 rounded-md border border-[var(--input-border)] bg-[var(--input)] text-[var(--textPrimary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              className="w-full p-3 border rounded-md bg-white text-black border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
           <div>
@@ -102,12 +102,12 @@ export default function SignupPage() {
               required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full p-3 rounded-md border border-[var(--input-border)] bg-[var(--input)] text-[var(--textPrimary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              className="w-full p-3 border rounded-md bg-white text-black border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
           <button
             type="submit"
-            className="w-full py-3 bg-[var(--accent)] text-[var(--accent-foreground)] font-semibold rounded-md hover:bg-blue-700 transition"
+            className="w-full py-3 bg-[#1d4ed8] text-white font-semibold rounded-md hover:bg-blue-700 transition"
           >
             Create Account
           </button>
