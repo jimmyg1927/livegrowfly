@@ -1,4 +1,5 @@
 'use client'
+export const dynamic = 'force-dynamic'
 
 import React, { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
@@ -8,9 +9,6 @@ import FeedbackModal from '@/components/FeedbackModal'
 import html2pdf from 'html2pdf.js'
 import {
   Save,
-  Share2,
-  ThumbsUp,
-  ThumbsDown,
   FileText,
 } from 'lucide-react'
 import { API_BASE_URL } from '@/lib/constants'
@@ -34,15 +32,12 @@ export default function DashboardPage() {
       content: "👋 Welcome to Growfly! Ask me anything or upload an image or PDF and I’ll help you break it down.",
     },
   ])
-  const [followUps, setFollowUps] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [files, setFiles] = useState<File[]>([])
   const [filePreviews, setFilePreviews] = useState<{ url: string; name: string; type: string }[]>([])
   const chatRef = useRef<HTMLDivElement>(null)
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [savingContent, setSavingContent] = useState('')
-  const [showFeedback, setShowFeedback] = useState(false)
-  const [feedbackResponseId, setFeedbackResponseId] = useState('')
 
   const setUser = useUserStore((s) => s.setUser)
   const setXp = useUserStore((s) => s.setXp)
@@ -157,11 +152,6 @@ export default function DashboardPage() {
     }, 3000)
   }
 
-  const exportAsPDF = () => {
-    const element = document.getElementById('export-zone')
-    if (element) html2pdf().from(element).save('growfly-response.pdf')
-  }
-
   return (
     <div className="px-4 md:px-8 pb-10 bg-background text-textPrimary min-h-screen">
       <div className="max-w-3xl mx-auto space-y-6">
@@ -249,10 +239,10 @@ export default function DashboardPage() {
       }} />
 
       <FeedbackModal
-        open={showFeedback}
-        onClose={() => setShowFeedback(false)}
-        onSubmit={() => setShowFeedback(false)}
-        responseId={feedbackResponseId}
+        open={false}
+        onClose={() => {}}
+        onSubmit={() => {}}
+        responseId=""
       />
     </div>
   )
