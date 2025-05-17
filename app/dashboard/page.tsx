@@ -6,13 +6,9 @@ import { useRouter } from 'next/navigation'
 import PromptTracker from '@/components/PromptTracker'
 import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
-import html2pdf from 'html2pdf.js'
-import {
-  Save,
-  FileText,
-} from 'lucide-react'
 import { API_BASE_URL } from '@/lib/constants'
 import { useUserStore } from '@/lib/store'
+import { FileText } from 'lucide-react'
 
 type Message = {
   role: 'assistant' | 'user'
@@ -101,7 +97,6 @@ export default function DashboardPage() {
   const handleSend = async () => {
     const token = localStorage.getItem('growfly_jwt')
     if (!token || (!input && files.length === 0)) return
-
     setLoading(true)
 
     const base64Files = await Promise.all(
@@ -153,76 +148,85 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="px-4 md:px-8 pb-10 bg-background text-textPrimary min-h-screen">
-      <div className="max-w-3xl mx-auto space-y-6">
+    <div className="px-4 md:px-12 pb-10 bg-background text-textPrimary min-h-screen">
+      <div className="max-w-5xl mx-auto space-y-6">
         <PromptTracker used={user?.promptsUsed || 0} limit={user?.promptLimit || 0} />
+
+        <div className="text-right">
+          <button
+            className="text-xs text-blue-500 underline mb-2"
+            onClick={() => setInput("What can Growfly do?")}
+          >
+            What can Growfly do?
+          </button>
+        </div>
+
+        <div ref={chatRef} className="bg-card rounded-2xl p-6 shadow-md max-h-[60vh] overflow-y-auto space-y-4 border border-border">
+          {messages.map((m, i) => (
+            <div key={i} className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
+              <div className="space-y-1 max-w-[80%]">
+                {m.imageUrl && (
+                  <img src={m.imageUrl} alt="Uploaded" className="rounded-lg border max-h-40" />
+                )}
+                <div className={`p-4 rounded-xl text-sm whitespace-pre-wrap shadow ${
+                  m.role === 'assistant' ? 'bg-gray-100 text-black' : 'bg-blue-500 text-white'
+                }`}>
+                  {m.content}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex items-start gap-2 mt-4">
+          <textarea
+            rows={2}
+            className="flex-1 p-3 text-sm rounded-xl bg-[var(--input)] border border-[var(--input-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] resize-none"
+            placeholder="Type your message or upload files..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                handleSend()
+              }
+            }}
+          />
+          <button
+            onClick={handleSend}
+            disabled={loading}
+            className="px-4 py-2 bg-[var(--accent)] hover:brightness-110 text-white rounded-lg text-sm font-medium transition disabled:opacity-50"
+          >
+            {loading ? 'Processing...' : 'Send'}
+          </button>
+        </div>
+
         <div
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
-          className="bg-card p-6 rounded-2xl border-2 border-dashed border-blue-400 hover:border-blue-600"
+          className="bg-white border border-dashed border-gray-300 rounded-xl p-4 text-center text-sm text-gray-600"
         >
-          <div className="text-center text-sm text-blue-500 mb-2">
-            Drag and drop files, or{' '}
-            <label className="underline cursor-pointer">
-              browse
-              <input type="file" multiple hidden onChange={handleFileInput} />
-            </label>
-          </div>
-
-          {filePreviews.map((f, i) => (
-            <div key={i} className="mb-2">
-              {f.type.includes('image') ? (
-                <img src={f.url} alt={f.name} className="rounded-lg max-h-48" />
-              ) : (
-                <div className="flex items-center gap-2 text-sm bg-gray-100 p-2 rounded">
-                  <FileText size={16} />
-                  <a href={f.url} target="_blank" rel="noopener noreferrer" className="underline">
-                    {f.name}
-                  </a>
-                </div>
-              )}
-            </div>
-          ))}
-
-          <div ref={chatRef} className="max-h-[60vh] overflow-y-auto space-y-4 mt-4" id="export-zone">
-            {messages.map((m, i) => (
-              <div key={i} className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
-                <div className="space-y-1 max-w-[80%]">
-                  {m.imageUrl && (
-                    <img src={m.imageUrl} alt="Uploaded" className="rounded-lg border max-h-40" />
-                  )}
-                  <div className={`p-4 rounded-2xl text-sm whitespace-pre-wrap shadow ${
-                    m.role === 'assistant' ? 'bg-[var(--highlight)] text-[var(--textPrimary)]' : 'bg-[var(--accent)] text-white'
-                  }`}>
-                    {m.content}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2 pt-4">
-            <input
-              className="flex-1 p-2 text-sm rounded-full bg-[var(--input)] border border-[var(--input-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-              placeholder="Type your message or upload files..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  handleSend()
-                }
-              }}
-            />
-            <button
-              onClick={handleSend}
-              disabled={loading}
-              className="px-4 py-2 bg-[var(--accent)] hover:brightness-110 text-white rounded-full text-sm font-medium transition disabled:opacity-50"
-            >
-              {loading ? 'Processing...' : 'Send'}
-            </button>
-          </div>
+          Drag and drop files here or{' '}
+          <label className="underline cursor-pointer">
+            browse
+            <input type="file" multiple hidden onChange={handleFileInput} />
+          </label>
         </div>
+
+        {filePreviews.map((f, i) => (
+          <div key={i} className="mt-2">
+            {f.type.includes('image') ? (
+              <img src={f.url} alt={f.name} className="rounded-lg max-h-48" />
+            ) : (
+              <div className="flex items-center gap-2 text-sm bg-gray-100 p-2 rounded">
+                <FileText size={16} />
+                <a href={f.url} target="_blank" rel="noopener noreferrer" className="underline">
+                  {f.name}
+                </a>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
 
       <SaveModal open={showSaveModal} onClose={() => setShowSaveModal(false)} onConfirm={async (title) => {
