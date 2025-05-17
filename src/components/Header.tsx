@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Sun, Moon } from 'lucide-react'
+import { Sun, Moon, UserCircle, Gift } from 'lucide-react'
 import { useUserStore } from '@/lib/store'
 import Link from 'next/link'
 import { useTheme } from '@/context/ThemeContext'
@@ -36,10 +36,17 @@ export default function Header() {
       </div>
 
       <div className="flex items-center gap-4">
+        <Link href="/refer" className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full text-sm font-medium transition">
+          <Gift size={16} />
+          Refer a Friend
+        </Link>
         <Link href="/change-plan">
           <span className="px-3 py-1 rounded-full border border-white text-sm font-medium bg-white/10 hover:bg-white/20 transition">
             Subscription: {subscriptionType.toLowerCase()}
           </span>
+        </Link>
+        <Link href="/settings" title="Settings">
+          <UserCircle className="w-6 h-6 text-white hover:text-white/80 transition" />
         </Link>
         <button
           onClick={toggleTheme}

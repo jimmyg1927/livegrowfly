@@ -106,11 +106,9 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
     const created = await res.json()
     setComments(prev => [...prev, created])
     setNewComment('')
-    editor
-      .chain()
-      .focus()
+    editor.chain().focus()
       .setTextSelection({ from: created.from, to: created.to })
-      .setHighlight({ color: '#f43f5e' })
+      .setHighlight({ color: '#f43f5e' }) // red
       .run()
     setActiveRange(null)
   }
@@ -156,7 +154,7 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
   )
 
   return (
-    <div className="flex gap-4">
+    <div className="flex gap-6">
       <div className="flex-1">
         {editor && (
           <div className="flex flex-wrap gap-1 p-2 border-b bg-card mb-2 rounded">
@@ -205,7 +203,7 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
           </div>
         )}
 
-        <p className="text-xs text-muted-foreground mt-3 italic">💬 Highlight any text above to add a comment.</p>
+        <p className="text-xs text-muted-foreground mt-3 italic">💬 Highlight text above to comment on it.</p>
 
         <div className="mt-4 flex gap-4">
           <button onClick={exportPDF} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110">
@@ -218,22 +216,20 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
       </div>
 
       {showComments && (
-        <aside className="w-64 pl-4 border-l space-y-3 text-sm">
-          <h2 className="text-base font-semibold flex items-center gap-1">
-            <MessageCircleMore size={16} /> Comments
+        <aside className="w-80 pl-4 border-l space-y-3">
+          <h2 className="text-lg font-semibold flex items-center gap-1">
+            <MessageCircleMore size={18} /> Comments
           </h2>
-          {comments.length === 0 && <p className="text-muted-foreground text-xs">No comments yet.</p>}
+          {comments.length === 0 && <p className="text-sm text-muted-foreground">No comments yet.</p>}
           {comments.map(c => (
-            <div key={c.id} className={`border rounded p-3 shadow-sm ${c.resolved ? 'opacity-40 line-through' : ''}`}>
+            <div key={c.id} className={`border rounded p-3 text-sm shadow-sm space-y-1 ${c.resolved ? 'opacity-50 line-through' : ''}`}>
               <p>{c.text}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {c.createdAt ? new Date(c.createdAt).toLocaleString() : ''}
-              </p>
-              <div className="flex gap-3 mt-2">
+              <p className="text-xs text-muted-foreground italic">{c.createdAt ? new Date(c.createdAt).toLocaleString() : ''}</p>
+              <div className="flex justify-between pt-1">
                 {!c.resolved && (
                   <button onClick={() => resolveComment(c.id)} className="text-green-600 text-xs">Resolve</button>
                 )}
-                <button onClick={() => deleteComment(c.id)} className="text-red-600 text-xs">
+                <button onClick={() => deleteComment(c.id)} className="text-red-600 text-xs flex items-center gap-1">
                   <Trash size={14} />
                 </button>
               </div>

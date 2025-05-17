@@ -2,38 +2,28 @@
 
 import React, { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import PromptTracker from '@/components/PromptTracker'
 import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
+import html2pdf from 'html2pdf.js'
 import {
-  Gift,
-  UserCircle,
   Save,
   Share2,
   ThumbsUp,
   ThumbsDown,
-  BarChart2,
-  Users,
   FileText,
-  Briefcase,
 } from 'lucide-react'
 import { API_BASE_URL } from '@/lib/constants'
 import { useUserStore } from '@/lib/store'
 
-interface Message {
+type Message = {
   role: 'assistant' | 'user'
   content: string
+  imageUrl?: string
+  fileName?: string
+  fileType?: string
   id?: string
 }
-
-const promptOptions = [
-  { text: 'How can Growfly help me?', icon: <Briefcase size={14} /> },
-  { text: 'How can you help me with my finances?', icon: <BarChart2 size={14} /> },
-  { text: 'How can you help me get more customers?', icon: <Users size={14} /> },
-  { text: 'How can you help me with documents and HR?', icon: <FileText size={14} /> },
-  { text: 'What marketing should I do today?', icon: <Briefcase size={14} /> },
-]
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -41,29 +31,25 @@ export default function DashboardPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: "Hello, I'm Growfly — I’m here to help your organisation grow. How can I assist you today?",
+      content: "👋 Welcome to Growfly! Ask me anything or upload an image or PDF and I’ll help you break it down.",
     },
   ])
   const [followUps, setFollowUps] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
+  const [files, setFiles] = useState<File[]>([])
+  const [filePreviews, setFilePreviews] = useState<{ url: string; name: string; type: string }[]>([])
+  const chatRef = useRef<HTMLDivElement>(null)
   const [showSaveModal, setShowSaveModal] = useState(false)
+  const [savingContent, setSavingContent] = useState('')
   const [showFeedback, setShowFeedback] = useState(false)
   const [feedbackResponseId, setFeedbackResponseId] = useState('')
-  const [savingContent, setSavingContent] = useState('')
-  const chatRef = useRef<HTMLDivElement>(null)
 
-  const setUser = useUserStore((state) => state.setUser)
-  const setXp = useUserStore((state) => state.setXp)
-  const setSubscriptionType = useUserStore((state) => state.setSubscriptionType)
-  const subscriptionType = useUserStore((state) => state.subscriptionType)
-  const xp = useUserStore((state) => state.xp)
-  const user = useUserStore((state) => state.user)
-
-  const getNextRefresh = () => {
-    const now = new Date()
-    const next = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-    return next.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
-  }
+  const setUser = useUserStore((s) => s.setUser)
+  const setXp = useUserStore((s) => s.setXp)
+  const setSubscriptionType = useUserStore((s) => s.setSubscriptionType)
+  const subscriptionType = useUserStore((s) => s.subscriptionType)
+  const xp = useUserStore((s) => s.xp)
+  const user = useUserStore((s) => s.user)
 
   useEffect(() => {
     const token = localStorage.getItem('growfly_jwt')
@@ -71,263 +57,203 @@ export default function DashboardPage() {
 
     fetch(`${API_BASE_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
-      credentials: 'include',
     })
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((res) => res.json())
       .then((data) => {
-        setUser({
-          email: data.email,
-          name: data.name,
-          promptLimit: data.promptLimit,
-          promptsUsed: data.promptsUsed,
-        })
+        setUser(data)
         setXp(data.totalXP || 0)
         setSubscriptionType(data.subscriptionType || 'Free')
       })
-      .catch(() => {
-        localStorage.removeItem('growfly_jwt')
-        router.push('/login')
-      })
+      .catch(() => router.push('/login'))
   }, [router, setUser, setXp, setSubscriptionType])
 
   useEffect(() => {
-    if (user && (!subscriptionType || subscriptionType === 'none')) {
-      router.push('/plans')
-    }
-  }, [user, subscriptionType, router])
-
-  useEffect(() => {
     if (!chatRef.current) return
-    chatRef.current.scrollTo({
-      top: chatRef.current.scrollHeight,
-      behavior: 'smooth',
-    })
+    chatRef.current.scrollTo({ top: chatRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
 
-  const handleSend = async (msg: string) => {
-    const token = localStorage.getItem('growfly_jwt')
-    const text = msg.trim()
-    if (!text || !user) return
-
-    if (user.promptsUsed >= user.promptLimit) {
-      const refresh = getNextRefresh()
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: `🚫 You’ve hit your monthly limit. Wait until ${refresh}.`,
-        },
-      ])
-      setInput('')
-      return
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    const dropped = Array.from(e.dataTransfer.files || [])
+    if (dropped.length > 0) {
+      setFiles((prev) => [...prev, ...dropped])
+      dropped.forEach((file) => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          const url = reader.result as string
+          setFilePreviews((prev) => [...prev, { url, name: file.name, type: file.type }])
+        }
+        reader.readAsDataURL(file)
+      })
     }
+  }
 
-    setMessages((prev) => [...prev, { role: 'user', content: text }, { role: 'assistant', content: '' }])
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(e.target.files || [])
+    if (selected.length > 0) {
+      setFiles((prev) => [...prev, ...selected])
+      selected.forEach((file) => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          const url = reader.result as string
+          setFilePreviews((prev) => [...prev, { url, name: file.name, type: file.type }])
+        }
+        reader.readAsDataURL(file)
+      })
+    }
+  }
+
+  const handleSend = async () => {
+    const token = localStorage.getItem('growfly_jwt')
+    if (!token || (!input && files.length === 0)) return
+
     setLoading(true)
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/ai`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ message: text }),
+    const base64Files = await Promise.all(
+      files.map((file) => {
+        return new Promise<string>((resolve) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as string)
+          reader.readAsDataURL(file)
+        })
       })
-      if (!res.ok) throw new Error('AI request failed.')
-      const reader = res.body?.getReader()
-      if (!reader) throw new Error('No response body')
+    )
 
-      const decoder = new TextDecoder()
-      let full = ''
-      let done = false
+    const res = await fetch(`${API_BASE_URL}/api/ocr/queue`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ message: input || 'Please analyse these files.', files: base64Files }),
+    })
 
-      while (!done) {
-        const { value, done: rd } = await reader.read()
-        done = rd
-        if (!value) continue
-        const chunk = decoder.decode(value, { stream: true })
-        for (const line of chunk.split('\n')) {
-          const c = line.trim()
-          if (!c.startsWith('data:')) continue
-          const jsonStr = c.replace(/^data:\s*/, '')
-          if (jsonStr === '[DONE]') continue
-          try {
-            const p = JSON.parse(jsonStr)
-            if (p.type === 'partial') {
-              full += p.content
-              setMessages((prev) =>
-                prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: full } : m))
-              )
-            }
-            if (p.type === 'complete') {
-              if (p.followUps) setFollowUps(p.followUps)
-              if (p.responseId) {
-                setFeedbackResponseId(p.responseId)
-                setMessages((prev) =>
-                  prev.map((m, i) => (i === prev.length - 1 ? { ...m, id: p.responseId } : m))
-                )
-              }
-            }
-          } catch (e) {
-            console.error(e)
-          }
-        }
+    const { jobId } = await res.json()
+    const poll = setInterval(async () => {
+      const result = await fetch(`${API_BASE_URL}/api/ocr/status/${jobId}`)
+      const { state, result: data } = await result.json()
+      if (state === 'completed') {
+        clearInterval(poll)
+        const responseText = data.content || 'No response.'
+
+        setMessages((prev) => [
+          ...prev,
+          ...filePreviews.map((f) => ({
+            role: 'user' as const,
+            content: input || 'Uploaded file',
+            imageUrl: f.type.startsWith('image') ? f.url : undefined,
+            fileName: f.name,
+            fileType: f.type,
+          })),
+          { role: 'assistant' as const, content: responseText },
+        ])
+        setXp((xp || 0) + 2.5)
+        setUser({ ...user, promptsUsed: (user?.promptsUsed || 0) + 1 })
+        setInput('')
+        setFiles([])
+        setFilePreviews([])
+        setLoading(false)
       }
-
-      setXp(xp + 2.5)
-      setUser({ ...user, promptsUsed: user.promptsUsed + 1 })
-    } catch (err: any) {
-      setMessages((prev) => [...prev, { role: 'assistant', content: `❌ ${err.message}` }])
-    } finally {
-      setLoading(false)
-      setInput('')
-    }
+    }, 3000)
   }
 
-  const handleSave = (content: string) => {
-    setSavingContent(content)
-    setShowSaveModal(true)
+  const exportAsPDF = () => {
+    const element = document.getElementById('export-zone')
+    if (element) html2pdf().from(element).save('growfly-response.pdf')
   }
-
-  const confirmSave = async (title: string) => {
-    const token = localStorage.getItem('growfly_jwt')
-    await fetch(`${API_BASE_URL}/api/saved`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}` },
-      credentials: 'include',
-      body: JSON.stringify({ content: savingContent, title }),
-    })
-    setShowSaveModal(false)
-  }
-
-  const handleShare = async (content: string) => {
-    const token = localStorage.getItem('growfly_jwt')
-    await fetch(`${API_BASE_URL}/api/collab`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}` },
-      credentials: 'include',
-      body: JSON.stringify({ content }),
-    })
-    router.push('/collab-zone')
-  }
-
-  const openFeedbackModalWith = (id: string) => {
-    setFeedbackResponseId(id)
-    setShowFeedback(true)
-  }
-
-  const closeFeedbackModal = () => setShowFeedback(false)
 
   return (
     <div className="px-4 md:px-8 pb-10 bg-background text-textPrimary min-h-screen">
       <div className="max-w-3xl mx-auto space-y-6">
-        <div className="flex items-center gap-6">
-          <PromptTracker used={user.promptsUsed} limit={user.promptLimit} />
-          <Link
-            href="/refer"
-            className="flex items-center gap-2 bg-[var(--accent)] hover:brightness-110 text-white px-4 py-2 rounded-full shadow-md text-sm font-semibold transition"
-          >
-            <Gift size={18} />
-            Refer a Friend
-          </Link>
-          <Link href="/settings" className="ml-auto">
-            <UserCircle className="text-textPrimary hover:text-accent transition w-6 h-6" />
-          </Link>
-        </div>
-
-        <div className="bg-card rounded-3xl p-6 shadow space-y-5">
-          <div className="flex flex-wrap gap-2">
-            {promptOptions.map((p, i) => (
-              <button
-                key={i}
-                onClick={() => handleSend(p.text)}
-                className="flex items-center gap-1 text-xs px-4 py-2 rounded-full bg-[var(--accent)] text-white hover:brightness-110 transition"
-              >
-                {p.icon}
-                {p.text}
-              </button>
-            ))}
+        <PromptTracker used={user?.promptsUsed || 0} limit={user?.promptLimit || 0} />
+        <div
+          onDrop={handleDrop}
+          onDragOver={(e) => e.preventDefault()}
+          className="bg-card p-6 rounded-2xl border-2 border-dashed border-blue-400 hover:border-blue-600"
+        >
+          <div className="text-center text-sm text-blue-500 mb-2">
+            Drag and drop files, or{' '}
+            <label className="underline cursor-pointer">
+              browse
+              <input type="file" multiple hidden onChange={handleFileInput} />
+            </label>
           </div>
 
-          <div ref={chatRef} className="max-h-[60vh] overflow-y-auto space-y-4">
-            {messages.slice(-10).map((m, i) => (
+          {filePreviews.map((f, i) => (
+            <div key={i} className="mb-2">
+              {f.type.includes('image') ? (
+                <img src={f.url} alt={f.name} className="rounded-lg max-h-48" />
+              ) : (
+                <div className="flex items-center gap-2 text-sm bg-gray-100 p-2 rounded">
+                  <FileText size={16} />
+                  <a href={f.url} target="_blank" rel="noopener noreferrer" className="underline">
+                    {f.name}
+                  </a>
+                </div>
+              )}
+            </div>
+          ))}
+
+          <div ref={chatRef} className="max-h-[60vh] overflow-y-auto space-y-4 mt-4" id="export-zone">
+            {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
                 <div className="space-y-1 max-w-[80%]">
-                  <div
-                    className={`p-4 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap shadow ${
-                      m.role === 'assistant'
-                        ? 'bg-[var(--highlight)] text-[var(--textPrimary)]'
-                        : 'bg-[var(--accent)] text-white'
-                    }`}
-                  >
+                  {m.imageUrl && (
+                    <img src={m.imageUrl} alt="Uploaded" className="rounded-lg border max-h-40" />
+                  )}
+                  <div className={`p-4 rounded-2xl text-sm whitespace-pre-wrap shadow ${
+                    m.role === 'assistant' ? 'bg-[var(--highlight)] text-[var(--textPrimary)]' : 'bg-[var(--accent)] text-white'
+                  }`}>
                     {m.content}
                   </div>
-                  {m.role === 'assistant' && m.id && (
-                    <div className="flex gap-2 items-center ml-1">
-                      <button onClick={() => openFeedbackModalWith(m.id!)} className="p-1 bg-green-500 rounded-full hover:bg-green-600 transition" title="Thumbs up">
-                        <ThumbsUp className="w-4 h-4 text-white" />
-                      </button>
-                      <button onClick={() => openFeedbackModalWith(m.id!)} className="p-1 bg-red-600 rounded-full hover:bg-red-500 transition" title="Thumbs down">
-                        <ThumbsDown className="w-4 h-4 text-white" />
-                      </button>
-                      <button onClick={() => handleSave(m.content)} title="Save this response" className="p-1 bg-blue-500 rounded-full hover:bg-blue-600 transition">
-                        <Save className="w-4 h-4 text-white" />
-                      </button>
-                      <button onClick={() => handleShare(m.content)} title="Share to Collab Zone" className="p-1 bg-purple-500 rounded-full hover:bg-purple-600 transition">
-                        <Share2 className="w-4 h-4 text-white" />
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
             ))}
           </div>
 
-          {followUps.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-2">
-              {followUps.map((t, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleSend(t)}
-                  className="text-xs px-3 py-2 rounded-full border border-border bg-input text-textPrimary hover:bg-accent/10 transition"
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          )}
-
           <div className="flex items-center gap-2 pt-4">
             <input
               className="flex-1 p-2 text-sm rounded-full bg-[var(--input)] border border-[var(--input-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-              placeholder="Type your message…"
+              placeholder="Type your message or upload files..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault()
-                  handleSend(input)
+                  handleSend()
                 }
               }}
             />
             <button
-              onClick={() => handleSend(input)}
+              onClick={handleSend}
               disabled={loading}
               className="px-4 py-2 bg-[var(--accent)] hover:brightness-110 text-white rounded-full text-sm font-medium transition disabled:opacity-50"
             >
-              {loading ? 'Thinking…' : 'Send'}
+              {loading ? 'Processing...' : 'Send'}
             </button>
           </div>
         </div>
       </div>
 
-      <SaveModal open={showSaveModal} onClose={() => setShowSaveModal(false)} onConfirm={confirmSave} />
-      <FeedbackModal open={showFeedback} onClose={closeFeedbackModal} onSubmit={closeFeedbackModal} responseId={feedbackResponseId} />
+      <SaveModal open={showSaveModal} onClose={() => setShowSaveModal(false)} onConfirm={async (title) => {
+        const token = localStorage.getItem('growfly_jwt')
+        await fetch(`${API_BASE_URL}/api/saved`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ title, content: savingContent }),
+        })
+        setShowSaveModal(false)
+      }} />
+
+      <FeedbackModal
+        open={showFeedback}
+        onClose={() => setShowFeedback(false)}
+        onSubmit={() => setShowFeedback(false)}
+        responseId={feedbackResponseId}
+      />
     </div>
   )
 }
