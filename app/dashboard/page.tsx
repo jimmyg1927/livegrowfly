@@ -1,3 +1,4 @@
+// FILE: app/dashboard/page.tsx
 'use client'
 export const dynamic = 'force-dynamic'
 
@@ -8,8 +9,9 @@ import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
 import { API_BASE_URL } from '@/lib/constants'
 import { useUserStore } from '@/lib/store'
-import { FileText } from 'lucide-react'
 import streamChat from '../../lib/streamChat'
+import { HiThumbUp, HiThumbDown } from 'react-icons/hi'
+import { FaRegBookmark, FaShareSquare } from 'react-icons/fa'
 
 type Message = {
   role: 'assistant' | 'user'
@@ -27,10 +29,13 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false)
   const [files, setFiles] = useState<File[]>([])
   const [filePreviews, setFilePreviews] = useState<{ url: string; name: string; type: string }[]>([])
-  const chatRef = useRef<HTMLDivElement>(null)
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [savingContent, setSavingContent] = useState('')
-  const [language, setLanguage] = useState<'en-UK' | 'en-US'>('en-UK')
+  const [language, setLanguage] = useState('en-UK')
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const [feedbackId, setFeedbackId] = useState('')
+
+  const chatRef = useRef<HTMLDivElement>(null)
 
   const setUser = useUserStore((s) => s.setUser)
   const setXp = useUserStore((s) => s.setXp)
@@ -58,7 +63,7 @@ export default function DashboardPage() {
     const saved = localStorage.getItem('growfly_chat')
     if (saved) setMessages(JSON.parse(saved))
     const langPref = localStorage.getItem('growfly_lang')
-    if (langPref === 'en-US') setLanguage('en-US')
+    if (langPref) setLanguage(langPref)
   }, [])
 
   useEffect(() => {
@@ -82,7 +87,7 @@ export default function DashboardPage() {
     const newMessages: Message[] = [
       ...filePreviews.map((f) => ({
         role: 'user' as const,
-        content: !overrideInput && input ? '' : prompt,
+        content: prompt || 'Uploaded file',
         imageUrl: f.type.startsWith('image') ? f.url : undefined,
         fileName: f.name,
         fileType: f.type,
@@ -97,7 +102,7 @@ export default function DashboardPage() {
     setFilePreviews([])
 
     try {
-      for await (const { type, content, followUps } of streamChat(prompt, token, language)) {
+      for await (const { type, content, followUps, responseId } of streamChat(prompt, token, language)) {
         if (type === 'partial') {
           setMessages((prev) => {
             const updated = [...prev]
@@ -108,18 +113,17 @@ export default function DashboardPage() {
         } else if (type === 'complete') {
           setXp((xp || 0) + 2.5)
           setUser({ ...user, promptsUsed: (user?.promptsUsed || 0) + 1 })
+          setFeedbackId(responseId || '')
 
-          setMessages((prev) => {
-            const updated = [...prev]
-            const last = updated.findLast((m) => m.role === 'assistant')
-            if (last && followUps) {
-              last.content += `\n\n`
+          if (followUps?.length) {
+            setMessages((prev) => {
+              const updated = [...prev]
               followUps.forEach((q) => {
                 updated.push({ role: 'assistant', content: `💡 ${q}` })
               })
-            }
-            return updated
-          })
+              return updated
+            })
+          }
         }
       }
     } catch (err) {
@@ -154,28 +158,44 @@ export default function DashboardPage() {
     })
   }
 
+  const languageOptions = [
+    { code: 'en-UK', label: '🇬🇧 English (UK)' },
+    { code: 'en-US', label: '🇺🇸 English (US)' },
+    { code: 'da', label: '🇩🇰 Danish' },
+    { code: 'de', label: '🇩🇪 German' },
+    { code: 'es', label: '🇪🇸 Spanish' },
+    { code: 'fr', label: '🇫🇷 French' },
+    { code: 'it', label: '🇮🇹 Italian' },
+    { code: 'nl', label: '🇳🇱 Dutch' },
+    { code: 'sv', label: '🇸🇪 Swedish' },
+    { code: 'pl', label: '🇵🇱 Polish' },
+  ]
+
   return (
     <div className="px-4 md:px-12 pb-10 bg-background text-textPrimary min-h-screen">
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex justify-between items-center">
           <PromptTracker used={user?.promptsUsed || 0} limit={user?.promptLimit || 0} />
           <select
-            className="text-sm border rounded px-2 py-1"
+            className="text-sm border rounded-full px-3 py-1 bg-muted"
             value={language}
             onChange={(e) => {
-              const selected = e.target.value as 'en-UK' | 'en-US'
+              const selected = e.target.value
               setLanguage(selected)
               localStorage.setItem('growfly_lang', selected)
             }}
           >
-            <option value="en-UK">🇬🇧 English (UK)</option>
-            <option value="en-US">🇺🇸 English (US)</option>
+            {languageOptions.map((opt) => (
+              <option key={opt.code} value={opt.code}>
+                {opt.label}
+              </option>
+            ))}
           </select>
         </div>
 
         <div className="flex justify-end">
           <button
-            className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 transition mb-2"
+            className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 transition"
             onClick={() => {
               setInput('How can Growfly help me?')
               handleSend('How can Growfly help me?')
@@ -185,14 +205,10 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div className="flex flex-wrap gap-2 mb-2">
           {filePreviews.map((f, i) => (
             <div key={i} className="w-24">
-              {f.type.includes('image') ? (
-                <img src={f.url} alt={f.name} className="rounded-lg max-h-24" />
-              ) : (
-                <div className="text-xs">{f.name}</div>
-              )}
+              <img src={f.url} alt={f.name} className="rounded-md max-h-20 border" />
             </div>
           ))}
         </div>
@@ -216,6 +232,48 @@ export default function DashboardPage() {
                 >
                   {m.content}
                 </div>
+                {m.role === 'assistant' && i === messages.length - 1 && (
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      className="text-xs flex items-center gap-1 text-gray-600 hover:text-green-600"
+                      onClick={() => setFeedbackOpen(true)}
+                    >
+                      <HiThumbUp /> Feedback
+                    </button>
+                    <button
+                      className="text-xs flex items-center gap-1 text-gray-600 hover:text-red-600"
+                      onClick={() => setFeedbackOpen(true)}
+                    >
+                      <HiThumbDown /> Feedback
+                    </button>
+                    <button
+                      className="text-xs flex items-center gap-1 text-gray-600 hover:text-blue-600"
+                      onClick={() => {
+                        setSavingContent(m.content)
+                        setShowSaveModal(true)
+                      }}
+                    >
+                      <FaRegBookmark /> Save
+                    </button>
+                    <button
+                      className="text-xs flex items-center gap-1 text-gray-600 hover:text-purple-600"
+                      onClick={async () => {
+                        const token = localStorage.getItem('growfly_jwt')
+                        await fetch(`${API_BASE_URL}/api/collab/share`, {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`,
+                          },
+                          body: JSON.stringify({ content: m.content }),
+                        })
+                        alert('Shared to Collab Zone!')
+                      }}
+                    >
+                      <FaShareSquare /> Share
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -274,7 +332,11 @@ export default function DashboardPage() {
         }}
       />
 
-      <FeedbackModal open={false} onClose={() => {}} onSubmit={() => {}} responseId="" />
+      <FeedbackModal
+        responseId={feedbackId}
+        open={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+      />
     </div>
   )
 }
