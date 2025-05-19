@@ -16,16 +16,21 @@ function getNerdLevel(xp: number = 0) {
 }
 
 export default function Header() {
-  const pathname = usePathname() || ''
-  const hiddenRoutes = ['/onboarding', '/signup', '/login', '/confirm-payment', '/payment-success']
-
-  if (hiddenRoutes.some(route => pathname.startsWith(route))) return null
-
+  // __ALWAYS__ call hooks at the top
   const { theme, toggleTheme } = useTheme()
   const xp = useUserStore((state) => state.xp)
   const subscriptionType = useUserStore((state) => state.subscriptionType)
+  const pathname = usePathname() || ''
+
+  // then compute derived state
   const { title, emoji, max } = getNerdLevel(xp)
   const progress = Math.min((xp / max) * 100, 100)
+  const hiddenRoutes = ['/onboarding', '/signup', '/login', '/confirm-payment', '/payment-success']
+
+  // __AFTER__ hooks, you can conditionally bail
+  if (hiddenRoutes.some(route => pathname.startsWith(route))) {
+    return null
+  }
 
   return (
     <header className="flex items-center justify-between bg-[#1992ff] text-white px-6 py-4 shadow-md rounded-bl-2xl transition-all">
