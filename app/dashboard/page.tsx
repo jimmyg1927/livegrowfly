@@ -9,9 +9,6 @@ import FeedbackModal from '@/components/FeedbackModal'
 import { API_BASE_URL } from '@/lib/constants'
 import { useUserStore } from '@/lib/store'
 import streamChat from '../../lib/streamChat'
-import { HiThumbUp, HiThumbDown } from 'react-icons/hi'
-import { FaRegBookmark } from 'react-icons/fa'
-import { TbBrain } from 'react-icons/tb'
 
 type Message = {
   role: 'assistant' | 'user'
@@ -21,6 +18,19 @@ type Message = {
   fileType?: string
   id?: string
 }
+
+const languageOptions = [
+  { code: 'en-UK', label: '🇬🇧 English (UK)' },
+  { code: 'en-US', label: '🇺🇸 English (US)' },
+  { code: 'da', label: '🇩🇰 Danish' },
+  { code: 'de', label: '🇩🇪 German' },
+  { code: 'es', label: '🇪🇸 Spanish' },
+  { code: 'fr', label: '🇫🇷 French' },
+  { code: 'it', label: '🇮🇹 Italian' },
+  { code: 'nl', label: '🇳🇱 Dutch' },
+  { code: 'sv', label: '🇸🇪 Swedish' },
+  { code: 'pl', label: '🇵🇱 Polish' },
+]
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -40,8 +50,6 @@ export default function DashboardPage() {
   const setUser = useUserStore((s) => s.setUser)
   const setXp = useUserStore((s) => s.setXp)
   const setSubscriptionType = useUserStore((s) => s.setSubscriptionType)
-  const subscriptionType = useUserStore((s) => s.subscriptionType)
-  const xp = useUserStore((s) => s.xp)
   const user = useUserStore((s) => s.user)
 
   useEffect(() => {
@@ -83,22 +91,10 @@ export default function DashboardPage() {
     if (!token || (!prompt && files.length === 0)) return
     if ((user?.promptsUsed || 0) >= (user?.promptLimit || 0)) return
 
-    const langMap: any = {
-      'en-UK': 'English (UK)',
-      'en-US': 'English (US)',
-      da: 'Danish',
-      de: 'German',
-      es: 'Spanish',
-      fr: 'French',
-      it: 'Italian',
-      nl: 'Dutch',
-      sv: 'Swedish',
-      pl: 'Polish',
-    }
+    const label = languageOptions.find((opt) => opt.code === language)?.label || 'English'
+    const basePrompt = `Please reply in ${label}:\n${prompt}`
 
     setLoading(true)
-
-    const basePrompt = `Please reply in ${langMap[language] || 'English'}:\n${prompt}`
 
     const newMessages: Message[] = [
       ...filePreviews.map((f) => ({
@@ -127,18 +123,15 @@ export default function DashboardPage() {
             return [...updated]
           })
         } else if (type === 'complete') {
-          setXp((xp || 0) + 2.5)
+          setXp((user?.totalXP || 0) + 2.5)
           setUser({ ...user, promptsUsed: (user?.promptsUsed || 0) + 1 })
           setFeedbackId(responseId || '')
-
           if (followUps?.length) {
-            setMessages((prev) => {
-              const updated = [...prev]
-              followUps.forEach((q) => {
-                updated.push({ role: 'assistant', content: `💡 ${q}` })
-              })
-              return updated
-            })
+            const updated = [...messages, { role: 'assistant', content }]
+            followUps.forEach((q) =>
+              updated.push({ role: 'assistant', content: `💡 ${q}` })
+            )
+            setMessages(updated)
           }
         }
       }
@@ -148,6 +141,7 @@ export default function DashboardPage() {
 
     setLoading(false)
   }
+
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     const dropped = Array.from(e.dataTransfer.files || [])
@@ -182,13 +176,12 @@ export default function DashboardPage() {
             className="text-sm border rounded-full px-3 py-1 bg-muted"
             value={language}
             onChange={(e) => {
-              const selected = e.target.value
-              setLanguage(selected)
-              localStorage.setItem('growfly_lang', selected)
+              setLanguage(e.target.value)
+              localStorage.setItem('growfly_lang', e.target.value)
             }}
           >
-            {['en-UK', 'en-US', 'da', 'de', 'es', 'fr', 'it', 'nl', 'sv', 'pl'].map((code) => (
-              <option key={code} value={code}>{code}</option>
+            {languageOptions.map((opt) => (
+              <option key={opt.code} value={opt.code}>{opt.label}</option>
             ))}
           </select>
         </div>
@@ -214,7 +207,7 @@ export default function DashboardPage() {
                         setInput(follow)
                         handleSend(follow)
                       }}
-                      className="px-3 py-1 rounded-full border text-sm text-foreground border-border bg-muted hover:bg-accent transition"
+                      className="px-3 py-1 rounded-full border text-sm border-border text-muted-foreground bg-background hover:bg-muted transition"
                     >
                       {m.content.replace(/^💡 /, '')}
                     </button>
@@ -224,19 +217,13 @@ export default function DashboardPage() {
                 </div>
 
                 {m.role === 'assistant' && !m.content.startsWith('💡') && i === messages.length - 1 && (
-                  <div className="flex gap-2 pt-1 text-muted-foreground text-sm items-center">
-                    <button onClick={() => setFeedbackOpen(true)} title="Helpful">
-                      <HiThumbUp className="hover:text-green-500 w-4 h-4" />
-                    </button>
-                    <button onClick={() => setFeedbackOpen(true)} title="Needs improvement">
-                      <HiThumbDown className="hover:text-red-500 w-4 h-4" />
-                    </button>
+                  <div className="flex gap-3 pt-1 text-lg text-muted-foreground items-center">
+                    <button onClick={() => setFeedbackOpen(true)} title="Helpful">👍</button>
+                    <button onClick={() => setFeedbackOpen(true)} title="Needs work">👎</button>
                     <button onClick={() => {
                       setSavingContent(m.content)
                       setShowSaveModal(true)
-                    }} title="Save">
-                      <FaRegBookmark className="hover:text-blue-500 w-4 h-4" />
-                    </button>
+                    }} title="Save">📌</button>
                     <button onClick={async () => {
                       const token = localStorage.getItem('growfly_jwt')
                       await fetch(`${API_BASE_URL}/api/collab/share`, {
@@ -248,37 +235,12 @@ export default function DashboardPage() {
                         body: JSON.stringify({ content: m.content }),
                       })
                       router.push('/collab-zone')
-                    }} title="Open in Collab Zone">
-                      <TbBrain className="hover:text-purple-500 w-4 h-4" />
-                    </button>
+                    }} title="Collab">🧠</button>
                   </div>
                 )}
               </div>
             </div>
           ))}
-        </div>
-
-        <div className="flex items-start gap-2 mt-4">
-          <textarea
-            rows={2}
-            className="flex-1 p-3 text-sm rounded-xl bg-[var(--input)] border border-[var(--input-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] resize-none"
-            placeholder="Type your message or upload files..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                handleSend()
-              }
-            }}
-          />
-          <button
-            onClick={() => handleSend()}
-            disabled={loading || user?.promptsUsed >= user?.promptLimit}
-            className="px-4 py-2 bg-[var(--accent)] hover:scale-105 hover:brightness-110 text-white rounded-full text-sm font-medium transition disabled:opacity-50"
-          >
-            {loading ? <span className="animate-pulse">Processing...</span> : 'Send'}
-          </button>
         </div>
 
         {filePreviews.length > 0 && (
@@ -290,6 +252,41 @@ export default function DashboardPage() {
             ))}
           </div>
         )}
+
+        <div className="flex flex-col gap-2 mt-4">
+          {(user?.promptsUsed || 0) >= (user?.promptLimit || 0) && (
+            <div className="text-sm text-red-500 bg-red-100 p-2 rounded-lg border border-red-300 flex justify-between items-center">
+              Prompt limit reached — upgrade to continue.
+              <button onClick={() => router.push('/change-plan')} className="ml-4 bg-red-600 text-white px-3 py-1 rounded-full text-xs">
+                Upgrade
+              </button>
+            </div>
+          )}
+
+          <div className="flex items-start gap-2">
+            <textarea
+              rows={2}
+              disabled={(user?.promptsUsed || 0) >= (user?.promptLimit || 0)}
+              className="flex-1 p-3 text-sm rounded-xl bg-[var(--input)] border border-[var(--input-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] resize-none"
+              placeholder="Type your message or upload files..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  handleSend()
+                }
+              }}
+            />
+            <button
+              onClick={() => handleSend()}
+              disabled={loading || (user?.promptsUsed || 0) >= (user?.promptLimit || 0)}
+              className="px-4 py-2 bg-[var(--accent)] hover:scale-105 hover:brightness-110 text-white rounded-full text-sm font-medium transition disabled:opacity-50"
+            >
+              {loading ? <span className="animate-pulse">Processing...</span> : 'Send'}
+            </button>
+          </div>
+        </div>
 
         <div
           onDrop={handleDrop}
