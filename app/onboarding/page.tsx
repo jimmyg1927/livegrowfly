@@ -1,5 +1,4 @@
 'use client'
-
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -76,7 +75,7 @@ export default function OnboardingPage() {
     textarea = false
   ) => (
     <div className="mb-6">
-      <label className="block text-sm font-medium mb-1">{label}</label>
+      <label className="block text-sm font-semibold mb-1">{label}</label>
       {textarea ? (
         <textarea
           name={name}
@@ -84,7 +83,7 @@ export default function OnboardingPage() {
           onChange={onChange}
           rows={3}
           placeholder={placeholder}
-          className="w-full px-0 pb-1 border-b border-gray-300 focus:border-blue-600 focus:outline-none transition"
+          className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded focus:ring-2 focus:ring-blue-600"
         />
       ) : (
         <input
@@ -93,20 +92,21 @@ export default function OnboardingPage() {
           value={form[name]}
           onChange={onChange}
           placeholder={placeholder}
-          className="w-full px-0 pb-1 border-b border-gray-300 focus:border-blue-600 focus:outline-none transition"
+          className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded focus:ring-2 focus:ring-blue-600"
         />
       )}
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-blue-600 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-8">
+    <div className="min-h-screen bg-[#1992FF] flex items-center justify-center p-6">
+      <div className="bg-white rounded-2xl shadow-lg w-full max-w-3xl p-8">
         <div className="flex justify-center mb-4">
+          {/* Your real logo here */}
           <Image
             src="/growfly-logo.png"
-            alt="Growfly Logo"
-            width={140}
+            alt="Growfly"
+            width={160}
             height={40}
           />
         </div>
@@ -118,29 +118,29 @@ export default function OnboardingPage() {
           brand.
         </p>
 
-        {/* XP Bar */}
+        {/* XP */}
         <div className="mb-8">
           <p className="text-sm font-medium mb-1">
             XP Progress: {xp} / {total}
           </p>
           <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
             <div
-              className="h-full bg-blue-600 transition-all"
+              className="h-full bg-[#1992FF] transition-all"
               style={{ width: `${(xp / total) * 100}%` }}
             />
           </div>
         </div>
 
         {/* Stepper */}
-        <div className="flex justify-center space-x-6 mb-8">
+        <div className="flex justify-center gap-6 mb-8">
           {[1, 2, 3].map((n) => (
             <button
               key={n}
               onClick={() => setStep(n)}
-              className={`text-sm font-medium ${
+              className={`text-sm font-semibold ${
                 step === n
-                  ? 'text-blue-600 underline'
-                  : 'text-gray-400 hover:text-blue-600'
+                  ? 'text-[#1992FF] underline'
+                  : 'text-gray-400 hover:text-[#1992FF]'
               }`}
             >
               {n === 1
@@ -152,7 +152,7 @@ export default function OnboardingPage() {
           ))}
         </div>
 
-        {/* Form */}
+        {/* Fields */}
         {step === 1 && (
           <>
             {renderField('Brand Name', 'brandName', 'Growfly Ltd')}
@@ -172,13 +172,13 @@ export default function OnboardingPage() {
             {renderField(
               'Brand Personality',
               'brandVoice',
-              'Witty & expert',
+              'Witty and expert',
               true
             )}
             {renderField(
               'Mission',
               'brandMission',
-              'Make AI marketing easier for all',
+              'Making AI marketing effortless',
               true
             )}
           </>
@@ -200,18 +200,18 @@ export default function OnboardingPage() {
             {renderField(
               'Goals with Growfly',
               'goals',
-              'Automate more content, grow reach',
+              'Automate content, grow reach',
               true
             )}
           </>
         )}
 
-        {/* Pager Buttons */}
+        {/* Nav Buttons */}
         <div className="flex justify-between mt-8">
           {step > 1 ? (
             <button
               onClick={() => setStep((s) => s - 1)}
-              className="px-4 py-2 rounded-full bg-gray-200 hover:bg-gray-300 transition"
+              className="px-4 py-2 bg-gray-200 rounded-full hover:bg-gray-300"
             >
               Back
             </button>
@@ -221,14 +221,14 @@ export default function OnboardingPage() {
           {step < 3 ? (
             <button
               onClick={() => setStep((s) => s + 1)}
-              className="px-6 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition"
+              className="px-6 py-2 bg-[#1992FF] text-white rounded-full hover:bg-blue-700"
             >
               Next
             </button>
           ) : (
             <button
               onClick={saveAll}
-              className="px-6 py-2 rounded-full bg-green-500 text-white hover:bg-green-600 transition"
+              className="px-6 py-2 bg-green-600 text-white rounded-full hover:bg-green-700"
             >
               Finish
             </button>
