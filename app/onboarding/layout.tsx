@@ -1,9 +1,11 @@
 // app/onboarding/layout.tsx
-export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
-  // No header/sidebar here—just full-bleed brand blue
-  return (
-    <html lang="en">
-      <body className="overflow-hidden">{children}</body>
-    </html>
-  )
+import { ReactNode } from 'react'
+
+export const metadata = {
+  title: 'Growfly Onboarding',
+}
+
+export default function OnboardingLayout({ children }: { children: ReactNode }) {
+  // By returning children directly, we bypass the default ClientLayout (header/sidebar)
+  return <>{children}</>
 }
