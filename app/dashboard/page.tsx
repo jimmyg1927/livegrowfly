@@ -83,7 +83,22 @@ export default function DashboardPage() {
     if (!token || (!prompt && files.length === 0)) return
     if ((user?.promptsUsed || 0) >= (user?.promptLimit || 0)) return
 
+    const langMap: any = {
+      'en-UK': 'English (UK)',
+      'en-US': 'English (US)',
+      da: 'Danish',
+      de: 'German',
+      es: 'Spanish',
+      fr: 'French',
+      it: 'Italian',
+      nl: 'Dutch',
+      sv: 'Swedish',
+      pl: 'Polish',
+    }
+
     setLoading(true)
+
+    const basePrompt = `Please reply in ${langMap[language] || 'English'}:\n${prompt}`
 
     const newMessages: Message[] = [
       ...filePreviews.map((f) => ({
@@ -93,7 +108,7 @@ export default function DashboardPage() {
         fileName: f.name,
         fileType: f.type,
       })),
-      { role: 'user', content: prompt },
+      { role: 'user', content: basePrompt },
       { role: 'assistant', content: '' },
     ]
 
@@ -103,7 +118,7 @@ export default function DashboardPage() {
     setFilePreviews([])
 
     try {
-      for await (const { type, content, followUps, responseId } of streamChat(prompt, token, language)) {
+      for await (const { type, content, followUps, responseId } of streamChat(basePrompt, token, language)) {
         if (type === 'partial') {
           setMessages((prev) => {
             const updated = [...prev]
@@ -133,7 +148,6 @@ export default function DashboardPage() {
 
     setLoading(false)
   }
-
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     const dropped = Array.from(e.dataTransfer.files || [])
@@ -206,32 +220,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <div className="flex justify-end">
-          <button
-            className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:scale-105 transition"
-            onClick={() => {
-              setInput('How can Growfly help me?')
-              handleSend('How can Growfly help me?')
-            }}
-          >
-            What can Growfly do?
-          </button>
-        </div>
-
-        {filePreviews.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-2">
-            {filePreviews.map((f, i) => (
-              <div key={i} className="w-24">
-                <img src={f.url} alt={f.name} className="rounded-md max-h-20 border" />
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div
-          ref={chatRef}
-          className="bg-card rounded-2xl p-6 shadow-md max-h-[60vh] overflow-y-auto space-y-4 border border-border"
-        >
+        <div ref={chatRef} className="bg-card rounded-2xl p-6 shadow-md max-h-[60vh] overflow-y-auto space-y-4 border border-border">
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
               <div className="space-y-1 max-w-[80%]">
@@ -245,14 +234,27 @@ export default function DashboardPage() {
                     m.role === 'assistant' ? 'bg-gray-100 text-black' : 'bg-blue-500 text-white'
                   }`}
                 >
-                  {m.content}
+                  {m.content.startsWith('💡') ? (
+                    <button
+                      className="text-left hover:text-blue-500 transition"
+                      onClick={() => {
+                        setInput(m.content.replace('💡 ', ''))
+                        handleSend(m.content.replace('💡 ', ''))
+                      }}
+                    >
+                      {m.content}
+                    </button>
+                  ) : (
+                    m.content
+                  )}
                 </div>
-                {m.role === 'assistant' && i === messages.length - 1 && (
-                  <div className="flex gap-2 pt-2 text-gray-500 text-sm">
-                    <button onClick={() => setFeedbackOpen(true)} title="This was helpful">
+
+                {m.role === 'assistant' && !m.content.startsWith('💡') && i === messages.length - 1 && (
+                  <div className="flex gap-3 pt-2 text-sm text-gray-500">
+                    <button onClick={() => setFeedbackOpen(true)} title="Helpful">
                       <HiThumbUp className="hover:text-green-600" />
                     </button>
-                    <button onClick={() => setFeedbackOpen(true)} title="Needs improvement">
+                    <button onClick={() => setFeedbackOpen(true)} title="Needs work">
                       <HiThumbDown className="hover:text-red-600" />
                     </button>
                     <button
@@ -277,7 +279,7 @@ export default function DashboardPage() {
                         })
                         router.push('/collab-zone')
                       }}
-                      title="Open in Collab Zone"
+                      title="Send to Collab"
                     >
                       <TbBrain className="hover:text-purple-600" />
                     </button>
@@ -310,6 +312,16 @@ export default function DashboardPage() {
             {loading ? <span className="animate-pulse">Processing...</span> : 'Send'}
           </button>
         </div>
+
+        {filePreviews.length > 0 && (
+          <div className="flex gap-2 mt-3 overflow-x-auto">
+            {filePreviews.map((f, i) => (
+              <div key={i} className="w-20 h-20 border rounded overflow-hidden">
+                <img src={f.url} alt={f.name} className="object-cover w-full h-full" />
+              </div>
+            ))}
+          </div>
+        )}
 
         <div
           onDrop={handleDrop}
