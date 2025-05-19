@@ -133,16 +133,18 @@ export default function NerdModePage() {
   }, [searchTerm]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10 space-y-10 text-textPrimary">
-      <motion.h1 className="text-2xl font-bold" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        🧠 Nerdify Me!
-      </motion.h1>
+    <div className="max-w-6xl mx-auto px-4 py-10 space-y-10 text-textPrimary">
 
-      <p className="text-base text-muted">
-        The Nerdify Me zone is your personal Growfly learning centre. Here you’ll find AI-powered prompt suggestions,
-        productivity tips, and feature tutorials – all designed to help you master Growfly faster and make smarter business moves with confidence.
-      </p>
+      {/* Welcome / Onboarding */}
+      <section className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 border border-blue-300 dark:border-blue-600 rounded-xl p-5">
+        <h2 className="text-lg font-semibold mb-2">👋 Welcome to the Growfly Learning Hub</h2>
+        <p className="text-sm leading-relaxed">
+          Whether you're just starting out or already scaling, this is your place to **master Growfly AI**. Learn how to prompt like a pro,
+          get productivity tips, and discover features that make running a business easier and faster.
+        </p>
+      </section>
 
+      {/* XP Levels */}
       <section className="bg-card p-6 rounded-xl border border-border">
         <h2 className="text-xl font-semibold text-accent mb-2">🎮 XP & Nerd Levels</h2>
         <p className="text-sm text-muted mb-4">
@@ -158,6 +160,49 @@ export default function NerdModePage() {
         </div>
       </section>
 
+      {/* AI Usage Tips */}
+      <section className="bg-card p-6 rounded-xl border border-border">
+        <h2 className="text-xl font-semibold text-accent mb-2">🎓 How to Use Growfly AI Like a Pro</h2>
+        <ul className="text-sm list-disc pl-5 space-y-2">
+          <li><strong>Be specific:</strong> Tell Growfly your brand type, tone, audience, or goal.</li>
+          <li><strong>Set context:</strong> Start with “Act as a [job] helping with [problem]…”</li>
+          <li><strong>Follow up:</strong> Don’t like the result? Ask “make it funnier” or “shorter for Twitter.”</li>
+          <li><strong>Teach it:</strong> Add info about your business before prompting — or update Brand Settings!</li>
+        </ul>
+      </section>
+
+      {/* Brand Settings Reminder */}
+      <section className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-100 border border-yellow-400 dark:border-yellow-700 rounded-xl p-5">
+        <h2 className="text-md font-semibold mb-2">⚙️ Tip: Personalise Growfly for Better Results</h2>
+        <p className="text-sm leading-relaxed">
+          Go to <a href="/brand-settings" className="underline text-blue-600">Brand Settings</a> to define your tone, audience, and goals. Growfly uses this to tailor answers just for your business.
+        </p>
+      </section>
+
+      {/* Prompt Structure Examples */}
+      <section className="bg-card p-6 rounded-xl border border-border">
+        <h2 className="text-xl font-semibold text-accent mb-3">📌 Prompt Writing: Before & After</h2>
+        <table className="w-full text-sm border-t border-border">
+          <thead>
+            <tr className="text-left">
+              <th className="py-2 pr-4">❌ Basic Prompt</th>
+              <th className="py-2">✅ Improved Prompt</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            <tr>
+              <td className="py-2 pr-4">Write Instagram post</td>
+              <td className="py-2">Write a fun, witty Instagram caption for a summer shoe sale aimed at Gen Z women</td>
+            </tr>
+            <tr>
+              <td className="py-2 pr-4">Help with ad</td>
+              <td className="py-2">Act as a performance marketer. Write 3 ad headlines for a skincare brand with a “clean & simple” message</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      {/* FAQs */}
       <section className="bg-card p-6 rounded-xl border border-border">
         <h2 className="text-xl font-semibold text-accent mb-3">💡 Growfly Feature FAQs</h2>
         <ul className="space-y-6 text-sm">
@@ -170,6 +215,7 @@ export default function NerdModePage() {
         </ul>
       </section>
 
+      {/* Search */}
       <section>
         <input
           type="text"
@@ -180,6 +226,7 @@ export default function NerdModePage() {
         />
       </section>
 
+      {/* Prompt Library */}
       <section>
         <h2 className="text-xl font-semibold text-accent mb-4">📋 Prompt Library</h2>
         {Object.entries(filteredPrompts).map(([category, list]) => (
@@ -218,13 +265,6 @@ export default function NerdModePage() {
             )}
           </div>
         ))}
-      </section>
-
-      <section className="bg-card p-6 rounded-xl border border-border">
-        <h2 className="text-xl font-semibold text-accent mb-3">💡 Pro Tip</h2>
-        <p className="text-sm text-muted leading-relaxed">
-          Not sure where to start? Just type: <strong>&quot;How can you help me today?&quot;</strong> and let Growfly guide your journey.
-        </p>
       </section>
     </div>
   );
