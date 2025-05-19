@@ -9,15 +9,8 @@ import FeedbackModal from '@/components/FeedbackModal'
 import { API_BASE_URL } from '@/lib/constants'
 import { useUserStore } from '@/lib/store'
 import streamChat from '../../lib/streamChat'
-
-type Message = {
-  role: 'assistant' | 'user'
-  content: string
-  imageUrl?: string
-  fileName?: string
-  fileType?: string
-  id?: string
-}
+import { HiThumbUp, HiThumbDown } from 'react-icons/hi'
+import { FaRegBookmark, FaShareSquare } from 'react-icons/fa'
 
 const languageOptions = [
   { code: 'en-UK', label: '🇬🇧 English (UK)' },
@@ -31,6 +24,15 @@ const languageOptions = [
   { code: 'sv', label: '🇸🇪 Swedish' },
   { code: 'pl', label: '🇵🇱 Polish' },
 ]
+
+type Message = {
+  role: 'assistant' | 'user'
+  content: string
+  imageUrl?: string
+  fileName?: string
+  fileType?: string
+  id?: string
+}
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -49,12 +51,15 @@ export default function DashboardPage() {
 
   const setUser = useUserStore((s) => s.setUser)
   const setXp = useUserStore((s) => s.setXp)
+  const setSubscriptionType = useUserStore((s) => s.setSubscriptionType)
+  const subscriptionType = useUserStore((s) => s.subscriptionType)
   const xp = useUserStore((s) => s.xp)
   const user = useUserStore((s) => s.user)
 
   useEffect(() => {
     const token = localStorage.getItem('growfly_jwt')
     if (!token) return router.push('/login')
+
     fetch(`${API_BASE_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -62,21 +67,16 @@ export default function DashboardPage() {
       .then((data) => {
         setUser(data)
         setXp(data.totalXP || 0)
+        setSubscriptionType(data.subscriptionType || 'Free')
+
+        return fetch(`${API_BASE_URL}/api/chat/history`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
       })
+      .then(res => res?.json?.())
+      .then(history => setMessages(history || []))
       .catch(() => router.push('/login'))
-  }, [router, setUser, setXp])
-
-  useEffect(() => {
-    const saved = localStorage.getItem('growfly_chat')
-    if (saved) setMessages(JSON.parse(saved))
-    const langPref = localStorage.getItem('growfly_lang')
-    if (langPref) setLanguage(langPref)
-  }, [])
-
-  useEffect(() => {
-    const trimmed = messages.slice(-4)
-    localStorage.setItem('growfly_chat', JSON.stringify(trimmed))
-  }, [messages])
+  }, [router, setUser, setXp, setSubscriptionType])
 
   useEffect(() => {
     if (chatRef.current) {
@@ -90,11 +90,6 @@ export default function DashboardPage() {
     if (!token || (!prompt && files.length === 0)) return
     if ((user?.promptsUsed || 0) >= (user?.promptLimit || 0)) return
 
-    const label = languageOptions.find((opt) => opt.code === language)?.label || 'English'
-    const basePrompt = `Please reply in ${label}:\n${prompt}`
-
-    setLoading(true)
-
     const newMessages: Message[] = [
       ...filePreviews.map((f) => ({
         role: 'user' as const,
@@ -103,7 +98,7 @@ export default function DashboardPage() {
         fileName: f.name,
         fileType: f.type,
       })),
-      { role: 'user', content: basePrompt },
+      { role: 'user', content: prompt },
       { role: 'assistant', content: '' },
     ]
 
@@ -111,27 +106,24 @@ export default function DashboardPage() {
     setInput('')
     setFiles([])
     setFilePreviews([])
+    setLoading(true)
 
     try {
-      for await (const { type, content, followUps, responseId } of streamChat(basePrompt, token, language)) {
+      for await (const { type, content, followUps, responseId } of streamChat(prompt, token, language)) {
         if (type === 'partial') {
           setMessages((prev) => {
             const updated = [...prev]
             const last = updated.findLast((m) => m.role === 'assistant')
             if (last) last.content += content
-            return [...updated]
+            return updated
           })
         } else if (type === 'complete') {
           setXp((xp || 0) + 2.5)
           setUser({ ...user, promptsUsed: (user?.promptsUsed || 0) + 1 })
           setFeedbackId(responseId || '')
 
-          if (followUps?.length) {
-            const updated = [...messages, { role: 'assistant' as const, content }]
-            followUps.forEach((q) =>
-              updated.push({ role: 'assistant' as const, content: `💡 ${q}` })
-            )
-            setMessages(updated)
+          if (followUps?.[0]) {
+            setMessages((prev) => [...prev, { role: 'assistant', content: `💡 ${followUps[0]}` }])
           }
         }
       }
@@ -142,17 +134,13 @@ export default function DashboardPage() {
     setLoading(false)
   }
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    const dropped = Array.from(e.dataTransfer.files || [])
-    dropped.forEach((file) => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        const url = reader.result as string
-        setFilePreviews((prev) => [...prev, { url, name: file.name, type: file.type }])
-      }
-      reader.readAsDataURL(file)
+  const handleClearChat = async () => {
+    const token = localStorage.getItem('growfly_jwt')
+    await fetch(`${API_BASE_URL}/api/chat/clear`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
     })
+    setMessages([])
   }
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -172,75 +160,23 @@ export default function DashboardPage() {
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex justify-between items-center">
           <PromptTracker used={user?.promptsUsed || 0} limit={user?.promptLimit || 0} />
-          <select
-            className="text-sm border rounded-full px-3 py-1 bg-muted"
-            value={language}
-            onChange={(e) => {
-              setLanguage(e.target.value)
-              localStorage.setItem('growfly_lang', e.target.value)
-            }}
-          >
-            {languageOptions.map((opt) => (
-              <option key={opt.code} value={opt.code}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
-
-        <div ref={chatRef} className="bg-card rounded-2xl p-6 shadow-md max-h-[60vh] overflow-y-auto space-y-6 border border-border">
-          {messages.map((m, i) => (
-            <div key={i} className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
-              <div className="space-y-2 max-w-[80%]">
-                {m.imageUrl && (
-                  <a href={m.imageUrl} download>
-                    <img src={m.imageUrl} alt="Uploaded" className="rounded-lg border max-h-40 cursor-pointer" />
-                  </a>
-                )}
-                <div
-                  className={`p-4 rounded-2xl text-sm whitespace-pre-wrap shadow ${
-                    m.role === 'assistant' ? 'bg-muted text-foreground' : 'bg-blue-500 text-white'
-                  }`}
-                >
-                  {m.content.startsWith('💡') ? (
-                    <button
-                      onClick={() => {
-                        const follow = m.content.replace(/^💡 /, '')
-                        setInput(follow)
-                        handleSend(follow)
-                      }}
-                      className="px-3 py-1 rounded-full border text-sm border-border text-muted-foreground bg-background hover:bg-muted transition"
-                    >
-                      {m.content.replace(/^💡 /, '')}
-                    </button>
-                  ) : (
-                    <span>{m.content}</span>
-                  )}
-                </div>
-
-                {m.role === 'assistant' && !m.content.startsWith('💡') && i === messages.length - 1 && (
-                  <div className="flex gap-3 pt-1 text-lg text-muted-foreground items-center">
-                    <button onClick={() => setFeedbackOpen(true)} title="Helpful">👍</button>
-                    <button onClick={() => setFeedbackOpen(true)} title="Needs work">👎</button>
-                    <button onClick={() => {
-                      setSavingContent(m.content)
-                      setShowSaveModal(true)
-                    }} title="Save">📌</button>
-                    <button onClick={async () => {
-                      const token = localStorage.getItem('growfly_jwt')
-                      await fetch(`${API_BASE_URL}/api/collab/share`, {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          Authorization: `Bearer ${token}`,
-                        },
-                        body: JSON.stringify({ content: m.content }),
-                      })
-                      router.push('/collab-zone')
-                    }} title="Collab">🧠</button>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+          <div className="flex gap-2">
+            <select
+              className="text-sm border rounded-full px-3 py-1 bg-muted"
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+            >
+              {languageOptions.map(opt => (
+                <option key={opt.code} value={opt.code}>{opt.label}</option>
+              ))}
+            </select>
+            <button
+              onClick={handleClearChat}
+              className="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-full hover:bg-red-200 transition"
+            >
+              🗑️ Clear Chat
+            </button>
+          </div>
         </div>
 
         {filePreviews.length > 0 && (
@@ -253,46 +189,65 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <div className="flex flex-col gap-2 mt-4">
-          {(user?.promptsUsed || 0) >= (user?.promptLimit || 0) && (
-            <div className="text-sm text-red-500 bg-red-100 p-2 rounded-lg border border-red-300 flex justify-between items-center">
-              Prompt limit reached — upgrade to continue.
-              <button onClick={() => router.push('/change-plan')} className="ml-4 bg-red-600 text-white px-3 py-1 rounded-full text-xs">
-                Upgrade
-              </button>
+        <div ref={chatRef} className="bg-card rounded-2xl p-6 shadow-md max-h-[60vh] overflow-y-auto space-y-6 border border-border">
+          {messages.map((m, i) => (
+            <div key={i} className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
+              <div className="space-y-2 max-w-[80%]">
+                <div className={`p-4 rounded-2xl text-sm whitespace-pre-wrap shadow ${m.role === 'assistant' ? 'bg-muted text-foreground' : 'bg-blue-500 text-white'}`}>
+                  {m.content.startsWith('💡') ? (
+                    <button onClick={() => handleSend(m.content.replace(/^💡 /, ''))} className="px-3 py-1 rounded-full border text-sm border-border text-muted-foreground bg-background hover:bg-muted transition">
+                      {m.content.replace(/^💡 /, '')}
+                    </button>
+                  ) : (
+                    <span>{m.content}</span>
+                  )}
+                </div>
+                {m.role === 'assistant' && i === messages.length - 1 && !m.content.startsWith('💡') && (
+                  <div className="flex gap-3 pt-1 text-sm text-muted-foreground">
+                    <button onClick={() => setFeedbackOpen(true)}><HiThumbUp /></button>
+                    <button onClick={() => setFeedbackOpen(true)}><HiThumbDown /></button>
+                    <button onClick={() => { setSavingContent(m.content); setShowSaveModal(true) }}><FaRegBookmark /> Save</button>
+                    <button onClick={async () => {
+                      const token = localStorage.getItem('growfly_jwt')
+                      const res = await fetch(`${API_BASE_URL}/api/collab/share`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                        body: JSON.stringify({ content: m.content }),
+                      })
+                      const data = await res.json()
+                      router.push(`/collab-zone?doc=${data.docId}`)
+                    }}><FaShareSquare /> Collab</button>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
-
-          <div className="flex items-start gap-2">
-            <textarea
-              rows={2}
-              disabled={(user?.promptsUsed || 0) >= (user?.promptLimit || 0)}
-              className="flex-1 p-3 text-sm rounded-xl bg-[var(--input)] border border-[var(--input-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] resize-none"
-              placeholder="Type your message or upload files..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  handleSend()
-                }
-              }}
-            />
-            <button
-              onClick={() => handleSend()}
-              disabled={loading || (user?.promptsUsed || 0) >= (user?.promptLimit || 0)}
-              className="px-4 py-2 bg-[var(--accent)] hover:scale-105 hover:brightness-110 text-white rounded-full text-sm font-medium transition disabled:opacity-50"
-            >
-              {loading ? <span className="animate-pulse">Processing...</span> : 'Send'}
-            </button>
-          </div>
+          ))}
         </div>
 
-        <div
-          onDrop={handleDrop}
-          onDragOver={(e) => e.preventDefault()}
-          className="bg-muted border border-dashed border-border rounded-xl p-4 text-center text-sm text-muted-foreground"
-        >
+        <div className="flex items-start gap-2 mt-4">
+          <textarea
+            rows={2}
+            className="flex-1 p-3 text-sm rounded-xl bg-[var(--input)] border border-[var(--input-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] resize-none"
+            placeholder="Type your message or upload files..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                handleSend()
+              }
+            }}
+          />
+          <button
+            onClick={() => handleSend()}
+            disabled={loading}
+            className="px-4 py-2 bg-[var(--accent)] hover:scale-105 hover:brightness-110 text-white rounded-full text-sm font-medium transition disabled:opacity-50"
+          >
+            {loading ? <span className="animate-pulse">Processing...</span> : 'Send'}
+          </button>
+        </div>
+
+        <div className="mt-4 border border-dashed border-border bg-muted p-4 rounded-xl text-center text-sm text-muted-foreground">
           Drag and drop files here or{' '}
           <label className="underline cursor-pointer">
             browse

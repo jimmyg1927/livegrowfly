@@ -26,16 +26,25 @@ export default function SignupPage() {
       setMessage('❌ Passwords do not match!')
       return
     }
+
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ''}/api/auth/signup`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password, plan: selectedPlan }),
       })
+
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Signup failed')
+
       localStorage.setItem('growfly_jwt', data.token)
-      router.push('/dashboard')
+
+      const meRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${data.token}` },
+      })
+      const user = await meRes.json()
+
+      router.push(user.hasCompletedOnboarding ? '/dashboard' : '/onboarding')
     } catch (err: any) {
       setMessage(`❌ ${err.message}`)
     }
@@ -60,9 +69,7 @@ export default function SignupPage() {
 
         <form onSubmit={handleSignup} className="space-y-5">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium mb-1">
-              Name
-            </label>
+            <label htmlFor="name" className="block text-sm font-medium mb-1">Name</label>
             <input
               type="text"
               id="name"
@@ -73,9 +80,7 @@ export default function SignupPage() {
             />
           </div>
           <div>
-            <label htmlFor="email" className="block text-sm font-medium mb-1">
-              Email
-            </label>
+            <label htmlFor="email" className="block text-sm font-medium mb-1">Email</label>
             <input
               type="email"
               id="email"
@@ -86,9 +91,7 @@ export default function SignupPage() {
             />
           </div>
           <div>
-            <label htmlFor="password" className="block text-sm font-medium mb-1">
-              Password
-            </label>
+            <label htmlFor="password" className="block text-sm font-medium mb-1">Password</label>
             <input
               type="password"
               id="password"
@@ -99,9 +102,7 @@ export default function SignupPage() {
             />
           </div>
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1">
-              Confirm Password
-            </label>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1">Confirm Password</label>
             <input
               type="password"
               id="confirmPassword"

@@ -55,6 +55,7 @@ export default function SettingsPage() {
           jobTitle: data.jobTitle || '',
           industry: data.industry || '',
           narrative: data.narrative || '',
+          goals: data.goals || '',
         })
         setLoading(false)
       })
@@ -80,6 +81,14 @@ export default function SettingsPage() {
       return
     }
 
+    const { confirmPassword, ...body } = form
+
+
+    const requiredFields = [
+      'name', 'jobTitle', 'industry', 'goals'
+    ]
+    const isComplete = requiredFields.every(field => form[field as keyof typeof form]?.trim())
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/user`, {
         method: 'PUT',
@@ -87,7 +96,7 @@ export default function SettingsPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...body, hasCompletedOnboarding: isComplete }),
       })
       if (!res.ok) throw new Error('Failed to update')
       alert('✅ Profile updated!')

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import { Loader2, Save } from 'lucide-react'
+import { API_BASE_URL } from '@/lib/constants'
 
 export default function BrandSettingsPage() {
   const [formData, setFormData] = useState({
@@ -28,7 +29,7 @@ export default function BrandSettingsPage() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await axios.get('/api/user/settings', {
+        const res = await axios.get(`${API_BASE_URL}/api/user/settings`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('growfly_jwt')}`,
           },
@@ -55,7 +56,7 @@ export default function BrandSettingsPage() {
   const handleSave = async () => {
     try {
       setSaving(true)
-      await axios.put('/api/user/settings', formData, {
+      await axios.put(`${API_BASE_URL}/api/user/settings`, formData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('growfly_jwt')}`,
         },

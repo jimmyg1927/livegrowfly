@@ -75,29 +75,6 @@ const prompts = {
   ],
 };
 
-const growflyFaqs = [
-  {
-    question: 'How do I use the Collab Zone to brainstorm with a teammate?',
-    answer: 'Open the Collab Zone tab, create a shared document, and invite a teammate by email. You&apos;ll both see real-time edits and can collaborate live.',
-  },
-  {
-    question: 'Remind me what I saved in Saved Mode this week.',
-    answer: 'Go to the Saved tab in your sidebar. All AI responses you&apos;ve bookmarked are stored there. You can rename or delete them any time.',
-  },
-  {
-    question: 'Submit a new feature idea for Growfly&apos;s Request Zone.',
-    answer: 'Head to the Wishlist page and type in your idea. You can also vote up existing ideas — we use this to guide the roadmap.',
-  },
-  {
-    question: 'How do I rename a saved response?',
-    answer: 'In the Saved tab, click the pencil/edit icon next to any saved title to rename it.',
-  },
-  {
-    question: 'How can I share a document from Collab Zone?',
-    answer: 'Click the “Share” button on any Collab Zone doc. You can invite people by email or generate a shareable link.',
-  },
-];
-
 const nerdLevels = [
   { level: 1, title: 'Curious Cat', emoji: '🐱' },
   { level: 2, title: 'Nerdlet', emoji: '🧠' },
@@ -134,8 +111,6 @@ export default function NerdModePage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10 space-y-10 text-textPrimary">
-
-      {/* Welcome / Onboarding */}
       <section className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 border border-blue-300 dark:border-blue-600 rounded-xl p-5">
         <h2 className="text-lg font-semibold mb-2">👋 Welcome to the Growfly Learning Hub</h2>
         <p className="text-sm leading-relaxed">
@@ -148,7 +123,6 @@ export default function NerdModePage() {
         </p>
       </section>
 
-      {/* XP Levels */}
       <section className="bg-card p-6 rounded-xl border border-border">
         <h2 className="text-xl font-semibold text-accent mb-2">🎮 XP & Nerd Levels</h2>
         <p className="text-sm text-muted mb-4">
@@ -164,10 +138,6 @@ export default function NerdModePage() {
         </div>
       </section>
 
-      {/* Tips, Brand Reminder, Prompt Examples, FAQs — unchanged below */}
-      {/* ... (no change to remaining structure) */}
-
-      {/* Search + Prompt Accordion */}
       <section>
         <input
           type="text"
@@ -194,20 +164,20 @@ export default function NerdModePage() {
                 {list.map((prompt) => (
                   <motion.li
                     key={prompt}
-                    className="flex items-center justify-between bg-highlight px-4 py-2 rounded-md text-sm hover:opacity-90"
+                    className="flex items-center justify-between bg-blue-100 dark:bg-blue-700 px-4 py-2 rounded-md text-sm hover:bg-blue-600 hover:text-white transition"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                   >
                     <span>{prompt}</span>
                     <button
                       onClick={() => handleCopy(prompt)}
-                      className="ml-4 hover:text-green-500 transition"
+                      className="ml-4 transition"
                       title="Copy prompt"
                     >
                       {copiedPrompt === prompt ? (
-                        <HiCheckCircle className="h-5 w-5" />
+                        <HiCheckCircle className="h-5 w-5 text-white" />
                       ) : (
-                        <HiClipboard className="h-5 w-5" />
+                        <HiClipboard className="h-5 w-5 text-blue-700 dark:text-white" />
                       )}
                     </button>
                   </motion.li>
