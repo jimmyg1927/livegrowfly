@@ -49,7 +49,7 @@ export default function DashboardPage() {
 
   const setUser = useUserStore((s) => s.setUser)
   const setXp = useUserStore((s) => s.setXp)
-  const setSubscriptionType = useUserStore((s) => s.setSubscriptionType)
+  const xp = useUserStore((s) => s.xp)
   const user = useUserStore((s) => s.user)
 
   useEffect(() => {
@@ -62,10 +62,9 @@ export default function DashboardPage() {
       .then((data) => {
         setUser(data)
         setXp(data.totalXP || 0)
-        setSubscriptionType(data.subscriptionType || 'Free')
       })
       .catch(() => router.push('/login'))
-  }, [router, setUser, setXp, setSubscriptionType])
+  }, [router, setUser, setXp])
 
   useEffect(() => {
     const saved = localStorage.getItem('growfly_chat')
@@ -123,13 +122,14 @@ export default function DashboardPage() {
             return [...updated]
           })
         } else if (type === 'complete') {
-          setXp((user?.totalXP || 0) + 2.5)
+          setXp((xp || 0) + 2.5)
           setUser({ ...user, promptsUsed: (user?.promptsUsed || 0) + 1 })
           setFeedbackId(responseId || '')
+
           if (followUps?.length) {
-            const updated = [...messages, { role: 'assistant', content }]
+            const updated = [...messages, { role: 'assistant' as const, content }]
             followUps.forEach((q) =>
-              updated.push({ role: 'assistant', content: `💡 ${q}` })
+              updated.push({ role: 'assistant' as const, content: `💡 ${q}` })
             )
             setMessages(updated)
           }
