@@ -1,4 +1,3 @@
-// FILE: app/dashboard/page.tsx
 'use client'
 export const dynamic = 'force-dynamic'
 
@@ -11,7 +10,8 @@ import { API_BASE_URL } from '@/lib/constants'
 import { useUserStore } from '@/lib/store'
 import streamChat from '../../lib/streamChat'
 import { HiThumbUp, HiThumbDown } from 'react-icons/hi'
-import { FaRegBookmark, FaShareSquare } from 'react-icons/fa'
+import { FaRegBookmark } from 'react-icons/fa'
+import { TbBrain } from 'react-icons/tb'
 
 type Message = {
   role: 'assistant' | 'user'
@@ -81,6 +81,7 @@ export default function DashboardPage() {
     const token = localStorage.getItem('growfly_jwt')
     const prompt = overrideInput || input
     if (!token || (!prompt && files.length === 0)) return
+    if ((user?.promptsUsed || 0) >= (user?.promptLimit || 0)) return
 
     setLoading(true)
 
@@ -193,9 +194,21 @@ export default function DashboardPage() {
           </select>
         </div>
 
+        {user?.promptsUsed >= user?.promptLimit && (
+          <div className="p-4 rounded-xl bg-red-100 text-red-700 border border-red-300 text-sm flex justify-between items-center">
+            You've reached your monthly prompt limit.
+            <button
+              onClick={() => router.push('/change-plan')}
+              className="bg-red-600 text-white px-4 py-1 rounded-full ml-4 hover:brightness-110 transition text-xs"
+            >
+              Upgrade Plan
+            </button>
+          </div>
+        )}
+
         <div className="flex justify-end">
           <button
-            className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 transition"
+            className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:scale-105 transition"
             onClick={() => {
               setInput('How can Growfly help me?')
               handleSend('How can Growfly help me?')
@@ -205,13 +218,15 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        <div className="flex flex-wrap gap-2 mb-2">
-          {filePreviews.map((f, i) => (
-            <div key={i} className="w-24">
-              <img src={f.url} alt={f.name} className="rounded-md max-h-20 border" />
-            </div>
-          ))}
-        </div>
+        {filePreviews.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-2">
+            {filePreviews.map((f, i) => (
+              <div key={i} className="w-24">
+                <img src={f.url} alt={f.name} className="rounded-md max-h-20 border" />
+              </div>
+            ))}
+          </div>
+        )}
 
         <div
           ref={chatRef}
@@ -226,37 +241,30 @@ export default function DashboardPage() {
                   </a>
                 )}
                 <div
-                  className={`p-4 rounded-xl text-sm whitespace-pre-wrap shadow ${
+                  className={`p-4 rounded-2xl text-sm whitespace-pre-wrap shadow ${
                     m.role === 'assistant' ? 'bg-gray-100 text-black' : 'bg-blue-500 text-white'
                   }`}
                 >
                   {m.content}
                 </div>
                 {m.role === 'assistant' && i === messages.length - 1 && (
-                  <div className="flex gap-3 pt-2">
-                    <button
-                      className="text-xs flex items-center gap-1 text-gray-600 hover:text-green-600"
-                      onClick={() => setFeedbackOpen(true)}
-                    >
-                      <HiThumbUp /> Feedback
+                  <div className="flex gap-2 pt-2 text-gray-500 text-sm">
+                    <button onClick={() => setFeedbackOpen(true)} title="This was helpful">
+                      <HiThumbUp className="hover:text-green-600" />
+                    </button>
+                    <button onClick={() => setFeedbackOpen(true)} title="Needs improvement">
+                      <HiThumbDown className="hover:text-red-600" />
                     </button>
                     <button
-                      className="text-xs flex items-center gap-1 text-gray-600 hover:text-red-600"
-                      onClick={() => setFeedbackOpen(true)}
-                    >
-                      <HiThumbDown /> Feedback
-                    </button>
-                    <button
-                      className="text-xs flex items-center gap-1 text-gray-600 hover:text-blue-600"
                       onClick={() => {
                         setSavingContent(m.content)
                         setShowSaveModal(true)
                       }}
+                      title="Save"
                     >
-                      <FaRegBookmark /> Save
+                      <FaRegBookmark className="hover:text-blue-600" />
                     </button>
                     <button
-                      className="text-xs flex items-center gap-1 text-gray-600 hover:text-purple-600"
                       onClick={async () => {
                         const token = localStorage.getItem('growfly_jwt')
                         await fetch(`${API_BASE_URL}/api/collab/share`, {
@@ -267,10 +275,11 @@ export default function DashboardPage() {
                           },
                           body: JSON.stringify({ content: m.content }),
                         })
-                        alert('Shared to Collab Zone!')
+                        router.push('/collab-zone')
                       }}
+                      title="Open in Collab Zone"
                     >
-                      <FaShareSquare /> Share
+                      <TbBrain className="hover:text-purple-600" />
                     </button>
                   </div>
                 )}
@@ -295,8 +304,8 @@ export default function DashboardPage() {
           />
           <button
             onClick={() => handleSend()}
-            disabled={loading}
-            className="px-4 py-2 bg-[var(--accent)] hover:brightness-110 text-white rounded-lg text-sm font-medium transition disabled:opacity-50"
+            disabled={loading || user?.promptsUsed >= user?.promptLimit}
+            className="px-4 py-2 bg-[var(--accent)] hover:scale-105 hover:brightness-110 text-white rounded-full text-sm font-medium transition disabled:opacity-50"
           >
             {loading ? <span className="animate-pulse">Processing...</span> : 'Send'}
           </button>
@@ -305,7 +314,7 @@ export default function DashboardPage() {
         <div
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
-          className="bg-white border border-dashed border-gray-300 rounded-xl p-4 text-center text-sm text-gray-600"
+          className="bg-muted border border-dashed border-gray-300 rounded-xl p-4 text-center text-sm text-gray-600"
         >
           Drag and drop files here or{' '}
           <label className="underline cursor-pointer">
@@ -332,11 +341,7 @@ export default function DashboardPage() {
         }}
       />
 
-      <FeedbackModal
-        responseId={feedbackId}
-        open={feedbackOpen}
-        onClose={() => setFeedbackOpen(false)}
-      />
+      <FeedbackModal responseId={feedbackId} open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </div>
   )
 }
