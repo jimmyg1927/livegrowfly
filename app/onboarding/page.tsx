@@ -34,7 +34,8 @@ export default function OnboardingPage() {
   }, [form])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
+    const { name, value } = e.target
+    setForm(prev => ({ ...prev, [name]: value }))
   }
 
   const handleSubmit = async () => {
@@ -58,20 +59,38 @@ export default function OnboardingPage() {
       })
 
       if (!res.ok || !xpRes.ok) throw new Error('Update failed')
-      toast.success("🎉 You\'re all set! Welcome aboard, nerd hero.")
+      toast.success("🎉 You&apos;re all set! Welcome aboard, nerd hero.")
       router.push('/dashboard')
-    } catch (err: any) {
+    } catch (err) {
       toast.error('Something went wrong saving your data.')
     }
   }
 
-  const renderField = (label: string, name: keyof typeof form, placeholder: string, textarea = false) => (
+  const renderField = (
+    label: string,
+    name: keyof typeof form,
+    placeholder: string,
+    textarea = false
+  ) => (
     <div>
       <label className="block font-medium mb-1">{label}</label>
       {textarea ? (
-        <textarea name={name} value={form[name]} onChange={handleChange} placeholder={placeholder} rows={3} className="w-full border border-gray-300 p-2 rounded-md" />
+        <textarea
+          name={name}
+          value={form[name]}
+          onChange={handleChange}
+          placeholder={placeholder}
+          rows={3}
+          className="w-full border border-gray-300 p-2 rounded-md"
+        />
       ) : (
-        <input name={name} value={form[name]} onChange={handleChange} placeholder={placeholder} className="w-full border border-gray-300 p-2 rounded-md" />
+        <input
+          name={name}
+          value={form[name]}
+          onChange={handleChange}
+          placeholder={placeholder}
+          className="w-full border border-gray-300 p-2 rounded-md"
+        />
       )}
     </div>
   )
@@ -79,19 +98,27 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-[#e6f7ff] px-6 py-10 text-black">
       <div className="max-w-3xl mx-auto">
+        {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <Image src="/growfly-bot.png" alt="Bot" width={48} height={48} />
           <div>
-            <h1 className="text-xl font-bold">Let's make Growfly personal ✨</h1>
-            <p className="text-sm text-gray-600">Answer a few quick things so our nerds can tailor your AI to your brand.</p>
+            <h1 className="text-xl font-bold">Let&apos;s make Growfly personal ✨</h1>
+            <p className="text-sm text-gray-600">
+              Answer a few quick things so our nerds can tailor your AI to your brand.
+            </p>
           </div>
         </div>
 
         {/* XP Bar */}
         <div className="mb-8">
-          <p className="text-sm font-medium mb-1">XP Progress: {xp} / {totalFields}</p>
+          <p className="text-sm font-medium mb-1">
+            XP Progress: {xp} / {totalFields}
+          </p>
           <div className="w-full h-2 bg-gray-300 rounded-full overflow-hidden">
-            <div className="h-full bg-blue-600 transition-all duration-300" style={{ width: `${(xp / totalFields) * 100}%` }}></div>
+            <div
+              className="h-full bg-blue-600 transition-all duration-300"
+              style={{ width: `${(xp / totalFields) * 100}%` }}
+            />
           </div>
         </div>
 
@@ -102,7 +129,7 @@ export default function OnboardingPage() {
           <span className={step >= 3 ? 'text-blue-600' : 'text-gray-400'}>3. About You</span>
         </div>
 
-        {/* Step Forms */}
+        {/* Step Fields */}
         <div className="space-y-4">
           {step === 1 && (
             <>
@@ -130,15 +157,30 @@ export default function OnboardingPage() {
           )}
         </div>
 
-        {/* Buttons */}
+        {/* Navigation Buttons */}
         <div className="flex justify-between mt-8">
           {step > 1 && (
-            <button onClick={() => setStep(s => s - 1)} className="text-sm px-4 py-2 rounded bg-gray-300 hover:bg-gray-400">Back</button>
+            <button
+              onClick={() => setStep(s => s - 1)}
+              className="text-sm px-4 py-2 rounded bg-gray-300 hover:bg-gray-400"
+            >
+              Back
+            </button>
           )}
           {step < 3 ? (
-            <button onClick={() => setStep(s => s + 1)} className="ml-auto text-sm px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Next</button>
+            <button
+              onClick={() => setStep(s => s + 1)}
+              className="ml-auto text-sm px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+            >
+              Next
+            </button>
           ) : (
-            <button onClick={handleSubmit} className="ml-auto text-sm px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700">Finish</button>
+            <button
+              onClick={handleSubmit}
+              className="ml-auto text-sm px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
+            >
+              Finish
+            </button>
           )}
         </div>
       </div>
