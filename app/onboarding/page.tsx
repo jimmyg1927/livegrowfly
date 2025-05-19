@@ -1,11 +1,26 @@
+// app/onboarding/page.tsx
 'use client'
-import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+
 import Image from 'next/image'
-import toast from 'react-hot-toast'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { toast } from 'react-hot-toast'
 import { API_BASE_URL } from '@/lib/constants'
 
-const initialForm = {
+type FormState = {
+  brandName: string
+  brandTone: string
+  brandDescription: string
+  brandValues: string
+  brandVoice: string
+  brandMission: string
+  inspiredBy: string
+  jobTitle: string
+  industry: string
+  goals: string
+}
+
+const INITIAL: FormState = {
   brandName: '',
   brandTone: '',
   brandDescription: '',
@@ -20,219 +35,233 @@ const initialForm = {
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const token =
-    typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null
+  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null
 
   const [step, setStep] = useState(1)
-  const [form, setForm] = useState(initialForm)
+  const [form, setForm] = useState<FormState>(INITIAL)
   const [xp, setXp] = useState(0)
-  const total = Object.keys(initialForm).length
+  const total = Object.keys(INITIAL).length
 
   useEffect(() => {
-    setXp(Object.values(form).filter((v) => v.trim() !== '').length)
+    const filled = Object.values(form).filter((v) => v.trim() !== '').length
+    setXp(filled)
   }, [form])
 
-  const onChange = (
+  const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
+    const { name, value } = e.target
+    setForm((f) => ({ ...f, [name]: value }))
   }
 
-  const saveAll = async () => {
-    if (!token) return toast.error('Not authenticated')
-    const id = toast.loading('Saving…')
+  const handleSubmit = async () => {
     try {
-      const [r1, r2] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/user/settings`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(form),
-        }),
-        fetch(`${API_BASE_URL}/api/user/xp`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ xp }),
-        }),
-      ])
-      if (!r1.ok || !r2.ok) throw new Error()
-      toast.success('All set! Redirecting…', { id })
+      const res = await fetch(`${API_BASE_URL}/api/user/settings`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(form),
+      })
+      const xpRes = await fetch(`${API_BASE_URL}/api/user/xp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ xp }),
+      })
+      if (!res.ok || !xpRes.ok) throw new Error('Save failed')
+      toast.success("🎉 You're all set! Redirecting…")
       router.push('/dashboard')
     } catch {
-      toast.error('Failed — try again', { id })
+      toast.error('❌ Something went wrong, please try again.')
     }
   }
 
   const renderField = (
     label: string,
-    name: keyof typeof initialForm,
+    name: keyof FormState,
     placeholder: string,
     textarea = false
   ) => (
-    <div className="mb-6">
-      <label className="block text-sm font-semibold mb-1">{label}</label>
+    <div>
+      <label className="block text-sm font-medium mb-1">{label}</label>
       {textarea ? (
         <textarea
           name={name}
           value={form[name]}
-          onChange={onChange}
-          rows={3}
+          onChange={handleChange}
           placeholder={placeholder}
-          className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded focus:ring-2 focus:ring-blue-600"
+          rows={3}
+          className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       ) : (
         <input
-          type="text"
           name={name}
           value={form[name]}
-          onChange={onChange}
+          onChange={handleChange}
           placeholder={placeholder}
-          className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded focus:ring-2 focus:ring-blue-600"
+          className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       )}
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-[#1992FF] flex items-center justify-center p-6">
-      <div className="bg-white rounded-2xl shadow-lg w-full max-w-3xl p-8">
-        <div className="flex justify-center mb-4">
-          {/* Your real logo here */}
+    <div className="min-h-screen bg-[#1992FF] flex items-center justify-center p-4">
+      <div className="w-full max-w-3xl bg-white rounded-2xl shadow-xl overflow-hidden">
+        {/* Logo */}
+        <div className="bg-[#1992FF] p-4 flex justify-center">
           <Image
             src="/growfly-logo.png"
             alt="Growfly"
-            width={160}
+            width={140}
             height={40}
           />
         </div>
-        <h1 className="text-2xl font-bold text-center mb-1">
-          Let&apos;s make Growfly personal ✨
-        </h1>
-        <p className="text-center text-gray-600 mb-6">
-          Answer a few quick things so our nerds can tailor your AI to your
-          brand.
-        </p>
 
-        {/* XP */}
-        <div className="mb-8">
-          <p className="text-sm font-medium mb-1">
-            XP Progress: {xp} / {total}
+        <div className="p-8">
+          <h1 className="text-2xl font-bold mb-2 text-center">
+            Let's make Growfly personal ✨
+          </h1>
+          <p className="text-center text-gray-600 mb-6">
+            Answer a few quick things so our nerds can tailor your AI to your
+            brand.
           </p>
-          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[#1992FF] transition-all"
-              style={{ width: `${(xp / total) * 100}%` }}
-            />
-          </div>
-        </div>
 
-        {/* Stepper */}
-        <div className="flex justify-center gap-6 mb-8">
-          {[1, 2, 3].map((n) => (
+          {/* XP Bar */}
+          <div className="mb-6">
+            <p className="text-sm font-medium mb-1">
+              XP Progress: {xp} / {total}
+            </p>
+            <div className="w-full h-2 bg-gray-200 rounded-full">
+              <div
+                className="h-2 bg-[#1992FF] rounded-full transition-all"
+                style={{ width: `${(xp / total) * 100}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Step Nav */}
+          <div className="flex justify-center space-x-8 mb-8 text-sm font-semibold">
             <button
-              key={n}
-              onClick={() => setStep(n)}
-              className={`text-sm font-semibold ${
-                step === n
-                  ? 'text-[#1992FF] underline'
-                  : 'text-gray-400 hover:text-[#1992FF]'
+              onClick={() => setStep(1)}
+              className={`px-3 py-1 rounded ${
+                step === 1
+                  ? 'bg-[#1992FF] text-white'
+                  : 'text-gray-500 hover:text-[#1992FF]'
               }`}
             >
-              {n === 1
-                ? '1. Brand'
-                : n === 2
-                ? '2. Audience'
-                : '3. About You'}
+              1. Brand
             </button>
-          ))}
-        </div>
+            <button
+              onClick={() => setStep(2)}
+              className={`px-3 py-1 rounded ${
+                step === 2
+                  ? 'bg-[#1992FF] text-white'
+                  : 'text-gray-500 hover:text-[#1992FF]'
+              }`}
+            >
+              2. Audience
+            </button>
+            <button
+              onClick={() => setStep(3)}
+              className={`px-3 py-1 rounded ${
+                step === 3
+                  ? 'bg-[#1992FF] text-white'
+                  : 'text-gray-500 hover:text-[#1992FF]'
+              }`}
+            >
+              3. About You
+            </button>
+          </div>
 
-        {/* Fields */}
-        {step === 1 && (
-          <>
-            {renderField('Brand Name', 'brandName', 'Growfly Ltd')}
-            {renderField('Tone of Voice', 'brandTone', 'Bold, confident')}
-            {renderField(
-              'Elevator Pitch',
-              'brandDescription',
-              'We help brands grow via AI.',
-              true
+          {/* Form Fields */}
+          <div className="space-y-4">
+            {step === 1 && (
+              <>
+                {renderField('Brand Name', 'brandName', 'e.g. Growfly Ltd')}
+                {renderField('Tone of Voice', 'brandTone', 'e.g. Bold, clever')}
+                {renderField(
+                  'Elevator Pitch',
+                  'brandDescription',
+                  'We help brands grow with AI.',
+                  true
+                )}
+                {renderField(
+                  'Core Values',
+                  'brandValues',
+                  'Trust, Innovation, Simplicity',
+                  true
+                )}
+                {renderField(
+                  'Brand Personality',
+                  'brandVoice',
+                  'Witty & expert',
+                  true
+                )}
+                {renderField(
+                  'Mission',
+                  'brandMission',
+                  'Make AI marketing simpler',
+                  true
+                )}
+              </>
             )}
-            {renderField(
-              'Core Values',
-              'brandValues',
-              'Trust, Innovation, Simplicity',
-              true
+            {step === 2 && (
+              <>
+                {renderField(
+                  'Inspired By',
+                  'inspiredBy',
+                  'Notion, Midjourney, Slack',
+                  true
+                )}
+              </>
             )}
-            {renderField(
-              'Brand Personality',
-              'brandVoice',
-              'Witty and expert',
-              true
+            {step === 3 && (
+              <>
+                {renderField('Your Job Title', 'jobTitle', 'Marketing Lead')}
+                {renderField('Your Industry', 'industry', 'E-commerce')}
+                {renderField(
+                  'Goals with Growfly',
+                  'goals',
+                  'Automate my content',
+                  true
+                )}
+              </>
             )}
-            {renderField(
-              'Mission',
-              'brandMission',
-              'Making AI marketing effortless',
-              true
-            )}
-          </>
-        )}
-        {step === 2 && (
-          <>
-            {renderField(
-              'Inspired By',
-              'inspiredBy',
-              'Notion, Midjourney, Slack',
-              true
-            )}
-          </>
-        )}
-        {step === 3 && (
-          <>
-            {renderField('Your Job Title', 'jobTitle', 'Marketing Director')}
-            {renderField('Your Industry', 'industry', 'E-commerce')}
-            {renderField(
-              'Goals with Growfly',
-              'goals',
-              'Automate content, grow reach',
-              true
-            )}
-          </>
-        )}
+          </div>
 
-        {/* Nav Buttons */}
-        <div className="flex justify-between mt-8">
-          {step > 1 ? (
-            <button
-              onClick={() => setStep((s) => s - 1)}
-              className="px-4 py-2 bg-gray-200 rounded-full hover:bg-gray-300"
-            >
-              Back
-            </button>
-          ) : (
-            <div />
-          )}
-          {step < 3 ? (
-            <button
-              onClick={() => setStep((s) => s + 1)}
-              className="px-6 py-2 bg-[#1992FF] text-white rounded-full hover:bg-blue-700"
-            >
-              Next
-            </button>
-          ) : (
-            <button
-              onClick={saveAll}
-              className="px-6 py-2 bg-green-600 text-white rounded-full hover:bg-green-700"
-            >
-              Finish
-            </button>
-          )}
+          {/* Navigation Buttons */}
+          <div className="mt-8 flex items-center justify-between">
+            {step > 1 ? (
+              <button
+                onClick={() => setStep((s) => s - 1)}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100"
+              >
+                Back
+              </button>
+            ) : (
+              <div />
+            )}
+            {step < 3 ? (
+              <button
+                onClick={() => setStep((s) => s + 1)}
+                className="px-6 py-2 rounded-lg bg-[#1992FF] text-white hover:bg-[#166FCC]"
+              >
+                Next
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                className="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
+              >
+                Finish &amp; Go to Dashboard
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
