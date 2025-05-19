@@ -1,4 +1,5 @@
 // lib/streamChat.ts
+
 export default async function* streamChat(prompt: string, token: string) {
   const res = await fetch('/api/ai', {
     method: 'POST',
@@ -23,7 +24,7 @@ export default async function* streamChat(prompt: string, token: string) {
 
     buffer += decoder.decode(value, { stream: true })
 
-    let parts = buffer.split('\n\n')
+    const parts = buffer.split('\n\n') // ✅ now using const
     buffer = parts.pop() || ''
 
     for (const part of parts) {
@@ -35,7 +36,7 @@ export default async function* streamChat(prompt: string, token: string) {
         const parsed = JSON.parse(jsonStr)
         yield parsed
       } catch (err) {
-        console.warn('Failed to parse chunk:', jsonStr)
+        console.warn('Failed to parse stream chunk:', jsonStr)
       }
     }
   }
