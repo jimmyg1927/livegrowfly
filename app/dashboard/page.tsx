@@ -196,7 +196,7 @@ export default function DashboardPage() {
 
         {user?.promptsUsed >= user?.promptLimit && (
           <div className="p-4 rounded-xl bg-red-100 text-red-700 border border-red-300 text-sm flex justify-between items-center">
-            You've reached your monthly prompt limit.
+            You&apos;ve reached your monthly prompt limit.
             <button
               onClick={() => router.push('/change-plan')}
               className="bg-red-600 text-white px-4 py-1 rounded-full ml-4 hover:brightness-110 transition text-xs"
