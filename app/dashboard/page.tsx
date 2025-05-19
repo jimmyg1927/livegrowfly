@@ -165,9 +165,9 @@ export default function DashboardPage() {
       <div className="max-w-5xl mx-auto space-y-6">
         <PromptTracker used={user?.promptsUsed || 0} limit={user?.promptLimit || 0} />
 
-        <div className="text-right">
-          <button
-            className="text-xs text-blue-500 underline mb-2"
+       <div className="flex justify-end">
+  <button
+    className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 transition mb-2"
             onClick={() => {
               setInput('How can Growfly help me?')
               handleSend('How can Growfly help me?')
