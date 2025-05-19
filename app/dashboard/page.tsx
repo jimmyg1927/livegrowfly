@@ -173,21 +173,8 @@ export default function DashboardPage() {
     })
   }
 
-  const languageOptions = [
-    { code: 'en-UK', label: '🇬🇧 English (UK)' },
-    { code: 'en-US', label: '🇺🇸 English (US)' },
-    { code: 'da', label: '🇩🇰 Danish' },
-    { code: 'de', label: '🇩🇪 German' },
-    { code: 'es', label: '🇪🇸 Spanish' },
-    { code: 'fr', label: '🇫🇷 French' },
-    { code: 'it', label: '🇮🇹 Italian' },
-    { code: 'nl', label: '🇳🇱 Dutch' },
-    { code: 'sv', label: '🇸🇪 Swedish' },
-    { code: 'pl', label: '🇵🇱 Polish' },
-  ]
-
   return (
-    <div className="px-4 md:px-12 pb-10 bg-background text-textPrimary min-h-screen">
+    <div className="px-4 md:px-12 pb-10 bg-background text-foreground min-h-screen">
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex justify-between items-center">
           <PromptTracker used={user?.promptsUsed || 0} limit={user?.promptLimit || 0} />
@@ -200,30 +187,16 @@ export default function DashboardPage() {
               localStorage.setItem('growfly_lang', selected)
             }}
           >
-            {languageOptions.map((opt) => (
-              <option key={opt.code} value={opt.code}>
-                {opt.label}
-              </option>
+            {['en-UK', 'en-US', 'da', 'de', 'es', 'fr', 'it', 'nl', 'sv', 'pl'].map((code) => (
+              <option key={code} value={code}>{code}</option>
             ))}
           </select>
         </div>
 
-        {user?.promptsUsed >= user?.promptLimit && (
-          <div className="p-4 rounded-xl bg-red-100 text-red-700 border border-red-300 text-sm flex justify-between items-center">
-            You&apos;ve reached your monthly prompt limit.
-            <button
-              onClick={() => router.push('/change-plan')}
-              className="bg-red-600 text-white px-4 py-1 rounded-full ml-4 hover:brightness-110 transition text-xs"
-            >
-              Upgrade Plan
-            </button>
-          </div>
-        )}
-
-        <div ref={chatRef} className="bg-card rounded-2xl p-6 shadow-md max-h-[60vh] overflow-y-auto space-y-4 border border-border">
+        <div ref={chatRef} className="bg-card rounded-2xl p-6 shadow-md max-h-[60vh] overflow-y-auto space-y-6 border border-border">
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
-              <div className="space-y-1 max-w-[80%]">
+              <div className="space-y-2 max-w-[80%]">
                 {m.imageUrl && (
                   <a href={m.imageUrl} download>
                     <img src={m.imageUrl} alt="Uploaded" className="rounded-lg border max-h-40 cursor-pointer" />
@@ -231,57 +204,52 @@ export default function DashboardPage() {
                 )}
                 <div
                   className={`p-4 rounded-2xl text-sm whitespace-pre-wrap shadow ${
-                    m.role === 'assistant' ? 'bg-gray-100 text-black' : 'bg-blue-500 text-white'
+                    m.role === 'assistant' ? 'bg-muted text-foreground' : 'bg-blue-500 text-white'
                   }`}
                 >
                   {m.content.startsWith('💡') ? (
                     <button
-                      className="text-left hover:text-blue-500 transition"
                       onClick={() => {
-                        setInput(m.content.replace('💡 ', ''))
-                        handleSend(m.content.replace('💡 ', ''))
+                        const follow = m.content.replace(/^💡 /, '')
+                        setInput(follow)
+                        handleSend(follow)
                       }}
+                      className="px-3 py-1 rounded-full border text-sm text-foreground border-border bg-muted hover:bg-accent transition"
                     >
-                      {m.content}
+                      {m.content.replace(/^💡 /, '')}
                     </button>
                   ) : (
-                    m.content
+                    <span>{m.content}</span>
                   )}
                 </div>
 
                 {m.role === 'assistant' && !m.content.startsWith('💡') && i === messages.length - 1 && (
-                  <div className="flex gap-3 pt-2 text-sm text-gray-500">
+                  <div className="flex gap-2 pt-1 text-muted-foreground text-sm items-center">
                     <button onClick={() => setFeedbackOpen(true)} title="Helpful">
-                      <HiThumbUp className="hover:text-green-600" />
+                      <HiThumbUp className="hover:text-green-500 w-4 h-4" />
                     </button>
-                    <button onClick={() => setFeedbackOpen(true)} title="Needs work">
-                      <HiThumbDown className="hover:text-red-600" />
+                    <button onClick={() => setFeedbackOpen(true)} title="Needs improvement">
+                      <HiThumbDown className="hover:text-red-500 w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => {
-                        setSavingContent(m.content)
-                        setShowSaveModal(true)
-                      }}
-                      title="Save"
-                    >
-                      <FaRegBookmark className="hover:text-blue-600" />
+                    <button onClick={() => {
+                      setSavingContent(m.content)
+                      setShowSaveModal(true)
+                    }} title="Save">
+                      <FaRegBookmark className="hover:text-blue-500 w-4 h-4" />
                     </button>
-                    <button
-                      onClick={async () => {
-                        const token = localStorage.getItem('growfly_jwt')
-                        await fetch(`${API_BASE_URL}/api/collab/share`, {
-                          method: 'POST',
-                          headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${token}`,
-                          },
-                          body: JSON.stringify({ content: m.content }),
-                        })
-                        router.push('/collab-zone')
-                      }}
-                      title="Send to Collab"
-                    >
-                      <TbBrain className="hover:text-purple-600" />
+                    <button onClick={async () => {
+                      const token = localStorage.getItem('growfly_jwt')
+                      await fetch(`${API_BASE_URL}/api/collab/share`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({ content: m.content }),
+                      })
+                      router.push('/collab-zone')
+                    }} title="Open in Collab Zone">
+                      <TbBrain className="hover:text-purple-500 w-4 h-4" />
                     </button>
                   </div>
                 )}
@@ -326,7 +294,7 @@ export default function DashboardPage() {
         <div
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
-          className="bg-muted border border-dashed border-gray-300 rounded-xl p-4 text-center text-sm text-gray-600"
+          className="bg-muted border border-dashed border-border rounded-xl p-4 text-center text-sm text-muted-foreground"
         >
           Drag and drop files here or{' '}
           <label className="underline cursor-pointer">
