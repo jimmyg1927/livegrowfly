@@ -1,84 +1,61 @@
 'use client'
 
 import React from 'react'
+import { Sun, Moon, UserCircle, Gift } from 'lucide-react'
+import { useUserStore } from '@/lib/store'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import {
-  HiOutlineHome,
-  HiOutlineCog,
-  HiOutlineLogout,
-  HiOutlineDocumentText,
-  HiOutlineUserGroup,
-  HiOutlineCurrencyPound,
-  HiOutlineLightBulb,
-  HiOutlineHeart,
-  HiOutlineUserAdd,
-  HiOutlineShieldCheck,
-} from 'react-icons/hi'
+import { useTheme } from '@/context/ThemeContext'
 
-const navItems = [
-  { name: 'Dashboard', href: '/dashboard', icon: HiOutlineHome },
-  { name: 'Saved', href: '/saved', icon: HiOutlineDocumentText },
-  { name: 'Collab Zone', href: '/collab-zone', icon: HiOutlineUserGroup },
-  { name: 'Wishlist', href: '/wishlist', icon: HiOutlineHeart },
-  { name: 'Nerdify Me!', href: '/nerd-mode', icon: HiOutlineLightBulb },
-  { name: 'Refer a Friend', href: '/refer', icon: HiOutlineUserAdd },
-  { name: 'Change Plan', href: '/change-plan', icon: HiOutlineCurrencyPound }, // ✅ fixed route
-  { name: 'Settings', href: '/settings', icon: HiOutlineCog },
-  { name: 'Brand Settings', href: '/brand-settings', icon: HiOutlineCog },
-  { name: 'Trusted Partners', href: '/trusted-partners', icon: HiOutlineShieldCheck },
-]
+function getNerdLevel(xp: number = 0) {
+  if (xp < 25) return { title: 'Curious Cat', emoji: '🐱', max: 25 }
+  if (xp < 150) return { title: 'Nerdlet', emoji: '🧪', max: 150 }
+  if (xp < 500) return { title: 'Prompt Prober', emoji: '🧠', max: 500 }
+  if (xp < 850) return { title: 'Nerdboss', emoji: '🧙‍♂️', max: 850 }
+  return { title: 'Prompt Commander', emoji: '🚀', max: 1000 }
+}
 
-export default function Sidebar() {
-  const pathname = usePathname()
+export default function Header() {
+  const { theme, toggleTheme } = useTheme()
+  const xp = useUserStore((state) => state.xp)
+  const subscriptionType = useUserStore((state) => state.subscriptionType)
+  const { title, emoji, max } = getNerdLevel(xp)
+  const progress = Math.min((xp / max) * 100, 100)
 
   return (
-    <div className="bg-[#1992ff] text-white w-20 sm:w-56 flex flex-col items-center sm:items-start py-5 px-2 sm:px-4 min-h-screen rounded-bl-2xl">
-      {/* Logo */}
-      <div className="mb-4 w-full flex justify-center sm:justify-center">
-        <Link href="/dashboard" className="w-full flex justify-center">
-          <img
-            src="/growfly-logo.png"
-            alt="Growfly"
-            className="w-20 h-20 object-contain"
+    <header className="flex items-center justify-between bg-[#1992ff] text-white px-6 py-4 shadow-md rounded-bl-2xl transition-all">
+      <div className="flex items-center gap-6">
+        <div className="text-lg font-semibold">
+          {emoji} {title} — {Math.floor(xp)} XP
+        </div>
+        <div className="w-48 bg-white/30 rounded-full h-2">
+          <div
+            className="h-2 rounded-full bg-white transition-all"
+            style={{ width: `${progress}%` }}
           />
-        </Link>
+        </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex flex-col gap-1 w-full">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`flex items-center gap-3 px-4 py-2 rounded-xl transition text-sm font-medium ${
-                isActive
-                  ? 'bg-white text-black shadow-md'
-                  : 'text-white hover:bg-white/20 hover:shadow'
-              }`}
-            >
-              <item.icon className="h-5 w-5" />
-              <span className="hidden sm:inline">{item.name}</span>
-            </Link>
-          )
-        })}
-      </nav>
-
-      {/* Logout */}
-      <div className="mt-auto w-full">
+      <div className="flex items-center gap-4">
+        <Link href="/refer" className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full text-sm font-medium transition">
+          <Gift size={16} />
+          Refer a Friend
+        </Link>
+        <Link href="/change-plan">
+          <span className="px-3 py-1 rounded-full border border-white text-sm font-medium bg-white/10 hover:bg-white/20 transition">
+            Subscription: {subscriptionType.toLowerCase()}
+          </span>
+        </Link>
+        <Link href="/settings" title="Settings">
+          <UserCircle className="w-6 h-6 text-white hover:text-white/80 transition" />
+        </Link>
         <button
-          onClick={() => {
-            localStorage.removeItem('growfly_jwt')
-            window.location.href = '/login'
-          }}
-          className="flex items-center gap-3 w-full px-4 py-2 text-white hover:bg-white/20 hover:shadow rounded-xl transition text-sm font-medium"
+          onClick={toggleTheme}
+          aria-label="Toggle theme"
+          className="bg-white text-[#1992ff] p-2 rounded-full shadow hover:brightness-105 transition"
         >
-          <HiOutlineLogout className="h-5 w-5" />
-          <span className="hidden sm:inline">Logout</span>
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>
       </div>
-    </div>
+    </header>
   )
 }

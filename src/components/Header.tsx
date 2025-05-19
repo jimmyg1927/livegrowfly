@@ -5,6 +5,7 @@ import { Sun, Moon, UserCircle, Gift } from 'lucide-react'
 import { useUserStore } from '@/lib/store'
 import Link from 'next/link'
 import { useTheme } from '@/context/ThemeContext'
+import { usePathname } from 'next/navigation'
 
 function getNerdLevel(xp: number = 0) {
   if (xp < 25) return { title: 'Curious Cat', emoji: '🐱', max: 25 }
@@ -15,6 +16,11 @@ function getNerdLevel(xp: number = 0) {
 }
 
 export default function Header() {
+  const pathname = usePathname() || ''
+  const hiddenRoutes = ['/onboarding', '/signup', '/login', '/confirm-payment', '/payment-success']
+
+  if (hiddenRoutes.some(route => pathname.startsWith(route))) return null
+
   const { theme, toggleTheme } = useTheme()
   const xp = useUserStore((state) => state.xp)
   const subscriptionType = useUserStore((state) => state.subscriptionType)
