@@ -58,7 +58,7 @@ export default function OnboardingPage() {
       })
 
       if (!res.ok || !xpRes.ok) throw new Error('Update failed')
-      toast.success("🎉 You're all set! Welcome aboard, nerd hero.")
+      toast.success("🎉 You\'re all set! Welcome aboard, nerd hero.")
       router.push('/dashboard')
     } catch (err: any) {
       toast.error('Something went wrong saving your data.')
