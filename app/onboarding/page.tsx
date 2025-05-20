@@ -65,14 +65,12 @@ export default function OnboardingPage() {
         Authorization: `Bearer ${token}`,
       }
 
-      // Save user settings
       const settingsRes = await fetch(`${API_BASE_URL}/api/user/settings`, {
         method: 'PUT',
         headers,
         body: JSON.stringify(form),
       })
 
-      // Save XP
       const xpRes = await fetch(`${API_BASE_URL}/api/user/xp`, {
         method: 'POST',
         headers,
@@ -103,7 +101,7 @@ export default function OnboardingPage() {
           placeholder={placeholder}
           value={form[name]}
           onChange={handleChange}
-          className="w-full border border-gray-300 p-2 rounded-md"
+          className="w-full border border-gray-300 p-3 rounded-xl"
         />
       ) : (
         <input
@@ -111,27 +109,29 @@ export default function OnboardingPage() {
           value={form[name]}
           onChange={handleChange}
           placeholder={placeholder}
-          className="w-full border border-gray-300 p-2 rounded-md"
+          className="w-full border border-gray-300 p-3 rounded-xl"
         />
       )}
     </div>
   )
 
   return (
-    <main className="min-h-screen bg-[#1992FF] flex items-center justify-center px-6 py-12">
-      <div className="w-full max-w-3xl bg-white rounded-2xl p-8 shadow-xl">
-        <div className="flex justify-center mb-6">
-          <Image src="/growfly-logo.png" alt="Growfly" width={160} height={48} />
+    <main className="min-h-screen bg-gradient-to-br from-[#1992FF] to-[#5BC6FF] flex items-center justify-center px-6 py-16">
+      <div className="w-full max-w-4xl bg-white rounded-3xl p-10 shadow-2xl">
+        <div className="flex justify-center mb-8">
+          <Image src="/growfly-logo.png" alt="Growfly" width={180} height={180} />
         </div>
 
-        <h1 className="text-2xl font-bold text-center mb-1">Let&rsquo;s make Growfly personal ✨</h1>
-        <p className="text-center text-gray-600 mb-6">
+        <h1 className="text-4xl font-extrabold text-center mb-3 text-gray-900">
+          Let&apos;s make Growfly personal ✨
+        </h1>
+        <p className="text-center text-gray-500 mb-6">
           Answer a few quick things so our nerds can tailor your AI to your brand.
         </p>
 
         <div className="mb-6">
           <p className="text-sm font-medium mb-1">XP Progress: {xp} / {totalFields}</p>
-          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
             <div
               className="h-full bg-[#1992FF] transition-all"
               style={{ width: `${(xp / totalFields) * 100}%` }}
@@ -139,15 +139,15 @@ export default function OnboardingPage() {
           </div>
         </div>
 
-        <div className="flex justify-center gap-8 text-sm font-semibold mb-6">
+        <div className="flex justify-center gap-6 text-sm font-semibold mb-8">
           {[1, 2, 3].map((n) => (
             <button
               key={n}
               onClick={() => setStep(n)}
-              className={`px-3 py-1 rounded-full transition ${
+              className={`px-4 py-1 rounded-full transition ${
                 step === n
-                  ? 'bg-[#1992FF] text-white'
-                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                  ? 'bg-[#1992FF] text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
               {n === 1 && '1. Brand'}
@@ -157,7 +157,7 @@ export default function OnboardingPage() {
           ))}
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           {step === 1 && (
             <>
               {renderField('Brand Name', 'brandName', 'Growfly Ltd')}
@@ -168,13 +168,11 @@ export default function OnboardingPage() {
               {renderField('Mission', 'brandMission', 'Make AI marketing easier for all', true)}
             </>
           )}
-
           {step === 2 && (
             <>
               {renderField('Inspired By', 'inspiredBy', 'Notion, Midjourney, Slack', true)}
             </>
           )}
-
           {step === 3 && (
             <>
               {renderField('Your Job Title', 'jobTitle', 'Marketing Director')}
@@ -184,11 +182,11 @@ export default function OnboardingPage() {
           )}
         </div>
 
-        <div className="flex justify-between mt-8">
+        <div className="flex justify-between mt-10">
           {step > 1 ? (
             <button
               onClick={() => setStep((s) => s - 1)}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition"
+              className="px-6 py-2 bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300 transition"
             >
               Back
             </button>
@@ -198,14 +196,14 @@ export default function OnboardingPage() {
           {step < 3 ? (
             <button
               onClick={() => setStep((s) => s + 1)}
-              className="px-4 py-2 bg-[#1992FF] text-white rounded hover:bg-[#166FCC] transition"
+              className="px-6 py-2 bg-[#1992FF] text-white rounded-xl hover:bg-[#157fd3] transition"
             >
               Next
             </button>
           ) : (
             <button
               onClick={handleSubmit}
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+              className="px-6 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition"
             >
               Finish &amp; Start Journey
             </button>
