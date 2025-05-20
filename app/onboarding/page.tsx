@@ -8,9 +8,7 @@ import { API_BASE_URL } from '@/lib/constants'
 
 type FormState = {
   brandName: string
-  brandTone: string
   brandDescription: string
-  brandValues: string
   brandVoice: string
   brandMission: string
   inspiredBy: string
@@ -21,9 +19,7 @@ type FormState = {
 
 const INITIAL_FORM: FormState = {
   brandName: '',
-  brandTone: '',
   brandDescription: '',
-  brandValues: '',
   brandVoice: '',
   brandMission: '',
   inspiredBy: '',
@@ -52,9 +48,26 @@ export default function OnboardingPage() {
     setForm((f) => ({ ...f, [name]: value }))
   }
 
+  const validateCurrentStep = () => {
+    const requiredStepFields = {
+      1: ['brandName', 'brandDescription', 'brandVoice', 'brandMission'],
+      2: ['inspiredBy'],
+      3: ['jobTitle', 'industry', 'goals'],
+    }
+    const missing = requiredStepFields[step].some(
+      (field) => form[field as keyof FormState]?.trim() === ''
+    )
+    return !missing
+  }
+
   const handleSubmit = async () => {
     if (!token) {
       router.push('/login')
+      return
+    }
+
+    if (!validateCurrentStep()) {
+      toast.error('❌ Please complete all fields.')
       return
     }
 
@@ -153,23 +166,21 @@ export default function OnboardingPage() {
         {step === 1 && (
           <>
             {renderField('Brand Name', 'brandName', 'Growfly Ltd')}
-            {renderField('Tone of Voice', 'brandTone', 'Bold, clever, confident')}
             {renderField('Elevator Pitch', 'brandDescription', 'We help brands grow using AI.', true)}
-            {renderField('Core Values', 'brandValues', 'Trust, Innovation, Simplicity', true)}
             {renderField('Brand Personality', 'brandVoice', 'Witty and expert', true)}
             {renderField('Mission', 'brandMission', 'Make AI marketing easier for all', true)}
           </>
         )}
         {step === 2 && (
           <>
-            {renderField('Inspired By', 'inspiredBy', 'Notion, Midjourney, Slack', true)}
+            {renderField('Inspired By', 'inspiredBy', 'What companies or competitors inspire you?', true)}
           </>
         )}
         {step === 3 && (
           <>
             {renderField('Your Job Title', 'jobTitle', 'Marketing Director')}
             {renderField('Your Industry', 'industry', 'E-commerce')}
-            {renderField('Goals with Growfly', 'goals', 'Automate more content, grow reach', true)}
+            {renderField('Goals with Growfly', 'goals', 'More sales, increase productivity, grow reach', true)}
           </>
         )}
       </div>
@@ -186,7 +197,13 @@ export default function OnboardingPage() {
         ) : <div />}
         {step < 3 ? (
           <button
-            onClick={() => setStep((s) => s + 1)}
+            onClick={() => {
+              if (validateCurrentStep()) {
+                setStep((s) => s + 1)
+              } else {
+                toast.error('❌ Please complete all fields.')
+              }
+            }}
             className="px-4 py-2 bg-[#1992FF] text-white rounded-full hover:bg-blue-600 transition"
           >
             Next
@@ -194,7 +211,7 @@ export default function OnboardingPage() {
         ) : (
           <button
             onClick={handleSubmit}
-            className="px-4 py-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition"
+            className="px-4 py-2 bg-[#1992FF] text-white rounded-full hover:bg-blue-600 transition"
           >
             Finish &amp; Start Journey
           </button>
