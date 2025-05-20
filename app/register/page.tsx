@@ -35,23 +35,15 @@ export default function RegisterPage() {
       button: 'Choose Personal',
       onClick: async () => {
         setLoadingPlan('personal')
-        try {
-          const res = await fetch('https://glowfly-api-production.up.railway.app/api/checkout/create-checkout-session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ planId: 'personal' }),
-          })
-          const data = await res.json()
-          if (data?.url) {
-            window.location.href = data.url
-          } else {
-            alert(data.error || 'Failed to create session.')
-            setLoadingPlan(null)
-          }
-        } catch (err) {
-          alert('Stripe error. Please try again.')
-          setLoadingPlan(null)
-        }
+        const res = await fetch('https://glowfly-api-production.up.railway.app/api/checkout/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ planId: 'personal' }),
+        })
+        const data = await res.json()
+        if (data?.url) window.location.href = data.url
+        else alert(data.error || 'Failed to create session.')
+        setLoadingPlan(null)
       },
     },
     {
@@ -69,23 +61,15 @@ export default function RegisterPage() {
       highlight: true,
       onClick: async () => {
         setLoadingPlan('business')
-        try {
-          const res = await fetch('https://glowfly-api-production.up.railway.app/api/checkout/create-checkout-session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ planId: 'business' }),
-          })
-          const data = await res.json()
-          if (data?.url) {
-            window.location.href = data.url
-          } else {
-            alert(data.error || 'Failed to create session.')
-            setLoadingPlan(null)
-          }
-        } catch (err) {
-          alert('Stripe error. Please try again.')
-          setLoadingPlan(null)
-        }
+        const res = await fetch('https://glowfly-api-production.up.railway.app/api/checkout/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ planId: 'business' }),
+        })
+        const data = await res.json()
+        if (data?.url) window.location.href = data.url
+        else alert(data.error || 'Failed to create session.')
+        setLoadingPlan(null)
       },
     },
     {
@@ -104,22 +88,15 @@ export default function RegisterPage() {
   ]
 
   return (
-    <main className="min-h-screen px-6 py-12 bg-gradient-to-b from-[#0a0a23] to-[#1e3a8a] text-white">
-      <div className="flex flex-col items-center text-center mb-10">
-        <Image
-          src="/growfly-logo.png"
-          alt="Growfly"
-          width={140}
-          height={40}
-          className="mb-4"
-        />
-        <h1 className="text-3xl md:text-4xl font-bold mb-2">
-          Supercharge Your Output with Growfly
-        </h1>
+    <main className="min-h-screen px-6 py-10 bg-gradient-to-b from-[#0a0a23] to-[#1e3a8a] text-white">
+      <div className="flex flex-col items-center text-center mb-10 mt-0">
+        <Image src="/growfly-logo.png" alt="Growfly" width={140} height={40} className="mb-2" />
+        <h1 className="text-3xl md:text-4xl font-bold mb-2">Supercharge Your Output with Growfly</h1>
         <p className="text-md md:text-lg text-white/80 max-w-2xl">
-          Growfly uses cutting-edge AI to help professionals draft emails,
-          reports, and presentations faster than ever. Pick a plan that fits
-          your needs — and get started in seconds.
+          Growfly is the ultimate distraction-free AI assistant — built to help entrepreneurs,
+          business owners, and professionals scale faster. We streamline Marketing, Finance,
+          HR, Legal, Product Feedback, Sales, and more. Supercharge your output, save time and
+          money, and stay focused on what matters most.
         </p>
       </div>
 
@@ -127,10 +104,10 @@ export default function RegisterPage() {
         {plans.map((plan) => (
           <div
             key={plan.id}
-            className={`relative rounded-xl p-6 transition shadow-md border text-black ${
+            className={`relative rounded-xl p-6 transition shadow-md ${
               plan.highlight
-                ? 'bg-blue-600 text-white border-blue-400'
-                : 'bg-white border-border hover:ring-4 hover:ring-blue-300'
+                ? 'bg-blue-600 text-white border border-blue-400'
+                : 'bg-white text-black hover:ring-4 hover:ring-blue-300'
             }`}
           >
             {plan.highlight && (
@@ -151,10 +128,8 @@ export default function RegisterPage() {
               className={`w-full py-2 px-4 rounded font-medium text-sm transition ${
                 plan.highlight
                   ? 'bg-yellow-300 text-black hover:bg-yellow-200'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              } ${
-                loadingPlan === plan.id ? 'cursor-not-allowed opacity-70' : ''
-              }`}
+                  : 'bg-[#1992FF] text-white hover:bg-blue-700'
+              } ${loadingPlan === plan.id ? 'cursor-not-allowed opacity-70' : ''}`}
             >
               {loadingPlan === plan.id ? 'Redirecting...' : plan.button}
             </button>

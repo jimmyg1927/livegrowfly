@@ -1,4 +1,3 @@
-// app/onboarding/layout.tsx
 import { ReactNode } from 'react'
 
 export const metadata = {
@@ -6,6 +5,9 @@ export const metadata = {
 }
 
 export default function OnboardingLayout({ children }: { children: ReactNode }) {
-  // By returning children directly, we bypass the default ClientLayout (header/sidebar)
-  return <>{children}</>
+  return (
+    <html lang="en">
+      <body style={{ margin: 0, padding: 0 }}>{children}</body>
+    </html>
+  )
 }

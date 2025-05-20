@@ -1,25 +1,39 @@
-'use client';
+// app/ClientLayout.tsx
+'use client'
 
-import React from 'react';
-import { usePathname } from 'next/navigation';
-import Sidebar from '@/components/Sidebar';
-import Header from '@/components/Header';
+import React, { ReactNode } from 'react'
+import { usePathname } from 'next/navigation'
+import Sidebar from '@/components/Sidebar'
+import Header from '@/components/Header'
 
-export default function ClientLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+export default function ClientLayout({ children }: { children: ReactNode }) {
+  const pathname = usePathname() || ''
 
-  // Pages that should hide both
-  const hideUI = ['/login', '/signup', '/register'].includes(pathname || '');
+  // routes where we do NOT want header/sidebar
+  const hiddenRoutes = [
+    '/onboarding',
+    '/signup',
+    '/login',
+    '/confirm-payment',
+    '/payment-success',
+  ]
 
+  // if the current path starts with one of those, just render the page
+  const hideChrome = hiddenRoutes.some((route) =>
+    pathname.startsWith(route),
+  )
+  if (hideChrome) {
+    return <>{children}</>
+  }
+
+  // otherwise render your normal dashboard chrome
   return (
-    <div className="flex h-screen bg-background text-textPrimary">
-      {!hideUI && <Sidebar />}
+    <div className="flex min-h-screen">
+      <Sidebar />
       <div className="flex-1 flex flex-col">
-        {!hideUI && <Header />}
-        <main className={`flex-1 overflow-y-auto ${hideUI ? '' : 'p-6'}`}>
-          {children}
-        </main>
+        <Header />
+        <main className="flex-1 overflow-auto">{children}</main>
       </div>
     </div>
-  );
+  )
 }

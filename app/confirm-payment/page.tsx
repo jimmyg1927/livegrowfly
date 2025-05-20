@@ -1,60 +1,40 @@
-'use client';
+'use client'
 
-import { useEffect, useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { toast } from 'react-hot-toast';
+import { useEffect, useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { toast } from 'react-hot-toast'
 
 function PaymentSuccessContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!searchParams) {
-      setError('Missing search parameters.');
-      setLoading(false);
-      return;
+    const token = searchParams?.get('token')
+
+    if (!token) {
+      setError('Missing token from Stripe redirect.')
+      setLoading(false)
+      return
     }
 
-    const sessionId = searchParams.get('session_id');
-
-    if (!sessionId) {
-      setError('Missing session ID.');
-      setLoading(false);
-      return;
+    try {
+      localStorage.setItem('growfly_jwt', token)
+      toast.success(`🎉 You're all set! Welcome aboard.`)
+      router.push('/onboarding')
+    } catch (err) {
+      setError('Failed to process token. Please try logging in.')
+      setLoading(false)
     }
-
-    const confirmPayment = async () => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/confirm-payment?session_id=${sessionId}`,
-        );
-        const data = await res.json();
-
-        if (data.token) {
-          localStorage.setItem('growfly_jwt', data.token);
-          router.push('/dashboard');
-          toast.success(`🎉 You're all set! Welcome aboard, nerd hero.`);
-        } else {
-          setError('Failed to confirm payment.');
-        }
-      } catch (err) {
-        setError('Error confirming payment.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    confirmPayment();
-  }, [searchParams, router]);
+  }, [searchParams, router])
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-white bg-blue-600">
         <p>Processing your payment... please wait 🚀</p>
       </div>
-    );
+    )
   }
 
   if (error) {
@@ -62,13 +42,13 @@ function PaymentSuccessContent() {
       <div className="min-h-screen flex items-center justify-center text-white bg-red-600">
         <p>{error}</p>
       </div>
-    );
+    )
   }
 
-  return null;
+  return null
 }
 
-export default function PaymentSuccessPage() {
+export default function PaidSuccessPage() {
   return (
     <Suspense
       fallback={
@@ -79,5 +59,5 @@ export default function PaymentSuccessPage() {
     >
       <PaymentSuccessContent />
     </Suspense>
-  );
+  )
 }
