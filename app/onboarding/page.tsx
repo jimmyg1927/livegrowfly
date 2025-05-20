@@ -93,7 +93,7 @@ export default function OnboardingPage() {
     textarea = false
   ) => (
     <div>
-      <label className="block font-medium mb-1">{label}</label>
+      <label className="block text-sm font-medium text-white mb-1">{label}</label>
       {textarea ? (
         <textarea
           name={name}
@@ -101,7 +101,7 @@ export default function OnboardingPage() {
           placeholder={placeholder}
           value={form[name]}
           onChange={handleChange}
-          className="w-full border border-gray-300 p-3 rounded-xl"
+          className="w-full p-3 bg-white/10 text-white border border-white/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1992FF]"
         />
       ) : (
         <input
@@ -109,29 +109,27 @@ export default function OnboardingPage() {
           value={form[name]}
           onChange={handleChange}
           placeholder={placeholder}
-          className="w-full border border-gray-300 p-3 rounded-xl"
+          className="w-full p-3 bg-white/10 text-white border border-white/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1992FF]"
         />
       )}
     </div>
   )
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-[#1992FF] to-[#5BC6FF] flex items-center justify-center px-6 py-16">
-      <div className="w-full max-w-4xl bg-white rounded-3xl p-10 shadow-2xl">
-        <div className="flex justify-center mb-8">
-          <Image src="/growfly-logo.png" alt="Growfly" width={180} height={180} />
-        </div>
+    <main className="min-h-screen bg-[#0B1C39] flex flex-col items-center justify-center px-6 py-16 text-white">
+      <div className="mb-8">
+        <Image src="/growfly-logo.png" alt="Growfly Logo" width={160} height={160} />
+      </div>
 
-        <h1 className="text-4xl font-extrabold text-center mb-3 text-gray-900">
-          Let&apos;s make Growfly personal ✨
-        </h1>
-        <p className="text-center text-gray-500 mb-6">
-          Answer a few quick things so our nerds can tailor your AI to your brand.
-        </p>
+      <h1 className="text-4xl font-extrabold text-center mb-2">Let&apos;s make Growfly personal ✨</h1>
+      <p className="text-center text-gray-300 mb-6">
+        Answer a few quick things so our nerds can tailor your AI to your brand.
+      </p>
 
+      <div className="w-full max-w-4xl">
         <div className="mb-6">
-          <p className="text-sm font-medium mb-1">XP Progress: {xp} / {totalFields}</p>
-          <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+          <p className="text-sm font-medium mb-1 text-white">XP Progress: {xp} / {totalFields}</p>
+          <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden">
             <div
               className="h-full bg-[#1992FF] transition-all"
               style={{ width: `${(xp / totalFields) * 100}%` }}
@@ -147,7 +145,7 @@ export default function OnboardingPage() {
               className={`px-4 py-1 rounded-full transition ${
                 step === n
                   ? 'bg-[#1992FF] text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-white/10 text-gray-300 hover:bg-white/20'
               }`}
             >
               {n === 1 && '1. Brand'}
@@ -186,7 +184,7 @@ export default function OnboardingPage() {
           {step > 1 ? (
             <button
               onClick={() => setStep((s) => s - 1)}
-              className="px-6 py-2 bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300 transition"
+              className="px-6 py-2 bg-white/20 text-white rounded-xl hover:bg-white/30 transition"
             >
               Back
             </button>
@@ -196,7 +194,7 @@ export default function OnboardingPage() {
           {step < 3 ? (
             <button
               onClick={() => setStep((s) => s + 1)}
-              className="px-6 py-2 bg-[#1992FF] text-white rounded-xl hover:bg-[#157fd3] transition"
+              className="px-6 py-2 bg-[#1992FF] text-white rounded-xl hover:bg-[#147dd1] transition"
             >
               Next
             </button>
