@@ -1,68 +1,113 @@
 'use client'
 
 import React from 'react'
-import { Sun, Moon, UserCircle, Gift } from 'lucide-react'
-import { useUserStore } from '@/lib/store'
 import Link from 'next/link'
-import { useTheme } from '@/context/ThemeContext'
 import { usePathname } from 'next/navigation'
+import { useTheme } from '@/context/ThemeContext'
+import { useUserStore } from '@/lib/store'
+import { Sun, Moon } from 'lucide-react'
 
-function getNerdLevel(xp: number = 0) {
-  if (xp < 25) return { title: 'Curious Cat', emoji: '🐱', max: 25 }
-  if (xp < 150) return { title: 'Nerdlet', emoji: '🧪', max: 150 }
-  if (xp < 500) return { title: 'Prompt Prober', emoji: '🧠', max: 500 }
-  if (xp < 850) return { title: 'Nerdboss', emoji: '🧙‍♂️', max: 850 }
-  return { title: 'Prompt Commander', emoji: '🚀', max: 1000 }
+// XP label helper
+function getXPLabel(xp: number) {
+  if (xp < 25) return '🐣 Curious Cat'
+  if (xp < 150) return '🧪 Nerdlet'
+  if (xp < 500) return '📈 Prompt Prober'
+  if (xp < 850) return '🧠 Nerdboss'
+  return '🚀 Prompt Commander'
+}
+
+function getXPProgress(xp: number) {
+  const levelCaps = [25, 150, 500, 850, 1000]
+  for (let i = 0; i < levelCaps.length; i++) {
+    if (xp < levelCaps[i]) {
+      const prev = i === 0 ? 0 : levelCaps[i - 1]
+      return ((xp - prev) / (levelCaps[i] - prev)) * 100
+    }
+  }
+  return 100
 }
 
 export default function Header() {
-  // __ALWAYS__ call hooks at the top
+  const pathname = usePathname()
   const { theme, toggleTheme } = useTheme()
-  const xp = useUserStore((state) => state.xp)
-  const subscriptionType = useUserStore((state) => state.subscriptionType)
-  const pathname = usePathname() || ''
+  const user = useUserStore(state => state.user)
 
-  // then compute derived state
-  const { title, emoji, max } = getNerdLevel(xp)
-  const progress = Math.min((xp / max) * 100, 100)
-  const hiddenRoutes = ['/onboarding', '/signup', '/login', '/confirm-payment', '/payment-success']
+  const hiddenRoutes = [
+    '/login',
+    '/signup',
+    '/register',
+    '/onboarding',
+    '/payment-success',
+    '/confirm-payment',
+  ]
 
-  // __AFTER__ hooks, you can conditionally bail
-  if (hiddenRoutes.some(route => pathname.startsWith(route))) {
+  if (!pathname || hiddenRoutes.some(route => pathname.startsWith(route))) {
     return null
   }
 
   return (
-    <header className="flex items-center justify-between bg-[#1992ff] text-white px-6 py-4 shadow-md rounded-bl-2xl transition-all">
-      <div className="flex items-center gap-6">
-        <div className="text-lg font-semibold">
-          {emoji} {title} — {Math.floor(xp)} XP
-        </div>
-        <div className="w-48 bg-white/30 rounded-full h-2">
-          <div
-            className="h-2 rounded-full bg-white transition-all"
-            style={{ width: `${progress}%` }}
-          />
+    <header className="w-full bg-[#1992FF] text-white flex items-center justify-between px-4 sm:px-8 py-3 shadow">
+      {/* Logo + XP */}
+      <div className="flex items-center gap-3 sm:gap-6">
+        <Link href="/dashboard" className="flex items-center gap-3 font-semibold text-lg">
+          <img src="/growfly-logo.png" alt="Growfly" className="h-10 w-auto" />
+        </Link>
+
+        <div className="hidden sm:flex flex-col">
+          <span className="text-sm font-semibold">
+            {getXPLabel(user?.totalXP || 0)} — {Math.floor(user?.totalXP || 0)} XP
+          </span>
+          <div className="w-40 h-2 bg-white/30 rounded-full overflow-hidden mt-1">
+            <div
+              className="h-full bg-white transition-all duration-300 ease-in-out"
+              style={{ width: `${getXPProgress(user?.totalXP || 0)}%` }}
+            />
+          </div>
         </div>
       </div>
 
+      {/* Buttons */}
       <div className="flex items-center gap-4">
-        <Link href="/refer" className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full text-sm font-medium transition">
-          <Gift size={16} />
-          Refer a Friend
+        {/* Referral */}
+        <Link
+          href="/refer"
+          className="hidden sm:inline-block px-3 py-1 text-sm font-medium rounded-full bg-white text-[#1992FF] hover:brightness-105 transition"
+        >
+          🎁 Refer a Friend
         </Link>
-        <Link href="/change-plan">
-          <span className="px-3 py-1 rounded-full border border-white text-sm font-medium bg-white/10 hover:bg-white/20 transition">
-            Subscription: {subscriptionType.toLowerCase()}
-          </span>
+
+        {/* Subscription */}
+        <span className="hidden sm:inline-block px-3 py-1 text-sm font-medium rounded-full bg-white text-[#1992FF]">
+          Subscription: {user?.subscriptionType || 'free'}
+        </span>
+
+        {/* Profile */}
+        <Link
+          href="/settings"
+          className="p-2 bg-white text-[#1992FF] rounded-full hover:brightness-105 shadow"
+        >
+          <span className="sr-only">Profile</span>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-5 h-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+          </svg>
         </Link>
-        <Link href="/settings" title="Settings">
-          <UserCircle className="w-6 h-6 text-white hover:text-white/80 transition" />
-        </Link>
+
+        {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
           aria-label="Toggle theme"
-          className="bg-white text-[#1992ff] p-2 rounded-full shadow hover:brightness-105 transition"
+          className="bg-white text-[#1992FF] p-2 rounded-full shadow hover:brightness-105 transition"
         >
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>

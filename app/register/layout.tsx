@@ -6,6 +6,6 @@ export const metadata = {
 }
 
 export default function RegisterLayout({ children }: { children: ReactNode }) {
-  // ✅ Do NOT rewrap <html> or <body> to avoid breaking layout inheritance
+  // This ensures it bypasses sidebar/header
   return <>{children}</>
 }

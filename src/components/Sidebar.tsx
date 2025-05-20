@@ -38,6 +38,7 @@ export default function Sidebar() {
     '/onboarding',
     '/signup',
     '/login',
+    '/register',
     '/confirm-payment',
     '/payment-success',
   ]

@@ -5,6 +5,8 @@ type User = {
   email?: string
   promptLimit: number
   promptsUsed: number
+  totalXP: number
+  subscriptionType: string
 }
 
 interface UserState {
@@ -22,9 +24,11 @@ export const useUserStore = create<UserState>((set) => ({
     email: '',
     promptLimit: 0,
     promptsUsed: 0,
+    totalXP: 0,
+    subscriptionType: 'free',
   },
   xp: 0,
-  subscriptionType: 'Free',
+  subscriptionType: 'free',
   setUser: (user) => set({ user }),
   setXp: (xp) => set({ xp }),
   setSubscriptionType: (type) => set({ subscriptionType: type }),
