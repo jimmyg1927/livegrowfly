@@ -38,58 +38,58 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#e6f7ff] px-6 py-12 text-black flex items-center justify-center">
-      <div className="w-full max-w-2xl bg-white border border-gray-200 rounded-2xl shadow-xl p-10 space-y-6">
-        <div className="flex items-center justify-center">
-          <Image src="/growfly-logo.png" alt="Growfly Logo" width={140} height={40} />
-        </div>
-
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">Welcome Back</h1>
-          <p className="text-sm text-gray-600 mt-1">Log in to access your dashboard and AI tools</p>
-        </div>
-
-        {error && <p className="text-center text-red-500 font-medium text-sm">{error}</p>}
-
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-5">
-          <div>
-            <label className="block text-sm font-semibold mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              required
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-md border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-[#1992FF]"
-              placeholder="you@example.com"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              required
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-md border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-[#1992FF]"
-              placeholder="Your password"
-            />
-          </div>
-
-          <div className="text-right">
-            <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
-              Forgot password?
-            </Link>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-3 bg-[#1992FF] text-white font-semibold rounded-md hover:bg-[#157fdd] transition"
-          >
-            Log In
-          </button>
-        </form>
+    <main className="min-h-screen bg-gradient-to-b from-[#0a0a23] to-[#1e3a8a] px-6 pt-10 pb-20 text-white flex flex-col items-center justify-center">
+      <div className="mb-6">
+        <Image src="/growfly-logo.png" alt="Growfly Logo" width={140} height={40} />
       </div>
+
+      <div className="text-center mb-6">
+        <h1 className="text-3xl font-extrabold">Welcome Back</h1>
+        <p className="text-white/80 text-sm mt-1">Log in to access your dashboard and AI tools</p>
+      </div>
+
+      {error && (
+        <p className="text-red-400 text-sm font-medium mb-4 text-center">{error}</p>
+      )}
+
+      <form onSubmit={handleSubmit} className="w-full max-w-md space-y-5">
+        <div>
+          <label className="block text-sm font-medium mb-1">Email</label>
+          <input
+            type="email"
+            value={email}
+            required
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-3 bg-white/10 text-white border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1992FF]"
+            placeholder="you@example.com"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Password</label>
+          <input
+            type="password"
+            value={password}
+            required
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full p-3 bg-white/10 text-white border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1992FF]"
+            placeholder="Your password"
+          />
+        </div>
+
+        <div className="text-right">
+          <Link href="/forgot-password" className="text-sm text-blue-400 hover:underline">
+            Forgot password?
+          </Link>
+        </div>
+
+        <button
+          type="submit"
+          className="w-full py-3 bg-[#1992FF] text-white font-semibold rounded-lg hover:bg-blue-600 transition"
+        >
+          Log In
+        </button>
+      </form>
     </main>
   )
 }
