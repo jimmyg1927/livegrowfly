@@ -1,3 +1,4 @@
+// ✅ Existing token method
 export async function getToken(userId: string): Promise<string | null> {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/token`, {
@@ -17,4 +18,12 @@ export async function getToken(userId: string): Promise<string | null> {
     console.error('Error fetching token:', error);
     return null;
   }
+}
+
+// ✅ Admin email whitelist
+export const ADMIN_EMAILS = ['teddy@growfly.io', 'jimmy@growfly.io']
+
+export function isAdmin(email: string | undefined | null): boolean {
+  if (!email) return false
+  return ADMIN_EMAILS.includes(email.toLowerCase())
 }

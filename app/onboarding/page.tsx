@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
@@ -30,11 +30,18 @@ const INITIAL_FORM: FormState = {
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null
   const [step, setStep] = useState<number>(1)
   const [form, setForm] = useState<FormState>({ ...INITIAL_FORM })
   const [xp, setXp] = useState<number>(0)
-  const totalFields = Object.keys(INITIAL_FORM).length
+  const [touchedFields, setTouchedFields] = useState<Partial<Record<keyof FormState, boolean>>>({})
+  const tokenRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    tokenRef.current = localStorage.getItem('growfly_jwt')
+    if (!tokenRef.current) {
+      router.push('/login')
+    }
+  }, [])
 
   useEffect(() => {
     const filled = Object.values(form).filter((v) => v.trim() !== '').length
@@ -46,37 +53,40 @@ export default function OnboardingPage() {
   ) => {
     const { name, value } = e.target
     setForm((f) => ({ ...f, [name]: value }))
+    setTouchedFields((prev) => ({ ...prev, [name]: true }))
+  }
+
+  const requiredFields: Record<number, (keyof FormState)[]> = {
+    1: ['brandName', 'brandDescription', 'brandVoice', 'brandMission'],
+    2: ['inspiredBy'],
+    3: ['jobTitle', 'industry', 'goals'],
   }
 
   const validateCurrentStep = () => {
-    const requiredStepFields = {
-      1: ['brandName', 'brandDescription', 'brandVoice', 'brandMission'],
-      2: ['inspiredBy'],
-      3: ['jobTitle', 'industry', 'goals'],
-    }
-    const missing = requiredStepFields[step].some(
-      (field) => form[field as keyof FormState]?.trim() === ''
+    const missing = requiredFields[step].filter(
+      (field) => form[field]?.trim() === ''
     )
-    return !missing
+    if (missing.length > 0) {
+      toast.error('❌ Please complete all fields.')
+      return false
+    }
+    return true
   }
 
   const handleSubmit = async () => {
-    if (!token) {
+    if (!tokenRef.current) {
       router.push('/login')
       return
     }
 
-    if (!validateCurrentStep()) {
-      toast.error('❌ Please complete all fields.')
-      return
-    }
+    if (!validateCurrentStep()) return
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/user/settings`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${tokenRef.current}`,
         },
         body: JSON.stringify(form),
       })
@@ -94,38 +104,50 @@ export default function OnboardingPage() {
     name: keyof FormState,
     placeholder: string,
     textarea = false
-  ) => (
-    <div>
-      <label className="block text-sm font-medium mb-1">{label}</label>
-      {textarea ? (
-        <textarea
-          name={name}
-          rows={3}
-          placeholder={placeholder}
-          value={form[name]}
-          onChange={handleChange}
-          className="w-full bg-white/10 text-white border border-white/30 rounded-lg p-3"
-        />
-      ) : (
-        <input
-          name={name}
-          value={form[name]}
-          onChange={handleChange}
-          placeholder={placeholder}
-          className="w-full bg-white/10 text-white border border-white/30 rounded-lg p-3"
-        />
-      )}
-    </div>
-  )
+  ) => {
+    const isError =
+      touchedFields[name] &&
+      requiredFields[step].includes(name) &&
+      form[name].trim() === ''
+
+    return (
+      <div>
+        <label className="block text-sm font-medium mb-1">{label}</label>
+        {textarea ? (
+          <textarea
+            name={name}
+            rows={3}
+            placeholder={placeholder}
+            value={form[name]}
+            onChange={handleChange}
+            className={`w-full bg-white/10 text-white border p-3 rounded-lg ${
+              isError ? 'border-red-500' : 'border-white/30'
+            }`}
+          />
+        ) : (
+          <input
+            name={name}
+            value={form[name]}
+            onChange={handleChange}
+            placeholder={placeholder}
+            className={`w-full bg-white/10 text-white border p-3 rounded-lg ${
+              isError ? 'border-red-500' : 'border-white/30'
+            }`}
+          />
+        )}
+        {isError && (
+          <p className="text-red-400 text-xs mt-1">This field is required.</p>
+        )}
+      </div>
+    )
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#0a0a23] to-[#1e3a8a] px-6 py-10 text-white">
-      {/* Logo */}
       <div className="flex justify-center mb-4">
         <Image src="/growfly-logo.png" alt="Growfly" width={140} height={40} />
       </div>
 
-      {/* Headings */}
       <h1 className="text-2xl font-bold text-center mb-1">
         Let&rsquo;s make Growfly personal ✨
       </h1>
@@ -133,18 +155,16 @@ export default function OnboardingPage() {
         Answer a few quick things so our nerds can tailor your AI to your brand.
       </p>
 
-      {/* XP Progress */}
       <div className="mb-6 max-w-xl mx-auto">
-        <p className="text-sm font-medium mb-1 text-center">XP Progress: {xp} / {totalFields}</p>
+        <p className="text-sm font-medium mb-1 text-center">XP Progress: {xp} / {Object.keys(INITIAL_FORM).length}</p>
         <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
           <div
             className="h-full bg-[#1992FF] transition-all"
-            style={{ width: `${(xp / totalFields) * 100}%` }}
+            style={{ width: `${(xp / Object.keys(INITIAL_FORM).length) * 100}%` }}
           />
         </div>
       </div>
 
-      {/* Step Buttons */}
       <div className="flex justify-center gap-4 text-sm font-semibold mb-6">
         {['Brand', 'Audience', 'About You'].map((label, index) => (
           <button
@@ -161,7 +181,6 @@ export default function OnboardingPage() {
         ))}
       </div>
 
-      {/* Fields */}
       <div className="space-y-4 max-w-xl mx-auto">
         {step === 1 && (
           <>
@@ -185,7 +204,6 @@ export default function OnboardingPage() {
         )}
       </div>
 
-      {/* Navigation Buttons */}
       <div className="flex justify-between mt-8 max-w-xl mx-auto">
         {step > 1 ? (
           <button
@@ -200,8 +218,6 @@ export default function OnboardingPage() {
             onClick={() => {
               if (validateCurrentStep()) {
                 setStep((s) => s + 1)
-              } else {
-                toast.error('❌ Please complete all fields.')
               }
             }}
             className="px-4 py-2 bg-[#1992FF] text-white rounded-full hover:bg-blue-600 transition"
