@@ -68,16 +68,7 @@ export default function OnboardingPage() {
         body: JSON.stringify(form),
       })
 
-      const xpRes = await fetch(`${API_BASE_URL}/api/user/xp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ xp }),
-      })
-
-      if (!res.ok || !xpRes.ok) throw new Error()
+      if (!res.ok) throw new Error()
       toast.success(`🎉 Onboarding complete!`)
       router.push('/dashboard')
     } catch {
@@ -116,17 +107,20 @@ export default function OnboardingPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#0a0a23] to-[#1e3a8a] px-6 py-10 text-white">
-      <div className="flex justify-center mb-6">
+      {/* Logo */}
+      <div className="flex justify-center mb-4">
         <Image src="/growfly-logo.png" alt="Growfly" width={140} height={40} />
       </div>
 
+      {/* Headings */}
       <h1 className="text-2xl font-bold text-center mb-1">
         Let&rsquo;s make Growfly personal ✨
       </h1>
-      <p className="text-center text-white/80 mb-6">
+      <p className="text-center text-white/80 mb-4">
         Answer a few quick things so our nerds can tailor your AI to your brand.
       </p>
 
+      {/* XP Progress */}
       <div className="mb-6 max-w-xl mx-auto">
         <p className="text-sm font-medium mb-1 text-center">XP Progress: {xp} / {totalFields}</p>
         <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
@@ -137,12 +131,24 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      <div className="flex justify-center gap-8 text-sm font-semibold mb-6">
-        <button onClick={() => setStep(1)} className={`px-2 ${step === 1 ? 'text-[#1992FF]' : 'text-white/50'}`}>1. Brand</button>
-        <button onClick={() => setStep(2)} className={`px-2 ${step === 2 ? 'text-[#1992FF]' : 'text-white/50'}`}>2. Audience</button>
-        <button onClick={() => setStep(3)} className={`px-2 ${step === 3 ? 'text-[#1992FF]' : 'text-white/50'}`}>3. About You</button>
+      {/* Step Buttons */}
+      <div className="flex justify-center gap-4 text-sm font-semibold mb-6">
+        {['Brand', 'Audience', 'About You'].map((label, index) => (
+          <button
+            key={index}
+            onClick={() => setStep(index + 1)}
+            className={`px-4 py-2 rounded-full transition ${
+              step === index + 1
+                ? 'bg-[#1992FF] text-white'
+                : 'bg-white/10 text-white hover:bg-white/20'
+            }`}
+          >
+            {index + 1}. {label}
+          </button>
+        ))}
       </div>
 
+      {/* Fields */}
       <div className="space-y-4 max-w-xl mx-auto">
         {step === 1 && (
           <>
@@ -168,11 +174,12 @@ export default function OnboardingPage() {
         )}
       </div>
 
+      {/* Navigation Buttons */}
       <div className="flex justify-between mt-8 max-w-xl mx-auto">
         {step > 1 ? (
           <button
             onClick={() => setStep((s) => s - 1)}
-            className="px-4 py-2 bg-white/20 text-white rounded hover:bg-white/30 transition"
+            className="px-4 py-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition"
           >
             Back
           </button>
@@ -180,14 +187,14 @@ export default function OnboardingPage() {
         {step < 3 ? (
           <button
             onClick={() => setStep((s) => s + 1)}
-            className="px-4 py-2 bg-[#1992FF] text-white rounded hover:bg-blue-600 transition"
+            className="px-4 py-2 bg-[#1992FF] text-white rounded-full hover:bg-blue-600 transition"
           >
             Next
           </button>
         ) : (
           <button
             onClick={handleSubmit}
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
+            className="px-4 py-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition"
           >
             Finish &amp; Start Journey
           </button>
