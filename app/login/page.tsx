@@ -24,14 +24,17 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       })
 
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data?.error || 'Login failed')
-      }
-
       const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'Login failed')
+
       localStorage.setItem('growfly_jwt', data.token)
-      router.push('/dashboard')
+
+      // ✅ Redirect based on onboarding
+      if (data.hasCompletedOnboarding) {
+        router.push('/dashboard')
+      } else {
+        router.push('/onboarding')
+      }
     } catch (err: any) {
       setError(err.message)
     }

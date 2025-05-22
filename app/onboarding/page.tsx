@@ -120,9 +120,7 @@ export default function OnboardingPage() {
             placeholder={placeholder}
             value={form[name]}
             onChange={handleChange}
-            className={`w-full bg-white/10 text-white border p-3 rounded-lg ${
-              isError ? 'border-red-500' : 'border-white/30'
-            }`}
+            className={`w-full bg-white/10 text-white border p-3 rounded-lg ${isError ? 'border-red-500' : 'border-white/30'}`}
           />
         ) : (
           <input
@@ -130,9 +128,7 @@ export default function OnboardingPage() {
             value={form[name]}
             onChange={handleChange}
             placeholder={placeholder}
-            className={`w-full bg-white/10 text-white border p-3 rounded-lg ${
-              isError ? 'border-red-500' : 'border-white/30'
-            }`}
+            className={`w-full bg-white/10 text-white border p-3 rounded-lg ${isError ? 'border-red-500' : 'border-white/30'}`}
           />
         )}
         {isError && (
@@ -166,7 +162,7 @@ export default function OnboardingPage() {
       </div>
 
       <div className="flex justify-center gap-4 text-sm font-semibold mb-6">
-        {['Brand', 'Audience', 'About You'].map((label, index) => (
+        {['Brand', 'Inspired By...', 'About You'].map((label, index) => (
           <button
             key={index}
             onClick={() => setStep(index + 1)}
