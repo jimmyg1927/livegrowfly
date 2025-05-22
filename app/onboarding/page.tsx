@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
 import { API_BASE_URL } from '@/lib/constants'
@@ -46,7 +47,7 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     const totalChars = Object.values(form).reduce((acc, val) => acc + val.trim().length, 0)
-    setXp(Math.floor(totalChars * 0.06))
+    setXp(Math.floor(totalChars * 0.05))
   }, [form])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -77,7 +78,6 @@ export default function OnboardingPage() {
 
   const handleSubmit = async () => {
     if (!validateStep()) return
-
     setLoading(true)
 
     try {
@@ -94,12 +94,18 @@ export default function OnboardingPage() {
         }),
       })
 
+      if (res.status === 409) {
+        toast.error('❌ That email is already registered. Try logging in instead.')
+        setLoading(false)
+        return
+      }
+
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Signup failed')
 
       localStorage.setItem('growfly_jwt', data.token)
 
-      const totalXP = Math.floor(Object.values(form).reduce((acc, val) => acc + val.trim().length, 0) * 0.06)
+      const totalXP = Math.floor(Object.values(form).reduce((acc, val) => acc + val.trim().length, 0) * 0.05)
 
       const brandRes = await fetch(`${API_BASE_URL}/api/user/settings`, {
         method: 'PUT',
@@ -272,6 +278,13 @@ export default function OnboardingPage() {
           </button>
         )}
       </div>
+
+      <p className="text-center text-white/70 text-sm mt-6">
+        Already have an account?{' '}
+        <Link href="/login" className="underline text-white hover:text-blue-300">
+          Log in here
+        </Link>
+      </p>
     </main>
   )
 }
