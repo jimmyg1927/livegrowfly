@@ -1,4 +1,4 @@
-'use client' // ✅ Forces client-only execution (disables server rendering)
+'use client'
 
 import React, { useEffect, useState } from 'react'
 import Image from 'next/image'
@@ -40,8 +40,7 @@ const INITIAL_FORM: FormState = {
 export default function OnboardingPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const plan = searchParams?.get('plan') ?? 'free'
-
+  const plan = searchParams?.get('plan') || 'free'
 
   const [step, setStep] = useState(1)
   const [form, setForm] = useState(INITIAL_FORM)
@@ -99,10 +98,13 @@ export default function OnboardingPage() {
       })
 
       const data = await res.json()
+
       if (res.status === 409) {
         toast.error('❌ Email already registered.')
+        setLoading(false)
         return
       }
+
       if (!res.ok) throw new Error(data.error || 'Signup failed')
 
       const token = data.token
@@ -137,9 +139,7 @@ export default function OnboardingPage() {
       } else {
         const stripeRes = await fetch(`${API_BASE_URL}/api/checkout/create-checkout-session`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ planId: plan }),
         })
 
@@ -198,17 +198,13 @@ export default function OnboardingPage() {
         <Image src="/growfly-logo.png" alt="Growfly" width={140} height={40} />
       </div>
 
-      <h1 className="text-2xl font-bold text-center mb-1">
-        Let&rsquo;s make Growfly personal ✨
-      </h1>
+      <h1 className="text-2xl font-bold text-center mb-1">Let&rsquo;s make Growfly personal ✨</h1>
       <p className="text-center text-white/80 mb-4">
         Answer a few quick things so our nerds can tailor your AI to your brand.
       </p>
 
       <div className="mb-6 max-w-xl mx-auto">
-        <p className="text-sm font-medium mb-1 text-center">
-          XP Progress: {xp} XP
-        </p>
+        <p className="text-sm font-medium mb-1 text-center">XP Progress: {xp} XP</p>
         <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
           <div className="h-full bg-[#1992FF] transition-all" style={{ width: `${Math.min(xp, 100)}%` }} />
         </div>
@@ -219,7 +215,9 @@ export default function OnboardingPage() {
           <button
             key={i}
             onClick={() => setStep(i + 1)}
-            className={`px-3 py-1 rounded-full ${step === i + 1 ? 'bg-[#1992FF]' : 'bg-white/10 hover:bg-white/20'}`}
+            className={`px-3 py-1 rounded-full ${
+              step === i + 1 ? 'bg-[#1992FF] text-white' : 'bg-white/10 text-white hover:bg-white/20'
+            }`}
           >
             {i + 1}. {label}
           </button>
@@ -259,7 +257,10 @@ export default function OnboardingPage() {
 
       <div className="flex justify-between mt-8 max-w-xl mx-auto">
         {step > 1 ? (
-          <button onClick={() => setStep((s) => s - 1)} className="px-4 py-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition">
+          <button
+            onClick={() => setStep((s) => s - 1)}
+            className="px-4 py-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition"
+          >
             Back
           </button>
         ) : (
@@ -275,7 +276,13 @@ export default function OnboardingPage() {
             Next
           </button>
         ) : (
-          <button onClick={handleSubmit} disabled={loading} className="px-4 py-2 bg-[#1992FF] text-white rounded-full hover:bg-blue-600 transition">
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className={`px-4 py-2 bg-[#1992FF] text-white rounded-full hover:bg-blue-600 transition ${
+              loading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
             {loading ? 'Submitting...' : 'Finish & Start Journey'}
           </button>
         )}
