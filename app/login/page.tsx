@@ -15,6 +15,7 @@ export default function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    console.log('🔍 Login submit triggered')
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
@@ -24,6 +25,7 @@ export default function LoginPage() {
       })
 
       const data = await res.json()
+      console.log('🔁 Login response:', res.status, data)
 
       if (!res.ok) {
         throw new Error(data?.error || 'Login failed')
@@ -32,6 +34,7 @@ export default function LoginPage() {
       localStorage.setItem('growfly_jwt', data.token)
       router.push(data.hasCompletedOnboarding ? '/dashboard' : '/onboarding')
     } catch (err: any) {
+      console.error('❌ Login error:', err)
       setError(err.message)
     }
   }
