@@ -46,7 +46,7 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     const totalChars = Object.values(form).reduce((acc, val) => acc + val.trim().length, 0)
-    setXp(Math.floor(totalChars * 0.01))
+    setXp(Math.floor(totalChars * 0.06))
   }, [form])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -99,6 +99,8 @@ export default function OnboardingPage() {
 
       localStorage.setItem('growfly_jwt', data.token)
 
+      const totalXP = Math.floor(Object.values(form).reduce((acc, val) => acc + val.trim().length, 0) * 0.06)
+
       const brandRes = await fetch(`${API_BASE_URL}/api/user/settings`, {
         method: 'PUT',
         headers: {
@@ -114,7 +116,7 @@ export default function OnboardingPage() {
           jobTitle: form.jobTitle,
           industry: form.industry,
           goals: form.goals,
-          totalXP: Math.floor(Object.values(form).reduce((acc, val) => acc + val.trim().length, 0) * 0.01),
+          totalXP,
         }),
       })
 
