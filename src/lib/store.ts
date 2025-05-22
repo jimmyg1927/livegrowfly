@@ -27,9 +27,20 @@ export const useUserStore = create<UserState>((set) => ({
     totalXP: 0,
     subscriptionType: 'free',
   },
-  xp: 0,
+  xp: 0, // onboarding XP (local only)
   subscriptionType: 'free',
-  setUser: (user) => set({ user }),
-  setXp: (xp) => set({ xp }),
+
+  // ✅ Sets full user object from backend / me route
+  setUser: (user) => {
+    set({ user, xp: user.totalXP || 0, subscriptionType: user.subscriptionType || 'free' })
+  },
+
+  // ✅ Sets XP progress locally — useful during onboarding
+  setXp: (xp) => set((state) => ({
+    xp,
+    user: { ...state.user, totalXP: xp },
+  })),
+
+  // ✅ Sets sub type manually
   setSubscriptionType: (type) => set({ subscriptionType: type }),
 }))
