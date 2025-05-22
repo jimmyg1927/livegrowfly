@@ -39,11 +39,11 @@ const INITIAL_FORM: FormState = {
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const [step, setStep] = useState<number>(1)
-  const [form, setForm] = useState<FormState>({ ...INITIAL_FORM })
-  const [xp, setXp] = useState<number>(0)
-  const [touchedFields, setTouchedFields] = useState<Partial<Record<keyof FormState, boolean>>>({})
+  const [step, setStep] = useState(1)
+  const [form, setForm] = useState(INITIAL_FORM)
+  const [xp, setXp] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [touchedFields, setTouchedFields] = useState<Partial<Record<keyof FormState, boolean>>>({})
 
   useEffect(() => {
     const totalChars = Object.values(form).reduce((acc, val) => acc + val.trim().length, 0)
@@ -64,7 +64,7 @@ export default function OnboardingPage() {
   }
 
   const validateStep = () => {
-    const missing = requiredFields[step].filter((field) => form[field]?.trim() === '')
+    const missing = requiredFields[step].filter((field) => form[field].trim() === '')
     if (missing.length > 0) {
       toast.error('❌ Please complete all fields.')
       return false
@@ -80,6 +80,8 @@ export default function OnboardingPage() {
     if (!validateStep()) return
     setLoading(true)
 
+    const plan = new URLSearchParams(window.location.search).get('plan') || 'free'
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/signup`, {
         method: 'POST',
@@ -90,20 +92,20 @@ export default function OnboardingPage() {
           password: form.password,
           jobTitle: form.jobTitle,
           industry: form.industry,
-          plan: new URLSearchParams(window.location.search).get('plan') || 'free',
+          plan,
         }),
       })
 
+      const data = await res.json()
       if (res.status === 409) {
-        toast.error('❌ That email is already registered. Try logging in instead.')
-        setLoading(false)
+        toast.error('❌ Email already registered.')
         return
       }
-
-      const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Signup failed')
 
-      localStorage.setItem('growfly_jwt', data.token)
+      const token = data.token
+      localStorage.setItem('growfly_jwt', token)
+      document.cookie = `growfly_jwt=${token}; path=/; max-age=604800`
 
       const totalXP = Math.floor(Object.values(form).reduce((acc, val) => acc + val.trim().length, 0) * 0.05)
 
@@ -111,7 +113,7 @@ export default function OnboardingPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${data.token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           brandName: form.brandName,
@@ -128,8 +130,24 @@ export default function OnboardingPage() {
 
       if (!brandRes.ok) throw new Error('Failed to save brand settings.')
 
-      toast.success('🎉 Welcome to Growfly!')
-      router.push('/dashboard')
+      if (plan === 'free') {
+        router.push('/dashboard')
+      } else {
+        const stripeRes = await fetch(`${API_BASE_URL}/api/checkout/create-checkout-session`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ planId: plan }),
+        })
+
+        const stripeData = await stripeRes.json()
+        if (stripeData.url) {
+          window.location.href = stripeData.url
+        } else {
+          throw new Error('Stripe session failed.')
+        }
+      }
     } catch (err: any) {
       toast.error(`❌ ${err.message || 'Error during onboarding.'}`)
     } finally {
@@ -144,11 +162,7 @@ export default function OnboardingPage() {
     textarea = false,
     type = 'text'
   ) => {
-    const isError =
-      touchedFields[name] &&
-      requiredFields[step].includes(name) &&
-      form[name].trim() === ''
-
+    const isError = touchedFields[name] && requiredFields[step].includes(name) && form[name].trim() === ''
     return (
       <div>
         <label className="block text-sm font-medium mb-1">{label}</label>
@@ -194,10 +208,7 @@ export default function OnboardingPage() {
           XP Progress: {xp} XP
         </p>
         <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-[#1992FF] transition-all"
-            style={{ width: `${Math.min(xp, 100)}%` }}
-          />
+          <div className="h-full bg-[#1992FF] transition-all" style={{ width: `${Math.min(xp, 100)}%` }} />
         </div>
       </div>
 
@@ -207,9 +218,7 @@ export default function OnboardingPage() {
             key={i}
             onClick={() => setStep(i + 1)}
             className={`px-3 py-1 rounded-full ${
-              step === i + 1
-                ? 'bg-[#1992FF] text-white'
-                : 'bg-white/10 text-white hover:bg-white/20'
+              step === i + 1 ? 'bg-[#1992FF] text-white' : 'bg-white/10 text-white hover:bg-white/20'
             }`}
           >
             {i + 1}. {label}
@@ -234,11 +243,7 @@ export default function OnboardingPage() {
             {renderField('Mission', 'brandMission', 'Make AI marketing easier for all', true)}
           </>
         )}
-        {step === 3 && (
-          <>
-            {renderField('Inspired By', 'inspiredBy', 'What companies or competitors inspire you?', true)}
-          </>
-        )}
+        {step === 3 && <>{renderField('Inspired By', 'inspiredBy', 'What companies or competitors inspire you?', true)}</>}
         {step === 4 && (
           <>
             {renderField('Your Job Title', 'jobTitle', 'Marketing Director')}
@@ -250,10 +255,7 @@ export default function OnboardingPage() {
 
       <div className="flex justify-between mt-8 max-w-xl mx-auto">
         {step > 1 ? (
-          <button
-            onClick={() => setStep((s) => s - 1)}
-            className="px-4 py-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition"
-          >
+          <button onClick={() => setStep((s) => s - 1)} className="px-4 py-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition">
             Back
           </button>
         ) : (
@@ -269,11 +271,7 @@ export default function OnboardingPage() {
             Next
           </button>
         ) : (
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="px-4 py-2 bg-[#1992FF] text-white rounded-full hover:bg-blue-600 transition"
-          >
+          <button onClick={handleSubmit} disabled={loading} className="px-4 py-2 bg-[#1992FF] text-white rounded-full hover:bg-blue-600 transition">
             {loading ? 'Submitting...' : 'Finish & Start Journey'}
           </button>
         )}

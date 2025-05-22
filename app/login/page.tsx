@@ -15,7 +15,6 @@ export default function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    console.log('🔍 Login submit triggered')
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
@@ -25,14 +24,30 @@ export default function LoginPage() {
       })
 
       const data = await res.json()
-      console.log('🔁 Login response:', res.status, data)
-
-      if (!res.ok) {
-        throw new Error(data?.error || 'Login failed')
-      }
+      if (!res.ok) throw new Error(data?.error || 'Login failed')
 
       localStorage.setItem('growfly_jwt', data.token)
-      router.push(data.hasCompletedOnboarding ? '/dashboard' : '/onboarding')
+
+      // Fetch the user to determine plan and onboarding state
+      const userRes = await fetch(`${API_BASE_URL}/api/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${data.token}`,
+        },
+      })
+      const user = await userRes.json()
+
+      if (!userRes.ok || !user) throw new Error('Failed to retrieve user.')
+
+      const plan = user.subscriptionType || 'free'
+      const onboarded = user.hasCompletedOnboarding
+
+      if (!onboarded) {
+        router.push('/onboarding')
+      } else if (plan !== 'free') {
+        router.push('/change-plan') // or Stripe portal if needed
+      } else {
+        router.push('/dashboard')
+      }
     } catch (err: any) {
       console.error('❌ Login error:', err)
       setError(err.message)
