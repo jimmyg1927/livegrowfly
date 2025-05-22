@@ -1,9 +1,9 @@
-'use client'
+'use client' // ✅ Forces client-only execution (disables server rendering)
 
 import React, { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'react-hot-toast'
 import { API_BASE_URL } from '@/lib/constants'
 
@@ -39,14 +39,15 @@ const INITIAL_FORM: FormState = {
 
 export default function OnboardingPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const plan = searchParams?.get('plan') ?? 'free'
+
+
   const [step, setStep] = useState(1)
   const [form, setForm] = useState(INITIAL_FORM)
   const [xp, setXp] = useState(0)
   const [loading, setLoading] = useState(false)
   const [touchedFields, setTouchedFields] = useState<Partial<Record<keyof FormState, boolean>>>({})
-
-  // ⛔ Plan is required — NO fallback
-  const plan = new URLSearchParams(window.location.search).get('plan')
 
   useEffect(() => {
     const totalChars = Object.values(form).reduce((acc, val) => acc + val.trim().length, 0)
@@ -81,11 +82,6 @@ export default function OnboardingPage() {
 
   const handleSubmit = async () => {
     if (!validateStep()) return
-    if (!plan) {
-      toast.error('❌ Missing plan parameter in URL.')
-      return
-    }
-
     setLoading(true)
 
     try {
@@ -223,9 +219,7 @@ export default function OnboardingPage() {
           <button
             key={i}
             onClick={() => setStep(i + 1)}
-            className={`px-3 py-1 rounded-full ${
-              step === i + 1 ? 'bg-[#1992FF] text-white' : 'bg-white/10 text-white hover:bg-white/20'
-            }`}
+            className={`px-3 py-1 rounded-full ${step === i + 1 ? 'bg-[#1992FF]' : 'bg-white/10 hover:bg-white/20'}`}
           >
             {i + 1}. {label}
           </button>
@@ -243,17 +237,21 @@ export default function OnboardingPage() {
         )}
         {step === 2 && (
           <>
-            {renderField('Brand Name', 'brandName', 'Micks Marketing Ltd')}
-            {renderField('Elevator Pitch', 'brandDescription', 'We help Landscaping brands grow using new Marketing Techniques .', true)}
+            {renderField('Brand Name', 'brandName', 'Growfly Ltd')}
+            {renderField('Elevator Pitch', 'brandDescription', 'We help brands grow using AI.', true)}
             {renderField('Brand Personality', 'brandVoice', 'Witty and expert', true)}
-            {renderField('Mission', 'brandMission', 'We help businesses grow and gain more business through marketing', true)}
+            {renderField('Mission', 'brandMission', 'Make AI marketing easier for all', true)}
           </>
         )}
-        {step === 3 && <>{renderField('Inspired By', 'inspiredBy', 'What companies or competitors inspire you?', true)}</>}
+        {step === 3 && (
+          <>
+            {renderField('Inspired By', 'inspiredBy', 'What companies or competitors inspire you?', true)}
+          </>
+        )}
         {step === 4 && (
           <>
-            {renderField('Your Job Title', 'jobTitle', 'Director')}
-            {renderField('Your Industry', 'industry', 'Marketing')}
+            {renderField('Your Job Title', 'jobTitle', 'Marketing Director')}
+            {renderField('Your Industry', 'industry', 'E-commerce')}
             {renderField('Goals with Growfly', 'goals', 'More sales, increase productivity, grow reach', true)}
           </>
         )}
