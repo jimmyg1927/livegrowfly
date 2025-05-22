@@ -1,3 +1,4 @@
+// FILE: middleware.ts
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
@@ -8,7 +9,7 @@ export const config = {
 export async function middleware(req: NextRequest) {
   const url = req.nextUrl.clone()
 
-  // CORS support for API routes
+  // ─── CORS SUPPORT FOR /api ───────────────────────────────────────────────────
   if (req.nextUrl.pathname.startsWith('/api')) {
     if (req.method === 'OPTIONS') {
       const res = new NextResponse(null, { status: 204 })
@@ -18,38 +19,36 @@ export async function middleware(req: NextRequest) {
       res.headers.set('Access-Control-Allow-Headers', 'Content-Type,Authorization')
       return res
     }
-
     const res = NextResponse.next()
     res.headers.set('Access-Control-Allow-Origin', 'https://growflynew0425.vercel.app')
     res.headers.set('Access-Control-Allow-Credentials', 'true')
     return res
   }
 
-  // ⛔ Block dashboard if onboarding not completed
+  // ─── PROTECT /dashboard ──────────────────────────────────────────────────────
   if (req.nextUrl.pathname === '/dashboard') {
-    const jwt = req.cookies.get('growfly_jwt')?.value || req.headers.get('Authorization')?.replace('Bearer ', '')
-
+    // 1) Check JWT (cookie or Authorization header)
+    const jwt =
+      req.cookies.get('growfly_jwt')?.value ||
+      req.headers.get('Authorization')?.replace('Bearer ', '')
     if (!jwt) {
       url.pathname = '/login'
       return NextResponse.redirect(url)
     }
 
     try {
-      const apiRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${jwt}`,
-        },
-      })
-
+      // 2) Fetch user data
+      const apiRes = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/me`,
+        { headers: { Authorization: `Bearer ${jwt}` } }
+      )
       if (!apiRes.ok) throw new Error('Invalid token')
-
       const user = await apiRes.json()
 
-      const requiredFields = [
+      // 3) Check exactly the fields you collect in onboarding
+      const required = [
         'brandName',
-        'brandTone',
         'brandDescription',
-        'brandValues',
         'brandVoice',
         'brandMission',
         'inspiredBy',
@@ -57,12 +56,9 @@ export async function middleware(req: NextRequest) {
         'industry',
         'goals',
       ]
-
-      const incomplete = requiredFields.some(field => !user[field])
-
+      const incomplete = required.some((f) => !user[f])
       if (incomplete) {
         url.pathname = '/onboarding'
-        url.searchParams.set('plan', user.subscriptionType || 'free') // ✅ Ensures plan is preserved
         return NextResponse.redirect(url)
       }
     } catch {
@@ -71,5 +67,6 @@ export async function middleware(req: NextRequest) {
     }
   }
 
+  // Otherwise, let the request through
   return NextResponse.next()
 }
