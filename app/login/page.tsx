@@ -20,21 +20,17 @@ export default function LoginPage() {
       const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ email, password }),
       })
 
       const data = await res.json()
-      if (!res.ok) throw new Error(data?.error || 'Login failed')
+
+      if (!res.ok) {
+        throw new Error(data?.error || 'Login failed')
+      }
 
       localStorage.setItem('growfly_jwt', data.token)
-
-      // ✅ Redirect based on onboarding
-      if (data.hasCompletedOnboarding) {
-        router.push('/dashboard')
-      } else {
-        router.push('/onboarding')
-      }
+      router.push(data.hasCompletedOnboarding ? '/dashboard' : '/onboarding')
     } catch (err: any) {
       setError(err.message)
     }
