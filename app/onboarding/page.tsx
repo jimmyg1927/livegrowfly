@@ -38,27 +38,30 @@ const INITIAL_FORM: FormState = {
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const [step, setStep] = useState<number>(1)
   const [form, setForm] = useState<FormState>({ ...INITIAL_FORM })
-  const [touchedFields, setTouchedFields] = useState<Partial<Record<keyof FormState, boolean>>>({})
-  const [xp, setXp] = useState<number>(0)
-
-  const calculateXP = (form: FormState) => {
-    const totalChars = Object.values(form).reduce((sum, val) => sum + val.trim().length, 0)
-    return Math.floor(totalChars * 0.01)
-  }
+  const [step, setStep] = useState(1)
+  const [plan, setPlan] = useState('free')
+  const [touched, setTouched] = useState<Partial<Record<keyof FormState, boolean>>>({})
+  const [xp, setXp] = useState(0)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    setXp(calculateXP(form))
-  }, [form])
+    const params = new URLSearchParams(window.location.search)
+    setPlan(params.get('plan')?.toLowerCase() || 'free')
+  }, [])
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target
-    setForm((f) => ({ ...f, [name]: value }))
-    setTouchedFields((prev) => ({ ...prev, [name]: true }))
-  }
+  useEffect(() => {
+    const totalChars = Object.entries(form).reduce((acc, [key, val]) => {
+      if (
+        !['password', 'confirmPassword'].includes(key) &&
+        typeof val === 'string'
+      ) {
+        acc += val.length
+      }
+      return acc
+    }, 0)
+    setXp(parseFloat((totalChars * 0.01).toFixed(2)))
+  }, [form])
 
   const requiredFields: Record<number, (keyof FormState)[]> = {
     1: ['name', 'email', 'password', 'confirmPassword'],
@@ -67,82 +70,68 @@ export default function OnboardingPage() {
     4: ['jobTitle', 'industry', 'goals'],
   }
 
-  const validateCurrentStep = () => {
+  const validateStep = () => {
     const missing = requiredFields[step].filter(
-      (field) => form[field]?.trim() === ''
+      field => !form[field] || form[field].trim() === ''
     )
     if (missing.length > 0) {
       toast.error('❌ Please complete all fields.')
       return false
     }
-
     if (step === 1 && form.password !== form.confirmPassword) {
       toast.error('❌ Passwords do not match.')
       return false
     }
-
     return true
   }
 
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target
+    setForm(prev => ({ ...prev, [name]: value }))
+    setTouched(prev => ({ ...prev, [name]: true }))
+  }
+
   const handleSubmit = async () => {
-    if (!validateCurrentStep()) return
+    if (!validateStep()) return
+    setLoading(true)
 
     try {
-      // ✅ 1. Create the user account
-      const signupRes = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+      const res = await fetch(`${API_BASE_URL}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          password: form.password,
-          plan: 'free',
+          ...form,
+          plan,
+          totalXP: xp,
         }),
       })
 
-      const data = await signupRes.json()
-      if (!signupRes.ok) throw new Error(data?.error || 'Signup failed')
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'Signup failed')
 
-      const token = data.token
-      localStorage.setItem('growfly_jwt', token)
+      localStorage.setItem('growfly_jwt', data.token)
 
-      // ✅ 2. Save the brand/user info
-      const settingsRes = await fetch(`${API_BASE_URL}/api/user/settings`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          brandName: form.brandName,
-          brandDescription: form.brandDescription,
-          brandVoice: form.brandVoice,
-          brandMission: form.brandMission,
-          inspiredBy: form.inspiredBy,
-          jobTitle: form.jobTitle,
-          industry: form.industry,
-          goals: form.goals,
-        }),
-      })
-
-      if (!settingsRes.ok) throw new Error()
-
-      // ✅ 3. Add XP
-      const finalXp = calculateXP(form)
-      await fetch(`${API_BASE_URL}/api/user/xp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ xp: finalXp }),
-      })
-
-      toast.success('🎉 Welcome to Growfly!')
-      router.push('/dashboard')
+      if (plan === 'free') {
+        router.push('/dashboard')
+      } else {
+        const stripeRes = await fetch(`${API_BASE_URL}/api/checkout/create-checkout-session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ planId: plan }),
+        })
+        const stripeData = await stripeRes.json()
+        if (stripeData?.url) {
+          window.location.href = stripeData.url
+        } else {
+          throw new Error(stripeData?.error || 'Stripe redirect failed')
+        }
+      }
     } catch (err: any) {
-      toast.error('❌ Failed to complete onboarding. Please try again.')
-      console.error('Onboarding error:', err)
+      toast.error(err.message || 'Signup failed')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -152,35 +141,28 @@ export default function OnboardingPage() {
     placeholder: string,
     textarea = false
   ) => {
-    const isError =
-      touchedFields[name] &&
-      requiredFields[step].includes(name) &&
-      form[name].trim() === ''
-
+    const isError = touched[name] && form[name].trim() === ''
     return (
       <div>
         <label className="block text-sm font-medium mb-1">{label}</label>
         {textarea ? (
           <textarea
             name={name}
-            rows={3}
-            placeholder={placeholder}
             value={form[name]}
             onChange={handleChange}
+            rows={3}
+            placeholder={placeholder}
             className={`w-full bg-white/10 text-white border p-3 rounded-lg ${isError ? 'border-red-500' : 'border-white/30'}`}
           />
         ) : (
           <input
             name={name}
-            type={name.includes('password') ? 'password' : 'text'}
             value={form[name]}
             onChange={handleChange}
             placeholder={placeholder}
+            type={name.toLowerCase().includes('password') ? 'password' : 'text'}
             className={`w-full bg-white/10 text-white border p-3 rounded-lg ${isError ? 'border-red-500' : 'border-white/30'}`}
           />
-        )}
-        {isError && (
-          <p className="text-red-400 text-xs mt-1">This field is required.</p>
         )}
       </div>
     )
@@ -188,29 +170,29 @@ export default function OnboardingPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#0a0a23] to-[#1e3a8a] px-6 py-10 text-white">
-      <div className="flex justify-center mb-4">
+      <div className="flex justify-center mb-6">
         <Image src="/growfly-logo.png" alt="Growfly" width={140} height={40} />
       </div>
 
-      <h1 className="text-2xl font-bold text-center mb-1">Let&rsquo;s get started ✨</h1>
-      <p className="text-center text-white/80 mb-6">
-        Help us tailor your experience by filling out the steps below.
+      <h1 className="text-2xl font-bold text-center mb-1">Welcome to Growfly</h1>
+      <p className="text-center text-white/80 mb-4">
+        Let's tailor your AI — and earn XP as you go!
       </p>
 
       <div className="mb-6 max-w-xl mx-auto">
         <p className="text-sm font-medium mb-1 text-center">
-          XP Progress: {xp} XP
+          XP Progress: {Math.floor(xp)} XP
         </p>
         <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
           <div
             className="h-full bg-[#1992FF] transition-all"
-            style={{ width: `${Math.min(xp, 100)}%` }}
+            style={{ width: `${Math.min((xp / 1000) * 100, 100)}%` }}
           />
         </div>
       </div>
 
       <div className="flex justify-center gap-2 text-sm font-semibold mb-6">
-        {['Basic Info', 'Brand Info', 'Inspiration', 'About You'].map((label, index) => (
+        {['Account', 'Brand', 'Inspiration', 'About You'].map((label, index) => (
           <button
             key={index}
             onClick={() => setStep(index + 1)}
@@ -228,15 +210,15 @@ export default function OnboardingPage() {
       <div className="space-y-4 max-w-xl mx-auto">
         {step === 1 && (
           <>
-            {renderField('Your Name', 'name', 'e.g. Sarah Walker')}
-            {renderField('Email Address', 'email', 'you@example.com')}
-            {renderField('Password', 'password', '••••••••')}
-            {renderField('Confirm Password', 'confirmPassword', '••••••••')}
+            {renderField('Your Name', 'name', 'John Doe')}
+            {renderField('Email', 'email', 'you@example.com')}
+            {renderField('Password', 'password', '●●●●●●●●')}
+            {renderField('Confirm Password', 'confirmPassword', '●●●●●●●●')}
           </>
         )}
         {step === 2 && (
           <>
-            {renderField('Brand Name', 'brandName', 'e.g. Growfly Ltd')}
+            {renderField('Brand Name', 'brandName', 'Growfly Ltd')}
             {renderField('Elevator Pitch', 'brandDescription', 'We help brands grow using AI.', true)}
             {renderField('Brand Personality', 'brandVoice', 'Witty and expert', true)}
             {renderField('Mission', 'brandMission', 'Make AI marketing easier for all', true)}
@@ -244,14 +226,14 @@ export default function OnboardingPage() {
         )}
         {step === 3 && (
           <>
-            {renderField('Inspired By', 'inspiredBy', 'What brands inspire you and why?', true)}
+            {renderField('Inspired By', 'inspiredBy', 'Notion, Duolingo, Midjourney', true)}
           </>
         )}
         {step === 4 && (
           <>
-            {renderField('Job Title', 'jobTitle', 'Marketing Director')}
+            {renderField('Your Job Title', 'jobTitle', 'Marketing Director')}
             {renderField('Your Industry', 'industry', 'E-commerce')}
-            {renderField('Goals with Growfly', 'goals', 'Increase reach, boost conversion, save time', true)}
+            {renderField('Your Goals with Growfly', 'goals', 'Boost productivity, better content', true)}
           </>
         )}
       </div>
@@ -264,14 +246,13 @@ export default function OnboardingPage() {
           >
             Back
           </button>
-        ) : <div />}
-
+        ) : (
+          <div />
+        )}
         {step < 4 ? (
           <button
             onClick={() => {
-              if (validateCurrentStep()) {
-                setStep((s) => s + 1)
-              }
+              if (validateStep()) setStep((s) => s + 1)
             }}
             className="px-4 py-2 bg-[#1992FF] text-white rounded-full hover:bg-blue-600 transition"
           >
@@ -280,9 +261,10 @@ export default function OnboardingPage() {
         ) : (
           <button
             onClick={handleSubmit}
-            className="px-4 py-2 bg-[#1992FF] text-white rounded-full hover:bg-blue-600 transition"
+            disabled={loading}
+            className="px-6 py-2 bg-[#1992FF] text-white rounded-full hover:bg-blue-600 transition disabled:opacity-50"
           >
-            Finish &amp; Start Journey 🚀
+            {loading ? 'Finishing...' : 'Finish & Start Journey'}
           </button>
         )}
       </div>

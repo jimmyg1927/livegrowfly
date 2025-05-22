@@ -20,7 +20,7 @@ export default function RegisterPage() {
         'Upgrade anytime',
       ],
       button: 'Start Free',
-      onClick: () => router.push('/signup?plan=free'),
+      onClick: () => router.push('/onboarding?plan=free'),
     },
     {
       id: 'personal',
@@ -33,18 +33,7 @@ export default function RegisterPage() {
         'Download responses',
       ],
       button: 'Choose Personal',
-      onClick: async () => {
-        setLoadingPlan('personal')
-        const res = await fetch('https://glowfly-api-production.up.railway.app/api/checkout/create-checkout-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ planId: 'personal' }),
-        })
-        const data = await res.json()
-        if (data?.url) window.location.href = data.url
-        else alert(data.error || 'Failed to create session.')
-        setLoadingPlan(null)
-      },
+      onClick: () => router.push('/onboarding?plan=personal'),
     },
     {
       id: 'business',
@@ -59,18 +48,7 @@ export default function RegisterPage() {
       ],
       button: 'Choose Business',
       highlight: true,
-      onClick: async () => {
-        setLoadingPlan('business')
-        const res = await fetch('https://glowfly-api-production.up.railway.app/api/checkout/create-checkout-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ planId: 'business' }),
-        })
-        const data = await res.json()
-        if (data?.url) window.location.href = data.url
-        else alert(data.error || 'Failed to create session.')
-        setLoadingPlan(null)
-      },
+      onClick: () => router.push('/onboarding?plan=business'),
     },
     {
       id: 'enterprise',
