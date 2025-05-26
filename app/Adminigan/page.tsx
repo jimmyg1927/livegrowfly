@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useUserStore } from '@/lib/store'
-import { ADMIN_EMAILS } from '@/lib/auth'
+import { useUserStore } from '@lib/store'
+import { ADMIN_EMAILS } from '@lib/auth'
 import {
   ResponsiveContainer,
   LineChart,
