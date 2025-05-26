@@ -1,192 +1,268 @@
-// File: app/dashboard/page.tsx
 'use client'
 export const dynamic = 'force-dynamic'
 
 import React, { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import PromptTracker from '@/components/PromptTracker'
-import SaveModal from '@/components/SaveModal'
-import FeedbackModal from '@/components/FeedbackModal'
-import { API_BASE_URL, defaultFollowUps } from '@lib/constants'
+
+import PromptTracker from '@components/PromptTracker'
+import SaveModal from '@components/SaveModal'
+import FeedbackModal from '@components/FeedbackModal'
+
+import streamChat, { StreamedChunk } from '@lib/streamChat'
 import { useUserStore } from '@lib/store'
-import streamChat from '@lib/streamChat'
+import { defaultFollowUps, API_BASE_URL } from '@lib/constants'
+
 import { HiThumbUp, HiThumbDown } from 'react-icons/hi'
 import { FaRegBookmark, FaShareSquare } from 'react-icons/fa'
 
-const languageOptions = [
-  { code: 'en-UK', label: '🇬🇧 English (UK)' },
-  { code: 'en-US', label: '🇺🇸 English (US)' },
-  { code: 'da', label: '🇩🇰 Danish' },
-  { code: 'de', label: '🇩🇪 German' },
-  { code: 'es', label: '🇪🇸 Spanish' },
-  { code: 'fr', label: '🇫🇷 French' },
-  { code: 'it', label: '🇮🇹 Italian' },
-  { code: 'nl', label: '🇳🇱 Dutch' },
-  { code: 'sv', label: '🇸🇪 Swedish' },
-  { code: 'pl', label: '🇵🇱 Polish' },
-]
-
 type Message = {
+  id: string
   role: 'assistant' | 'user'
   content: string
-  imageUrl?: string
-  fileName?: string
-  fileType?: string
-  id?: string
 }
 
 export default function DashboardPage() {
   const router = useRouter()
+  const { user } = useUserStore()
+
+  // 1️⃣ Get your JWT from localStorage
+  const token = typeof window !== 'undefined'
+    ? localStorage.getItem('growfly_jwt') || ''
+    : ''
+
+  // 2️⃣ Safely read prompt stats from `user`
+  const promptLimit = (user as any)?.promptLimit ?? 0
+  const promptsUsed = (user as any)?.promptsUsed ?? 0
+
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
-  const [loading, setLoading] = useState(false)
-  const [files, setFiles] = useState<File[]>([])
-  const [filePreviews, setFilePreviews] = useState<{ url: string; name: string; type: string }[]>([])
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [showSaveModal, setShowSaveModal] = useState(false)
-  const [savingContent, setSavingContent] = useState('')
-  const [language, setLanguage] = useState('en-UK')
-  const [feedbackOpen, setFeedbackOpen] = useState(false)
-  const [feedbackId, setFeedbackId] = useState('')
+  const [saveContent, setSaveContent] = useState('')
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false)
+  const [feedbackTargetId, setFeedbackTargetId] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const chatEndRef = useRef<HTMLDivElement>(null)
 
-  const chatRef = useRef<HTMLDivElement>(null)
-
-  const setUser = useUserStore((s) => s.setUser)
-  const setXp = useUserStore((s) => s.setXp)
-  const setSubscriptionType = useUserStore((s) => s.setSubscriptionType)
-  const xp = useUserStore((s) => s.xp)
-  const user = useUserStore((s) => s.user)
-
+  // Redirect if not logged in (no JWT)
   useEffect(() => {
-    const token = localStorage.getItem('growfly_jwt')
-    if (!token) return router.push('/login')
+    if (!token) router.push('/onboarding')
+  }, [token, router])
 
-    fetch(`${API_BASE_URL}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setUser(data)
-        setXp(data.totalXP || 0)
-        setSubscriptionType(data.subscriptionType || 'Free')
-        return fetch(`${API_BASE_URL}/api/chat/history`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-      })
-      .then((res) => res.json())
-      .then((history) => setMessages(history || []))
-      .catch(() => router.push('/login'))
-  }, [router, setUser, setXp, setSubscriptionType])
-
+  // Auto-scroll on new messages
   useEffect(() => {
-    if (chatRef.current) {
-      setTimeout(() => {
-        chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight, behavior: 'smooth' })
-      }, 100)
-    }
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const handleSend = async (overrideInput?: string) => {
-    const token = localStorage.getItem('growfly_jwt')
-    const prompt = overrideInput || input
-    if (!token || (!prompt && files.length === 0)) return
-    if ((user?.promptsUsed || 0) >= (user?.promptLimit || 0)) return
+  // Send a user message & stream the AI reply
+  const handleSubmit = async () => {
+    const text = input.trim()
+    if (!text) return
 
-    const newMessages: Message[] = [
-      { role: 'user', content: prompt },
-      { role: 'assistant', content: '' },
-    ]
-
-    setMessages((prev) => [...prev, ...newMessages])
+    // 1) Add the user bubble
+    const userId = `u${Date.now()}`
+    setMessages((m) => [...m, { id: userId, role: 'user', content: text }])
     setInput('')
-    setFiles([])
-    setFilePreviews([])
-    setLoading(true)
 
+    // 2) Prepare an empty assistant bubble
+    const replyId = `a${Date.now()}`
+    setMessages((m) => [...m, { id: replyId, role: 'assistant', content: '' }])
+
+    // 3) Stream in chunks
     await streamChat(
-      prompt,
+      text,
       token,
-      (chunk) => {
-        if (chunk.type === 'partial' && chunk.content) {
-          setMessages((prev) => {
-            const updated = [...prev]
-            const last = updated.findLast((m) => m.role === 'assistant')
-            if (last) last.content += chunk.content
-            return updated
-          })
-        } else if (chunk.type === 'complete') {
-          setXp((xp || 0) + 2.5)
-          setUser({ ...user, promptsUsed: (user?.promptsUsed || 0) + 1 })
-          setFeedbackId(chunk.responseId || '')
-        }
+      (chunk: StreamedChunk) => {
+        if (!chunk.content) return
+        setMessages((m) =>
+          m.map((msg) =>
+            msg.id === replyId
+              ? { ...msg, content: msg.content + chunk.content! }
+              : msg
+          )
+        )
       },
-      () => setLoading(false)
+      () => {
+        // onDone (optional)
+      }
     )
+
+    setSelectedFile(null)
+  }
+
+  // Quick follow-ups
+  const handleFollowUp = (q: string) => {
+    setInput(q)
+    handleSubmit()
+  }
+
+  // File upload handler
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedFile(e.target.files?.[0] ?? null)
+  }
+
+  // Save & Feedback
+  const handleSave = (msg: Message) => {
+    setSaveContent(msg.content)
+    setShowSaveModal(true)
+  }
+  const handleFeedback = (msg: Message) => {
+    setFeedbackTargetId(msg.id)
+    setShowFeedbackModal(true)
   }
 
   return (
-    <div className="px-4 md:px-8 py-8 bg-background text-foreground min-h-screen">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
-          <PromptTracker used={user?.promptsUsed || 0} limit={user?.promptLimit || 0} />
-          <select
-            className="text-sm border rounded-full px-3 py-1 bg-muted"
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-          >
-            {languageOptions.map((opt) => (
-              <option key={opt.code} value={opt.code}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
+    <div className="min-h-screen flex bg-[#001f3f] text-white">
+      <div className="flex-1 flex flex-col p-6">
+        {/* Prompt Usage Tracker */}
+        <PromptTracker used={promptsUsed} limit={promptLimit} />
 
-        <div
-          ref={chatRef}
-          className="bg-card rounded-xl p-4 shadow max-h-[60vh] overflow-y-auto space-y-4 border"
-        >
-          {messages.map((m, i) => (
-            <div key={i} className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
-              <div className={`p-3 rounded-lg text-sm shadow ${m.role === 'assistant' ? 'bg-muted text-foreground' : 'bg-blue-500 text-white'}`}>
-                {m.content}
-              </div>
+        {/* Initial “What can Growfly do for me?” */}
+        {messages.length === 0 && (
+          <div className="text-center my-6">
+            <button
+              className="bg-[#0074D9] hover:bg-[#005FA3] px-6 py-2 rounded-full font-medium shadow"
+              onClick={() => {
+                setInput('What can Growfly do for me?')
+                handleSubmit()
+              }}
+            >
+              What can Growfly do for me?
+            </button>
+            <p className="mt-2 text-sm text-[#CCCCCC]">
+              Stuck? Visit <strong>Nerdify Me!</strong> for inspiration.
+            </p>
+          </div>
+        )}
+
+        {/* Chat window */}
+        <div className="flex-1 overflow-y-auto space-y-4 px-2 pb-4">
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`max-w-2xl p-4 rounded-xl shadow-lg whitespace-pre-wrap ${
+                msg.role === 'user'
+                  ? 'bg-[#004080] self-end text-right'
+                  : 'bg-white text-black self-start'
+              }`}
+            >
+              {msg.content}
+
+              {msg.role === 'assistant' && (
+                <>
+                  {/* Follow-Ups */}
+                  <div className="mt-3 flex gap-2 flex-wrap">
+                    {defaultFollowUps.slice(0, 2).map((fu, i) => (
+                      <button
+                        key={i}
+                        className="bg-[#DDDDDD] text-black px-3 py-1 rounded-full text-sm"
+                        onClick={() => handleFollowUp(fu)}
+                      >
+                        {fu}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Actions: 👍/👎 / Save / Share */}
+                  <div className="mt-2 flex items-center gap-4 text-lg text-[#666666]">
+                    <HiThumbUp
+                      className="cursor-pointer"
+                      onClick={() => handleFeedback(msg)}
+                    />
+                    <HiThumbDown
+                      className="cursor-pointer"
+                      onClick={() => handleFeedback(msg)}
+                    />
+                    <FaRegBookmark
+                      className="cursor-pointer"
+                      onClick={() => handleSave(msg)}
+                    />
+                    <FaShareSquare
+                      className="cursor-pointer"
+                      onClick={() => alert('Shared to Collab Zone')}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           ))}
+          <div ref={chatEndRef} />
         </div>
 
-        <div className="flex gap-2 overflow-x-auto">
-          {defaultFollowUps.map((text, i) => (
-            <button
-              key={i}
-              onClick={() => setInput(text)}
-              className="px-3 py-1 bg-accent text-white rounded-full text-sm whitespace-nowrap"
-            >
-              {text}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex gap-2">
+        {/* Input & Upload */}
+        <div className="mt-4 border-t border-[#005080] pt-4">
           <textarea
             rows={2}
-            className="flex-1 p-3 text-sm rounded-xl border bg-muted focus:outline-none focus:ring-2"
-            placeholder="Type your message..."
+            className="w-full p-3 rounded-lg resize-none text-black"
+            placeholder="Type your message…"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
-                handleSend()
+                handleSubmit()
               }
             }}
           />
+
+          <div className="mt-2 flex items-center gap-4">
+            <input
+              type="file"
+              accept="image/*,application/pdf"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="text-[#7FB3FF] underline"
+            >
+              Upload Image / PDF
+            </button>
+            {selectedFile && (
+              <span className="text-sm text-[#CCCCCC]">
+                {selectedFile.name}
+              </span>
+            )}
+          </div>
+
           <button
-            onClick={() => handleSend()}
-            disabled={loading}
-            className="px-4 py-2 bg-accent text-white rounded-full text-sm"
+            className="mt-4 w-full bg-[#0074D9] hover:bg-[#005FA3] py-2 rounded-lg font-medium"
+            onClick={handleSubmit}
           >
-            {loading ? 'Processing…' : 'Send'}
+            Send
           </button>
         </div>
       </div>
+
+      {/* Save Modal */}
+      {showSaveModal && (
+        <SaveModal
+          open={showSaveModal}
+          onClose={() => setShowSaveModal(false)}
+          onConfirm={async (title) => {
+            await fetch(`${API_BASE_URL}/api/saved`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ title, content: saveContent }),
+            })
+            setShowSaveModal(false)
+          }}
+        />
+      )}
+
+      {/* Feedback Modal */}
+      {showFeedbackModal && (
+        <FeedbackModal
+          responseId={feedbackTargetId}
+          open={showFeedbackModal}
+          onClose={() => setShowFeedbackModal(false)}
+          onSubmit={() => setShowFeedbackModal(false)}
+        />
+      )}
     </div>
   )
 }
