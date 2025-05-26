@@ -12,7 +12,7 @@ type FormState = {
   email: string
   password: string
   confirmPassword: string
-  brandName: string
+  companyName: string        // renamed
   brandDescription: string
   brandVoice: string
   brandMission: string
@@ -27,7 +27,7 @@ const INITIAL_FORM: FormState = {
   email: '',
   password: '',
   confirmPassword: '',
-  brandName: '',
+  companyName: '',           // renamed
   brandDescription: '',
   brandVoice: '',
   brandMission: '',
@@ -46,42 +46,30 @@ export default function OnboardingClient() {
   const [form, setForm] = useState(INITIAL_FORM)
   const [xp, setXp] = useState(0)
   const [loading, setLoading] = useState(false)
-  // Prevents double‐submits before loading state kicks in
   const submittingRef = useRef(false)
+  const [touchedFields, setTouchedFields] = useState<Partial<Record<keyof FormState, boolean>>>({})
 
-  // Track touched fields for per‐step validation
-  const [touchedFields, setTouchedFields] = useState<
-    Partial<Record<keyof FormState, boolean>>
-  >({})
-
-  // XP calculation (0.05 XP per character)
+  // XP calculation: 0.05 XP per character
   useEffect(() => {
-    const totalChars = Object.values(form).reduce(
-      (acc, val) => acc + val.trim().length,
-      0
-    )
+    const totalChars = Object.values(form).reduce((acc, val) => acc + val.trim().length, 0)
     setXp(Math.floor(totalChars * 0.05))
   }, [form])
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setForm((prev) => ({ ...prev, [name]: value }))
-    setTouchedFields((prev) => ({ ...prev, [name]: true }))
+    setForm(prev => ({ ...prev, [name]: value }))
+    setTouchedFields(prev => ({ ...prev, [name]: true }))
   }
 
   const requiredFields: Record<number, (keyof FormState)[]> = {
     1: ['name', 'email', 'password', 'confirmPassword'],
-    2: ['brandName', 'brandDescription', 'brandVoice', 'brandMission'],
+    2: ['companyName', 'brandDescription', 'brandVoice', 'brandMission'],  // updated
     3: ['inspiredBy'],
     4: ['jobTitle', 'industry', 'goals'],
   }
 
   const validateStep = () => {
-    const missing = requiredFields[step].filter(
-      (field) => form[field].trim() === ''
-    )
+    const missing = requiredFields[step].filter(field => form[field].trim() === '')
     if (missing.length) {
       toast.error('❌ Please complete all fields.')
       return false
@@ -94,19 +82,17 @@ export default function OnboardingClient() {
   }
 
   const handleSubmit = async () => {
-    // 1) Prevent double-call
     if (submittingRef.current) return
     submittingRef.current = true
 
-    // 2) Validate current step
     if (!validateStep()) {
       submittingRef.current = false
       return
     }
-
     setLoading(true)
+
     try {
-      // ─── SIGNUP ────────────────────────────────────────────────────────────────
+      // 1. Sign up
       const signupRes = await fetch(`${API_BASE_URL}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -120,54 +106,41 @@ export default function OnboardingClient() {
         }),
       })
       const signupData = await signupRes.json()
-
       if (signupRes.status === 409) {
         toast.error('❌ That email is already registered.')
         return
       }
-      if (!signupRes.ok) {
-        throw new Error(signupData.error || 'Signup failed')
-      }
-
-      // Persist JWT
+      if (!signupRes.ok) throw new Error(signupData.error || 'Signup failed')
       const token = signupData.token
       localStorage.setItem('growfly_jwt', token)
       document.cookie = `growfly_jwt=${token}; path=/; max-age=604800`
 
-      // ─── SAVE BRAND SETTINGS + XP ───────────────────────────────────────────────
-      const totalXP = Math.floor(
-        Object.values(form).reduce((acc, val) => acc + val.trim().length, 0) * 0.05
-      )
-      const settingsRes = await fetch(
-        `${API_BASE_URL}/api/user/settings`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            brandName: form.brandName,
-            brandDescription: form.brandDescription,
-            brandVoice: form.brandVoice,
-            brandMission: form.brandMission,
-            inspiredBy: form.inspiredBy,
-            jobTitle: form.jobTitle,
-            industry: form.industry,
-            goals: form.goals,
-            totalXP,
-          }),
-        }
-      )
-      if (!settingsRes.ok) {
-        throw new Error('Failed to save brand settings.')
-      }
+      // 2. Save brand/company settings + XP
+      const totalXP = xp
+      const settingsRes = await fetch(`${API_BASE_URL}/api/user/settings`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          companyName: form.companyName,    // updated
+          brandDescription: form.brandDescription,
+          brandVoice: form.brandVoice,
+          brandMission: form.brandMission,
+          inspiredBy: form.inspiredBy,
+          jobTitle: form.jobTitle,
+          industry: form.industry,
+          goals: form.goals,
+          totalXP,
+        }),
+      })
+      if (!settingsRes.ok) throw new Error('Failed to save settings.')
 
-      // ─── FINAL REDIRECT ────────────────────────────────────────────────────────
+      // 3. Redirect
       if (plan === 'free') {
         router.push('/dashboard')
       } else {
-        // Paid plan → Stripe
         const stripeRes = await fetch(
           `${API_BASE_URL}/api/checkout/create-checkout-session`,
           {
@@ -176,12 +149,9 @@ export default function OnboardingClient() {
             body: JSON.stringify({ planId: plan }),
           }
         )
-        const stripeData = await stripeRes.json()
-        if (stripeData.url) {
-          window.location.href = stripeData.url
-        } else {
-          throw new Error('Stripe session failed.')
-        }
+        const { url } = await stripeRes.json()
+        if (url) window.location.href = url
+        else throw new Error('Stripe session failed.')
       }
     } catch (err: any) {
       toast.error(`❌ ${err.message || 'Error during onboarding.'}`)
@@ -248,29 +218,38 @@ export default function OnboardingClient() {
         Answer a few quick things so our nerds can tailor your AI to your brand.
       </p>
 
-      {/* XP bar */}
-      <div className="mb-6 max-w-xl mx-auto">
-        <p className="text-sm font-medium mb-1 text-center">
-          XP Progress: {xp} XP
-        </p>
+      {/* ⭐ XP bar + call-out */}
+      <div className="mb-6 max-w-xl mx-auto space-y-2">
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-sm font-semibold">⭐ XP Earned: {xp} XP</span>
+          <span
+            className="text-xs underline cursor-help"
+            title="The more detail you give, the more XP you earn toward perks!"
+          >
+            ?
+          </span>
+        </div>
         <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
           <div
-            className="h-full bg-[#1992FF] transition-all"
+            className="h-full bg-[#FFD700] transition-all"
             style={{ width: `${Math.min(xp, 100)}%` }}
           />
         </div>
+        <p className="text-xs italic text-center text-yellow-300">
+          The more detail you give, the more XP you earn toward perks!
+        </p>
       </div>
 
-      {/* Step nav */}
-      <div className="flex justify-center gap-2 text-xs font-medium mb-6">
-        {['Account', 'Brand', 'Inspired By...', 'About You'].map((label, i) => (
+      {/* Step navigation */}
+      <div className="flex justify-center gap-3 mb-6">
+        {['Account', 'Company', 'Inspired By...', 'About You'].map((label, i) => (
           <button
             key={i}
             onClick={() => setStep(i + 1)}
-            className={`px-3 py-1 rounded-full ${
+            className={`px-4 py-1 rounded-full text-xs font-semibold ${
               step === i + 1
-                ? 'bg-[#1992FF] text-white'
-                : 'bg-white/10 text-white hover:bg-white/20'
+                ? 'bg-[#FFD700] text-black'
+                : 'bg-white/20 text-white hover:bg-white/30'
             }`}
           >
             {i + 1}. {label}
@@ -296,7 +275,7 @@ export default function OnboardingClient() {
         )}
         {step === 2 && (
           <>
-            {renderField('Brand Name', 'brandName', 'Growfly Ltd')}
+            {renderField('Company Name', 'companyName', 'Acme Corp')}  {/* updated */}
             {renderField(
               'Elevator Pitch',
               'brandDescription',
@@ -312,13 +291,20 @@ export default function OnboardingClient() {
             {renderField(
               'Mission',
               'brandMission',
-              'Make AI marketing easier for all',
+              'Make marketing easier for all',
               true
             )}
           </>
         )}
         {step === 3 && (
-          <>{renderField('Inspired By', 'inspiredBy', 'Competitors you admire?', true)}</>
+          <>
+            {renderField(
+              'Inspired By',
+              'inspiredBy',
+              'Competitors you admire?',
+              true
+            )}
+          </>
         )}
         {step === 4 && (
           <>
@@ -327,7 +313,7 @@ export default function OnboardingClient() {
             {renderField(
               'Goals with Growfly',
               'goals',
-              'More sales, increase productivity, grow reach',
+              'More sales, increase productivity…',
               true
             )}
           </>
@@ -338,7 +324,7 @@ export default function OnboardingClient() {
       <div className="flex justify-between mt-8 max-w-xl mx-auto">
         {step > 1 ? (
           <button
-            onClick={() => setStep((s) => s - 1)}
+            onClick={() => setStep(s => s - 1)}
             className="px-4 py-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition"
           >
             Back
@@ -349,10 +335,8 @@ export default function OnboardingClient() {
 
         {step < 4 ? (
           <button
-            onClick={() => {
-              if (validateStep()) setStep((s) => s + 1)
-            }}
-            className="px-4 py-2 bg-[#1992FF] text-white rounded-full hover:bg-blue-600 transition"
+            onClick={() => validateStep() && setStep(s => s + 1)}
+            className="px-4 py-2 bg-[#FFD700] text-black rounded-full hover:brightness-110 transition"
           >
             Next
           </button>
@@ -360,7 +344,7 @@ export default function OnboardingClient() {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className={`px-4 py-2 bg-[#1992FF] text-white rounded-full hover:bg-blue-600 transition ${
+            className={`px-4 py-2 bg-[#FFD700] text-black rounded-full hover:brightness-110 transition ${
               loading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
@@ -371,7 +355,7 @@ export default function OnboardingClient() {
 
       <p className="text-center text-white/70 text-sm mt-6">
         Already have an account?{' '}
-        <Link href="/login" className="underline hover:text-blue-300">
+        <Link href="/login" className="underline hover:text-yellow-300">
           Log in here
         </Link>
       </p>

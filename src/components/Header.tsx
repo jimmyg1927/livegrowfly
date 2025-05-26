@@ -7,7 +7,7 @@ import { useTheme } from '@/context/ThemeContext'
 import { useUserStore } from '@/lib/store'
 import { Sun, Moon } from 'lucide-react'
 
-// XP label helper
+// XP label helper (same as before)
 function getXPLabel(xp: number) {
   if (xp < 25) return '🐣 Curious Cat'
   if (xp < 150) return '🧪 Nerdlet'
@@ -16,6 +16,7 @@ function getXPLabel(xp: number) {
   return '🚀 Prompt Commander'
 }
 
+// XP progress helper (same as before)
 function getXPProgress(xp: number) {
   const levelCaps = [25, 150, 500, 850, 1000]
   for (let i = 0; i < levelCaps.length; i++) {
@@ -47,28 +48,27 @@ export default function Header() {
 
   return (
     <header className="w-full bg-[#1992FF] text-white flex items-center justify-between px-4 sm:px-8 py-3 shadow">
-      {/* Logo + XP */}
-      <div className="flex items-center gap-3 sm:gap-6">
-        <Link href="/dashboard" className="flex items-center gap-3 font-semibold text-lg">
-          <img src="/growfly-logo.png" alt="Growfly" className="h-10 w-auto" />
-        </Link>
-
-        <div className="hidden sm:flex flex-col">
+      {/* --- XP Section (no logo) --- */}
+      <div className="flex items-center gap-6">
+        <div className="flex flex-col">
           <span className="text-sm font-semibold">
             {getXPLabel(user?.totalXP || 0)} — {Math.floor(user?.totalXP || 0)} XP
           </span>
-          <div className="w-40 h-2 bg-white/30 rounded-full overflow-hidden mt-1">
+          <div className="w-40 h-2 bg-white/20 rounded-full overflow-hidden mt-1">
             <div
-              className="h-full bg-white transition-all duration-300 ease-in-out"
-              style={{ width: `${getXPProgress(user?.totalXP || 0)}%` }}
+              className="h-full transition-all"
+              style={{
+                width: `${getXPProgress(user?.totalXP || 0)}%`,
+                backgroundColor: '#FFD700',
+              }}
             />
           </div>
         </div>
       </div>
 
-      {/* Buttons */}
+      {/* --- Action Buttons --- */}
       <div className="flex items-center gap-4">
-        {/* Referral */}
+        {/* Refer a Friend */}
         <Link
           href="/refer"
           className="hidden sm:inline-block px-3 py-1 text-sm font-medium rounded-full bg-white text-[#1992FF] hover:brightness-105 transition"
@@ -76,12 +76,12 @@ export default function Header() {
           🎁 Refer a Friend
         </Link>
 
-        {/* Subscription */}
-        <span className="hidden sm:inline-block px-3 py-1 text-sm font-medium rounded-full bg-white text-[#1992FF]">
+        {/* Subscription Tag */}
+        <span className="hidden sm:inline-block px-3 py-1 text-sm font-medium rounded-full bg-white text-[#1992FF] capitalize">
           Subscription: {user?.subscriptionType || 'free'}
         </span>
 
-        {/* Profile */}
+        {/* Profile Icon */}
         <Link
           href="/settings"
           className="p-2 bg-white text-[#1992FF] rounded-full hover:brightness-105 shadow"
