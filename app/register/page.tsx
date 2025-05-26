@@ -2,89 +2,95 @@
 
 import React from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 export default function RegisterPage() {
   const router = useRouter()
 
-  const handlePlanSelect = (plan: string) => {
-    router.push(`/onboarding?plan=${plan}`)
+  const handleSelect = (plan: string) => {
+    if (plan === 'enterprise') {
+      router.push('/contact?plan=enterprise')
+    } else {
+      router.push(`/onboarding?plan=${plan}`)
+    }
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#0a0a23] to-[#1e3a8a] px-4 py-10 text-white flex flex-col items-center">
-      <Image
-        src="/growfly-logo.png"
-        alt="Growfly Logo"
-        width={160}
-        height={40}
-        className="mb-6"
-      />
+    <main className="min-h-screen bg-gradient-to-b from-[#0a0a23] to-[#1e3a8a] px-6 py-10 text-white">
+      <div className="flex justify-center mb-6">
+        <Image src="/growfly-logo.png" alt="Growfly Logo" width={150} height={50} />
+      </div>
 
-      <h1 className="text-3xl font-bold text-center mb-3">Choose your Growfly plan</h1>
-      <p className="text-center text-white/80 mb-10 max-w-md">
-        Whether you're just curious or scaling your business, Growfly's AI can help you save time, spark ideas, and stay ahead.
+      <h1 className="text-3xl font-bold text-center mb-4">
+        Let&apos;s build your brand&apos;s voice
+      </h1>
+      <p className="text-center text-white/80 max-w-xl mx-auto mb-10">
+        Pick a plan to get started. You can upgrade anytime. No credit card needed for free accounts.
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full px-4">
+      <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {/* Free Plan */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-lg">
-          <h2 className="text-xl font-bold mb-1">Free</h2>
-          <p className="text-sm text-white/80 mb-4">20 prompts/month</p>
-          <ul className="text-sm text-white/70 mb-6 space-y-1">
-            <li>✅ Try AI with no cost</li>
-            <li>✅ Access dashboard</li>
-            <li>✅ Upgrade anytime</li>
+        <div className="rounded-2xl border border-white/20 bg-white/5 p-6 shadow-md flex flex-col items-center text-center">
+          <h2 className="text-xl font-semibold mb-2">Free</h2>
+          <p className="text-white/70 text-sm mb-4">Explore Growfly and try basic features.</p>
+          <p className="text-3xl font-bold mb-4">£0</p>
+          <ul className="text-sm text-white/80 space-y-2 mb-4">
+            <li>✅ 20 prompts per month</li>
+            <li>✅ Basic AI answers</li>
+            <li>✅ Access to Saved + Collab</li>
           </ul>
           <button
-            onClick={() => handlePlanSelect('free')}
-            className="w-full bg-[#72C8F6] text-black font-semibold py-2 rounded-full hover:brightness-110 transition"
+            onClick={() => handleSelect('free')}
+            className="mt-auto px-4 py-2 bg-[#72C8F6] text-black font-semibold rounded-full hover:brightness-110 transition"
           >
-            Choose Free
+            Start Free
           </button>
         </div>
 
         {/* Personal Plan */}
-        <div className="rounded-2xl border border-white/10 bg-white/10 p-6 shadow-lg">
-          <h2 className="text-xl font-bold mb-1">Personal</h2>
-          <p className="text-sm text-white/80 mb-4">400 prompts/month – £9.99</p>
-          <ul className="text-sm text-white/70 mb-6 space-y-1">
-            <li>🚀 Advanced AI access</li>
-            <li>🔓 Unlock Saved & Collab tools</li>
-            <li>📈 Personal brand insights</li>
+        <div className="rounded-2xl border-2 border-[#72C8F6] bg-white/10 p-6 shadow-lg flex flex-col items-center text-center">
+          <h2 className="text-xl font-semibold mb-2 text-[#72C8F6]">Personal</h2>
+          <p className="text-white/70 text-sm mb-4">For individual creators + founders.</p>
+          <p className="text-3xl font-bold mb-4">£14.99</p>
+          <ul className="text-sm text-white/80 space-y-2 mb-4">
+            <li>🚀 400 prompts/month</li>
+            <li>✅ AI-generated brand strategies</li>
+            <li>✅ Saved prompts, Collab docs, support</li>
           </ul>
           <button
-            onClick={() => handlePlanSelect('personal')}
-            className="w-full bg-[#72C8F6] text-black font-semibold py-2 rounded-full hover:brightness-110 transition"
+            onClick={() => handleSelect('personal')}
+            className="mt-auto px-4 py-2 bg-[#72C8F6] text-black font-semibold rounded-full hover:brightness-110 transition"
           >
             Choose Personal
           </button>
         </div>
 
         {/* Business Plan */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-lg">
-          <h2 className="text-xl font-bold mb-1">Business</h2>
-          <p className="text-sm text-white/80 mb-4">2000 prompts/month – £38.99</p>
-          <ul className="text-sm text-white/70 mb-6 space-y-1">
-            <li>🏢 Full AI suite for teams</li>
-            <li>👥 Add teammates & share</li>
-            <li>📊 Admin tools & analytics</li>
+        <div className="rounded-2xl border border-white/20 bg-white/5 p-6 shadow-md flex flex-col items-center text-center">
+          <h2 className="text-xl font-semibold mb-2">Business</h2>
+          <p className="text-white/70 text-sm mb-4">Best for teams & growing brands.</p>
+          <p className="text-3xl font-bold mb-4">£38.99</p>
+          <ul className="text-sm text-white/80 space-y-2 mb-4">
+            <li>👥 2000 prompts/month</li>
+            <li>✅ Multi-user collaboration</li>
+            <li>✅ Advanced AI, insights, analytics</li>
           </ul>
           <button
-            onClick={() => handlePlanSelect('business')}
-            className="w-full bg-[#72C8F6] text-black font-semibold py-2 rounded-full hover:brightness-110 transition"
+            onClick={() => handleSelect('business')}
+            className="mt-auto px-4 py-2 bg-[#72C8F6] text-black font-semibold rounded-full hover:brightness-110 transition"
           >
             Choose Business
           </button>
         </div>
       </div>
 
-      <p className="text-white/60 text-sm mt-8">
+      <p className="text-center text-sm text-white/60 mt-8">
         Want something custom?{' '}
-        <Link href="/contact" className="underline hover:text-[#72C8F6]">
+        <Link href="/contact?plan=enterprise" className="underline hover:text-[#72C8F6]">
           Contact us
-        </Link>
+        </Link>{' '}
+        for Enterprise plans.
       </p>
     </main>
   )
