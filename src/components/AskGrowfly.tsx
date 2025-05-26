@@ -2,7 +2,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { defaultFollowUps } from '../lib/constants'
+import { defaultFollowUps } from '@lib/constants'
 
 export default function AskGrowfly() {
   const [message, setMessage] = useState('')
