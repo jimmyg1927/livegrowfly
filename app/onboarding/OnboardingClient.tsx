@@ -1,3 +1,4 @@
+// File: app/onboarding/OnboardingClient.tsx
 'use client'
 
 import React, { useEffect, useState, useRef } from 'react'
@@ -12,7 +13,7 @@ type FormState = {
   email: string
   password: string
   confirmPassword: string
-  companyName: string        // renamed
+  companyName: string
   brandDescription: string
   brandVoice: string
   brandMission: string
@@ -27,7 +28,7 @@ const INITIAL_FORM: FormState = {
   email: '',
   password: '',
   confirmPassword: '',
-  companyName: '',           // renamed
+  companyName: '',
   brandDescription: '',
   brandVoice: '',
   brandMission: '',
@@ -49,7 +50,6 @@ export default function OnboardingClient() {
   const submittingRef = useRef(false)
   const [touchedFields, setTouchedFields] = useState<Partial<Record<keyof FormState, boolean>>>({})
 
-  // XP calculation: 0.05 XP per character
   useEffect(() => {
     const totalChars = Object.values(form).reduce((acc, val) => acc + val.trim().length, 0)
     setXp(Math.floor(totalChars * 0.05))
@@ -63,7 +63,7 @@ export default function OnboardingClient() {
 
   const requiredFields: Record<number, (keyof FormState)[]> = {
     1: ['name', 'email', 'password', 'confirmPassword'],
-    2: ['companyName', 'brandDescription', 'brandVoice', 'brandMission'],  // updated
+    2: ['companyName', 'brandDescription', 'brandVoice', 'brandMission'],
     3: ['inspiredBy'],
     4: ['jobTitle', 'industry', 'goals'],
   }
@@ -92,7 +92,6 @@ export default function OnboardingClient() {
     setLoading(true)
 
     try {
-      // 1. Sign up
       const signupRes = await fetch(`${API_BASE_URL}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -111,11 +110,11 @@ export default function OnboardingClient() {
         return
       }
       if (!signupRes.ok) throw new Error(signupData.error || 'Signup failed')
+
       const token = signupData.token
       localStorage.setItem('growfly_jwt', token)
       document.cookie = `growfly_jwt=${token}; path=/; max-age=604800`
 
-      // 2. Save brand/company settings + XP
       const totalXP = xp
       const settingsRes = await fetch(`${API_BASE_URL}/api/user/settings`, {
         method: 'PUT',
@@ -124,7 +123,7 @@ export default function OnboardingClient() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          companyName: form.companyName,    // updated
+          companyName: form.companyName,
           brandDescription: form.brandDescription,
           brandVoice: form.brandVoice,
           brandMission: form.brandMission,
@@ -137,18 +136,14 @@ export default function OnboardingClient() {
       })
       if (!settingsRes.ok) throw new Error('Failed to save settings.')
 
-      // 3. Redirect
       if (plan === 'free') {
         router.push('/dashboard')
       } else {
-        const stripeRes = await fetch(
-          `${API_BASE_URL}/api/checkout/create-checkout-session`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ planId: plan }),
-          }
-        )
+        const stripeRes = await fetch(`${API_BASE_URL}/api/checkout/create-checkout-session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ planId: plan }),
+        })
         const { url } = await stripeRes.json()
         if (url) window.location.href = url
         else throw new Error('Stripe session failed.')
@@ -211,36 +206,29 @@ export default function OnboardingClient() {
         <Image src="/growfly-logo.png" alt="Growfly" width={140} height={40} />
       </div>
 
-      <h1 className="text-2xl font-bold text-center mb-1">
-        Let’s make Growfly personal ✨
-      </h1>
+      <h1 className="text-2xl font-bold text-center mb-1">Let’s make Growfly personal ✨</h1>
       <p className="text-center text-white/80 mb-4">
         Answer a few quick things so our nerds can tailor your AI to your brand.
       </p>
 
-      {/* ⭐ XP bar + call-out */}
       <div className="mb-6 max-w-xl mx-auto space-y-2">
         <div className="flex items-center justify-center gap-2">
           <span className="text-sm font-semibold">⭐ XP Earned: {xp} XP</span>
-          <span
-            className="text-xs underline cursor-help"
-            title="The more detail you give, the more XP you earn toward perks!"
-          >
+          <span className="text-xs underline cursor-help" title="The more detail you give, the more XP you earn toward perks!">
             ?
           </span>
         </div>
         <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
           <div
-            className="h-full bg-[#FFD700] transition-all"
+            className="h-full bg-[#72C8F6] transition-all"
             style={{ width: `${Math.min(xp, 100)}%` }}
           />
         </div>
-        <p className="text-xs italic text-center text-yellow-300">
+        <p className="text-xs italic text-center text-[#72C8F6]">
           The more detail you give, the more XP you earn toward perks!
         </p>
       </div>
 
-      {/* Step navigation */}
       <div className="flex justify-center gap-3 mb-6">
         {['Account', 'Company', 'Inspired By...', 'About You'].map((label, i) => (
           <button
@@ -248,7 +236,7 @@ export default function OnboardingClient() {
             onClick={() => setStep(i + 1)}
             className={`px-4 py-1 rounded-full text-xs font-semibold ${
               step === i + 1
-                ? 'bg-[#FFD700] text-black'
+                ? 'bg-[#72C8F6] text-black'
                 : 'bg-white/20 text-white hover:bg-white/30'
             }`}
           >
@@ -257,70 +245,37 @@ export default function OnboardingClient() {
         ))}
       </div>
 
-      {/* Form fields */}
       <div className="space-y-4 max-w-xl mx-auto">
         {step === 1 && (
           <>
             {renderField('Name', 'name', 'John Doe')}
             {renderField('Email', 'email', 'john@example.com', false, 'email')}
             {renderField('Password', 'password', '••••••••', false, 'password')}
-            {renderField(
-              'Confirm Password',
-              'confirmPassword',
-              '••••••••',
-              false,
-              'password'
-            )}
+            {renderField('Confirm Password', 'confirmPassword', '••••••••', false, 'password')}
           </>
         )}
         {step === 2 && (
           <>
-            {renderField('Company Name', 'companyName', 'Acme Corp')}  {/* updated */}
-            {renderField(
-              'Elevator Pitch',
-              'brandDescription',
-              'We help brands grow using AI.',
-              true
-            )}
-            {renderField(
-              'Brand Personality',
-              'brandVoice',
-              'Witty and expert',
-              true
-            )}
-            {renderField(
-              'Mission',
-              'brandMission',
-              'Make marketing easier for all',
-              true
-            )}
+            {renderField('Company Name', 'companyName', 'Acme Corp')}
+            {renderField('Elevator Pitch', 'brandDescription', 'We help brands grow using AI.', true)}
+            {renderField('Brand Personality', 'brandVoice', 'Witty and expert', true)}
+            {renderField('Mission', 'brandMission', 'Make marketing easier for all', true)}
           </>
         )}
         {step === 3 && (
           <>
-            {renderField(
-              'Inspired By',
-              'inspiredBy',
-              'Competitors you admire?',
-              true
-            )}
+            {renderField('Inspired By', 'inspiredBy', 'Competitors you admire?', true)}
           </>
         )}
         {step === 4 && (
           <>
             {renderField('Your Job Title', 'jobTitle', 'Marketing Director')}
             {renderField('Your Industry', 'industry', 'E-commerce')}
-            {renderField(
-              'Goals with Growfly',
-              'goals',
-              'More sales, increase productivity…',
-              true
-            )}
+            {renderField('Goals with Growfly', 'goals', 'More sales, increase productivity…', true)}
           </>
         )}
       </div>
 
-      {/* Navigation buttons */}
       <div className="flex justify-between mt-8 max-w-xl mx-auto">
         {step > 1 ? (
           <button
@@ -332,11 +287,10 @@ export default function OnboardingClient() {
         ) : (
           <div />
         )}
-
         {step < 4 ? (
           <button
             onClick={() => validateStep() && setStep(s => s + 1)}
-            className="px-4 py-2 bg-[#FFD700] text-black rounded-full hover:brightness-110 transition"
+            className="px-4 py-2 bg-[#72C8F6] text-black rounded-full hover:brightness-110 transition"
           >
             Next
           </button>
@@ -344,7 +298,7 @@ export default function OnboardingClient() {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className={`px-4 py-2 bg-[#FFD700] text-black rounded-full hover:brightness-110 transition ${
+            className={`px-4 py-2 bg-[#72C8F6] text-black rounded-full hover:brightness-110 transition ${
               loading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
@@ -355,7 +309,7 @@ export default function OnboardingClient() {
 
       <p className="text-center text-white/70 text-sm mt-6">
         Already have an account?{' '}
-        <Link href="/login" className="underline hover:text-yellow-300">
+        <Link href="/login" className="underline hover:text-[#72C8F6]">
           Log in here
         </Link>
       </p>
