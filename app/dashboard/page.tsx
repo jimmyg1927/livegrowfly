@@ -1,4 +1,3 @@
-// File: app/dashboard/page.tsx
 'use client'
 export const dynamic = 'force-dynamic'
 
@@ -12,19 +11,6 @@ import { useUserStore } from '@lib/store'
 import streamChat from '@lib/streamChat'
 import { HiThumbUp, HiThumbDown } from 'react-icons/hi'
 import { FaRegBookmark, FaShareSquare } from 'react-icons/fa'
-
-const languageOptions = [
-  { code: 'en-UK', label: '🇬🇧 English (UK)' },
-  { code: 'en-US', label: '🇺🇸 English (US)' },
-  { code: 'da', label: '🇩🇰 Danish' },
-  { code: 'de', label: '🇩🇪 German' },
-  { code: 'es', label: '🇪🇸 Spanish' },
-  { code: 'fr', label: '🇫🇷 French' },
-  { code: 'it', label: '🇮🇹 Italian' },
-  { code: 'nl', label: '🇳🇱 Dutch' },
-  { code: 'sv', label: '🇸🇪 Swedish' },
-  { code: 'pl', label: '🇵🇱 Polish' },
-]
 
 type Message = {
   role: 'assistant' | 'user'
@@ -44,7 +30,6 @@ export default function DashboardPage() {
   const [filePreviews, setFilePreviews] = useState<{ url: string; name: string; type: string }[]>([])
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [savingContent, setSavingContent] = useState('')
-  const [language, setLanguage] = useState('en-UK')
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [feedbackId, setFeedbackId] = useState('')
 
@@ -124,15 +109,6 @@ export default function DashboardPage() {
           setXp((xp || 0) + 2.5)
           setUser({ ...user, promptsUsed: (user?.promptsUsed || 0) + 1 })
           setFeedbackId(chunk.responseId || '')
-
-          // ✅ SAFER followUps check
-          const followUps = chunk.followUps
-          if (Array.isArray(followUps) && followUps.length > 0) {
-            setMessages((prev) => [
-              ...prev,
-              { role: 'assistant', content: `💡 ${followUps[0]}` },
-            ])
-          }
         }
       },
       () => setLoading(false)
@@ -160,74 +136,33 @@ export default function DashboardPage() {
     })
   }
 
-  const langLabel = languageOptions.find((l) => l.code === language)?.label || language
-
   return (
     <div className="px-4 md:px-12 pb-10 bg-background text-foreground min-h-screen">
       <div className="max-w-5xl mx-auto space-y-6">
-        {/* header with PromptTracker, language selector, clear chat */}
+
+        {/* Header */}
         <div className="flex justify-between items-center">
           <PromptTracker used={user?.promptsUsed || 0} limit={user?.promptLimit || 0} />
-          <div className="flex gap-2">
-            <select
-              className="text-sm border rounded-full px-3 py-1 bg-muted"
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-            >
-              {languageOptions.map((opt) => (
-                <option key={opt.code} value={opt.code}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={handleClearChat}
-              className="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-full hover:bg-red-200 transition"
-            >
-              🗑️ Clear Chat
-            </button>
-          </div>
+          <button
+            onClick={handleClearChat}
+            className="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-full hover:bg-red-200 transition"
+          >
+            🗑️ Clear Chat
+          </button>
         </div>
 
-        {/* system context */}
-        <div className="max-w-5xl mx-auto mb-4 p-4 bg-white/10 rounded-md text-sm text-white">
-          <strong className="block mb-1">System Context:</strong>
-          You are <em>Growfly AI</em> working for <strong>{user.name || 'User'}</strong>
-          {user.jobTitle && ` (a ${user.jobTitle})`} in <strong>{user.industry || 'their industry'}</strong>. Their brand is <strong>{user.brandName || 'Not specified'}</strong> (elevator pitch: “{user.brandDescription || '—'}”). You must answer in <strong>{langLabel}</strong>.
-        </div>
-
-        {/* file previews */}
-        {filePreviews.length > 0 && (
-          <div className="flex gap-2 mt-3 overflow-x-auto">
-            {filePreviews.map((f, i) => (
-              <div key={i} className="w-20 h-20 border rounded overflow-hidden">
-                <img src={f.url} alt={f.name} className="object-cover w-full h-full" />
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* chat history */}
+        {/* Chat area */}
         <div
           ref={chatRef}
-          className="bg-card rounded-2xl p-6 shadow-md max-h-[60vh] overflow-y-auto space-y-6 border border-border"
+          className="bg-muted rounded-2xl p-6 shadow-md max-h-[60vh] overflow-y-auto space-y-6 border border-border"
         >
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
               <div className="space-y-2 max-w-[80%]">
-                <div className={`p-4 rounded-2xl text-sm whitespace-pre-wrap shadow ${m.role === 'assistant' ? 'bg-muted text-foreground' : 'bg-blue-500 text-white'}`}>
-                  {m.content.startsWith('💡') ? (
-                    <button
-                      onClick={() => handleSend(m.content.replace(/^💡 /, ''))}
-                      className="px-3 py-1 rounded-full border text-sm border-border text-muted-foreground bg-background hover:bg-muted transition"
-                    >
-                      {m.content.replace(/^💡 /, '')}
-                    </button>
-                  ) : (
-                    <span>{m.content}</span>
-                  )}
+                <div className={`p-4 rounded-2xl text-sm whitespace-pre-wrap shadow ${m.role === 'assistant' ? 'bg-white text-black' : 'bg-[#1992FF] text-white'}`}>
+                  <span>{m.content}</span>
                 </div>
-                {m.role === 'assistant' && i === messages.length - 1 && !m.content.startsWith('💡') && (
+                {m.role === 'assistant' && i === messages.length - 1 && (
                   <div className="flex gap-3 pt-1 text-sm text-muted-foreground">
                     <button onClick={() => setFeedbackOpen(true)}><HiThumbUp /></button>
                     <button onClick={() => setFeedbackOpen(true)}><HiThumbDown /></button>
@@ -249,12 +184,12 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* default follow-ups bar */}
+        {/* Follow-up pills */}
         <div className="flex gap-2 overflow-x-auto max-w-5xl mx-auto mb-4">
           {defaultFollowUps.map((p, i) => (
             <button
               key={i}
-              onClick={() => setInput(p)}
+              onClick={() => handleSend(p)}
               className="px-3 py-1 bg-[#1992FF] text-white rounded-full whitespace-nowrap hover:bg-blue-700 transition"
             >
               {p}
@@ -262,7 +197,7 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* input & send */}
+        {/* Input area */}
         <div className="flex items-start gap-2 mt-4">
           <textarea
             rows={2}
@@ -286,7 +221,7 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        {/* drag-and-drop area */}
+        {/* Upload area */}
         <div className="mt-4 border border-dashed border-border bg-muted p-4 rounded-xl text-center text-sm text-muted-foreground">
           Drag and drop files here or{' '}
           <label className="underline cursor-pointer">
