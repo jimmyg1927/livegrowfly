@@ -1,6 +1,6 @@
 'use client'
 
-import { useLanguageStore } from '@/lib/languageStore'
+import { useLanguageStore } from '@lib/languageStore'
 
 const languageOptions = [
   { label: '🇬🇧 English (UK)', value: 'English (UK)' },

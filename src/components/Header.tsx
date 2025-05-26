@@ -4,7 +4,7 @@ import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTheme } from '@/context/ThemeContext'
-import { useUserStore } from '@/lib/store'
+import { useUserStore } from '@lib/store'
 import { Sun, Moon } from 'lucide-react'
 
 // XP label helper (same as before)

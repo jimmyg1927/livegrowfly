@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { API_BASE_URL } from '@/lib/constants'
+import { API_BASE_URL } from '@lib/constants'
 
 interface UserProfile {
   name?: string

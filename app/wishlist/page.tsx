@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { HiThumbUp, HiThumbDown } from 'react-icons/hi'
-import { API_BASE_URL } from '@/lib/constants'
+import { API_BASE_URL } from '@lib/constants'
 
 interface WishlistItem {
   id: string

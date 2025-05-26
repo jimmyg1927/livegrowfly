@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'react-hot-toast'
-import { API_BASE_URL } from '@/lib/constants'
+import { API_BASE_URL } from '@lib/constants'
 
 type FormState = {
   name: string

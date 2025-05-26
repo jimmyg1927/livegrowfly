@@ -2,7 +2,7 @@
 
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { API_BASE_URL } from '@/lib/constants'
+import { API_BASE_URL } from '@lib/constants'
 
 export default function ResetPasswordClient() {
   const searchParams = useSearchParams()

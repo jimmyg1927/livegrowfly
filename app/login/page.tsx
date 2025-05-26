@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { API_BASE_URL } from '@/lib/constants'
+import { API_BASE_URL } from '@lib/constants'
 
 export default function LoginPage() {
   const router = useRouter()
