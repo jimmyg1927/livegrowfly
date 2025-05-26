@@ -13,7 +13,6 @@ import streamChat, { StreamedChunk } from '@lib/streamChat'
 import { useUserStore } from '@lib/store'
 import { defaultFollowUps, API_BASE_URL } from '@lib/constants'
 
-// Types
 interface Message {
   id: string
   role: 'user' | 'assistant'
@@ -27,7 +26,6 @@ export default function DashboardPage() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
   const promptLimit = (user as any)?.promptLimit ?? 0
   const promptsUsed = (user as any)?.promptsUsed ?? 0
-  const totalXP = (user as any)?.totalXP ?? 0
 
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
@@ -40,7 +38,6 @@ export default function DashboardPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
 
-  // Load last 5 messages on mount
   useEffect(() => {
     const stored = localStorage.getItem('growfly_chat')
     if (stored) {
@@ -53,7 +50,6 @@ export default function DashboardPage() {
     }
   }, [])
 
-  // Save messages to localStorage
   useEffect(() => {
     localStorage.setItem('growfly_chat', JSON.stringify(messages))
   }, [messages])
@@ -133,28 +129,14 @@ export default function DashboardPage() {
     setShowFeedbackModal(true)
   }
 
-  const getXPLabel = () => {
-    if (totalXP >= 850) return 'Prompt Commander'
-    if (totalXP >= 500) return 'Nerdboss'
-    if (totalXP >= 150) return 'Prompt Prober'
-    if (totalXP >= 25) return 'Nerdlet'
-    return 'Curious Cat'
-  }
-
   return (
     <div className="flex flex-col h-full p-4 text-foreground">
-      {/* XP + Prompt Usage */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium">🧠 {getXPLabel()} — {totalXP} XP</span>
-          <div className="w-32 h-2 bg-gray-300 rounded overflow-hidden">
-            <div className="h-full bg-blue-500" style={{ width: `${Math.min((totalXP % 150) / 150 * 100, 100)}%` }} />
-          </div>
-        </div>
+      {/* Prompt usage tracker */}
+      <div className="flex justify-end mb-4">
         <PromptTracker used={promptsUsed} limit={promptLimit} />
       </div>
 
-      {/* Initial Prompt */}
+      {/* Initial Starter Prompt */}
       {messages.length === 0 && (
         <div className="text-center my-6">
           <button
@@ -167,24 +149,28 @@ export default function DashboardPage() {
             What can Growfly do for me?
           </button>
           <p className="text-xs mt-2">
-            Need inspiration? Visit <strong>Nerdify Me!</strong>
+            Need inspiration? Try <strong>Nerdify Me!</strong>
           </p>
         </div>
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-4 pb-4">
+      <div className="flex-1 overflow-y-auto space-y-6 pb-6">
         {messages.map((msg) => (
           <div
             key={msg.id}
             className={`whitespace-pre-wrap text-sm p-4 rounded-xl shadow-sm max-w-2xl ${
-              msg.role === 'user' ? 'bg-primary/10 self-end ml-auto' : 'bg-muted self-start'
+              msg.role === 'user' ? 'bg-blue-50 self-end ml-auto' : 'bg-gray-100 self-start'
             }`}
           >
+            <p className="text-xs mb-1 font-medium text-gray-500">
+              {msg.role === 'user' ? '🧑 You' : '🤖 Growfly'}
+            </p>
             {msg.imageUrl && (
               <Image src={msg.imageUrl} alt="uploaded" width={200} height={200} className="mb-2 rounded" />
             )}
             <p>{msg.content}</p>
+
             {msg.role === 'assistant' && (
               <>
                 <div className="flex gap-2 mt-3 flex-wrap">
@@ -199,10 +185,10 @@ export default function DashboardPage() {
                   ))}
                 </div>
                 <div className="flex gap-3 mt-2 text-lg">
-                  <HiThumbUp onClick={() => handleFeedback(msg)} className="cursor-pointer hover:text-green-500" />
-                  <HiThumbDown onClick={() => handleFeedback(msg)} className="cursor-pointer hover:text-red-500" />
-                  <FaRegBookmark onClick={() => handleSave(msg)} className="cursor-pointer hover:text-yellow-500" />
-                  <FaShareSquare onClick={() => router.push('/collab-zone')} className="cursor-pointer hover:text-blue-500" />
+                  <HiThumbUp title="Helpful" onClick={() => handleFeedback(msg)} className="cursor-pointer hover:text-green-500" />
+                  <HiThumbDown title="Not helpful" onClick={() => handleFeedback(msg)} className="cursor-pointer hover:text-red-500" />
+                  <FaRegBookmark title="Save response" onClick={() => handleSave(msg)} className="cursor-pointer hover:text-yellow-500" />
+                  <FaShareSquare title="Send to Collab Zone" onClick={() => router.push('/collab-zone')} className="cursor-pointer hover:text-blue-500" />
                 </div>
               </>
             )}
@@ -244,7 +230,8 @@ export default function DashboardPage() {
           </div>
           <button
             onClick={handleSubmit}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md text-sm"
+            disabled={!input.trim() && !selectedFile}
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-6 py-2 rounded-md text-sm"
           >
             Send
           </button>
