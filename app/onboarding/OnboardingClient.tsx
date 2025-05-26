@@ -1,4 +1,3 @@
-// File: app/onboarding/OnboardingClient.tsx
 'use client'
 
 import React, { useEffect, useState, useRef } from 'react'
@@ -123,7 +122,7 @@ export default function OnboardingClient() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          companyName: form.companyName,
+          brandName: form.companyName, // FIXED
           brandDescription: form.brandDescription,
           brandVoice: form.brandVoice,
           brandMission: form.brandMission,
@@ -256,7 +255,7 @@ export default function OnboardingClient() {
         )}
         {step === 2 && (
           <>
-            {renderField('Company Name', 'companyName', 'Acme Corp')}
+            {renderField('Brand Name', 'companyName', 'Acme Corp')}
             {renderField('Elevator Pitch', 'brandDescription', 'We help brands grow using AI.', true)}
             {renderField('Brand Personality', 'brandVoice', 'Witty and expert', true)}
             {renderField('Mission', 'brandMission', 'Make marketing easier for all', true)}
