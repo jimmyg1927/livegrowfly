@@ -1,5 +1,3 @@
-// lib/streamChat.ts
-
 export interface StreamedChunk {
   type: 'partial' | 'complete'
   content?: string
@@ -7,27 +5,19 @@ export interface StreamedChunk {
   responseId?: string
 }
 
-/**
- * Connect to the /api/streamChat endpoint and stream AI responses.
- * 
- * @param message The user message to send
- * @param token   The JWT token for authentication (in Authorization header)
- * @param onChunk Callback for each streamed partial chunk
- * @param onDone  Callback for when streaming completes
- */
 export default async function streamChat(
   message: string,
   token: string,
   onChunk: (data: StreamedChunk) => void,
   onDone: () => void
 ) {
-  const res = await fetch('/api/streamChat', {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/ai/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ message })
+    body: JSON.stringify({ message }),
   })
 
   if (!res.ok || !res.body) {
@@ -38,7 +28,6 @@ export default async function streamChat(
   const decoder = new TextDecoder()
   let buffer = ''
 
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const { value, done } = await reader.read()
     if (done) break
