@@ -1,3 +1,4 @@
+// File: app/dashboard/page.tsx
 'use client'
 export const dynamic = 'force-dynamic'
 
@@ -6,12 +7,12 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { HiThumbUp, HiThumbDown } from 'react-icons/hi'
 import { FaRegBookmark, FaShareSquare, FaFileDownload } from 'react-icons/fa'
-import PromptTracker from '@/components/PromptTracker'
-import SaveModal from '@/components/SaveModal'
-import FeedbackModal from '@/components/FeedbackModal'
+import PromptTracker from '@components/PromptTracker'
+import SaveModal from '@components/SaveModal'
+import FeedbackModal from '@components/FeedbackModal'
 import streamChat, { StreamedChunk } from '@lib/streamChat'
 import { useUserStore } from '@lib/store'
-import { API_BASE_URL } from 'lib/constants'
+import { API_BASE_URL } from '@lib/constants'
 
 type Message = {
   id: string
@@ -35,32 +36,33 @@ export default function DashboardPage() {
   const [saveContent, setSaveContent] = useState('')
   const [showFeedbackModal, setShowFeedbackModal] = useState(false)
   const [feedbackTargetId, setFeedbackTargetId] = useState('')
+
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const chatKey = typeof window !== 'undefined' && user?.id ? `growfly_chat_${user.id}` : ''
 
   useEffect(() => {
     if (!token) router.push('/onboarding')
   }, [token])
 
   useEffect(() => {
-    const fetchHistory = async () => {
+    if (!chatKey) return
+    const stored = localStorage.getItem(chatKey)
+    if (stored) {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/chat/history`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-        const data = await res.json()
-        if (Array.isArray(data)) {
-          setMessages(data.slice(-5)) // show last 5 messages
-        }
-      } catch (err) {
-        console.error('Failed to load chat history', err)
+        const hist = JSON.parse(stored) as Message[]
+        setMessages(hist.slice(-5))
+      } catch {
+        console.warn('⚠️ Failed to parse user-specific chat history')
       }
     }
+  }, [chatKey])
 
-    if (token) fetchHistory()
-  }, [token])
+  useEffect(() => {
+    if (chatKey) {
+      localStorage.setItem(chatKey, JSON.stringify(messages))
+    }
+  }, [messages, chatKey])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -138,6 +140,16 @@ export default function DashboardPage() {
     setSelectedFile(e.target.files?.[0] ?? null)
   }
 
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    const file = e.dataTransfer.files[0]
+    if (file) setSelectedFile(file)
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+  }
+
   const handleSave = (msg: Message) => {
     setSaveContent(msg.content)
     setShowSaveModal(true)
@@ -162,7 +174,7 @@ export default function DashboardPage() {
       {messages.length === 0 && (
         <div className="text-center my-6">
           <button
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow text-sm"
+            className="bg-[#3399ff] hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow text-sm"
             onClick={() => {
               setInput('What can Growfly do for me?')
               handleSubmit()
@@ -179,8 +191,8 @@ export default function DashboardPage() {
             key={msg.id}
             className={`whitespace-pre-wrap text-sm p-4 rounded-xl shadow-sm max-w-2xl ${
               msg.role === 'user'
-                ? 'bg-blue-100 self-end ml-auto'
-                : 'bg-gray-100 self-start'
+                ? 'bg-[#3399ff] text-white self-end ml-auto'
+                : 'bg-gray-100 dark:bg-[#1e1e1e] self-start'
             }`}
           >
             {msg.imageUrl && (
@@ -221,7 +233,7 @@ export default function DashboardPage() {
         <div ref={chatEndRef} />
       </div>
 
-      <div className="border-t pt-4 mt-4">
+      <div className="border-t pt-4 mt-4" onDrop={handleDrop} onDragOver={handleDragOver}>
         <textarea
           rows={2}
           className="w-full p-3 rounded border bg-background resize-none text-sm"
@@ -236,7 +248,7 @@ export default function DashboardPage() {
           }}
         />
         <div className="flex justify-between items-center mt-2">
-          <div className="text-sm">
+          <div className="text-sm flex items-center gap-3">
             <input
               type="file"
               accept="image/*,application/pdf"
@@ -244,17 +256,20 @@ export default function DashboardPage() {
               className="hidden"
               ref={fileInputRef}
             />
-            <button onClick={() => fileInputRef.current?.click()} className="text-blue-600 underline">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="bg-[#3399ff] text-white px-3 py-1 rounded text-sm"
+            >
               Upload Image / PDF
             </button>
             {selectedFile && (
-              <span className="ml-2 text-xs text-muted-foreground">{selectedFile.name}</span>
+              <span className="text-xs text-muted-foreground">{selectedFile.name}</span>
             )}
           </div>
           <button
             onClick={handleSubmit}
             disabled={!input.trim() && !selectedFile}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-6 py-2 rounded-md text-sm"
+            className="bg-[#3399ff] hover:bg-blue-700 disabled:bg-gray-300 text-white px-6 py-2 rounded-md text-sm"
           >
             Send
           </button>

@@ -33,16 +33,23 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#030712] to-[#1e3a8a] text-white flex items-center justify-center px-4 py-12">
-      <div className="bg-white text-black p-8 sm:p-10 rounded-2xl shadow-2xl w-full max-w-2xl">
-        <h1 className="text-4xl font-bold mb-3 text-center text-[#1992FF]">
-          + Let&apos;s talk about your business +
+      <div className="w-full max-w-2xl bg-white text-black rounded-2xl shadow-2xl p-8 sm:p-10 relative">
+        {/* Growfly logo at the top */}
+        <div className="flex justify-center mb-6">
+          <img src="/growfly-logo.png" alt="Growfly Logo" className="h-16 w-auto" />
+        </div>
+
+        <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-center text-[#1992FF]">
+          Let’s talk about your business
         </h1>
-        <p className="text-center text-gray-600 mb-6">
-          One of the Growfly founders will contact you shortly to discuss a bespoke enterprise package.
+        <p className="text-center text-gray-600 mb-6 text-sm sm:text-base">
+          Fill in this short form and one of our Growfly founders — <strong>Jimmy</strong> or <strong>Teddy</strong> — will personally reach out to you to tailor a solution for your business.
         </p>
 
         {submitted ? (
-          <p className="text-green-600 text-center font-semibold">✅ Your message has been sent!</p>
+          <p className="text-green-600 text-center font-semibold">
+            ✅ Your message has been sent. We’ll be in touch shortly.
+          </p>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
