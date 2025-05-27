@@ -5,24 +5,20 @@ import React, { useEffect, useState, useRef, ChangeEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { HiThumbUp, HiThumbDown } from 'react-icons/hi'
-import { FaRegBookmark, FaShareSquare, FaTimes, FaDownload } from 'react-icons/fa'
-import toast, { Toaster } from 'react-hot-toast'
+import { FaRegBookmark, FaShareSquare, FaFileDownload } from 'react-icons/fa'
 import PromptTracker from '@components/PromptTracker'
 import SaveModal from '@components/SaveModal'
 import FeedbackModal from '@components/FeedbackModal'
 import streamChat, { StreamedChunk } from '@lib/streamChat'
 import { useUserStore } from '@lib/store'
-import { API_BASE_URL } from '@lib/constants'
-import { saveAs } from 'file-saver'
-import { Document, Packer, Paragraph, TextRun } from 'docx'
-import jsPDF from 'jspdf'
+import { defaultFollowUps, API_BASE_URL } from '@lib/constants'
 
-interface Message {
+type Message = {
   id: string
   role: 'user' | 'assistant'
   content: string
   imageUrl?: string
-  collabId?: string
+  followUps?: string[]
 }
 
 export default function DashboardPage() {
@@ -39,7 +35,6 @@ export default function DashboardPage() {
   const [saveContent, setSaveContent] = useState('')
   const [showFeedbackModal, setShowFeedbackModal] = useState(false)
   const [feedbackTargetId, setFeedbackTargetId] = useState('')
-  const [isStreaming, setIsStreaming] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
@@ -50,9 +45,7 @@ export default function DashboardPage() {
       try {
         const hist = JSON.parse(stored) as Message[]
         setMessages(hist.slice(-5))
-      } catch {
-        console.warn('Failed to parse chat history.')
-      }
+      } catch {}
     }
   }, [])
 
@@ -68,68 +61,66 @@ export default function DashboardPage() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const banned = ['joke', 'poem', 'love', 'story', 'fantasy', 'fun', 'chatgpt', 'bard', 'claude']
+  const uploadFile = async (file: File) => {
+    const data = new FormData()
+    data.append('file', file)
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: data,
+    })
+    const { url } = await res.json()
+    return url as string
+  }
+
   const handleSubmit = async () => {
     const text = input.trim()
     if (!text && !selectedFile) return
 
-    const isOffTopic = banned.some(k => text.toLowerCase().includes(k))
-    if (isOffTopic) {
-      setMessages((m) => [
-        ...m,
-        {
-          id: `warn-${Date.now()}`,
-          role: 'assistant',
-          content:
-            "We’re Growfly — a business-specific AI built in partnership with OpenAI. We only assist with professional, commercial or operational topics. " +
-            "If you believe your prompt is relevant, please contact us through the dashboard.",
-        },
-      ])
-      setInput('')
-      return
-    }
-
     const uId = `u${Date.now()}`
-    const aId = `a${Date.now()}`
-    setIsStreaming(true)
     setMessages((m) => [...m, { id: uId, role: 'user', content: text }])
     setInput('')
 
     let imageUrl: string | undefined
     if (selectedFile) {
-      const data = new FormData()
-      data.append('file', selectedFile)
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: data,
-      })
-      if (!res.ok) {
-        toast.error('❌ Upload failed. Try again.')
-        return
-      }
-      const { url } = await res.json()
-      imageUrl = url
-      setMessages((m) => [...m, { id: `f${Date.now()}`, role: 'user', content: '', imageUrl }])
+      imageUrl = await uploadFile(selectedFile)
       setSelectedFile(null)
     }
 
+    const aId = `a${Date.now()}`
     setMessages((m) => [...m, { id: aId, role: 'assistant', content: '' }])
 
+    let content = ''
     await streamChat(
-      text + (imageUrl ? `\n[Image: ${imageUrl}]` : ''),
+      text + (imageUrl ? `\n\n[Image URL: ${imageUrl}]` : ''),
       token,
       (chunk: StreamedChunk) => {
         if (!chunk.content) return
-        setMessages((msgs) =>
-          msgs.map((msg) =>
-            msg.id === aId
-              ? { ...msg, content: msg.content + chunk.content! }
-              : msg
+        content += chunk.content
+        setMessages((m) =>
+          m.map((msg) =>
+            msg.id === aId ? { ...msg, content: content } : msg
           )
         )
       },
-      () => setIsStreaming(false)
+      () => {
+        fetch(`${API_BASE_URL}/api/ai/followup`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ answer: content }),
+        })
+          .then(res => res.json())
+          .then(data => {
+            setMessages((m) =>
+              m.map((msg) =>
+                msg.id === aId ? { ...msg, followUps: data.followUps || [] } : msg
+              )
+            )
+          })
+      }
     )
   }
 
@@ -138,46 +129,28 @@ export default function DashboardPage() {
     handleSubmit()
   }
 
-  const exportPDF = (msg: Message) => {
-    const doc = new jsPDF()
-    doc.text(msg.content, 10, 10)
-    doc.save(`${msg.id}.pdf`)
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSelectedFile(e.target.files?.[0] ?? null)
   }
 
-  const exportDOCX = async (msg: Message) => {
-    const doc = new Document({
-      sections: [
-        {
-          children: [new Paragraph({ children: [new TextRun(msg.content)] })],
-        },
-      ],
-    })
-    const blob = await Packer.toBlob(doc)
-    saveAs(blob, `${msg.id}.docx`)
+  const handleSave = (msg: Message) => {
+    setSaveContent(msg.content)
+    setShowSaveModal(true)
   }
 
-  const saveToCollabZone = async (msg: Message) => {
-    const res = await fetch('/api/collab', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ title: 'AI Response', content: msg.content }),
-    })
-    const result = await res.json()
-    if (res.ok && result.id) {
-      toast.success('📤 Sent to Collab Zone')
-      router.push(`/collab-zone?doc=${result.id}`)
-    } else {
-      toast.error('❌ Failed to share')
-    }
+  const handleFeedback = (msg: Message) => {
+    setFeedbackTargetId(msg.id)
+    setShowFeedbackModal(true)
+  }
+
+  const downloadFile = (msg: Message, type: 'pdf' | 'docx') => {
+    const url = `${API_BASE_URL}/api/download?type=${type}&content=${encodeURIComponent(msg.content)}`
+    window.open(url, '_blank')
   }
 
   return (
     <div className="flex flex-col h-full p-4 text-foreground">
-      <Toaster position="bottom-right" />
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-between mb-4 items-center">
         <PromptTracker used={promptsUsed} limit={promptLimit} />
       </div>
 
@@ -192,40 +165,45 @@ export default function DashboardPage() {
           >
             What can Growfly do for me?
           </button>
-          <p className="text-xs mt-2">Need inspiration? Try <strong>Nerdify Me!</strong></p>
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto space-y-6 pb-6 max-w-4xl w-full mx-auto">
+      <div className="flex-1 overflow-y-auto space-y-6 pb-6">
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`whitespace-pre-wrap text-sm p-4 rounded-xl shadow-sm ${
-              msg.role === 'user' ? 'bg-blue-50 self-end ml-auto' : 'bg-gray-100 self-start'
+            className={`whitespace-pre-wrap text-sm p-4 rounded-xl shadow-sm max-w-2xl ${
+              msg.role === 'user'
+                ? 'bg-blue-100 self-end ml-auto'
+                : 'bg-gray-100 self-start'
             }`}
           >
-            <p className="text-xs mb-1 font-medium text-gray-500">
-              {msg.role === 'user' ? '🧑 You' : '🤖 Growfly'}
-            </p>
             {msg.imageUrl && (
-              <Image src={msg.imageUrl} alt="uploaded" width={200} height={200} className="mb-2 rounded" />
+              <Image src={msg.imageUrl} alt="Uploaded" width={200} height={200} className="mb-2 rounded" />
             )}
             <p>{msg.content}</p>
 
             {msg.role === 'assistant' && (
-              <div className="flex flex-wrap gap-2 mt-3 text-lg">
-                <HiThumbUp onClick={() => toast.success('👍 Thanks')} className="cursor-pointer hover:text-green-500" />
-                <HiThumbDown onClick={() => toast.success('👎 Feedback noted')} className="cursor-pointer hover:text-red-500" />
-                <FaRegBookmark onClick={() => { setSaveContent(msg.content); setShowSaveModal(true) }} className="cursor-pointer hover:text-yellow-500" />
-                <FaShareSquare onClick={() => saveToCollabZone(msg)} className="cursor-pointer hover:text-blue-500" />
-                <FaDownload onClick={() => exportPDF(msg)} className="cursor-pointer hover:text-indigo-500" title="Download PDF" />
-                <button
-                  onClick={() => exportDOCX(msg)}
-                  className="text-xs border px-2 py-1 rounded hover:bg-gray-200"
-                >
-                  DOCX
-                </button>
-              </div>
+              <>
+                <div className="flex gap-2 mt-3 flex-wrap">
+                  {msg.followUps?.map((fu, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleFollowUp(fu)}
+                      className="bg-blue-200 hover:bg-blue-300 text-sm px-3 py-1 rounded-full"
+                    >
+                      {fu}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-3 mt-3 text-lg">
+                  <HiThumbUp onClick={() => handleFeedback(msg)} className="cursor-pointer hover:text-green-500" />
+                  <HiThumbDown onClick={() => handleFeedback(msg)} className="cursor-pointer hover:text-red-500" />
+                  <FaRegBookmark onClick={() => handleSave(msg)} className="cursor-pointer hover:text-yellow-500" />
+                  <FaShareSquare onClick={() => router.push('/collab-zone')} className="cursor-pointer hover:text-blue-500" />
+                  <FaFileDownload onClick={() => downloadFile(msg, 'docx')} className="cursor-pointer hover:text-gray-600" />
+                </div>
+              </>
             )}
           </div>
         ))}
@@ -247,11 +225,11 @@ export default function DashboardPage() {
           }}
         />
         <div className="flex justify-between items-center mt-2">
-          <div className="text-sm flex items-center gap-2">
+          <div className="text-sm">
             <input
               type="file"
               accept="image/*,application/pdf"
-              onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
+              onChange={handleFileChange}
               className="hidden"
               ref={fileInputRef}
             />
@@ -259,21 +237,15 @@ export default function DashboardPage() {
               Upload Image / PDF
             </button>
             {selectedFile && (
-              <span className="flex items-center gap-2 text-xs bg-gray-100 px-2 py-1 rounded-full">
-                {selectedFile.name}
-                <FaTimes
-                  className="cursor-pointer text-red-500"
-                  onClick={() => setSelectedFile(null)}
-                />
-              </span>
+              <span className="ml-2 text-xs text-muted-foreground">{selectedFile.name}</span>
             )}
           </div>
           <button
             onClick={handleSubmit}
-            disabled={isStreaming || (!input.trim() && !selectedFile)}
+            disabled={!input.trim() && !selectedFile}
             className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-6 py-2 rounded-md text-sm"
           >
-            {isStreaming ? 'Sending...' : 'Send'}
+            Send
           </button>
         </div>
       </div>
@@ -291,7 +263,6 @@ export default function DashboardPage() {
               },
               body: JSON.stringify({ title, content: saveContent }),
             })
-            toast.success('✅ Saved')
             setShowSaveModal(false)
           }}
         />
@@ -302,10 +273,7 @@ export default function DashboardPage() {
           responseId={feedbackTargetId}
           open={showFeedbackModal}
           onClose={() => setShowFeedbackModal(false)}
-          onSubmit={() => {
-            setShowFeedbackModal(false)
-            toast.success('✅ Feedback submitted')
-          }}
+          onSubmit={() => setShowFeedbackModal(false)}
         />
       )}
     </div>
