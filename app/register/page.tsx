@@ -22,9 +22,9 @@ export default function RegisterPage() {
         <Image src="/growfly-logo.png" alt="Growfly Logo" width={150} height={50} />
       </div>
 
-      <h1 className="text-3xl font-bold text-center mb-4">
-        Let&apos;s build your brand&apos;s voice
-      </h1>
+      +<h1 className="text-3xl font-bold text-center mb-4">
+      +  Let&apos;s grow your business
+      +</h1>
       <p className="text-center text-white/80 max-w-xl mx-auto mb-10">
         Pick a plan to get started. You can upgrade anytime. No credit card needed for free accounts.
       </p>
@@ -52,7 +52,7 @@ export default function RegisterPage() {
         <div className="rounded-2xl border-2 border-[#72C8F6] bg-white/10 p-6 shadow-lg flex flex-col items-center text-center">
           <h2 className="text-xl font-semibold mb-2 text-[#72C8F6]">Personal</h2>
           <p className="text-white/70 text-sm mb-4">For individual creators + founders.</p>
-          <p className="text-3xl font-bold mb-4">£14.99</p>
+          <p className="text-3xl font-bold mb-4">£8.99</p>
           <ul className="text-sm text-white/80 space-y-2 mb-4">
             <li>🚀 400 prompts/month</li>
             <li>✅ AI-generated brand strategies</li>

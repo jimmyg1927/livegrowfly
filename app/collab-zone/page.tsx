@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   FiPlus, FiTrash2, FiEdit3, FiSave, FiMail,
-  FiCheckCircle, FiAlertCircle, FiDownload, FiLink
+  FiCheckCircle, FiAlertCircle, FiDownload, FiLink, FiFileText, FiUsers
 } from 'react-icons/fi'
 import Editor from '@/components/editor/Editor'
 import { formatDistanceToNow } from 'date-fns'
@@ -49,6 +49,13 @@ export default function CollabZonePage() {
       })
   }, [])
 
+  useEffect(() => {
+    if (statusMsg?.type === 'success') {
+      const timer = setTimeout(() => setStatusMsg(null), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [statusMsg])
+
   const handleNew = async () => {
     const token = localStorage.getItem('growfly_jwt')!
     const res = await fetch(`${API_URL}/api/collab`, {
@@ -78,7 +85,6 @@ export default function CollabZonePage() {
         title: activeDoc.title,
       }),
     })
-
     const updated = await res.json()
     setDocs(prev => prev.map(doc => doc.id === updated.id ? updated : doc))
     setActiveDoc(updated)
@@ -95,7 +101,6 @@ export default function CollabZonePage() {
       },
       body: JSON.stringify({ title: newTitle }),
     })
-
     const updated = await res.json()
     setDocs(prev => prev.map(doc => doc.id === id ? updated : doc))
     if (activeDoc?.id === id) setActiveDoc(updated)
@@ -155,43 +160,47 @@ export default function CollabZonePage() {
           <FiPlus /> New Doc
         </button>
 
-        <div className="font-bold text-sm">Your Docs</div>
+        <div className="font-bold text-xs mt-4 mb-1 flex items-center gap-2"><FiFileText size={14}/> Your Docs</div>
         {docs.map(doc => (
           <div
             key={doc.id}
-            className={`flex flex-col px-2 py-1 rounded ${
+            className={`flex flex-col px-2 py-1 rounded cursor-pointer ${
               doc.id === activeDoc?.id ? 'bg-accent/20' : 'hover:bg-muted'
             }`}
           >
-            <div onClick={() => setActiveDoc(doc)} className="truncate text-xs cursor-pointer">
-              {titleEditId === doc.id ? (
-                <div className="flex items-center gap-1">
-                  <input
-                    value={newTitle}
-                    onChange={e => setNewTitle(e.target.value)}
-                    className="flex-1 px-1 text-xs border rounded"
-                  />
-                  <button
-                    onClick={() => handleRename(doc.id)}
-                    className="text-green-600 text-xs"
-                  >
-                    Save
-                  </button>
-                </div>
-              ) : (
-                <span className="flex justify-between items-center gap-2">
+            {titleEditId === doc.id ? (
+              <div className="flex items-center gap-1">
+                <input
+                  value={newTitle}
+                  onChange={e => setNewTitle(e.target.value)}
+                  className="flex-1 px-2 py-1 text-xs border rounded"
+                />
+                <button
+                  onClick={() => handleRename(doc.id)}
+                  className="text-green-600 text-xs"
+                >
+                  Save
+                </button>
+              </div>
+            ) : (
+              <div className="flex justify-between items-center text-xs">
+                <span
+                  className="truncate flex-1"
+                  title={doc.title}
+                  onClick={() => setActiveDoc(doc)}
+                >
                   {doc.title}
-                  <span className="flex items-center gap-1">
-                    <FiEdit3 size={12} onClick={() => { setTitleEditId(doc.id); setNewTitle(doc.title) }} className="cursor-pointer" />
-                    <FiTrash2 size={12} onClick={() => confirmDelete(doc.id)} className="cursor-pointer text-red-600" />
-                  </span>
                 </span>
-              )}
-            </div>
+                <span className="flex gap-1 ml-2">
+                  <FiEdit3 size={12} onClick={() => { setTitleEditId(doc.id); setNewTitle(doc.title) }} className="cursor-pointer" />
+                  <FiTrash2 size={12} onClick={() => confirmDelete(doc.id)} className="cursor-pointer text-red-600" />
+                </span>
+              </div>
+            )}
           </div>
         ))}
 
-        <div className="font-bold text-sm pt-2">Shared with You</div>
+        <div className="font-bold text-xs mt-4 mb-1 flex items-center gap-2"><FiUsers size={14}/> Shared with You</div>
         {sharedDocs.map(doc => (
           <div
             key={doc.id}
@@ -207,7 +216,7 @@ export default function CollabZonePage() {
       </aside>
 
       <main className="flex-1 p-6 space-y-4 overflow-auto">
-        <div className="flex flex-wrap gap-2 items-center justify-between">
+        <div className="flex flex-wrap gap-2 items-center justify-between mb-2">
           <h1 className="text-xl font-semibold">Collab Zone</h1>
           <div className="flex flex-wrap gap-2 items-center">
             <input
@@ -215,18 +224,19 @@ export default function CollabZonePage() {
               placeholder="email to share with"
               value={shareEmail}
               onChange={e => setShareEmail(e.target.value)}
+              title="Invite someone to collaborate"
               className="px-2 py-1 border border-border rounded text-sm"
             />
-            <button onClick={shareByEmail} className="px-3 py-2 bg-accent text-white rounded text-sm">
+            <button onClick={shareByEmail} title="Send invite via email" className="px-3 py-2 bg-accent text-white rounded text-sm">
               <FiMail size={14} className="inline mr-1" /> Share
             </button>
-            <button onClick={copyLink} className="px-3 py-2 bg-muted rounded text-sm">
+            <button onClick={copyLink} title="Copy doc link" className="px-3 py-2 bg-muted rounded text-sm">
               <FiLink size={14} className="inline mr-1" /> Copy Link
             </button>
-            <button onClick={handleSave} className="px-3 py-2 bg-green-600 text-white rounded text-sm">
+            <button onClick={handleSave} title="Save document" className="px-3 py-2 bg-green-600 text-white rounded text-sm">
               <FiSave size={14} className="inline mr-1" /> Save
             </button>
-            <button onClick={() => setShowComments(!showComments)} className="px-3 py-2 bg-muted rounded text-sm">
+            <button onClick={() => setShowComments(!showComments)} title="Toggle comment visibility" className="px-3 py-2 bg-muted rounded text-sm">
               {showComments ? 'Hide Comments' : 'Show Comments'}
             </button>
           </div>
@@ -243,7 +253,7 @@ export default function CollabZonePage() {
           </div>
         )}
 
-        <div className="border border-border rounded-lg bg-card p-2 min-h-[60vh] overflow-y-auto">
+        <div className="border border-border rounded-lg bg-card p-4 min-h-[60vh] overflow-y-auto">
           {activeDoc ? (
             <Editor
               key={activeDoc.id}
@@ -254,7 +264,7 @@ export default function CollabZonePage() {
             />
           ) : (
             <p className="text-muted-foreground p-10 text-sm text-center">
-              Select or create a document to begin editing.
+              📝 Select or create a document to begin editing.
             </p>
           )}
         </div>
