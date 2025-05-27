@@ -137,13 +137,13 @@ export default function NerdModePage() {
             <p className="text-xs font-medium text-muted mb-1">Prompt:</p>
             <p className="text-sm font-semibold">“Write a welcome email for new customers.”</p>
             <p className="text-xs mt-2 text-muted">Response Preview:</p>
-            <p className="text-sm italic text-muted">"Hey there! We’re so excited you joined us..."</p>
+            <p className="text-sm italic text-muted">&quot;Hey there! We’re so excited you joined us...&quot;</p>
           </div>
           <div className="p-4 border border-border rounded-md bg-muted/5">
             <p className="text-xs font-medium text-muted mb-1">Prompt:</p>
             <p className="text-sm font-semibold">“Summarise this PDF contract.”</p>
             <p className="text-xs mt-2 text-muted">Response Preview:</p>
-            <p className="text-sm italic text-muted">"This contract covers three key points: 1) Ownership..."</p>
+            <p className="text-sm italic text-muted">&quot;This contract covers three key points: 1) Ownership...&quot;</p>
           </div>
         </div>
       </section>
