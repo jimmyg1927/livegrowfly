@@ -1,4 +1,3 @@
-// src/components/Sidebar.tsx
 'use client'
 
 import React from 'react'
@@ -33,7 +32,6 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname() || ''
 
-  // hide on any of these public routes
   const hiddenRoutes = [
     '/onboarding',
     '/signup',
@@ -41,14 +39,15 @@ export default function Sidebar() {
     '/register',
     '/confirm-payment',
     '/payment-success',
+    '/forgot-password',
+    '/contact',
   ]
   if (hiddenRoutes.some(route => pathname.startsWith(route))) {
     return null
   }
 
   return (
-    <div className="bg-[#1992ff] text-white w-20 sm:w-56 flex flex-col items-center sm:items-start py-5 px-2 sm:px-4 min-h-screen rounded-bl-2xl">
-      {/* Logo */}
+    <div className="bg-gradient-to-b from-[#0f172a] to-[#1e3a8a] text-white w-20 sm:w-56 flex flex-col items-center sm:items-start py-5 px-2 sm:px-4 min-h-screen rounded-bl-2xl">
       <div className="mb-4 w-full flex justify-center sm:justify-center">
         <Link href="/dashboard" className="w-full flex justify-center">
           <img
@@ -59,7 +58,6 @@ export default function Sidebar() {
         </Link>
       </div>
 
-      {/* Navigation */}
       <nav className="flex flex-col gap-1 w-full">
         {navItems.map(item => {
           const isActive = pathname === item.href
@@ -80,7 +78,6 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Logout */}
       <div className="mt-auto w-full">
         <button
           onClick={() => {

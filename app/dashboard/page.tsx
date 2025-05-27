@@ -1,4 +1,3 @@
-// File: app/dashboard/page.tsx
 'use client'
 export const dynamic = 'force-dynamic'
 
@@ -7,12 +6,12 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { HiThumbUp, HiThumbDown } from 'react-icons/hi'
 import { FaRegBookmark, FaShareSquare, FaFileDownload } from 'react-icons/fa'
-import PromptTracker from '@components/PromptTracker'
-import SaveModal from '@components/SaveModal'
-import FeedbackModal from '@components/FeedbackModal'
+import PromptTracker from '@/components/PromptTracker'
+import SaveModal from '@/components/SaveModal'
+import FeedbackModal from '@/components/FeedbackModal'
 import streamChat, { StreamedChunk } from '@lib/streamChat'
 import { useUserStore } from '@lib/store'
-import { defaultFollowUps, API_BASE_URL } from '@lib/constants'
+import { API_BASE_URL } from 'lib/constants'
 
 type Message = {
   id: string
@@ -36,28 +35,31 @@ export default function DashboardPage() {
   const [saveContent, setSaveContent] = useState('')
   const [showFeedbackModal, setShowFeedbackModal] = useState(false)
   const [feedbackTargetId, setFeedbackTargetId] = useState('')
-
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const stored = localStorage.getItem('growfly_chat')
-    if (stored) {
+    if (!token) router.push('/onboarding')
+  }, [token])
+
+  useEffect(() => {
+    const fetchHistory = async () => {
       try {
-        const hist = JSON.parse(stored) as Message[]
-        setMessages(hist.slice(-5))
-      } catch {
-        return
+        const res = await fetch(`${API_BASE_URL}/api/chat/history`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        const data = await res.json()
+        if (Array.isArray(data)) {
+          setMessages(data.slice(-5)) // show last 5 messages
+        }
+      } catch (err) {
+        console.error('Failed to load chat history', err)
       }
     }
-  }, [])
 
-  useEffect(() => {
-    localStorage.setItem('growfly_chat', JSON.stringify(messages))
-  }, [messages])
-
-  useEffect(() => {
-    if (!token) router.push('/onboarding')
+    if (token) fetchHistory()
   }, [token])
 
   useEffect(() => {
@@ -184,11 +186,10 @@ export default function DashboardPage() {
             {msg.imageUrl && (
               <Image
                 src={msg.imageUrl}
-                alt="Uploaded image for AI"
+                alt="Uploaded file"
                 width={200}
                 height={200}
                 className="mb-2 rounded"
-                priority
               />
             )}
             <p>{msg.content}</p>

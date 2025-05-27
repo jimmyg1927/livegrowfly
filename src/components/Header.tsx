@@ -7,7 +7,6 @@ import { useTheme } from '@/context/ThemeContext'
 import { useUserStore } from '@lib/store'
 import { Sun, Moon } from 'lucide-react'
 
-// XP label helper (same as before)
 function getXPLabel(xp: number) {
   if (xp < 25) return '🐣 Curious Cat'
   if (xp < 150) return '🧪 Nerdlet'
@@ -16,7 +15,6 @@ function getXPLabel(xp: number) {
   return '🚀 Prompt Commander'
 }
 
-// XP progress helper (same as before)
 function getXPProgress(xp: number) {
   const levelCaps = [25, 150, 500, 850, 1000]
   for (let i = 0; i < levelCaps.length; i++) {
@@ -40,6 +38,8 @@ export default function Header() {
     '/onboarding',
     '/payment-success',
     '/confirm-payment',
+    '/forgot-password',
+    '/contact',
   ]
 
   if (!pathname || hiddenRoutes.some(route => pathname.startsWith(route))) {
@@ -47,8 +47,7 @@ export default function Header() {
   }
 
   return (
-    <header className="w-full bg-[#1992FF] text-white flex items-center justify-between px-4 sm:px-8 py-3 shadow">
-      {/* --- XP Section (no logo) --- */}
+    <header className="w-full bg-gradient-to-r from-[#0f172a] to-[#1e3a8a] text-white flex items-center justify-between px-4 sm:px-8 py-3 shadow">
       <div className="flex items-center gap-6">
         <div className="flex flex-col">
           <span className="text-sm font-semibold">
@@ -66,22 +65,16 @@ export default function Header() {
         </div>
       </div>
 
-      {/* --- Action Buttons --- */}
       <div className="flex items-center gap-4">
-        {/* Refer a Friend */}
         <Link
           href="/refer"
           className="hidden sm:inline-block px-3 py-1 text-sm font-medium rounded-full bg-white text-[#1992FF] hover:brightness-105 transition"
         >
           🎁 Refer a Friend
         </Link>
-
-        {/* Subscription Tag */}
         <span className="hidden sm:inline-block px-3 py-1 text-sm font-medium rounded-full bg-white text-[#1992FF] capitalize">
           Subscription: {user?.subscriptionType || 'free'}
         </span>
-
-        {/* Profile Icon */}
         <Link
           href="/settings"
           className="p-2 bg-white text-[#1992FF] rounded-full hover:brightness-105 shadow"
@@ -102,8 +95,6 @@ export default function Header() {
             />
           </svg>
         </Link>
-
-        {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
           aria-label="Toggle theme"

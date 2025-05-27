@@ -12,47 +12,46 @@ export default function ForgotPasswordPage() {
     e.preventDefault()
     setMessage('')
     setError('')
-
     try {
       const res = await fetch(`${API_BASE_URL}/api/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       })
-
       const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Something went wrong')
-      }
-
-      setMessage('Reset link sent to your email if it exists in our system.')
+      if (!res.ok) throw new Error(data.error || 'Something went wrong')
+      setMessage('✅ Reset link sent if the email exists.')
     } catch (err: any) {
       setError(err.message)
     }
   }
 
   return (
-    <div className="max-w-md mx-auto mt-20 p-6 border rounded bg-background text-textPrimary">
-      <h1 className="text-2xl mb-4 font-semibold">Forgot Password</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Enter your email"
-          required
-          className="w-full px-3 py-2 border rounded"
-        />
-        <button
-          type="submit"
-          className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-        >
-          Send Reset Link
-        </button>
-        {message && <p className="text-green-500">{message}</p>}
-        {error && <p className="text-red-500">{error}</p>}
-      </form>
+    <div className="min-h-screen w-full bg-gradient-to-b from-[#030712] to-[#1e3a8a] text-white flex items-center justify-center px-4 py-12">
+      <div className="bg-white text-black p-8 rounded-2xl shadow-2xl w-full max-w-md">
+        <h1 className="text-3xl font-bold mb-4 text-center text-[#1992FF]">Forgot your password?</h1>
+        <p className="text-center text-gray-600 mb-6">
+          No worries. Enter your email and we’ll send a reset link.
+        </p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            required
+            className="w-full px-4 py-2 border border-gray-300 rounded-xl bg-gray-100"
+          />
+          <button
+            type="submit"
+            className="w-full py-3 bg-[#1992FF] text-white font-semibold rounded-xl hover:brightness-110 transition"
+          >
+            Send Reset Link
+          </button>
+          {message && <p className="text-green-600 text-sm text-center">{message}</p>}
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+        </form>
+      </div>
     </div>
   )
 }
