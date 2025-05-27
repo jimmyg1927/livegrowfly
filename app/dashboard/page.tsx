@@ -1,4 +1,3 @@
-// File: app/dashboard/page.tsx
 'use client'
 export const dynamic = 'force-dynamic'
 
@@ -24,10 +23,10 @@ type Message = {
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { user } = useUserStore()
+  const { user, setUser } = useUserStore()
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
-  const promptLimit = (user as any)?.promptLimit ?? 0
-  const promptsUsed = (user as any)?.promptsUsed ?? 0
+  const promptLimit = user?.promptLimit ?? 0
+  const promptsUsed = user?.promptsUsed ?? 0
 
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
@@ -51,9 +50,9 @@ export default function DashboardPage() {
     if (stored) {
       try {
         const hist = JSON.parse(stored) as Message[]
-        setMessages(hist.slice(-5))
+        setMessages(hist.slice(-10))
       } catch {
-        console.warn('⚠️ Failed to parse user-specific chat history')
+        console.warn('⚠️ Failed to parse chat history')
       }
     }
   }, [chatKey])
@@ -67,6 +66,14 @@ export default function DashboardPage() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  const refreshUser = async () => {
+    const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const updated = await res.json()
+    setUser(updated)
+  }
 
   const uploadFile = async (file: File) => {
     const data = new FormData()
@@ -98,35 +105,29 @@ export default function DashboardPage() {
     setMessages((m) => [...m, { id: aId, role: 'assistant', content: '' }])
 
     let content = ''
+    let followUps: string[] = []
+
     await streamChat(
       text + (imageUrl ? `\n\n[Image URL: ${imageUrl}]` : ''),
       token,
       (chunk: StreamedChunk) => {
-        if (!chunk.content) return
-        content += chunk.content
-        setMessages((m) =>
-          m.map((msg) =>
-            msg.id === aId ? { ...msg, content: content } : msg
+        if (chunk.content) {
+          content += chunk.content
+          setMessages((m) =>
+            m.map((msg) => msg.id === aId ? { ...msg, content } : msg)
           )
-        )
+        }
+        if (chunk.followUps) {
+          followUps = chunk.followUps
+        }
       },
       () => {
-        fetch(`${API_BASE_URL}/api/ai/followup`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ answer: content }),
-        })
-          .then(res => res.json())
-          .then(data => {
-            setMessages((m) =>
-              m.map((msg) =>
-                msg.id === aId ? { ...msg, followUps: data.followUps || [] } : msg
-              )
-            )
-          })
+        setMessages((m) =>
+          m.map((msg) =>
+            msg.id === aId ? { ...msg, followUps } : msg
+          )
+        )
+        refreshUser()
       }
     )
   }
@@ -138,16 +139,6 @@ export default function DashboardPage() {
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSelectedFile(e.target.files?.[0] ?? null)
-  }
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    const file = e.dataTransfer.files[0]
-    if (file) setSelectedFile(file)
-  }
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
   }
 
   const handleSave = (msg: Message) => {
@@ -165,8 +156,18 @@ export default function DashboardPage() {
     window.open(url, '_blank')
   }
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    const file = e.dataTransfer.files?.[0]
+    if (file) setSelectedFile(file)
+  }
+
   return (
-    <div className="flex flex-col h-full p-4 text-foreground">
+    <div className="flex flex-col h-full p-4 text-foreground" onDragOver={handleDragOver} onDrop={handleDrop}>
       <div className="flex justify-between mb-4 items-center">
         <PromptTracker used={promptsUsed} limit={promptLimit} />
       </div>
@@ -174,7 +175,7 @@ export default function DashboardPage() {
       {messages.length === 0 && (
         <div className="text-center my-6">
           <button
-            className="bg-[#3399ff] hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow text-sm"
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full text-sm"
             onClick={() => {
               setInput('What can Growfly do for me?')
               handleSubmit()
@@ -191,29 +192,23 @@ export default function DashboardPage() {
             key={msg.id}
             className={`whitespace-pre-wrap text-sm p-4 rounded-xl shadow-sm max-w-2xl ${
               msg.role === 'user'
-                ? 'bg-[#3399ff] text-white self-end ml-auto'
-                : 'bg-gray-100 dark:bg-[#1e1e1e] self-start'
+                ? 'bg-[#1992FF] text-white self-end ml-auto'
+                : 'bg-gray-200 self-start text-gray-800'
             }`}
           >
             {msg.imageUrl && (
-              <Image
-                src={msg.imageUrl}
-                alt="Uploaded file"
-                width={200}
-                height={200}
-                className="mb-2 rounded"
-              />
+              <Image src={msg.imageUrl} alt="Uploaded file" width={200} height={200} className="mb-2 rounded" />
             )}
             <p>{msg.content}</p>
 
             {msg.role === 'assistant' && (
               <>
                 <div className="flex gap-2 mt-3 flex-wrap">
-                  {msg.followUps?.map((fu, i) => (
+                  {msg.followUps?.slice(0, 2).map((fu, i) => (
                     <button
                       key={i}
                       onClick={() => handleFollowUp(fu)}
-                      className="bg-blue-200 hover:bg-blue-300 text-sm px-3 py-1 rounded-full"
+                      className="bg-white text-blue-600 text-xs px-3 py-1 rounded-full hover:bg-blue-100"
                     >
                       {fu}
                     </button>
@@ -233,7 +228,7 @@ export default function DashboardPage() {
         <div ref={chatEndRef} />
       </div>
 
-      <div className="border-t pt-4 mt-4" onDrop={handleDrop} onDragOver={handleDragOver}>
+      <div className="border-t pt-4 mt-4">
         <textarea
           rows={2}
           className="w-full p-3 rounded border bg-background resize-none text-sm"
@@ -248,7 +243,7 @@ export default function DashboardPage() {
           }}
         />
         <div className="flex justify-between items-center mt-2">
-          <div className="text-sm flex items-center gap-3">
+          <div className="text-sm">
             <input
               type="file"
               accept="image/*,application/pdf"
@@ -258,18 +253,18 @@ export default function DashboardPage() {
             />
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="bg-[#3399ff] text-white px-3 py-1 rounded text-sm"
+              className="bg-[#1992FF] text-white px-3 py-1 rounded-md text-xs hover:brightness-110"
             >
               Upload Image / PDF
             </button>
             {selectedFile && (
-              <span className="text-xs text-muted-foreground">{selectedFile.name}</span>
+              <span className="ml-2 text-xs text-muted-foreground">{selectedFile.name}</span>
             )}
           </div>
           <button
             onClick={handleSubmit}
             disabled={!input.trim() && !selectedFile}
-            className="bg-[#3399ff] hover:bg-blue-700 disabled:bg-gray-300 text-white px-6 py-2 rounded-md text-sm"
+            className="bg-[#1992FF] hover:bg-blue-700 disabled:bg-gray-300 text-white px-6 py-2 rounded-md text-sm"
           >
             Send
           </button>
