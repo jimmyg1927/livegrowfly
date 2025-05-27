@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUserStore } from '@lib/store'
-import { ADMIN_EMAILS } from '@lib/auth'
 import {
   ResponsiveContainer,
   LineChart,
@@ -16,6 +15,14 @@ import {
   Bar,
   Legend,
 } from 'recharts'
+
+// Define directly here to avoid import issues
+const ADMIN_EMAILS = ['teddy@growfly.io', 'jimmy@growfly.io']
+
+const isAdmin = (email: string | undefined | null) => {
+  if (!email) return false
+  return ADMIN_EMAILS.includes(email.toLowerCase())
+}
 
 type AnalyticsData = {
   users: any[]
@@ -34,17 +41,13 @@ type AnalyticsData = {
   timestamp: string
 }
 
-const isAdmin = (email: string | undefined | null) => {
-  if (!email) return false
-  return ADMIN_EMAILS.includes(email.toLowerCase())
-}
-
 export default function AdminiganPage() {
   const router = useRouter()
   const { user } = useUserStore()
   const [data, setData] = useState<AnalyticsData | null>(null)
 
   useEffect(() => {
+    if (user === undefined) return // wait for user to load
     if (!user || !isAdmin(user?.email)) {
       router.push('/dashboard')
       return
@@ -65,7 +68,9 @@ export default function AdminiganPage() {
     fetchData()
   }, [user])
 
-  if (!isAdmin(user?.email)) return null
+  if (!user || !isAdmin(user?.email)) {
+    return <p className="text-center mt-10 text-muted-foreground">Checking admin access...</p>
+  }
 
   return (
     <div className="p-6 md:p-10 space-y-10 text-foreground">
@@ -78,7 +83,6 @@ export default function AdminiganPage() {
 
       {data ? (
         <>
-          {/* Primary Summary Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <StatCard label="New Users (30d)" value={data.users.length} />
             <StatCard label="Saved Responses" value={data.savedCount} />
@@ -86,7 +90,6 @@ export default function AdminiganPage() {
             <StatCard label="Feedback Submitted" value={data.feedbackCount} />
           </div>
 
-          {/* Stripe Revenue Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <StatCard label="Total Revenue (est)" value={`£${data.revenue.totalRevenue}`} />
             <StatCard label="MRR (Personal)" value={`£${data.revenue.mrr.personal.toFixed(2)}`} />
@@ -94,7 +97,6 @@ export default function AdminiganPage() {
           </div>
           <StatCard label="New Paid Users (This Month)" value={data.revenue.newPaidThisMonth} />
 
-          {/* Weekly Growth Line Chart */}
           <div className="bg-card p-6 rounded-xl shadow-sm border">
             <h2 className="text-lg font-semibold mb-4">Weekly Growth</h2>
             <ResponsiveContainer width="100%" height={250}>
@@ -110,7 +112,6 @@ export default function AdminiganPage() {
             </ResponsiveContainer>
           </div>
 
-          {/* Breakdown Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-card p-6 rounded-xl shadow-sm border">
               <h2 className="text-lg font-semibold mb-4">Subscription Breakdown</h2>
@@ -140,7 +141,6 @@ export default function AdminiganPage() {
             </div>
           </div>
 
-          {/* Top Users */}
           <div className="bg-card p-6 rounded-xl shadow-sm border">
             <h2 className="text-lg font-semibold mb-4">Top Users</h2>
             <table className="w-full text-sm">

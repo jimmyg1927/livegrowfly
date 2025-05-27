@@ -1,3 +1,4 @@
+// File: app/dashboard/page.tsx
 'use client'
 export const dynamic = 'force-dynamic'
 
@@ -45,7 +46,9 @@ export default function DashboardPage() {
       try {
         const hist = JSON.parse(stored) as Message[]
         setMessages(hist.slice(-5))
-      } catch {}
+      } catch {
+        return
+      }
     }
   }, [])
 
@@ -179,7 +182,14 @@ export default function DashboardPage() {
             }`}
           >
             {msg.imageUrl && (
-              <Image src={msg.imageUrl} alt="Uploaded" width={200} height={200} className="mb-2 rounded" />
+              <Image
+                src={msg.imageUrl}
+                alt="Uploaded image for AI"
+                width={200}
+                height={200}
+                className="mb-2 rounded"
+                priority
+              />
             )}
             <p>{msg.content}</p>
 
