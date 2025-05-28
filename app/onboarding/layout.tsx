@@ -1,13 +1,13 @@
 import { ReactNode } from 'react'
 
 export const metadata = {
-  title: 'growfly.io Onboarding',
+  title: 'Register — growfly.io',
 }
 
-export default function OnboardingLayout({ children }: { children: ReactNode }) {
+export default function RegisterLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-background text-textPrimary">
-      {children}
-    </div>
+    <html lang="en">
+      <body className="bg-background text-textPrimary">{children}</body>
+    </html>
   )
 }
