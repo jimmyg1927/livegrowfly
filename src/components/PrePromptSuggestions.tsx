@@ -19,7 +19,7 @@ export default function PrePromptSuggestions({ onSelect }: { onSelect: (prompt: 
           <button
             key={index}
             onClick={() => onSelect(suggestion.replace(/^[^a-zA-Z]+/, ''))}
-            className="text-xs px-3 py-1 rounded-full bg-primary text-white hover:bg-primary/80 transition-colors"
+            className="text-xs px-3 py-1 rounded-full bg-primary text-textPrimary hover:bg-primary/80 transition-colors"
           >
             {suggestion}
           </button>

@@ -115,7 +115,7 @@ export default function ChangePlanPage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#0c0f1a] to-[#02050a] px-4 py-16 text-white">
+    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#0c0f1a] to-[#02050a] px-4 py-16 text-textPrimary">
       <div className="max-w-4xl text-center mb-12">
         <h1 className="text-4xl font-extrabold mb-3">+ Change your Growfly plan +</h1>
         <p className="text-md text-gray-300">
@@ -129,7 +129,7 @@ export default function ChangePlanPage() {
             key={plan.id}
             className={`flex flex-col justify-between rounded-2xl border px-6 py-8 transition duration-300 ${
               plan.highlight
-                ? 'bg-[#122c64] text-white border-[#2e63f5]'
+                ? 'bg-[#122c64] text-textPrimary border-[#2e63f5]'
                 : 'bg-white text-black border-gray-200 hover:shadow-xl'
             }`}
           >
@@ -149,10 +149,10 @@ export default function ChangePlanPage() {
               disabled={selectedPlan === plan.id || currentPlan === plan.id}
               className={`w-full mt-4 py-2 text-sm font-semibold rounded-md transition ${
                 selectedPlan === plan.id || currentPlan === plan.id
-                  ? 'bg-gray-400 cursor-not-allowed text-white'
+                  ? 'bg-gray-400 cursor-not-allowed text-textPrimary'
                   : plan.highlight
                   ? 'bg-yellow-300 text-black hover:bg-yellow-200'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-blue-600 text-textPrimary hover:bg-blue-700'
               }`}
             >
               {selectedPlan === plan.id

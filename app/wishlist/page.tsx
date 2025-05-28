@@ -135,7 +135,7 @@ export default function WishlistPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="px-5 py-2 bg-accent text-white rounded hover:brightness-110 text-sm"
+            className="px-5 py-2 bg-accent text-textPrimary rounded hover:brightness-110 text-sm"
           >
             {submitting ? 'Posting…' : 'Add to Wishlist'}
           </button>
@@ -172,7 +172,7 @@ export default function WishlistPage() {
                   onClick={() => handleVote(item.id, 'positive')}
                   className={`flex items-center gap-1 px-4 py-1 rounded-full text-sm transition ${
                     item.userVote === 'positive'
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-blue-600 text-textPrimary'
                       : 'bg-muted text-blue-600'
                   }`}
                 >
@@ -183,7 +183,7 @@ export default function WishlistPage() {
                   onClick={() => handleVote(item.id, 'negative')}
                   className={`flex items-center gap-1 px-4 py-1 rounded-full text-sm transition ${
                     item.userVote === 'negative'
-                      ? 'bg-red-600 text-white'
+                      ? 'bg-red-600 text-textPrimary'
                       : 'bg-muted text-red-600'
                   }`}
                 >

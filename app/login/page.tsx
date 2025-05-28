@@ -55,14 +55,14 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#0a0a23] to-[#1e3a8a] px-6 pt-10 pb-20 text-white flex flex-col items-center justify-center">
+    <main className="min-h-screen bg-gradient-to-b from-[#0a0a23] to-[#1e3a8a] px-6 pt-10 pb-20 text-textPrimary flex flex-col items-center justify-center">
       <div className="mb-6">
         <Image src="/growfly-logo.png" alt="Growfly Logo" width={140} height={40} />
       </div>
 
       <div className="text-center mb-6">
         <h1 className="text-3xl font-extrabold">Welcome Back</h1>
-        <p className="text-white/80 text-sm mt-1">Log in to access your dashboard and AI tools</p>
+        <p className="text-textPrimary/80 text-sm mt-1">Log in to access your dashboard and AI tools</p>
       </div>
 
       {error && (
@@ -77,7 +77,7 @@ export default function LoginPage() {
             value={email}
             required
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-3 bg-white/10 text-white border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1992FF]"
+            className="w-full p-3 bg-white/10 text-textPrimary border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1992FF]"
             placeholder="you@example.com"
           />
         </div>
@@ -89,7 +89,7 @@ export default function LoginPage() {
             value={password}
             required
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-3 bg-white/10 text-white border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1992FF]"
+            className="w-full p-3 bg-white/10 text-textPrimary border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1992FF]"
             placeholder="Your password"
           />
         </div>
@@ -102,7 +102,7 @@ export default function LoginPage() {
 
         <button
           type="submit"
-          className="w-full py-3 bg-[#1992FF] text-white font-semibold rounded-lg hover:bg-blue-600 transition"
+          className="w-full py-3 bg-accent text-textPrimary font-semibold rounded-lg hover:bg-blue-600 transition"
         >
           Log In
         </button>

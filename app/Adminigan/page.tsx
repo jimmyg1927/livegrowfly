@@ -82,11 +82,11 @@ export default function AdminiganPage() {
   }, [user])
 
   if (!user || !isAdmin(user?.email)) {
-    return <p className="text-center mt-20 text-white">Checking access…</p>
+    return <p className="text-center mt-20 text-textPrimary">Checking access…</p>
   }
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-[#030712] to-[#1e3a8a] text-white px-6 py-10">
+    <div className="min-h-screen w-full bg-gradient-to-b from-[#030712] to-[#1e3a8a] text-textPrimary px-6 py-10">
       <div className="max-w-7xl mx-auto space-y-12">
 
         <div className="text-center">
@@ -221,7 +221,7 @@ export default function AdminiganPage() {
             </p>
           </>
         ) : (
-          <p className="text-center text-white mt-10">Loading admin data…</p>
+          <p className="text-center text-textPrimary mt-10">Loading admin data…</p>
         )}
       </div>
     </div>

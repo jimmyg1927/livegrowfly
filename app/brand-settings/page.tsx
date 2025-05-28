@@ -162,7 +162,7 @@ export default function BrandSettingsPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md text-sm font-medium transition"
+          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-textPrimary px-6 py-2 rounded-md text-sm font-medium transition"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           {saving ? 'Saving...' : 'Save Brand Settings'}

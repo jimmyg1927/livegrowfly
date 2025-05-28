@@ -58,7 +58,7 @@ export default function AskGrowfly() {
           placeholder="Type your prompt here…"
         />
         <button
-          className="px-4 bg-primary text-white rounded"
+          className="px-4 bg-primary text-textPrimary rounded"
           onClick={sendPrompt}
           disabled={loading || !message.trim()}
         >

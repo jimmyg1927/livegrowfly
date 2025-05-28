@@ -47,7 +47,7 @@ export default function Header() {
   }
 
   return (
-    <header className="w-full bg-gradient-to-r from-[#0f172a] to-[#1e3a8a] text-white flex items-center justify-between px-4 sm:px-8 py-3 shadow">
+    <header className="w-full bg-gradient-to-r from-[#0f172a] to-[#1e3a8a] text-textPrimary flex items-center justify-between px-4 sm:px-8 py-3 shadow">
       <div className="flex items-center gap-6">
         <div className="flex flex-col">
           <span className="text-sm font-semibold">

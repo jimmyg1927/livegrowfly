@@ -42,7 +42,7 @@ export default function SetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-600 to-blue-300 text-white">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-600 to-blue-300 text-textPrimary">
       <form
         onSubmit={handleSubmit}
         className="bg-white text-black rounded-2xl shadow-lg p-8 max-w-md w-full"
@@ -80,7 +80,7 @@ export default function SetPasswordPage() {
 
         <button
           type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-800 text-white font-semibold py-2 rounded-xl transition"
+          className="w-full bg-blue-600 hover:bg-blue-800 text-textPrimary font-semibold py-2 rounded-xl transition"
         >
           Set Password & Continue
         </button>

@@ -113,10 +113,10 @@ export default function SettingsPage() {
       if (data.url) {
         window.open(data.url, '_blank')
       } else {
-        alert('Stripe billing portal not available.')
+        alert(data.error || 'You’re currently on a free plan. Billing is only available for paid users.')
       }
     } catch (err) {
-      alert('Failed to open billing portal.')
+      alert('You’re currently on a free plan. Billing is only available for paid users.')
     }
   }
 
@@ -206,13 +206,13 @@ export default function SettingsPage() {
           </div>
 
           <div className="md:col-span-2 flex flex-col sm:flex-row justify-between items-start sm:items-center mt-4 gap-4">
-            <button type="submit" className="bg-accent hover:brightness-110 px-6 py-2 rounded font-semibold text-white transition">
+            <button type="submit" className="bg-accent hover:brightness-110 px-6 py-2 rounded font-semibold text-textPrimary transition">
               Save Changes
             </button>
             <button
               type="button"
               onClick={handleBillingPortal}
-              className="bg-[#1992FF] hover:bg-[#0f66c5] text-white font-medium text-sm px-5 py-2 rounded transition"
+              className="bg-accent hover:bg-[#0f66c5] text-textPrimary font-medium text-sm px-5 py-2 rounded transition"
             >
               Manage Billing + View Invoices
             </button>

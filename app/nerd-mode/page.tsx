@@ -194,7 +194,7 @@ export default function NerdModePage() {
                 {list.map((prompt) => (
                   <motion.li
                     key={prompt}
-                    className="flex items-center justify-between bg-blue-100 dark:bg-blue-700 px-4 py-2 rounded-md text-sm hover:bg-blue-600 hover:text-white transition"
+                    className="flex items-center justify-between bg-blue-100 dark:bg-blue-700 px-4 py-2 rounded-md text-sm hover:bg-blue-600 hover:text-textPrimary transition"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                   >
@@ -205,9 +205,9 @@ export default function NerdModePage() {
                       title="Copy prompt"
                     >
                       {copiedPrompt === prompt ? (
-                        <HiCheckCircle className="h-5 w-5 text-white" />
+                        <HiCheckCircle className="h-5 w-5 text-textPrimary" />
                       ) : (
-                        <HiClipboard className="h-5 w-5 text-blue-700 dark:text-white" />
+                        <HiClipboard className="h-5 w-5 text-blue-700 dark:text-textPrimary" />
                       )}
                     </button>
                   </motion.li>

@@ -50,7 +50,7 @@ export default function ReferPage() {
               className="flex-1 px-4 py-2 rounded bg-background border border-gray-300"
             />
             <button
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+              className="bg-blue-600 text-textPrimary px-4 py-2 rounded hover:bg-blue-700 transition"
               onClick={() => copyToClipboard(shareUrl)}
               disabled={!shareUrl}
             >
@@ -65,7 +65,7 @@ export default function ReferPage() {
             <code className="bg-gray-100 px-3 py-1 rounded font-mono text-sm">{code || '—'}</code>
             <button
               onClick={() => code && copyToClipboard(code)}
-              className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition text-sm"
+              className="bg-blue-500 text-textPrimary px-3 py-1 rounded hover:bg-blue-600 transition text-sm"
               disabled={!code}
             >
               Copy Code

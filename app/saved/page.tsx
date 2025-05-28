@@ -181,7 +181,7 @@ export default function SavedPage() {
                         <DialogTrigger asChild>
                           <button
                             onClick={() => setSelected(item)}
-                            className="flex items-center gap-1 text-xs px-3 py-1 rounded bg-accent text-white hover:bg-accent/90 transition"
+                            className="flex items-center gap-1 text-xs px-3 py-1 rounded bg-accent text-textPrimary hover:bg-accent/90 transition"
                           >
                             <FiMaximize2 className="w-4 h-4" /> View Full
                           </button>
@@ -198,7 +198,7 @@ export default function SavedPage() {
 
                       <button
                         onClick={() => handleShareToCollab(item)}
-                        className="flex items-center gap-1 text-xs px-3 py-1 rounded bg-violet-600 hover:bg-violet-700 text-white transition"
+                        className="flex items-center gap-1 text-xs px-3 py-1 rounded bg-violet-600 hover:bg-violet-700 text-textPrimary transition"
                       >
                         <FiEdit className="w-4 h-4" /> Edit in Collab Zone
                       </button>
@@ -206,7 +206,7 @@ export default function SavedPage() {
 
                     <button
                       onClick={() => handleDelete(item.id)}
-                      className="flex items-center gap-1 text-sm px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white transition"
+                      className="flex items-center gap-1 text-sm px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-textPrimary transition"
                     >
                       <FiTrash2 /> Delete
                     </button>

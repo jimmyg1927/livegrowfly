@@ -196,7 +196,7 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
             />
             <button
               onClick={addComment}
-              className="px-3 py-1 text-sm bg-accent text-white rounded hover:brightness-110"
+              className="px-3 py-1 text-sm bg-accent text-textPrimary rounded hover:brightness-110"
             >
               Comment
             </button>
@@ -206,10 +206,10 @@ export default function Editor({ content, setContent, docId, showComments }: Pro
         <p className="text-xs text-muted-foreground mt-3 italic">💬 Highlight text above to comment on it.</p>
 
         <div className="mt-4 flex gap-4">
-          <button onClick={exportPDF} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110">
+          <button onClick={exportPDF} className="flex items-center gap-1 px-4 py-2 bg-accent text-textPrimary rounded hover:brightness-110">
             <Download size={16} /> Export PDF
           </button>
-          <button onClick={exportDocx} className="flex items-center gap-1 px-4 py-2 bg-accent text-white rounded hover:brightness-110">
+          <button onClick={exportDocx} className="flex items-center gap-1 px-4 py-2 bg-accent text-textPrimary rounded hover:brightness-110">
             <Download size={16} /> Export Word
           </button>
         </div>

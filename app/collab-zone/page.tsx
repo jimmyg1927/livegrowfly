@@ -155,7 +155,7 @@ export default function CollabZonePage() {
       <aside className="w-60 border-r border-border bg-card p-4 space-y-4 overflow-y-auto text-sm">
         <button
           onClick={handleNew}
-          className="w-full flex items-center gap-1 px-3 py-2 bg-accent text-white rounded hover:brightness-110 transition text-xs"
+          className="w-full flex items-center gap-1 px-3 py-2 bg-accent text-textPrimary rounded hover:brightness-110 transition text-xs"
         >
           <FiPlus /> New Doc
         </button>
@@ -227,13 +227,13 @@ export default function CollabZonePage() {
               title="Invite someone to collaborate"
               className="px-2 py-1 border border-border rounded text-sm"
             />
-            <button onClick={shareByEmail} title="Send invite via email" className="px-3 py-2 bg-accent text-white rounded text-sm">
+            <button onClick={shareByEmail} title="Send invite via email" className="px-3 py-2 bg-accent text-textPrimary rounded text-sm">
               <FiMail size={14} className="inline mr-1" /> Share
             </button>
             <button onClick={copyLink} title="Copy doc link" className="px-3 py-2 bg-muted rounded text-sm">
               <FiLink size={14} className="inline mr-1" /> Copy Link
             </button>
-            <button onClick={handleSave} title="Save document" className="px-3 py-2 bg-green-600 text-white rounded text-sm">
+            <button onClick={handleSave} title="Save document" className="px-3 py-2 bg-green-600 text-textPrimary rounded text-sm">
               <FiSave size={14} className="inline mr-1" /> Save
             </button>
             <button onClick={() => setShowComments(!showComments)} title="Toggle comment visibility" className="px-3 py-2 bg-muted rounded text-sm">

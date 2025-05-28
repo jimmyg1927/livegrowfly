@@ -10,7 +10,7 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="flex items-center gap-2 px-3 py-1 bg-accent text-white rounded-full hover:bg-accent/80 transition duration-300 shadow-smooth"
+      className="flex items-center gap-2 px-3 py-1 bg-accent text-textPrimary rounded-full hover:bg-accent/80 transition duration-300 shadow-smooth"
       aria-label="Toggle Light/Dark Mode"
     >
       {theme === 'light' ? (

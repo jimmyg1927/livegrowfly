@@ -25,7 +25,7 @@ export default function FeedbackForm({ onCreated }: FeedbackFormProps) {
       />
       <button
         type="submit"
-        className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
+        className="mt-2 px-4 py-2 bg-blue-500 text-textPrimary rounded"
       >
         Submit
       </button>

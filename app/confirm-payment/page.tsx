@@ -31,7 +31,7 @@ function PaymentSuccessContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white bg-blue-600">
+      <div className="min-h-screen flex items-center justify-center text-textPrimary bg-blue-600">
         <p>Processing your payment... please wait 🚀</p>
       </div>
     )
@@ -39,7 +39,7 @@ function PaymentSuccessContent() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white bg-red-600">
+      <div className="min-h-screen flex items-center justify-center text-textPrimary bg-red-600">
         <p>{error}</p>
       </div>
     )
@@ -52,7 +52,7 @@ export default function PaidSuccessPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center text-white bg-blue-600">
+        <div className="min-h-screen flex items-center justify-center text-textPrimary bg-blue-600">
           Loading...
         </div>
       }

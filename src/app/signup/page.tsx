@@ -41,7 +41,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#020617] to-gray-900 text-white flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-b from-[#020617] to-gray-900 text-textPrimary flex items-center justify-center px-4">
       <div className="bg-white text-black p-8 rounded-2xl shadow-2xl w-full max-w-md">
         <button
           onClick={() => router.push('/plans')}
@@ -95,7 +95,7 @@ export default function SignupPage() {
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-800 transition"
+            className="w-full bg-blue-600 text-textPrimary font-semibold py-2 rounded-lg hover:bg-blue-800 transition"
           >
             Create Account
           </button>

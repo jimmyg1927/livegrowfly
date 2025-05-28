@@ -4,7 +4,7 @@ import ResetPasswordClient from '@/components/ResetPasswordClient'
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="text-center p-10 text-white">Loading reset form...</div>}>
+    <Suspense fallback={<div className="text-center p-10 text-textPrimary">Loading reset form...</div>}>
       <ResetPasswordClient />
     </Suspense>
   )

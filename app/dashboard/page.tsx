@@ -67,6 +67,24 @@ export default function DashboardPage() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  const handleStream = async (prompt: string, aId: string) => {
+    let fullContent = ''
+    await streamChat(
+      prompt,
+      token,
+      (chunk: StreamedChunk) => {
+        if (!chunk.content) return
+        fullContent += chunk.content
+        setMessages((m) =>
+          m.map((msg) =>
+            msg.id === aId ? { ...msg, content: fullContent, followUps: chunk.followUps } : msg
+          )
+        )
+      },
+      () => {}
+    )
+  }
+
   const handleSubmit = async () => {
     const text = input.trim()
     if (!text && !selectedFile) return
@@ -82,7 +100,6 @@ export default function DashboardPage() {
       const reader = new FileReader()
       reader.onload = async () => {
         const base64 = reader.result as string
-
         try {
           const res = await fetch(`${API_BASE_URL}/api/ai/image`, {
             method: 'POST',
@@ -109,32 +126,23 @@ export default function DashboardPage() {
       reader.readAsDataURL(selectedFile)
       setSelectedFile(null)
     } else {
-      let fullContent = ''
-      await streamChat(
-        text,
-        token,
-        (chunk: StreamedChunk) => {
-          if (!chunk.content) return
-          fullContent += chunk.content
-          setMessages((m) =>
-            m.map((msg) =>
-              msg.id === aId ? { ...msg, content: fullContent } : msg
-            )
-          )
-        },
-        () => { /* handled by follow-up fetch inside streamChat */ }
-      )
+      handleStream(text, aId)
     }
   }
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null
+    if (!file) return
+    const preview = URL.createObjectURL(file)
+    setMessages((m) => [...m, { id: `u${Date.now()}`, role: 'user', content: file.name, imageUrl: preview }])
     setSelectedFile(file)
   }
 
   const handleFollowUp = (q: string) => {
-    setInput(q)
-    handleSubmit()
+    const uId = `u${Date.now()}`
+    const aId = `a${Date.now()}`
+    setMessages((m) => [...m, { id: uId, role: 'user', content: q }, { id: aId, role: 'assistant', content: '' }])
+    handleStream(q, aId)
   }
 
   const handleSave = (msg: Message) => {
@@ -162,10 +170,7 @@ export default function DashboardPage() {
         <div className="text-center my-6">
           <button
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow text-sm"
-            onClick={() => {
-              setInput('What can Growfly do for me?')
-              handleSubmit()
-            }}
+            onClick={() => handleFollowUp('What can Growfly do for me?')}
           >
             What can Growfly do for me?
           </button>
@@ -178,7 +183,7 @@ export default function DashboardPage() {
             key={msg.id}
             className={`whitespace-pre-wrap text-sm p-4 rounded-xl shadow-sm max-w-2xl ${
               msg.role === 'user'
-                ? 'bg-[#1992FF] text-white self-end ml-auto'
+                ? 'bg-accent text-white self-end ml-auto'
                 : 'bg-gray-100 self-start text-black'
             }`}
           >
@@ -211,7 +216,9 @@ export default function DashboardPage() {
                   <HiThumbDown onClick={() => handleFeedback(msg)} className="cursor-pointer hover:text-red-500" />
                   <FaRegBookmark onClick={() => handleSave(msg)} className="cursor-pointer hover:text-yellow-500" />
                   <FaShareSquare onClick={() => router.push('/collab-zone')} className="cursor-pointer hover:text-blue-500" />
-                  <FaFileDownload onClick={() => downloadFile(msg, 'docx')} className="cursor-pointer hover:text-gray-600" />
+                  {msg.imageUrl && (
+                    <FaFileDownload onClick={() => downloadFile(msg, 'docx')} className="cursor-pointer hover:text-gray-600" />
+                  )}
                 </div>
               </>
             )}
@@ -262,7 +269,7 @@ export default function DashboardPage() {
           <button
             onClick={handleSubmit}
             disabled={!input.trim() && !selectedFile}
-            className="bg-[#1992FF] hover:bg-blue-700 disabled:bg-gray-300 text-white px-6 py-2 rounded-md text-sm"
+            className="bg-accent hover:bg-blue-700 disabled:bg-gray-300 text-white px-6 py-2 rounded-md text-sm"
           >
             Send
           </button>
