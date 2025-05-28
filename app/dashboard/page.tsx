@@ -161,7 +161,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col h-full p-4 bg-background text-textPrimary">
+    <div className="flex flex-col h-full p-4 bg-muted text-textPrimary transition-colors duration-300">
       <div className="flex justify-between mb-4 items-center">
         <PromptTracker used={promptsUsed} limit={promptLimit} />
       </div>
@@ -205,7 +205,7 @@ export default function DashboardPage() {
                     <button
                       key={i}
                       onClick={() => handleFollowUp(fu)}
-                      className="bg-white text-blue-700 border border-blue-300 hover:bg-blue-50 px-4 py-1 rounded-full text-sm transition"
+                      className="bg-blue-100 text-blue-800 hover:bg-blue-200 px-3 py-1 rounded-full text-xs font-medium shadow-sm"
                     >
                       {fu}
                     </button>
@@ -269,9 +269,9 @@ export default function DashboardPage() {
           <button
             onClick={handleSubmit}
             disabled={!input.trim() && !selectedFile}
-            className="bg-accent hover:brightness-110 disabled:bg-gray-300 text-white px-6 py-2 rounded-md text-sm"
+            className="bg-accent hover:bg-accent/90 disabled:bg-gray-400 text-white font-semibold px-6 py-2 rounded-full text-sm shadow transition-all"
           >
-            Send
+            ➤ Send
           </button>
         </div>
       </div>

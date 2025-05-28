@@ -23,8 +23,8 @@
 }
 
 .dark {
-  --background: #0f172a; /* ✅ SOLID NAVY for dark mode bg */
-  --textPrimary: #ffffff; /* ✅ WHITE for dark mode text */
+  --background: #0f172a;
+  --textPrimary: #ffffff;
 
   --accent: #2e63f5;
   --accent-foreground: #ffffff;
@@ -43,4 +43,22 @@
 /* ✅ Enforce globally */
 body {
   @apply bg-background text-textPrimary;
+}
+
+/* ✅ Fix for all inputs, textareas, selects */
+input,
+textarea,
+select {
+  @apply text-textPrimary bg-input border border-input-border placeholder-gray-400 focus:border-input-focus focus:outline-none rounded;
+}
+
+/* ✅ Ensure placeholder is legible in dark mode */
+input::placeholder,
+textarea::placeholder {
+  color: #cbd5e1; /* Tailwind gray-400 */
+}
+
+/* ✅ Ensure all labels match theme text */
+label {
+  @apply text-textPrimary;
 }
