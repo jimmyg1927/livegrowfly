@@ -13,14 +13,14 @@ export async function middleware(req: NextRequest) {
   if (req.nextUrl.pathname.startsWith('/api')) {
     if (req.method === 'OPTIONS') {
       const res = new NextResponse(null, { status: 204 })
-      res.headers.set('Access-Control-Allow-Origin', 'https://growflynew0425.vercel.app')
+      res.headers.set('Access-Control-Allow-Origin', 'https://app.growfly.io')
       res.headers.set('Access-Control-Allow-Credentials', 'true')
       res.headers.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
       res.headers.set('Access-Control-Allow-Headers', 'Content-Type,Authorization')
       return res
     }
     const res = NextResponse.next()
-    res.headers.set('Access-Control-Allow-Origin', 'https://growflynew0425.vercel.app')
+    res.headers.set('Access-Control-Allow-Origin', 'https://app.growfly.io')
     res.headers.set('Access-Control-Allow-Credentials', 'true')
     return res
   }
