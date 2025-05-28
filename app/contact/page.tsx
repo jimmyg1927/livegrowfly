@@ -47,7 +47,7 @@ export default function ContactPage() {
 
         {submitted ? (
           <div className="text-green-400 text-center font-semibold">
-            ✅ Thanks! We'll be in touch shortly.
+            ✅ Thanks! We&apos;ll be in touch shortly.
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
