@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
   title: 'growfly.io',
-  description: 'AI-powered growth dashboard',
+  description: 'growfly.io is the Artificial Intelligence (AI) powered growth platform for startups and small businesses.',
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {

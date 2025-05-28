@@ -1,7 +1,7 @@
 import { ReactNode } from 'react'
 
 export const metadata = {
-  title: 'Growfly Onboarding',
+  title: 'growfly.io Onboarding',
 }
 
 export default function OnboardingLayout({ children }: { children: ReactNode }) {

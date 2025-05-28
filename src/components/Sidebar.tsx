@@ -52,8 +52,8 @@ export default function Sidebar() {
         <Link href="/dashboard" className="w-full flex justify-center">
           <img
             src="/growfly-logo.png"
-            alt="Growfly"
-            className="w-20 h-20 object-contain"
+            alt="growfly"
+            className="w-22 h-22 object-contain"
           />
         </Link>
       </div>

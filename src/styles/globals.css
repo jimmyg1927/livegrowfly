@@ -5,9 +5,9 @@
 /* Light Mode Defaults */
 :root {
   --background: #ffffff;
-  --textPrimary: #000000;
+  --textPrimary: #ffffff;
 
-  --accent: #2e63f5;
+  --accent: #00C3ff;
   --accent-foreground: #ffffff;
 
   --card: #f5f5f5;
@@ -16,7 +16,7 @@
   --border: #e5e7eb;
   --input: #f9fafb;
   --input-border: #d1d5db;
-  --input-focus: #3b82f6;
+  --input-focus: #00C3FF;
 
   --highlight: #fef9c3;
 
@@ -28,18 +28,18 @@
   --background: #0f172a;             /* Dark navy background */
   --textPrimary: #ffffff;            /* White text */
 
-  --accent: #2e63f5;
+  --accent: #254aae;
   --accent-foreground: #ffffff;
 
-  --card: #1e293b;
+  --card: #254aae;
   --card-foreground: #ffffff;
 
   --border: #334155;
   --input: #1f2937;
   --input-border: #475569;
-  --input-focus: #60a5fa;
+  --input-focus: #00C3FF;
 
-  --highlight: #fef08a;
+  --highlight: #ffeb50;
 }
 
 /* ✅ Enforce global background + text color */
@@ -58,7 +58,7 @@ select {
 /* ✅ Placeholder readability in dark mode */
 input::placeholder,
 textarea::placeholder {
-  color: #cbd5e1; /* Tailwind gray-400 */
+  color: #00C3FF; /* Tailwind gray-400 */
 }
 
 /* ✅ Label text should match theme */
