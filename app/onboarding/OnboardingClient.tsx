@@ -200,8 +200,8 @@ export default function OnboardingClient() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#0a0a23] to-[#1e3a8a] px-6 py-10 text-textPrimary">
-      <div className="flex justify-center mb-4">
+    <main className="min-h-screen bg-gradient-to-b from-[#0a0a23] to-[#1e3a8a] px-4 pt-4 pb-6 text-textPrimary">
+      <div className="flex justify-center mb-2 mt-2">
         <Image src="/growfly-logo.png" alt="Growfly" width={140} height={40} />
       </div>
 

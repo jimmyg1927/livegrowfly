@@ -6,8 +6,8 @@ export const metadata = {
 
 export default function OnboardingLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body style={{ margin: 0, padding: 0 }}>{children}</body>
-    </html>
+    <div className="min-h-screen bg-background text-textPrimary">
+      {children}
+    </div>
   )
 }
