@@ -67,8 +67,8 @@ export default function Sidebar() {
               href={item.href}
               className={`flex items-center gap-3 px-4 py-2 rounded-xl transition text-sm font-medium ${
                 isActive
-                  ? 'bg-white text-textPrimary shadow-md'
-                  : 'text-white hover:bg-white/20 hover:shadow'
+                  ? 'bg-white text-[#0f172a] shadow-md font-semibold'
+                  : 'text-white hover:bg-white/10 hover:shadow'
               }`}
             >
               <item.icon className="h-5 w-5" />
@@ -84,7 +84,7 @@ export default function Sidebar() {
             localStorage.removeItem('growfly_jwt')
             window.location.href = '/login'
           }}
-          className="flex items-center gap-3 w-full px-4 py-2 text-white hover:bg-white/20 hover:shadow rounded-xl transition text-sm font-medium"
+          className="flex items-center gap-3 w-full px-4 py-2 text-white hover:bg-white/10 hover:shadow rounded-xl transition text-sm font-medium"
         >
           <HiOutlineLogout className="h-5 w-5" />
           <span className="hidden sm:inline">Logout</span>

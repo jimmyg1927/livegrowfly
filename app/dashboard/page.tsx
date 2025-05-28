@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { HiThumbUp, HiThumbDown } from 'react-icons/hi'
 import { FaRegBookmark, FaShareSquare, FaFileDownload } from 'react-icons/fa'
-import PromptTracker from '@components/PromptTracker'
-import SaveModal from '@components/SaveModal'
-import FeedbackModal from '@components/FeedbackModal'
+import PromptTracker from '@/components/PromptTracker'
+import SaveModal from '@/components/SaveModal'
+import FeedbackModal from '@/components/FeedbackModal'
 import streamChat, { StreamedChunk } from '@lib/streamChat'
 import { useUserStore } from '@lib/store'
 import { API_BASE_URL } from '@lib/constants'
@@ -161,7 +161,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col h-full min-h-screen p-4 bg-background text-textPrimary">
+    <div className="flex flex-col h-full p-4 bg-background text-textPrimary">
       <div className="flex justify-between mb-4 items-center">
         <PromptTracker used={promptsUsed} limit={promptLimit} />
       </div>
@@ -169,7 +169,7 @@ export default function DashboardPage() {
       {messages.length === 0 && (
         <div className="text-center my-6">
           <button
-            className="bg-accent hover:brightness-110 text-white px-4 py-2 rounded-full shadow text-sm"
+            className="bg-accent text-white px-4 py-2 rounded-full shadow text-sm hover:brightness-110"
             onClick={() => handleFollowUp('What can Growfly do for me?')}
           >
             What can Growfly do for me?
@@ -205,7 +205,7 @@ export default function DashboardPage() {
                     <button
                       key={i}
                       onClick={() => handleFollowUp(fu)}
-                      className="text-sm px-4 py-1 rounded-full border border-accent text-accent hover:bg-accent/10 transition"
+                      className="bg-white text-blue-700 border border-blue-300 hover:bg-blue-50 px-4 py-1 rounded-full text-sm transition"
                     >
                       {fu}
                     </button>
@@ -230,7 +230,7 @@ export default function DashboardPage() {
       <div className="border-t pt-4 mt-4">
         <textarea
           rows={2}
-          className="w-full p-3 rounded border bg-card resize-none text-sm text-textPrimary"
+          className="w-full p-3 rounded border bg-input text-textPrimary resize-none text-sm"
           placeholder="Type your message..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -251,7 +251,7 @@ export default function DashboardPage() {
               }}
               onDragOver={(e) => e.preventDefault()}
               onClick={() => fileInputRef.current?.click()}
-              className="cursor-pointer border-2 border-dashed border-blue-400 px-4 py-2 rounded text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900"
+              className="cursor-pointer border-2 border-dashed border-blue-400 px-4 py-2 rounded text-blue-600 hover:bg-blue-50"
             >
               📎 Upload Image / PDF
             </div>
