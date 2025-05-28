@@ -130,7 +130,7 @@ export default function ChangePlanPage() {
             className={`flex flex-col justify-between rounded-2xl border px-6 py-8 transition duration-300 ${
               plan.highlight
                 ? 'bg-[#122c64] text-textPrimary border-[#2e63f5]'
-                : 'bg-white text-black border-gray-200 hover:shadow-xl'
+                : 'bg-white text-textPrimary border-gray-200 hover:shadow-xl'
             }`}
           >
             <div>
@@ -151,7 +151,7 @@ export default function ChangePlanPage() {
                 selectedPlan === plan.id || currentPlan === plan.id
                   ? 'bg-gray-400 cursor-not-allowed text-textPrimary'
                   : plan.highlight
-                  ? 'bg-yellow-300 text-black hover:bg-yellow-200'
+                  ? 'bg-yellow-300 text-textPrimary hover:bg-yellow-200'
                   : 'bg-blue-600 text-textPrimary hover:bg-blue-700'
               }`}
             >

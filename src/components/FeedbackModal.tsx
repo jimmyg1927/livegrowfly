@@ -74,7 +74,7 @@ export default function FeedbackModal({
               <button
                 onClick={() => setRating('positive')}
                 className={`p-3 rounded-full transition shadow ${
-                  rating === 'positive' ? 'bg-green-500 text-textPrimary' : 'bg-gray-300 text-black'
+                  rating === 'positive' ? 'bg-green-500 text-textPrimary' : 'bg-gray-300 text-textPrimary'
                 }`}
                 title="Thumbs Up"
               >
@@ -83,7 +83,7 @@ export default function FeedbackModal({
               <button
                 onClick={() => setRating('negative')}
                 className={`p-3 rounded-full transition shadow ${
-                  rating === 'negative' ? 'bg-red-500 text-textPrimary' : 'bg-gray-300 text-black'
+                  rating === 'negative' ? 'bg-red-500 text-textPrimary' : 'bg-gray-300 text-textPrimary'
                 }`}
                 title="Thumbs Down"
               >
@@ -100,7 +100,7 @@ export default function FeedbackModal({
             <div className="flex justify-end gap-2">
               <button
                 onClick={onClose}
-                className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400"
+                className="px-4 py-2 bg-gray-300 text-textPrimary rounded hover:bg-gray-400"
                 disabled={submitting}
               >
                 Cancel

@@ -42,7 +42,7 @@ export default function RegisterPage() {
           </ul>
           <button
             onClick={() => handleSelect('free')}
-            className="mt-auto px-4 py-2 bg-[#72C8F6] text-black font-semibold rounded-full hover:brightness-110 transition"
+            className="mt-auto px-4 py-2 bg-[#72C8F6] text-textPrimary font-semibold rounded-full hover:brightness-110 transition"
           >
             Start Free
           </button>
@@ -60,7 +60,7 @@ export default function RegisterPage() {
           </ul>
           <button
             onClick={() => handleSelect('personal')}
-            className="mt-auto px-4 py-2 bg-[#72C8F6] text-black font-semibold rounded-full hover:brightness-110 transition"
+            className="mt-auto px-4 py-2 bg-[#72C8F6] text-textPrimary font-semibold rounded-full hover:brightness-110 transition"
           >
             Choose Personal
           </button>
@@ -78,7 +78,7 @@ export default function RegisterPage() {
           </ul>
           <button
             onClick={() => handleSelect('business')}
-            className="mt-auto px-4 py-2 bg-[#72C8F6] text-black font-semibold rounded-full hover:brightness-110 transition"
+            className="mt-auto px-4 py-2 bg-[#72C8F6] text-textPrimary font-semibold rounded-full hover:brightness-110 transition"
           >
             Choose Business
           </button>

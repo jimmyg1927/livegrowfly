@@ -115,7 +115,7 @@ export default function AdminiganPage() {
             <StatCard label="New Paid Users (This Month)" value={analytics.revenue.newPaidThisMonth} />
 
             {/* Weekly Growth Line Chart */}
-            <div className="bg-white text-black rounded-2xl shadow p-6 border">
+            <div className="bg-white text-textPrimary rounded-2xl shadow p-6 border">
               <h2 className="text-lg font-semibold mb-4 text-[#1992FF]">📊 Weekly Growth</h2>
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={analytics.weeklyStats}>
@@ -132,7 +132,7 @@ export default function AdminiganPage() {
 
             {/* Breakdown Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white text-black rounded-2xl shadow p-6 border">
+              <div className="bg-white text-textPrimary rounded-2xl shadow p-6 border">
                 <h2 className="text-lg font-semibold mb-4 text-[#1992FF]">📦 Subscription Breakdown</h2>
                 <ul className="space-y-2 text-sm">
                   {analytics.subscriptionBreakdown.map((item) => (
@@ -144,7 +144,7 @@ export default function AdminiganPage() {
                 </ul>
               </div>
 
-              <div className="bg-white text-black rounded-2xl shadow p-6 border">
+              <div className="bg-white text-textPrimary rounded-2xl shadow p-6 border">
                 <h2 className="text-lg font-semibold mb-4 text-[#1992FF]">📈 XP Level Distribution</h2>
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={analytics.xpLevels}>
@@ -159,7 +159,7 @@ export default function AdminiganPage() {
             </div>
 
             {/* Top Users */}
-            <div className="bg-white text-black rounded-2xl shadow p-6 border">
+            <div className="bg-white text-textPrimary rounded-2xl shadow p-6 border">
               <h2 className="text-lg font-semibold mb-4 text-[#1992FF]">🏆 Top Users</h2>
               <table className="w-full text-sm">
                 <thead className="text-gray-600">
@@ -184,7 +184,7 @@ export default function AdminiganPage() {
             </div>
 
             {/* Contact Messages */}
-            <div className="bg-white text-black rounded-2xl shadow p-6 border">
+            <div className="bg-white text-textPrimary rounded-2xl shadow p-6 border">
               <h2 className="text-lg font-semibold mb-4 text-[#1992FF]">📩 Contact Form Submissions</h2>
               {messages.length === 0 ? (
                 <p className="text-gray-500 text-sm">No contact form messages yet.</p>
@@ -230,7 +230,7 @@ export default function AdminiganPage() {
 
 function StatCard({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="p-4 bg-white text-black rounded-xl border shadow-sm">
+    <div className="p-4 bg-white text-textPrimary rounded-xl border shadow-sm">
       <p className="text-sm text-gray-500">{label}</p>
       <p className="text-2xl font-bold">{value}</p>
     </div>

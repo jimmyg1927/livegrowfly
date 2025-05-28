@@ -68,16 +68,16 @@ export default function Header() {
       <div className="flex items-center gap-4">
         <Link
           href="/refer"
-          className="hidden sm:inline-block px-3 py-1 text-sm font-medium rounded-full bg-white text-[#1992FF] hover:brightness-105 transition"
+          className="hidden sm:inline-block px-3 py-1 text-sm font-medium rounded-full bg-accent text-white hover:brightness-105 transition"
         >
           🎁 Refer a Friend
         </Link>
-        <span className="hidden sm:inline-block px-3 py-1 text-sm font-medium rounded-full bg-white text-[#1992FF] capitalize">
+        <span className="hidden sm:inline-block px-3 py-1 text-sm font-medium rounded-full bg-card text-accent capitalize">
           Subscription: {user?.subscriptionType || 'free'}
         </span>
         <Link
           href="/settings"
-          className="p-2 bg-white text-[#1992FF] rounded-full hover:brightness-105 shadow"
+          className="p-2 bg-card text-accent rounded-full hover:brightness-105 shadow"
         >
           <span className="sr-only">Profile</span>
           <svg
@@ -98,7 +98,7 @@ export default function Header() {
         <button
           onClick={toggleTheme}
           aria-label="Toggle theme"
-          className="bg-white text-[#1992FF] p-2 rounded-full shadow hover:brightness-105 transition"
+          className="bg-card text-accent p-2 rounded-full shadow hover:brightness-105 transition"
         >
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>

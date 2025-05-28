@@ -41,7 +41,7 @@ export default function AskGrowfly() {
         {defaultFollowUps.map((p, i) => (
           <button
             key={i}
-            className="px-3 py-1 bg-accent text-black rounded"
+            className="px-3 py-1 bg-accent text-textPrimary rounded"
             onClick={() => setMessage(p)}
           >
             {p}

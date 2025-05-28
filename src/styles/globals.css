@@ -23,8 +23,8 @@
 }
 
 .dark {
-  --background: #0f172a; /* ✅ solid dark Growfly blue for Tailwind compatibility */
-  --textPrimary: #ffffff;
+  --background: #0f172a; /* ✅ SOLID NAVY for dark mode bg */
+  --textPrimary: #ffffff; /* ✅ WHITE for dark mode text */
 
   --accent: #2e63f5;
   --accent-foreground: #ffffff;
@@ -38,4 +38,9 @@
   --input-focus: #60a5fa;
 
   --highlight: #fef08a;
+}
+
+/* ✅ Enforce globally */
+body {
+  @apply bg-background text-textPrimary;
 }

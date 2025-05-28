@@ -42,7 +42,7 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#020617] to-gray-900 text-textPrimary flex items-center justify-center px-4">
-      <div className="bg-white text-black p-8 rounded-2xl shadow-2xl w-full max-w-md">
+      <div className="bg-white text-textPrimary p-8 rounded-2xl shadow-2xl w-full max-w-md">
         <button
           onClick={() => router.push('/plans')}
           className="text-sm text-blue-600 hover:underline mb-4"

@@ -20,7 +20,7 @@ export default function FeedbackForm({ onCreated }: FeedbackFormProps) {
       <textarea
         value={feedback}
         onChange={(e) => setFeedback(e.target.value)}
-        className="w-full p-2 border rounded text-black"
+        className="w-full p-2 border rounded text-textPrimary"
         placeholder="Enter your feedback"
       />
       <button

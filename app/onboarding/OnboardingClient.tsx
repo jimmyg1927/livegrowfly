@@ -235,7 +235,7 @@ export default function OnboardingClient() {
             onClick={() => setStep(i + 1)}
             className={`px-4 py-1 rounded-full text-xs font-semibold ${
               step === i + 1
-                ? 'bg-[#72C8F6] text-black'
+                ? 'bg-[#72C8F6] text-textPrimary'
                 : 'bg-white/20 text-textPrimary hover:bg-white/30'
             }`}
           >
@@ -289,7 +289,7 @@ export default function OnboardingClient() {
         {step < 4 ? (
           <button
             onClick={() => validateStep() && setStep(s => s + 1)}
-            className="px-4 py-2 bg-[#72C8F6] text-black rounded-full hover:brightness-110 transition"
+            className="px-4 py-2 bg-[#72C8F6] text-textPrimary rounded-full hover:brightness-110 transition"
           >
             Next
           </button>
@@ -297,7 +297,7 @@ export default function OnboardingClient() {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className={`px-4 py-2 bg-[#72C8F6] text-black rounded-full hover:brightness-110 transition ${
+            className={`px-4 py-2 bg-[#72C8F6] text-textPrimary rounded-full hover:brightness-110 transition ${
               loading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
