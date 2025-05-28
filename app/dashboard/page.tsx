@@ -77,7 +77,13 @@ export default function DashboardPage() {
         fullContent += chunk.content
         setMessages((m) =>
           m.map((msg) =>
-            msg.id === aId ? { ...msg, content: fullContent, followUps: chunk.followUps } : msg
+            msg.id === aId
+              ? {
+                  ...msg,
+                  content: fullContent,
+                  followUps: chunk.followUps ?? msg.followUps ?? [],
+                }
+              : msg
           )
         )
       },
