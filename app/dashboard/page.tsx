@@ -161,7 +161,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col h-full p-4 text-foreground">
+    <div className="flex flex-col h-full min-h-screen p-4 bg-background text-textPrimary">
       <div className="flex justify-between mb-4 items-center">
         <PromptTracker used={promptsUsed} limit={promptLimit} />
       </div>
@@ -169,7 +169,7 @@ export default function DashboardPage() {
       {messages.length === 0 && (
         <div className="text-center my-6">
           <button
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow text-sm"
+            className="bg-accent hover:brightness-110 text-white px-4 py-2 rounded-full shadow text-sm"
             onClick={() => handleFollowUp('What can Growfly do for me?')}
           >
             What can Growfly do for me?
@@ -184,7 +184,7 @@ export default function DashboardPage() {
             className={`whitespace-pre-wrap text-sm p-4 rounded-xl shadow-sm max-w-2xl ${
               msg.role === 'user'
                 ? 'bg-accent text-white self-end ml-auto'
-                : 'bg-gray-100 self-start text-black'
+                : 'bg-card text-textPrimary self-start'
             }`}
           >
             {msg.imageUrl && (
@@ -205,7 +205,7 @@ export default function DashboardPage() {
                     <button
                       key={i}
                       onClick={() => handleFollowUp(fu)}
-                      className="bg-white text-blue-700 border border-blue-300 hover:bg-blue-50 px-4 py-1 rounded-full text-sm transition"
+                      className="text-sm px-4 py-1 rounded-full border border-accent text-accent hover:bg-accent/10 transition"
                     >
                       {fu}
                     </button>
@@ -230,7 +230,7 @@ export default function DashboardPage() {
       <div className="border-t pt-4 mt-4">
         <textarea
           rows={2}
-          className="w-full p-3 rounded border bg-background resize-none text-sm"
+          className="w-full p-3 rounded border bg-card resize-none text-sm text-textPrimary"
           placeholder="Type your message..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -251,7 +251,7 @@ export default function DashboardPage() {
               }}
               onDragOver={(e) => e.preventDefault()}
               onClick={() => fileInputRef.current?.click()}
-              className="cursor-pointer border-2 border-dashed border-blue-400 px-4 py-2 rounded text-blue-600 hover:bg-blue-50"
+              className="cursor-pointer border-2 border-dashed border-blue-400 px-4 py-2 rounded text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900"
             >
               📎 Upload Image / PDF
             </div>
@@ -269,7 +269,7 @@ export default function DashboardPage() {
           <button
             onClick={handleSubmit}
             disabled={!input.trim() && !selectedFile}
-            className="bg-accent hover:bg-blue-700 disabled:bg-gray-300 text-white px-6 py-2 rounded-md text-sm"
+            className="bg-accent hover:brightness-110 disabled:bg-gray-300 text-white px-6 py-2 rounded-md text-sm"
           >
             Send
           </button>
