@@ -23,7 +23,7 @@
 }
 
 .dark {
-  --background: linear-gradient(to bottom, #0c0f1a, #02050a); /* ✅ only line changed */
+  --background: #0f172a; /* ✅ solid dark Growfly blue for Tailwind compatibility */
   --textPrimary: #ffffff;
 
   --accent: #2e63f5;
