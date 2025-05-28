@@ -2,7 +2,7 @@
 import { ReactNode } from 'react'
 
 export const metadata = {
-  title: 'Growfly — Register',
+  title: 'growfly — Register for an account with growfly.io',
 }
 
 export default function RegisterLayout({ children }: { children: ReactNode }) {

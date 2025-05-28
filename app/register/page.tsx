@@ -23,10 +23,10 @@ export default function RegisterPage() {
       </div>
 
       +<h1 className="text-3xl font-bold text-center mb-4">
-      +  Let&apos;s grow your business
+      +  Focus on your business
       +</h1>
       <p className="text-center text-textPrimary/80 max-w-xl mx-auto mb-10">
-        Pick a plan to get started. You can upgrade anytime. No credit card needed for free accounts.
+        AI for business, no distraction. Pick a plan to get started. You can upgrade anytime. No credit card needed for free accounts.
       </p>
 
       <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
@@ -36,8 +36,8 @@ export default function RegisterPage() {
           <p className="text-textPrimary/70 text-sm mb-4">Explore Growfly and try basic features.</p>
           <p className="text-3xl font-bold mb-4">£0</p>
           <ul className="text-sm text-textPrimary/80 space-y-2 mb-4">
-            <li>✅ 20 prompts per month</li>
-            <li>✅ Basic AI answers</li>
+            <li>✅ 20 free prompts per month</li>
+            <li>✅ Unique and detailed AI responses</li>
             <li>✅ Access to Saved + Collab</li>
           </ul>
           <button
@@ -54,9 +54,9 @@ export default function RegisterPage() {
           <p className="text-textPrimary/70 text-sm mb-4">For individual creators + founders.</p>
           <p className="text-3xl font-bold mb-4">£8.99</p>
           <ul className="text-sm text-textPrimary/80 space-y-2 mb-4">
-            <li>🚀 400 prompts/month</li>
-            <li>✅ AI-generated brand strategies</li>
-            <li>✅ Saved prompts, Collab docs, support</li>
+            <li>🚀 400 prompts a month</li>
+            <li>✅ Unique AI-generated responses</li>
+            <li>✅ Saved prompts, Collab docs, support and more</li>
           </ul>
           <button
             onClick={() => handleSelect('personal')}
@@ -72,9 +72,9 @@ export default function RegisterPage() {
           <p className="text-textPrimary/70 text-sm mb-4">Best for teams & growing brands.</p>
           <p className="text-3xl font-bold mb-4">£38.99</p>
           <ul className="text-sm text-textPrimary/80 space-y-2 mb-4">
-            <li>👥 2000 prompts/month</li>
+            <li>👥 2000 prompts a month</li>
             <li>✅ Multi-user collaboration</li>
-            <li>✅ Advanced AI, insights, analytics</li>
+            <li>✅ Advanced AI, insights, analytics, support </li>
           </ul>
           <button
             onClick={() => handleSelect('business')}

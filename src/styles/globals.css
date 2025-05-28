@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Light Mode Defaults */
+/* 🌞 Light Mode Defaults */
 :root {
   --background: #ffffff;
   --textPrimary: #ffffff;
@@ -23,10 +23,10 @@
   --radius: 0.5rem;
 }
 
-/* Dark Mode Overrides */
+/* 🌚 Dark Mode Overrides */
 .dark {
-  --background: #0f172a;             /* Dark navy background */
-  --textPrimary: #ffffff;            /* White text */
+  --background: #0f172a;
+  --textPrimary: #ffffff;
 
   --accent: #254aae;
   --accent-foreground: #ffffff;
@@ -42,26 +42,26 @@
   --highlight: #ffeb50;
 }
 
-/* ✅ Enforce global background + text color */
+/* ✅ Enforce background and text globally */
 html,
 body {
   @apply bg-background text-textPrimary;
 }
 
-/* ✅ Inputs, selects, textareas match theme */
+/* ✅ Universal form input styling */
 input,
 textarea,
 select {
   @apply text-textPrimary bg-input border border-input-border placeholder-gray-400 focus:border-input-focus focus:outline-none rounded;
 }
 
-/* ✅ Placeholder readability in dark mode */
+/* ✅ Placeholder contrast in all themes */
 input::placeholder,
 textarea::placeholder {
-  color: #00C3FF; /* Tailwind gray-400 */
+  color: #cbd5e1; /* Tailwind gray-400 */
 }
 
-/* ✅ Label text should match theme */
+/* ✅ Label visibility in light and dark mode */
 label {
   @apply text-textPrimary;
 }

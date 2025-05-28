@@ -53,7 +53,7 @@ export default function Sidebar() {
           <img
             src="/growfly-logo.png"
             alt="growfly"
-            className="w-22 h-22 object-contain"
+            className="w-20 h-20 object-contain"
           />
         </Link>
       </div>
