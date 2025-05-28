@@ -8,7 +8,7 @@ import ClientLayout from './ClientLayout'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Growfly',
+  title: 'growfly.io',
   description: 'AI-powered growth dashboard',
 }
 
