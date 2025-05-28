@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { API_BASE_URL } from '@lib/constants'
+import Link from 'next/link'
 
 interface UserProfile {
   name?: string
@@ -14,6 +14,7 @@ interface UserProfile {
   narrative?: string
   subscriptionType?: string
   stripeCustomerId?: string
+  goals?: string
 }
 
 export default function SettingsPage() {
@@ -83,10 +84,7 @@ export default function SettingsPage() {
 
     const { confirmPassword, ...body } = form
 
-
-    const requiredFields = [
-      'name', 'jobTitle', 'industry', 'goals'
-    ]
+    const requiredFields = ['name', 'jobTitle', 'industry', 'goals']
     const isComplete = requiredFields.every(field => form[field as keyof typeof form]?.trim())
 
     try {
@@ -112,9 +110,13 @@ export default function SettingsPage() {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
-      if (data.url) window.location.href = data.url
+      if (data.url) {
+        window.open(data.url, '_blank')
+      } else {
+        alert('Stripe billing portal not available.')
+      }
     } catch (err) {
-      alert('Could not open billing portal.')
+      alert('Failed to open billing portal.')
     }
   }
 
@@ -173,7 +175,7 @@ export default function SettingsPage() {
             <textarea
               name="goals"
               rows={3}
-              placeholder="This allows us to improve our services and responses to our users"
+              placeholder="This helps us tailor your experience."
               value={form.goals}
               onChange={handleChange}
               className="w-full rounded p-2 bg-card border border-border"
@@ -203,12 +205,16 @@ export default function SettingsPage() {
             />
           </div>
 
-          <div className="md:col-span-2 flex justify-between items-center mt-4">
+          <div className="md:col-span-2 flex flex-col sm:flex-row justify-between items-start sm:items-center mt-4 gap-4">
             <button type="submit" className="bg-accent hover:brightness-110 px-6 py-2 rounded font-semibold text-white transition">
               Save Changes
             </button>
-            <button type="button" onClick={handleBillingPortal} className="text-accent hover:underline text-sm">
-              Manage Billing via Stripe
+            <button
+              type="button"
+              onClick={handleBillingPortal}
+              className="bg-[#1992FF] hover:bg-[#0f66c5] text-white font-medium text-sm px-5 py-2 rounded transition"
+            >
+              Manage Billing + View Invoices
             </button>
           </div>
         </form>

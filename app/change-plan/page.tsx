@@ -7,39 +7,33 @@ const plans = [
   {
     id: 'free',
     name: 'Free',
-    price: '£0/month',
+    price: '£0',
     features: [
       '20 prompts/month',
-      '1 user',
-      'Access to Collab Zone',
-      'Save & edit documents',
-      'Upgrade anytime',
+      'Basic AI access',
+      'Saved responses + Collab Zone',
     ],
     button: 'Use Free',
   },
   {
     id: 'personal',
     name: 'Personal',
-    price: '£8.99/month',
+    price: '£8.99',
     features: [
       '400 prompts/month',
-      '1 user',
-      'Priority AI speed',
-      'Prompt history',
-      'Download responses',
+      'AI brand strategies',
+      'Saved prompts + support',
     ],
     button: 'Change to Personal',
   },
   {
     id: 'business',
     name: 'Business',
-    price: '£38.99/month',
+    price: '£38.99',
     features: [
       '2000 prompts/month',
-      '3 users',
-      'Team workspace',
-      'Priority support',
-      'Unlimited saved docs',
+      'Multi-user collaboration',
+      'Advanced AI + analytics',
     ],
     highlight: true,
     button: 'Change to Business',
@@ -49,8 +43,7 @@ const plans = [
     name: 'Enterprise',
     price: 'Custom',
     features: [
-      'Unlimited prompts',
-      'Unlimited users',
+      'Unlimited prompts + users',
       'Dedicated support',
       'Custom integrations',
     ],
@@ -61,20 +54,34 @@ const plans = [
 export default function ChangePlanPage() {
   const router = useRouter()
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null)
   const [message, setMessage] = useState('')
-
-  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null
+  const [token, setToken] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!token) router.push('/login')
-  }, [token, router])
+    const storedToken = localStorage.getItem('growfly_jwt')
+    if (!storedToken) {
+      router.push('/login')
+    } else {
+      setToken(storedToken)
+      fetch('/api/auth/me', {
+        headers: { Authorization: `Bearer ${storedToken}` },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.subscriptionType) {
+            setCurrentPlan(data.subscriptionType.toLowerCase())
+          }
+        })
+    }
+  }, [router])
 
   const handleSelect = async (planId: string) => {
     setSelectedPlan(planId)
     setMessage('')
 
     if (planId === 'free') {
-      router.push('/signup?plan=free')
+      router.push('/dashboard')
       return
     }
 
@@ -108,56 +115,58 @@ export default function ChangePlanPage() {
   }
 
   return (
-    <main className="min-h-screen px-6 py-12 bg-background text-textPrimary">
-      <div className="flex flex-col items-center text-center mb-12">
-        <h1 className="text-3xl md:text-4xl font-bold mb-2">Change Your Growfly Plan</h1>
-        <p className="text-muted-foreground max-w-2xl text-sm">
-          Upgrade or downgrade your subscription plan anytime. Paid plans provide more prompts,
-          team access, and enhanced tools.
+    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#0c0f1a] to-[#02050a] px-4 py-16 text-white">
+      <div className="max-w-4xl text-center mb-12">
+        <h1 className="text-4xl font-extrabold mb-3">+ Change your Growfly plan +</h1>
+        <p className="text-md text-gray-300">
+          You're in control. Downgrade or upgrade any time. Paid plans unlock more prompts, speed, and tools.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-7xl">
         {plans.map((plan) => (
           <div
             key={plan.id}
-            className={`relative rounded-xl p-6 transition shadow-md border flex flex-col justify-between ${
+            className={`flex flex-col justify-between rounded-2xl border px-6 py-8 transition duration-300 ${
               plan.highlight
-                ? 'bg-blue-600 text-white border-blue-500'
-                : 'bg-white text-black border-gray-200 hover:ring-4 hover:ring-blue-200'
+                ? 'bg-[#122c64] text-white border-[#2e63f5]'
+                : 'bg-white text-black border-gray-200 hover:shadow-xl'
             }`}
           >
-            {plan.highlight && (
-              <div className="absolute top-0 right-0 bg-yellow-300 text-black text-xs font-bold px-3 py-1 rounded-bl-xl">
-                Most Popular
-              </div>
-            )}
             <div>
-              <h2 className="text-xl font-bold mb-1">{plan.name}</h2>
-              <p className="text-lg font-semibold mb-4">{plan.price}</p>
+              <h2 className="text-xl font-semibold mb-1">{plan.name}</h2>
+              <p className="text-2xl font-bold mb-4">{plan.price}</p>
               <ul className="mb-6 space-y-2 text-sm">
-                {plan.features.map((line) => (
-                  <li key={line}>✓ {line}</li>
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex items-center">
+                    <span className="mr-2">✓</span> {feature}
+                  </li>
                 ))}
               </ul>
             </div>
             <button
               onClick={() => handleSelect(plan.id)}
-              disabled={selectedPlan === plan.id}
-              className={`mt-auto w-full py-2 px-4 rounded-md text-sm font-semibold transition ${
-                plan.highlight
+              disabled={selectedPlan === plan.id || currentPlan === plan.id}
+              className={`w-full mt-4 py-2 text-sm font-semibold rounded-md transition ${
+                selectedPlan === plan.id || currentPlan === plan.id
+                  ? 'bg-gray-400 cursor-not-allowed text-white'
+                  : plan.highlight
                   ? 'bg-yellow-300 text-black hover:bg-yellow-200'
                   : 'bg-blue-600 text-white hover:bg-blue-700'
-              } ${selectedPlan === plan.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+              }`}
             >
-              {selectedPlan === plan.id ? 'Redirecting...' : plan.button}
+              {selectedPlan === plan.id
+                ? 'Redirecting...'
+                : currentPlan === plan.id
+                ? 'Current Plan'
+                : plan.button}
             </button>
           </div>
         ))}
       </div>
 
       {message && (
-        <p className="text-center text-sm mt-6 text-red-500 font-medium">{message}</p>
+        <p className="text-center text-sm mt-6 text-red-400 font-medium">{message}</p>
       )}
     </main>
   )

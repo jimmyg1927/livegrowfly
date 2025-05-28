@@ -23,10 +23,10 @@ type Message = {
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { user, setUser } = useUserStore()
+  const { user } = useUserStore()
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
-  const promptLimit = user?.promptLimit ?? 0
-  const promptsUsed = user?.promptsUsed ?? 0
+  const promptLimit = (user as any)?.promptLimit ?? 0
+  const promptsUsed = (user as any)?.promptsUsed ?? 0
 
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
@@ -35,9 +35,9 @@ export default function DashboardPage() {
   const [saveContent, setSaveContent] = useState('')
   const [showFeedbackModal, setShowFeedbackModal] = useState(false)
   const [feedbackTargetId, setFeedbackTargetId] = useState('')
-
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
+
   const chatKey = typeof window !== 'undefined' && user?.id ? `growfly_chat_${user.id}` : ''
 
   useEffect(() => {
@@ -50,9 +50,9 @@ export default function DashboardPage() {
     if (stored) {
       try {
         const hist = JSON.parse(stored) as Message[]
-        setMessages(hist.slice(-10))
+        setMessages(hist.slice(-5))
       } catch {
-        console.warn('⚠️ Failed to parse chat history')
+        console.warn('⚠️ Failed to parse user-specific chat history')
       }
     }
   }, [chatKey])
@@ -67,26 +67,6 @@ export default function DashboardPage() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const refreshUser = async () => {
-    const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    const updated = await res.json()
-    setUser(updated)
-  }
-
-  const uploadFile = async (file: File) => {
-    const data = new FormData()
-    data.append('file', file)
-    const res = await fetch('/api/upload', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: data,
-    })
-    const { url } = await res.json()
-    return url as string
-  }
-
   const handleSubmit = async () => {
     const text = input.trim()
     if (!text && !selectedFile) return
@@ -95,50 +75,66 @@ export default function DashboardPage() {
     setMessages((m) => [...m, { id: uId, role: 'user', content: text }])
     setInput('')
 
-    let imageUrl: string | undefined
-    if (selectedFile) {
-      imageUrl = await uploadFile(selectedFile)
-      setSelectedFile(null)
-    }
-
     const aId = `a${Date.now()}`
     setMessages((m) => [...m, { id: aId, role: 'assistant', content: '' }])
 
-    let content = ''
-    let followUps: string[] = []
+    if (selectedFile) {
+      const reader = new FileReader()
+      reader.onload = async () => {
+        const base64 = reader.result as string
 
-    await streamChat(
-      text + (imageUrl ? `\n\n[Image URL: ${imageUrl}]` : ''),
-      token,
-      (chunk: StreamedChunk) => {
-        if (chunk.content) {
-          content += chunk.content
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/ai/image`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ imageBase64: base64, message: text }),
+          })
+          const data = await res.json()
           setMessages((m) =>
-            m.map((msg) => msg.id === aId ? { ...msg, content } : msg)
+            m.map((msg) =>
+              msg.id === aId ? { ...msg, content: data.content, imageUrl: base64 } : msg
+            )
+          )
+        } catch (err) {
+          setMessages((m) =>
+            m.map((msg) =>
+              msg.id === aId ? { ...msg, content: '❌ Failed to analyze image.' } : msg
+            )
           )
         }
-        if (chunk.followUps) {
-          followUps = chunk.followUps
-        }
-      },
-      () => {
-        setMessages((m) =>
-          m.map((msg) =>
-            msg.id === aId ? { ...msg, followUps } : msg
-          )
-        )
-        refreshUser()
       }
-    )
+      reader.readAsDataURL(selectedFile)
+      setSelectedFile(null)
+    } else {
+      let fullContent = ''
+      await streamChat(
+        text,
+        token,
+        (chunk: StreamedChunk) => {
+          if (!chunk.content) return
+          fullContent += chunk.content
+          setMessages((m) =>
+            m.map((msg) =>
+              msg.id === aId ? { ...msg, content: fullContent } : msg
+            )
+          )
+        },
+        () => { /* handled by follow-up fetch inside streamChat */ }
+      )
+    }
+  }
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null
+    setSelectedFile(file)
   }
 
   const handleFollowUp = (q: string) => {
     setInput(q)
     handleSubmit()
-  }
-
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setSelectedFile(e.target.files?.[0] ?? null)
   }
 
   const handleSave = (msg: Message) => {
@@ -156,18 +152,8 @@ export default function DashboardPage() {
     window.open(url, '_blank')
   }
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-  }
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    const file = e.dataTransfer.files?.[0]
-    if (file) setSelectedFile(file)
-  }
-
   return (
-    <div className="flex flex-col h-full p-4 text-foreground" onDragOver={handleDragOver} onDrop={handleDrop}>
+    <div className="flex flex-col h-full p-4 text-foreground">
       <div className="flex justify-between mb-4 items-center">
         <PromptTracker used={promptsUsed} limit={promptLimit} />
       </div>
@@ -175,7 +161,7 @@ export default function DashboardPage() {
       {messages.length === 0 && (
         <div className="text-center my-6">
           <button
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full text-sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow text-sm"
             onClick={() => {
               setInput('What can Growfly do for me?')
               handleSubmit()
@@ -193,28 +179,34 @@ export default function DashboardPage() {
             className={`whitespace-pre-wrap text-sm p-4 rounded-xl shadow-sm max-w-2xl ${
               msg.role === 'user'
                 ? 'bg-[#1992FF] text-white self-end ml-auto'
-                : 'bg-gray-200 self-start text-gray-800'
+                : 'bg-gray-100 self-start text-black'
             }`}
           >
             {msg.imageUrl && (
-              <Image src={msg.imageUrl} alt="Uploaded file" width={200} height={200} className="mb-2 rounded" />
+              <Image
+                src={msg.imageUrl}
+                alt="Uploaded"
+                width={240}
+                height={240}
+                className="mb-2 rounded shadow"
+              />
             )}
             <p>{msg.content}</p>
 
             {msg.role === 'assistant' && (
               <>
                 <div className="flex gap-2 mt-3 flex-wrap">
-                  {msg.followUps?.slice(0, 2).map((fu, i) => (
+                  {msg.followUps?.map((fu, i) => (
                     <button
                       key={i}
                       onClick={() => handleFollowUp(fu)}
-                      className="bg-white text-blue-600 text-xs px-3 py-1 rounded-full hover:bg-blue-100"
+                      className="bg-white text-blue-700 border border-blue-300 hover:bg-blue-50 px-4 py-1 rounded-full text-sm transition"
                     >
                       {fu}
                     </button>
                   ))}
                 </div>
-                <div className="flex gap-3 mt-3 text-lg">
+                <div className="flex gap-4 mt-3 text-lg">
                   <HiThumbUp onClick={() => handleFeedback(msg)} className="cursor-pointer hover:text-green-500" />
                   <HiThumbDown onClick={() => handleFeedback(msg)} className="cursor-pointer hover:text-red-500" />
                   <FaRegBookmark onClick={() => handleSave(msg)} className="cursor-pointer hover:text-yellow-500" />
@@ -244,6 +236,18 @@ export default function DashboardPage() {
         />
         <div className="flex justify-between items-center mt-2">
           <div className="text-sm">
+            <div
+              onDrop={(e) => {
+                e.preventDefault()
+                const file = e.dataTransfer.files?.[0]
+                if (file) setSelectedFile(file)
+              }}
+              onDragOver={(e) => e.preventDefault()}
+              onClick={() => fileInputRef.current?.click()}
+              className="cursor-pointer border-2 border-dashed border-blue-400 px-4 py-2 rounded text-blue-600 hover:bg-blue-50"
+            >
+              📎 Upload Image / PDF
+            </div>
             <input
               type="file"
               accept="image/*,application/pdf"
@@ -251,14 +255,8 @@ export default function DashboardPage() {
               className="hidden"
               ref={fileInputRef}
             />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="bg-[#1992FF] text-white px-3 py-1 rounded-md text-xs hover:brightness-110"
-            >
-              Upload Image / PDF
-            </button>
             {selectedFile && (
-              <span className="ml-2 text-xs text-muted-foreground">{selectedFile.name}</span>
+              <p className="text-xs text-muted-foreground mt-1">{selectedFile.name}</p>
             )}
           </div>
           <button
