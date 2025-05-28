@@ -119,7 +119,7 @@ export default function ChangePlanPage() {
       <div className="max-w-4xl text-center mb-12">
         <h1 className="text-4xl font-extrabold mb-3">+ Change your Growfly plan +</h1>
         <p className="text-md text-gray-300">
-          You're in control. Downgrade or upgrade any time. Paid plans unlock more prompts, speed, and tools.
+          You&#39;re in control. Downgrade or upgrade any time. Paid plans unlock more prompts, speed, and tools.
         </p>
       </div>
 
