@@ -122,7 +122,7 @@ export default function OnboardingClient() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          brandName: form.companyName, // FIXED
+          brandName: form.companyName,
           brandDescription: form.brandDescription,
           brandVoice: form.brandVoice,
           brandMission: form.brandMission,
@@ -168,7 +168,7 @@ export default function OnboardingClient() {
       form[name].trim() === ''
     return (
       <div>
-        <label className="block text-sm font-medium mb-1">{label}</label>
+        <label className="block text-sm font-medium text-white mb-1">{label}</label>
         {textarea ? (
           <textarea
             name={name}
@@ -176,7 +176,7 @@ export default function OnboardingClient() {
             placeholder={placeholder}
             value={form[name]}
             onChange={handleChange}
-            className={`w-full bg-white/10 text-textPrimary border p-3 rounded-lg ${
+            className={`w-full bg-white/10 text-white border p-3 rounded-lg ${
               isError ? 'border-red-500' : 'border-white/30'
             }`}
           />
@@ -187,7 +187,7 @@ export default function OnboardingClient() {
             placeholder={placeholder}
             value={form[name]}
             onChange={handleChange}
-            className={`w-full bg-white/10 text-textPrimary border p-3 rounded-lg ${
+            className={`w-full bg-white/10 text-white border p-3 rounded-lg ${
               isError ? 'border-red-500' : 'border-white/30'
             }`}
           />
@@ -200,13 +200,13 @@ export default function OnboardingClient() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#0a0a23] to-[#1e3a8a] px-4 pt-4 pb-6 text-textPrimary">
+    <main className="min-h-screen bg-gradient-to-b from-[#0a0a23] to-[#1e3a8a] px-4 pt-4 pb-6 text-white">
       <div className="flex justify-center mb-2 mt-2">
         <Image src="/growfly-logo.png" alt="Growfly" width={140} height={40} />
       </div>
 
       <h1 className="text-2xl font-bold text-center mb-1">Let’s make Growfly personal ✨</h1>
-      <p className="text-center text-textPrimary/80 mb-4">
+      <p className="text-center text-white/80 mb-4">
         Answer a few quick things so our nerds can tailor your AI to your brand.
       </p>
 
@@ -235,8 +235,8 @@ export default function OnboardingClient() {
             onClick={() => setStep(i + 1)}
             className={`px-4 py-1 rounded-full text-xs font-semibold ${
               step === i + 1
-                ? 'bg-[#72C8F6] text-textPrimary'
-                : 'bg-white/20 text-textPrimary hover:bg-white/30'
+                ? 'bg-[#72C8F6] text-white'
+                : 'bg-white/20 text-white hover:bg-white/30'
             }`}
           >
             {i + 1}. {label}
@@ -279,7 +279,7 @@ export default function OnboardingClient() {
         {step > 1 ? (
           <button
             onClick={() => setStep(s => s - 1)}
-            className="px-4 py-2 bg-white/20 text-textPrimary rounded-full hover:bg-white/30 transition"
+            className="px-4 py-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition"
           >
             Back
           </button>
@@ -289,7 +289,7 @@ export default function OnboardingClient() {
         {step < 4 ? (
           <button
             onClick={() => validateStep() && setStep(s => s + 1)}
-            className="px-4 py-2 bg-[#72C8F6] text-textPrimary rounded-full hover:brightness-110 transition"
+            className="px-4 py-2 bg-[#72C8F6] text-white rounded-full hover:brightness-110 transition"
           >
             Next
           </button>
@@ -297,7 +297,7 @@ export default function OnboardingClient() {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className={`px-4 py-2 bg-[#72C8F6] text-textPrimary rounded-full hover:brightness-110 transition ${
+            className={`px-4 py-2 bg-[#72C8F6] text-white rounded-full hover:brightness-110 transition ${
               loading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
@@ -306,7 +306,7 @@ export default function OnboardingClient() {
         )}
       </div>
 
-      <p className="text-center text-textPrimary/70 text-sm mt-6">
+      <p className="text-center text-white/70 text-sm mt-6">
         Already have an account?{' '}
         <Link href="/login" className="underline hover:text-[#72C8F6]">
           Log in here
