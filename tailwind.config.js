@@ -10,6 +10,7 @@ module.exports = {
       colors: {
         background: 'var(--background)',
         textPrimary: 'var(--textPrimary)',
+        muted: 'var(--muted)', // ✅ ADDED muted background color
         accent: {
           DEFAULT: 'var(--accent)',
           foreground: 'var(--accent-foreground)',

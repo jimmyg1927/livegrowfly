@@ -7,6 +7,8 @@
   --background: #ffffff;
   --textPrimary: #ffffff;
 
+  --muted: #ffffff; /* ✅ ADDED muted fallback */
+
   --accent: #00C3ff;
   --accent-foreground: #ffffff;
 
@@ -27,6 +29,8 @@
 .dark {
   --background: #0f172a;
   --textPrimary: #ffffff;
+
+  --muted: #0a0a23; /* ✅ MATCHES sidebar blue */
 
   --accent: #254aae;
   --accent-foreground: #ffffff;

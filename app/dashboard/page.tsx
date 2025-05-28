@@ -167,7 +167,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col h-full p-4 bg-muted text-textPrimary transition-colors duration-300">
+    <div className="flex flex-col h-full p-4 bg-background text-textPrimary transition-colors duration-300">
       <div className="flex justify-between mb-4 items-center">
         <PromptTracker used={promptsUsed} limit={promptLimit} />
       </div>
