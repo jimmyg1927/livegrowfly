@@ -23,10 +23,10 @@ type Message = {
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { user } = useUserStore()
+  const { user, setUser } = useUserStore()
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
-  const promptLimit = (user as any)?.promptLimit ?? 0
-  const promptsUsed = (user as any)?.promptsUsed ?? 0
+  const promptLimit = user?.promptLimit ?? 0
+  const promptsUsed = user?.promptsUsed ?? 0
 
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
@@ -89,6 +89,14 @@ export default function DashboardPage() {
       },
       () => {}
     )
+
+    // Manually increment prompt usage + XP
+setUser({
+  ...user,
+  promptsUsed: (user?.promptsUsed ?? 0) + 1,
+  totalXP: (user?.totalXP ?? 0) + 2.5,
+})
+
   }
 
   const handleSubmit = async () => {
