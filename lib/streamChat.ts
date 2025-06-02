@@ -1,64 +1,61 @@
 // File: lib/streamChat.ts
+
 export type StreamedChunk = {
-  content: string
+  content?: string
   followUps?: string[]
 }
 
-type StreamChatParams = {
+interface StreamChatArgs {
   prompt: string
   token: string
-  onChunk: (chunk: StreamedChunk) => void
-  onComplete: () => void
+  onStream?: (chunk: StreamedChunk) => void
+  onComplete?: (full: string, followUps: string[]) => void
 }
 
-const streamChat = async ({ prompt, token, onChunk, onComplete }: StreamChatParams) => {
-  const controller = new AbortController()
-  const signal = controller.signal
-
-  const response = await fetch('/api/ai/chat', {
+const streamChat = async ({ prompt, token, onStream, onComplete }: StreamChatArgs) => {
+  const res = await fetch('/api/ai/chat', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ prompt }),
-    signal,
+    body: (() => {
+      const form = new FormData()
+      form.append('message', prompt)
+      return form
+    })(),
   })
 
-  if (!response.body) throw new Error('No response body')
+  if (!res.ok || !res.body) throw new Error('Failed to connect to stream')
 
-  const reader = response.body.getReader()
-  const decoder = new TextDecoder()
-  let fullText = ''
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder('utf-8')
+
+  let full = ''
   let followUps: string[] = []
 
   while (true) {
     const { done, value } = await reader.read()
     if (done) break
-    const chunk = decoder.decode(value, { stream: true })
-    fullText += chunk
 
-    const parsed = parseChunk(chunk)
-    if (parsed.content) {
-      onChunk(parsed)
-    }
-    if (parsed.followUps?.length) {
-      followUps = parsed.followUps
-    }
-  }
+    const chunk = decoder.decode(value)
+    const lines = chunk.split('\n').filter(Boolean)
 
-  onComplete()
-}
+    for (const line of lines) {
+      if (line === 'data: [DONE]') continue
+      if (!line.startsWith('data: ')) continue
 
-function parseChunk(chunk: string): StreamedChunk {
-  try {
-    const data = JSON.parse(chunk)
-    return {
-      content: data.content || '',
-      followUps: data.followUps || [],
+      const json = JSON.parse(line.replace('data: ', ''))
+
+      if (json.type === 'partial') {
+        const content = json.content
+        full += content
+        onStream?.({ content })
+      } else if (json.type === 'complete') {
+        followUps = json.followUps || []
+        onStream?.({ followUps })
+        onComplete?.(full, followUps)
+      }
     }
-  } catch {
-    return { content: chunk }
   }
 }
 

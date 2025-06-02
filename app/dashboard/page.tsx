@@ -9,7 +9,7 @@ import { FaRegBookmark, FaShareSquare, FaFileDownload, FaSyncAlt } from 'react-i
 import PromptTracker from '@/components/PromptTracker'
 import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
-import streamChat, { StreamedChunk } from '@lib/streamChat'
+import streamChat from '@lib/streamChat'
 import { useUserStore } from '@lib/store'
 import { API_BASE_URL } from '@lib/constants'
 
@@ -131,10 +131,10 @@ function DashboardContent() {
     let fullContent = ''
     let followUps: string[] = []
 
-    await streamChat(
+    await streamChat({
       prompt,
       token,
-      (chunk: StreamedChunk) => {
+      onStream: (chunk) => {
         if (!chunk.content) return
         fullContent += chunk.content
         if (chunk.followUps) followUps = chunk.followUps
@@ -151,7 +151,7 @@ function DashboardContent() {
           )
         )
       },
-      async () => {
+      onComplete: async () => {
         if (!followUps.length) {
           followUps = await fetchFollowUps(prompt)
           setMessages((m) =>
@@ -164,8 +164,8 @@ function DashboardContent() {
           promptsUsed: (user?.promptsUsed ?? 0) + 1,
           totalXP: (user?.totalXP ?? 0) + 2.5,
         })
-      }
-    )
+      },
+    })
   }
 
   const handleSubmit = async () => {
@@ -262,7 +262,10 @@ function DashboardContent() {
                   {msg.followUps?.map((fu, i) => (
                     <button
                       key={i}
-                      onClick={() => handleSubmit()}
+                      onClick={() => {
+                        setInput(fu)
+                        handleSubmit()
+                      }}
                       className="bg-blue-100 text-blue-800 hover:bg-blue-200 px-3 py-1 rounded-full text-xs font-medium shadow-sm"
                     >
                       {fu}
