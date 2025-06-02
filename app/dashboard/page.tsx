@@ -2,7 +2,7 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
-import React, { useEffect, useState, useRef, ChangeEvent, Suspense } from 'react'
+import React, { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { HiThumbUp, HiThumbDown } from 'react-icons/hi'
@@ -302,7 +302,7 @@ function DashboardContent() {
             className={`whitespace-pre-wrap text-sm p-4 rounded-xl shadow-sm max-w-2xl ${
               msg.role === 'user'
                 ? 'bg-accent text-white self-end ml-auto'
-                : 'bg-gray-300 text-white self-start'
+                : 'bg-gray-300 text-black self-start'
             }`}
           >
             {msg.imageUrl && (
@@ -330,15 +330,26 @@ function DashboardContent() {
                   ))}
                 </div>
                 <div className="flex gap-4 mt-3 text-lg">
-                  <HiThumbUp className="cursor-pointer hover:text-green-500" />
-                  <HiThumbDown className="cursor-pointer hover:text-red-500" />
-                  <FaRegBookmark className="cursor-pointer hover:text-yellow-500" />
-                  <FaShareSquare
+                  <HiThumbUp
                     onClick={() => {
-                      // Open feedback modal for this response
                       setFeedbackResponseId(msg.id)
                       setIsFeedbackModalOpen(true)
                     }}
+                    className="cursor-pointer hover:text-green-500"
+                  />
+                  <HiThumbDown
+                    onClick={() => {
+                      setFeedbackResponseId(msg.id)
+                      setIsFeedbackModalOpen(true)
+                    }}
+                    className="cursor-pointer hover:text-red-500"
+                  />
+                  <FaRegBookmark
+                    onClick={() => setIsSaveModalOpen(true)}
+                    className="cursor-pointer hover:text-yellow-500"
+                  />
+                  <FaShareSquare
+                    onClick={() => router.push('/collab-zone')}
                     className="cursor-pointer hover:text-blue-500"
                   />
                   {msg.imageUrl && (
