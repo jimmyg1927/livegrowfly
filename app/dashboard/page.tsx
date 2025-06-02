@@ -2,7 +2,7 @@
 export const dynamic = 'force-dynamic'
 
 import React, { useEffect, useState, useRef, ChangeEvent } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { HiThumbUp, HiThumbDown } from 'react-icons/hi'
 import { FaRegBookmark, FaShareSquare, FaFileDownload } from 'react-icons/fa'
@@ -11,7 +11,7 @@ import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
 import streamChat, { StreamedChunk } from '@lib/streamChat'
 import { useUserStore } from '@lib/store'
-import { API_BASE_URL } from '@lib/constants'
+import { API_BASE_URL, defaultFollowUps } from '@lib/constants'
 
 type Message = {
   id: string
@@ -23,6 +23,9 @@ type Message = {
 
 export default function DashboardPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+if (!searchParams) return null // or fallback render
+const threadId = searchParams.get('threadId') || ''
   const { user, setUser } = useUserStore()
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
   const promptLimit = user?.promptLimit ?? 0
@@ -35,46 +38,60 @@ export default function DashboardPage() {
   const [saveContent, setSaveContent] = useState('')
   const [showFeedbackModal, setShowFeedbackModal] = useState(false)
   const [feedbackTargetId, setFeedbackTargetId] = useState('')
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const chatKey = typeof window !== 'undefined' && user?.id ? `growfly_chat_${user.id}` : ''
+  // 🧠 Load thread by ID from backend
+  useEffect(() => {
+    if (!user?.id || !threadId) return
+    fetch(`${API_BASE_URL}/api/threads/${threadId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then(res => res.json())
+      .then(data => {
+        setMessages(data.messages || [])
+      })
+      .catch(err => console.error('Failed to load thread:', err))
+  }, [threadId, user?.id])
 
   useEffect(() => {
     if (!token) router.push('/onboarding')
   }, [token])
 
   useEffect(() => {
-    if (!chatKey) return
-    const stored = localStorage.getItem(chatKey)
-    if (stored) {
-      try {
-        const hist = JSON.parse(stored) as Message[]
-        setMessages(hist.slice(-5))
-      } catch {
-        console.warn('⚠️ Failed to parse user-specific chat history')
-      }
-    }
-  }, [chatKey])
-
-  useEffect(() => {
-    if (chatKey) {
-      localStorage.setItem(chatKey, JSON.stringify(messages))
-    }
-  }, [messages, chatKey])
-
-  useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  const persistThread = async (updatedMessages: Message[]) => {
+    if (!threadId) return
+    try {
+      await fetch(`${API_BASE_URL}/api/threads/${threadId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ messages: updatedMessages }),
+      })
+    } catch (err) {
+      console.error('❌ Failed to persist thread update:', err)
+    }
+  }
+
   const handleStream = async (prompt: string, aId: string) => {
     let fullContent = ''
+    let followUps: string[] = []
+
     await streamChat(
       prompt,
       token,
       (chunk: StreamedChunk) => {
         if (!chunk.content) return
         fullContent += chunk.content
+        if (chunk.followUps) followUps = chunk.followUps
+
         setMessages((m) =>
           m.map((msg) =>
             msg.id === aId
@@ -90,13 +107,23 @@ export default function DashboardPage() {
       () => {}
     )
 
-    // Manually increment prompt usage + XP
-setUser({
-  ...user,
-  promptsUsed: (user?.promptsUsed ?? 0) + 1,
-  totalXP: (user?.totalXP ?? 0) + 2.5,
-})
+    if (followUps.length === 0) {
+      followUps = [
+        'What can Growfly automate for me?',
+        'Can Growfly help me find new leads?',
+      ]
+      setMessages((m) =>
+        m.map((msg) => (msg.id === aId ? { ...msg, followUps } : msg))
+      )
+    }
 
+    setUser({
+      ...user,
+      promptsUsed: (user?.promptsUsed ?? 0) + 1,
+      totalXP: (user?.totalXP ?? 0) + 2.5,
+    })
+
+    persistThread([...messages])
   }
 
   const handleSubmit = async () => {
@@ -104,11 +131,13 @@ setUser({
     if (!text && !selectedFile) return
 
     const uId = `u${Date.now()}`
-    setMessages((m) => [...m, { id: uId, role: 'user', content: text }])
-    setInput('')
-
     const aId = `a${Date.now()}`
-    setMessages((m) => [...m, { id: aId, role: 'assistant', content: '' }])
+    const newMessages: Message[] = [
+      { id: uId, role: 'user', content: text },
+      { id: aId, role: 'assistant', content: '' },
+    ]
+    setMessages((prev) => [...prev, ...newMessages])
+    setInput('')
 
     if (selectedFile) {
       const reader = new FileReader()
@@ -124,18 +153,19 @@ setUser({
             body: JSON.stringify({ imageBase64: base64, message: text }),
           })
           const data = await res.json()
-          setMessages((m) =>
-            m.map((msg) =>
+          setMessages((prev) =>
+            prev.map((msg) =>
               msg.id === aId ? { ...msg, content: data.content, imageUrl: base64 } : msg
             )
           )
-        } catch (err) {
-          setMessages((m) =>
-            m.map((msg) =>
+        } catch {
+          setMessages((prev) =>
+            prev.map((msg) =>
               msg.id === aId ? { ...msg, content: '❌ Failed to analyze image.' } : msg
             )
           )
         }
+        persistThread([...messages, ...newMessages])
       }
       reader.readAsDataURL(selectedFile)
       setSelectedFile(null)
@@ -155,7 +185,11 @@ setUser({
   const handleFollowUp = (q: string) => {
     const uId = `u${Date.now()}`
     const aId = `a${Date.now()}`
-    setMessages((m) => [...m, { id: uId, role: 'user', content: q }, { id: aId, role: 'assistant', content: '' }])
+    const newMessages: Message[] = [
+      { id: uId, role: 'user', content: q },
+      { id: aId, role: 'assistant', content: '' },
+    ]
+    setMessages((prev) => [...prev, ...newMessages])
     handleStream(q, aId)
   }
 

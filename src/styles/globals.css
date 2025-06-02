@@ -13,7 +13,7 @@
   --accent-foreground: #ffffff;
 
   --card: #f5f5f5;
-  --card-foreground: #000000;
+  --card-foreground: #254aae;
 
   --border: #e5e7eb;
   --input: #f9fafb;
@@ -27,10 +27,10 @@
 
 /* 🌚 Dark Mode Overrides */
 .dark {
-  --background: #0f172a;
+  --background: #254aae;
   --textPrimary: #ffffff;
 
-  --muted: #0a0a23; /* ✅ MATCHES sidebar blue */
+  --muted: #254aae; /* ✅ MATCHES sidebar blue */
 
   --accent: #254aae;
   --accent-foreground: #ffffff;

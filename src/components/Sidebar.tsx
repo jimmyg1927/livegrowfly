@@ -14,12 +14,14 @@ import {
   HiOutlineHeart,
   HiOutlineUserAdd,
   HiOutlineShieldCheck,
+  HiOutlineClock, // ✅ new icon
 } from 'react-icons/hi'
 
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: HiOutlineHome },
   { name: 'Saved', href: '/saved', icon: HiOutlineDocumentText },
   { name: 'Collab Zone', href: '/collab-zone', icon: HiOutlineUserGroup },
+  { name: 'Chats', href: '/recent-chats', icon: HiOutlineClock }, // ✅ NEW
   { name: 'Wishlist', href: '/wishlist', icon: HiOutlineHeart },
   { name: 'Nerdify Me!', href: '/nerd-mode', icon: HiOutlineLightBulb },
   { name: 'Refer a Friend', href: '/refer', icon: HiOutlineUserAdd },
