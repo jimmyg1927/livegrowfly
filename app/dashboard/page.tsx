@@ -5,7 +5,12 @@ import React, { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { HiThumbUp, HiThumbDown } from 'react-icons/hi'
-import { FaRegBookmark, FaShareSquare, FaFileDownload, FaSyncAlt } from 'react-icons/fa'
+import {
+  FaRegBookmark,
+  FaShareSquare,
+  FaFileDownload,
+  FaSyncAlt,
+} from 'react-icons/fa'
 import PromptTracker from '@/components/PromptTracker'
 import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
@@ -21,7 +26,7 @@ type Message = {
   followUps?: string[]
 }
 
-const PROMPT_LIMITS = {
+const PROMPT_LIMITS: Record<string, number> = {
   free: 20,
   personal: 400,
   business: 2000,
@@ -33,8 +38,12 @@ function DashboardContent() {
   const paramThreadId = searchParams?.get('threadId')
 
   const { user, setUser } = useUserStore()
-  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
-  const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || ''] || 0
+  const token =
+    typeof window !== 'undefined'
+      ? localStorage.getItem('growfly_jwt') || ''
+      : ''
+  const promptLimit =
+    PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || ''] || 0
   const promptsUsed = user?.promptsUsed ?? 0
 
   const [input, setInput] = useState('')
@@ -42,17 +51,18 @@ function DashboardContent() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [threadId, setThreadId] = useState<string | null>(null)
   const [threadTitle, setThreadTitle] = useState('')
-  const [editingTitle, setEditingTitle] = useState(false)
+  const [showSaveModal, setShowSaveModal] = useState(false)
+  const [saveContent, setSaveContent] = useState('')
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false)
+  const [feedbackTargetId, setFeedbackTargetId] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // If no token, redirect to onboarding
   useEffect(() => {
     if (!token) router.push('/onboarding')
   }, [token, router])
 
-  // On load (or whenever threadId param changes), fetch history
   useEffect(() => {
     const id = paramThreadId || localStorage.getItem('growfly_last_thread_id')
     if (id) {
@@ -65,51 +75,47 @@ function DashboardContent() {
           setMessages(data.messages || [])
           setThreadTitle(data.title || formatTitleFromDate(new Date()))
         })
-        .catch(() => {
-          // If history fetch fails, just create a new thread
-          createNewThread()
-        })
     } else {
       createNewThread()
     }
   }, [paramThreadId])
 
-  // Format “Untitled Chat” from a date/time stamp
   const formatTitleFromDate = (date: Date) => {
     return `${date.toLocaleDateString(undefined, {
       weekday: 'long',
-    })} Chat – ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+    })} Chat – ${date.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    })}`
   }
 
-  // Create a brand‐new thread
   const createNewThread = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/chat/create`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Thread creation failed')
-      const data = await res.json()
-      setThreadId(data.threadId || data.id)
-      setMessages([])
-      const title = formatTitleFromDate(new Date())
-      setThreadTitle(title)
-      localStorage.setItem('growfly_last_thread_id', data.threadId || data.id)
-    } catch (err) {
-      console.error('Failed to create thread:', err)
-      // Optionally show a toast or alert
-    }
+    const res = await fetch(`${API_BASE_URL}/api/chat/create`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    const data = await res.json()
+    setThreadId(data.threadId || data.id)
+    setMessages([])
+    const title = formatTitleFromDate(new Date())
+    setThreadTitle(title)
+    localStorage.setItem(
+      'growfly_last_thread_id',
+      data.threadId || data.id
+    )
   }
 
-  // Auto‐scroll to bottom when messages update
+  // Scroll to bottom when new messages arrive
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
-    const nearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 100
+    const nearBottom =
+      container.scrollTop + container.clientHeight >=
+      container.scrollHeight - 100
     if (nearBottom) chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Fetch two deduped follow‐ups from the AI backend
+  // Fetch two unique follow‐up suggestions from backend (or fallbacks)
   const fetchFollowUps = async (text: string): Promise<string[]> => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/ai/followups`, {
@@ -122,15 +128,24 @@ function DashboardContent() {
       })
       if (!res.ok) throw new Error('Followups fetch failed')
       const data = await res.json()
-      // Deduplicate, then take the first two
-      const unique = Array.from(new Set(data.followUps || [])).slice(0, 2)
-      return unique.length ? unique : ['Can you explain that further?', 'How can I apply this?']
+
+      // Cast unknown[] to string[]
+      const followUpsFromServer = (data.followUps as unknown) as string[]
+
+      // Deduplicate then take the first two
+      const unique: string[] = Array.from(
+        new Set(followUpsFromServer || [])
+      ).slice(0, 2)
+
+      return unique.length
+        ? unique
+        : ['Can you explain that further?', 'How can I apply this?']
     } catch {
       return ['What’s next?', 'Any examples to help?']
     }
   }
 
-  // Save each user/assistant message to the chat history table
+  // Persist each message to chat‐history table
   const postMessage = async (role: 'user' | 'assistant', content: string) => {
     if (!threadId) return
     await fetch(`${API_BASE_URL}/api/chatHistory/${threadId}`, {
@@ -143,13 +158,13 @@ function DashboardContent() {
     })
   }
 
-  // Stream in new assistant response
-  const handleStream = async (messageText: string, aId: string) => {
+  // Stream the AI response, update UI as chunks arrive
+  const handleStream = async (prompt: string, aId: string) => {
     let fullContent = ''
     let followUps: string[] = []
 
     await streamChat({
-      prompt: messageText,
+      prompt,
       token,
       threadId: threadId || undefined,
       onStream: (chunk) => {
@@ -163,50 +178,49 @@ function DashboardContent() {
               ? {
                   ...msg,
                   content: fullContent,
-                  followUps: chunk.followUps ?? msg.followUps ?? [],
+                  followUps:
+                    chunk.followUps ?? msg.followUps ?? [],
                 }
               : msg
           )
         )
       },
       onComplete: async () => {
+        // If backend didn’t supply follow‐ups, fetch them now
         if (!followUps.length) {
           followUps = await fetchFollowUps(fullContent)
           setMessages((m) =>
-            m.map((msg) => (msg.id === aId ? { ...msg, followUps } : msg))
+            m.map((msg) =>
+              msg.id === aId ? { ...msg, followUps } : msg
+            )
           )
         }
         postMessage('assistant', fullContent)
-        // Increment user’s promptsUsed & XP
         setUser({
           ...user,
           promptsUsed: (user?.promptsUsed ?? 0) + 1,
           totalXP: (user?.totalXP ?? 0) + 2.5,
         })
       },
-      onImage: (imageUrl) => {
-        // If the AI returns an image URL, you could append it here
-        // e.g. setMessages((m) => [...m, { id: `img${Date.now()}`, role: 'assistant', content: '', imageUrl }])
-      },
     })
   }
 
-  // Fire off user message (text or file)
+  // When user clicks “Send” (or a follow‐up button), post user message & show assistant placeholder
   const handleSubmit = async (override?: string) => {
-    const text = override ?? input.trim()
+    const text = override || input.trim()
     if (!text && !selectedFile) return
 
-    // 1) Insert the user’s message into state & database
     const uId = `u${Date.now()}`
     setMessages((m) => [...m, { id: uId, role: 'user', content: text }])
     setInput('')
     postMessage('user', text)
 
-    // 2) Create a placeholder for the assistant response
     const aId = `a${Date.now()}`
-    setMessages((m) => [...m, { id: aId, role: 'assistant', content: '' }])
+    setMessages((m) => [
+      ...m,
+      { id: aId, role: 'assistant', content: '' },
+    ])
 
-    // 3) If a file is attached, let the “image” endpoint handle it
     if (selectedFile) {
       const reader = new FileReader()
       reader.onload = async () => {
@@ -223,14 +237,18 @@ function DashboardContent() {
           const data = await res.json()
           setMessages((m) =>
             m.map((msg) =>
-              msg.id === aId ? { ...msg, content: data.content, imageUrl: base64 } : msg
+              msg.id === aId
+                ? { ...msg, content: data.content, imageUrl: base64 }
+                : msg
             )
           )
           postMessage('assistant', data.content)
         } catch {
           setMessages((m) =>
             m.map((msg) =>
-              msg.id === aId ? { ...msg, content: '❌ Failed to analyze image.' } : msg
+              msg.id === aId
+                ? { ...msg, content: '❌ Failed to analyze image.' }
+                : msg
             )
           )
         }
@@ -238,59 +256,19 @@ function DashboardContent() {
       reader.readAsDataURL(selectedFile)
       setSelectedFile(null)
     } else {
-      // 4) Otherwise, stream from the AI
+      // Normal text‐only flow
       handleStream(text, aId)
     }
   }
 
   return (
     <div className="flex flex-col h-full p-4 bg-background text-textPrimary">
-      {/* ────────────────────────────────────────────────── */}
-      {/* Header: Title + Prompt Tracker + “New Chat” Button */}
       <div className="flex justify-between items-center mb-4">
-        {/** Only show the threadTitle if we’re not just clicked “New Chat” */}
-        {editingTitle ? (
-          <input
-            className="text-xl font-bold p-1 border rounded"
-            value={threadTitle}
-            onChange={(e) => setThreadTitle(e.target.value)}
-            onBlur={async () => {
-              setEditingTitle(false)
-              try {
-                await fetch(`${API_BASE_URL}/api/chat/rename/${threadId}`, {
-                  method: 'PUT',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                  },
-                  body: JSON.stringify({ title: threadTitle }),
-                })
-              } catch {
-                console.error('Failed to rename thread')
-              }
-            }}
-          />
-        ) : (
-          <h2
-            className="text-xl font-bold cursor-pointer"
-            onClick={() => setEditingTitle(true)}
-          >
-            {threadTitle}
-          </h2>
-        )}
-
+        <h2 className="text-xl font-bold">{threadTitle}</h2>
         <div className="flex items-center gap-4">
-          {/* PromptTracker: give it a custom background so it stands out */}
-          <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-md">
-            <PromptTracker used={promptsUsed} limit={promptLimit} />
-          </div>
-
+          <PromptTracker used={promptsUsed} limit={promptLimit} />
           <button
-            onClick={() => {
-              createNewThread()
-              setThreadTitle('')        // “hide” the date/time title momentarily
-              setMessages([])
-            }}
+            onClick={createNewThread}
             className="text-xs bg-accent text-white px-3 py-1 rounded-full flex items-center gap-2 hover:brightness-110"
           >
             <FaSyncAlt /> New Chat
@@ -298,17 +276,16 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* ────────────────────────────────────────────────── */}
-      {/* Chat Bubbles Container */}
       <div
         ref={containerRef}
         className="flex-1 overflow-y-auto space-y-6 pb-6"
       >
-        {/* “What can Growfly do for me?” prompt aligned right */}
         {messages.length === 0 && (
           <div className="mb-4 flex justify-end">
             <button
-              onClick={() => handleSubmit('What can Growfly do for me?')}
+              onClick={() =>
+                handleSubmit('What can Growfly do for me?')
+              }
               className="bg-blue-100 text-blue-800 hover:bg-blue-200 px-4 py-2 rounded-full text-sm font-medium shadow"
             >
               What can Growfly do for me?
@@ -316,17 +293,15 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* Iterate through messages */}
         {messages.map((msg) => (
           <div
             key={msg.id}
             className={`whitespace-pre-wrap text-sm p-4 rounded-xl shadow-sm max-w-2xl ${
               msg.role === 'user'
                 ? 'bg-accent text-white self-end ml-auto'
-                : 'bg-gray-100 text-black self-start'
+                : 'bg-neutral-200 text-black self-start'
             }`}
           >
-            {/* If AI returned an image, show it */}
             {msg.imageUrl && (
               <Image
                 src={msg.imageUrl}
@@ -338,10 +313,8 @@ function DashboardContent() {
             )}
             <p>{msg.content}</p>
 
-            {/* If it’s an assistant bubble, show the follow‐up buttons & icons */}
             {msg.role === 'assistant' && (
               <>
-                {/* 2 Follow‐up Suggestions (deduped) */}
                 <div className="flex gap-2 mt-3 flex-wrap">
                   {msg.followUps?.map((fu, i) => (
                     <button
@@ -353,52 +326,45 @@ function DashboardContent() {
                     </button>
                   ))}
                 </div>
-
-                {/* Reaction / Bookmark / Share / Download icons */}
                 <div className="flex gap-4 mt-3 text-lg">
                   <HiThumbUp
                     onClick={() => {
-                      /* TODO: wire up “Thumbs Up” sending to FeedbackModal */
+                      setFeedbackTargetId(msg.id)
+                      setShowFeedbackModal(true)
                     }}
                     className="cursor-pointer hover:text-green-500"
                   />
                   <HiThumbDown
                     onClick={() => {
-                      /* TODO: wire up “Thumbs Down” sending to FeedbackModal */
+                      setFeedbackTargetId(msg.id)
+                      setShowFeedbackModal(true)
                     }}
                     className="cursor-pointer hover:text-red-500"
                   />
                   <FaRegBookmark
                     onClick={() => {
-                      /* TODO: wire up SaveModal: pass content, and set open=true */
+                      setSaveContent(msg.content)
+                      setShowSaveModal(true)
                     }}
                     className="cursor-pointer hover:text-yellow-500"
                   />
                   <FaShareSquare
-                    onClick={() => {
-                      /* TODO: currently opens FeedbackModal – you can change target logic here */
-                    }}
+                    onClick={() =>
+                      router.push('/collab-zone')
+                    }
                     className="cursor-pointer hover:text-blue-500"
                   />
                   {msg.imageUrl && (
-                    <FaFileDownload
-                      onClick={() => {
-                        /* TODO: Trigger download of msg.imageUrl */
-                      }}
-                      className="cursor-pointer hover:text-gray-600"
-                    />
+                    <FaFileDownload className="cursor-pointer hover:text-gray-600" />
                   )}
                 </div>
               </>
             )}
           </div>
         ))}
-
         <div ref={chatEndRef} />
       </div>
 
-      {/* ────────────────────────────────────────────────── */}
-      {/* Input Bar + File Uploader */}
       <div className="border-t pt-4 mt-4">
         <textarea
           rows={2}
@@ -431,7 +397,9 @@ function DashboardContent() {
             ref={fileInputRef}
           />
           {selectedFile && (
-            <p className="text-xs text-muted-foreground mt-1">{selectedFile.name}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {selectedFile.name}
+            </p>
           )}
           <button
             onClick={() => handleSubmit()}
@@ -443,24 +411,34 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* ────────────────────────────────────────────────── */}
-      {/* SaveModal & FeedbackModal */}
-      {/* Note: Pass the required props exactly as the component expects */}
+      {/* ----- Save Modal ----- */}
       <SaveModal
-        open={false}              // toggle this to true when user clicks on “bookmark”
-        onClose={() => {
-          /* set state to close SaveModal */
-        }}
+        open={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
         onConfirm={async (title: string) => {
-          /* persist the saved chat title in your database */
+          if (!threadId) return
+          // Save the message under the given title
+          await fetch(`${API_BASE_URL}/api/saved`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              title,
+              content: saveContent,
+              threadId,
+            }),
+          })
+          setShowSaveModal(false)
         }}
       />
+
+      {/* ----- Feedback Modal ----- */}
       <FeedbackModal
-        responseId={''}           // pass the assistant’s response ID that the user is rating
-        open={false}              // toggle to true when user clicks thumbs up/down
-        onClose={() => {
-          /* set state to close FeedbackModal */
-        }}
+        responseId={feedbackTargetId}
+        open={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
       />
     </div>
   )
