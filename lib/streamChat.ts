@@ -1,59 +1,65 @@
 // File: lib/streamChat.ts
-
-export interface StreamedChunk {
-  type: 'partial' | 'complete'
-  content?: string
+export type StreamedChunk = {
+  content: string
   followUps?: string[]
-  responseId?: string
 }
 
-export default async function streamChat(
-  message: string,
-  token: string,
-  onChunk: (data: StreamedChunk) => void,
-  onDone: () => void
-) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/ai/chat`, {
+type StreamChatParams = {
+  prompt: string
+  token: string
+  onChunk: (chunk: StreamedChunk) => void
+  onComplete: () => void
+}
+
+const streamChat = async ({ prompt, token, onChunk, onComplete }: StreamChatParams) => {
+  const controller = new AbortController()
+  const signal = controller.signal
+
+  const response = await fetch('/api/ai/chat', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ prompt }),
+    signal,
   })
 
-  if (!res.ok || !res.body) {
-    throw new Error(`Stream failed: ${res.statusText}`)
-  }
+  if (!response.body) throw new Error('No response body')
 
-  const reader = res.body.getReader()
+  const reader = response.body.getReader()
   const decoder = new TextDecoder()
-  let buffer = ''
+  let fullText = ''
+  let followUps: string[] = []
 
   while (true) {
-    const { value, done } = await reader.read()
+    const { done, value } = await reader.read()
     if (done) break
+    const chunk = decoder.decode(value, { stream: true })
+    fullText += chunk
 
-    buffer += decoder.decode(value, { stream: true })
-
-    const parts = buffer.split('\n\n')
-    buffer = parts.pop() || ''
-
-    for (const part of parts) {
-      if (part.startsWith('event: done')) {
-        onDone()
-        return
-      }
-      if (part.startsWith('data: ')) {
-        try {
-          const json = JSON.parse(part.replace('data: ', '')) as StreamedChunk
-          onChunk(json)
-        } catch (err) {
-          console.error('❌ Invalid JSON chunk:', part)
-        }
-      }
+    const parsed = parseChunk(chunk)
+    if (parsed.content) {
+      onChunk(parsed)
+    }
+    if (parsed.followUps?.length) {
+      followUps = parsed.followUps
     }
   }
 
-  onDone()
+  onComplete()
 }
+
+function parseChunk(chunk: string): StreamedChunk {
+  try {
+    const data = JSON.parse(chunk)
+    return {
+      content: data.content || '',
+      followUps: data.followUps || [],
+    }
+  } catch {
+    return { content: chunk }
+  }
+}
+
+export default streamChat
