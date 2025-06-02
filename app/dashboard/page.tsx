@@ -129,7 +129,6 @@ function DashboardContent() {
     await streamChat({
       prompt,
       token,
-      threadId: threadId || undefined,
       onStream: (chunk) => {
         if (!chunk.content) return
         fullContent += chunk.content
@@ -149,7 +148,7 @@ function DashboardContent() {
       },
       onComplete: async () => {
         if (!followUps.length) {
-          followUps = await fetchFollowUps(prompt)
+          followUps = await fetchFollowUps(fullContent)
           setMessages((m) =>
             m.map((msg) => (msg.id === aId ? { ...msg, followUps } : msg))
           )
@@ -244,7 +243,7 @@ function DashboardContent() {
             className={`whitespace-pre-wrap text-sm p-4 rounded-xl shadow-sm max-w-2xl ${
               msg.role === 'user'
                 ? 'bg-accent text-white self-end ml-auto'
-                : 'bg-card text-textPrimary self-start'
+                : 'bg-neutral-700 text-white self-start'
             }`}
           >
             {msg.imageUrl && (
