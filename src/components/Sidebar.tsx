@@ -23,7 +23,7 @@ const navItems = [
   { name: 'Collab Zone', href: '/collab-zone', icon: HiOutlineUserGroup },
   { name: 'Chat History', href: '/recent-chats', icon: HiOutlineClock }, // ✅ NEW
   { name: 'Wishlist', href: '/wishlist', icon: HiOutlineHeart },
-  { name: 'Education Hub!', href: '/nerd-mode', icon: HiOutlineLightBulb },
+  { name: 'Education Hub', href: '/nerd-mode', icon: HiOutlineLightBulb },
   { name: 'Refer a Friend', href: '/refer', icon: HiOutlineUserAdd },
   { name: 'Change Plan', href: '/change-plan', icon: HiOutlineCurrencyPound },
   { name: 'Settings', href: '/settings', icon: HiOutlineCog },
