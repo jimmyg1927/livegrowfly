@@ -1,7 +1,7 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
-import React, { useEffect, useState, useRef, ChangeEvent } from 'react'
+import React, { useEffect, useState, useRef, ChangeEvent, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { HiThumbUp, HiThumbDown } from 'react-icons/hi'
@@ -21,7 +21,7 @@ type Message = {
   followUps?: string[]
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const chatId = searchParams?.get('threadId')
@@ -43,7 +43,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!token) router.push('/onboarding')
-  }, [token])
+  }, [token, router])
 
   useEffect(() => {
     if (!user?.id) return
@@ -328,5 +328,14 @@ export default function DashboardPage() {
         />
       )}
     </div>
+  )
+}
+
+// FINAL EXPORT – wrapped in suspense
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-center">Loading dashboard...</div>}>
+      <DashboardContent />
+    </Suspense>
   )
 }
