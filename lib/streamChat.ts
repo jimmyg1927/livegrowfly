@@ -23,7 +23,7 @@ export default async function streamChat({
   onComplete,
   onImage,
 }: Props) {
-  const res = await fetch(`/api/ai/chat`, {
+  const res = await fetch(`/api/chat/create`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
