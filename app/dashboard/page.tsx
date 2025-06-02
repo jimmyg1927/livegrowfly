@@ -1,4 +1,3 @@
-// File: app/dashboard/page.tsx
 'use client'
 export const dynamic = 'force-dynamic'
 
@@ -6,12 +5,7 @@ import React, { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { HiThumbUp, HiThumbDown } from 'react-icons/hi'
-import {
-  FaRegBookmark,
-  FaShareSquare,
-  FaFileDownload,
-  FaSyncAlt,
-} from 'react-icons/fa'
+import { FaRegBookmark, FaShareSquare, FaFileDownload, FaSyncAlt } from 'react-icons/fa'
 import PromptTracker from '@/components/PromptTracker'
 import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
@@ -27,7 +21,7 @@ type Message = {
   followUps?: string[]
 }
 
-const PROMPT_LIMITS: Record<string, number> = {
+const PROMPT_LIMITS = {
   free: 20,
   personal: 400,
   business: 2000,
@@ -39,12 +33,8 @@ function DashboardContent() {
   const paramThreadId = searchParams?.get('threadId')
 
   const { user, setUser } = useUserStore()
-  const token =
-    typeof window !== 'undefined'
-      ? localStorage.getItem('growfly_jwt') || ''
-      : ''
-  const promptLimit =
-    PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || ''] || 0
+  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
+  const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || ''] || 0
   const promptsUsed = user?.promptsUsed ?? 0
 
   const [input, setInput] = useState('')
@@ -52,19 +42,17 @@ function DashboardContent() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [threadId, setThreadId] = useState<string | null>(null)
   const [threadTitle, setThreadTitle] = useState('')
+  const [editingTitle, setEditingTitle] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // State for modals
-  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false)
-  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false)
-  const [feedbackResponseId, setFeedbackResponseId] = useState<string>('')
-
+  // If no token, redirect to onboarding
   useEffect(() => {
     if (!token) router.push('/onboarding')
   }, [token, router])
 
+  // On load (or whenever threadId param changes), fetch history
   useEffect(() => {
     const id = paramThreadId || localStorage.getItem('growfly_last_thread_id')
     if (id) {
@@ -78,6 +66,7 @@ function DashboardContent() {
           setThreadTitle(data.title || formatTitleFromDate(new Date()))
         })
         .catch(() => {
+          // If history fetch fails, just create a new thread
           createNewThread()
         })
     } else {
@@ -85,15 +74,14 @@ function DashboardContent() {
     }
   }, [paramThreadId])
 
+  // Format “Untitled Chat” from a date/time stamp
   const formatTitleFromDate = (date: Date) => {
     return `${date.toLocaleDateString(undefined, {
       weekday: 'long',
-    })} Chat – ${date.toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-    })}`
+    })} Chat – ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
   }
 
+  // Create a brand‐new thread
   const createNewThread = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/chat/create`, {
@@ -102,26 +90,26 @@ function DashboardContent() {
       })
       if (!res.ok) throw new Error('Thread creation failed')
       const data = await res.json()
-      setThreadId(data.threadId)
+      setThreadId(data.threadId || data.id)
       setMessages([])
-      setThreadTitle('') // Hide title until set by fetch or default
       const title = formatTitleFromDate(new Date())
       setThreadTitle(title)
-      localStorage.setItem('growfly_last_thread_id', data.threadId)
+      localStorage.setItem('growfly_last_thread_id', data.threadId || data.id)
     } catch (err) {
       console.error('Failed to create thread:', err)
+      // Optionally show a toast or alert
     }
   }
 
+  // Auto‐scroll to bottom when messages update
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
-    const nearBottom =
-      container.scrollTop + container.clientHeight >=
-      container.scrollHeight - 100
+    const nearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 100
     if (nearBottom) chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  // Fetch two deduped follow‐ups from the AI backend
   const fetchFollowUps = async (text: string): Promise<string[]> => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/ai/followups`, {
@@ -134,44 +122,34 @@ function DashboardContent() {
       })
       if (!res.ok) throw new Error('Followups fetch failed')
       const data = await res.json()
-      // Deduplicate and take first two
-      const unique = (Array.from(new Set(data.followUps || [])) as string[]).slice(
-        0,
-        2
-      )
-      return unique.length
-        ? unique
-        : ['Can you explain that further?', 'How can I apply this?']
+      // Deduplicate, then take the first two
+      const unique = Array.from(new Set(data.followUps || [])).slice(0, 2)
+      return unique.length ? unique : ['Can you explain that further?', 'How can I apply this?']
     } catch {
-      return ["What's next?", 'Any examples to help?']
+      return ['What’s next?', 'Any examples to help?']
     }
   }
 
-  const postMessage = async (
-    role: 'user' | 'assistant',
-    content: string
-  ) => {
+  // Save each user/assistant message to the chat history table
+  const postMessage = async (role: 'user' | 'assistant', content: string) => {
     if (!threadId) return
-    try {
-      await fetch(`${API_BASE_URL}/api/chatHistory/${threadId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ role, content }),
-      })
-    } catch (err) {
-      console.error('Failed to save message:', err)
-    }
+    await fetch(`${API_BASE_URL}/api/chatHistory/${threadId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ role, content }),
+    })
   }
 
-  const handleStream = async (prompt: string, aId: string) => {
+  // Stream in new assistant response
+  const handleStream = async (messageText: string, aId: string) => {
     let fullContent = ''
     let followUps: string[] = []
 
     await streamChat({
-      prompt,
+      prompt: messageText,
       token,
       threadId: threadId || undefined,
       onStream: (chunk) => {
@@ -199,6 +177,7 @@ function DashboardContent() {
           )
         }
         postMessage('assistant', fullContent)
+        // Increment user’s promptsUsed & XP
         setUser({
           ...user,
           promptsUsed: (user?.promptsUsed ?? 0) + 1,
@@ -206,23 +185,28 @@ function DashboardContent() {
         })
       },
       onImage: (imageUrl) => {
-        // Handle streamed image URLs if any
+        // If the AI returns an image URL, you could append it here
+        // e.g. setMessages((m) => [...m, { id: `img${Date.now()}`, role: 'assistant', content: '', imageUrl }])
       },
     })
   }
 
+  // Fire off user message (text or file)
   const handleSubmit = async (override?: string) => {
-    const text = override || input.trim()
+    const text = override ?? input.trim()
     if (!text && !selectedFile) return
 
+    // 1) Insert the user’s message into state & database
     const uId = `u${Date.now()}`
     setMessages((m) => [...m, { id: uId, role: 'user', content: text }])
     setInput('')
     postMessage('user', text)
 
+    // 2) Create a placeholder for the assistant response
     const aId = `a${Date.now()}`
     setMessages((m) => [...m, { id: aId, role: 'assistant', content: '' }])
 
+    // 3) If a file is attached, let the “image” endpoint handle it
     if (selectedFile) {
       const reader = new FileReader()
       reader.onload = async () => {
@@ -239,18 +223,14 @@ function DashboardContent() {
           const data = await res.json()
           setMessages((m) =>
             m.map((msg) =>
-              msg.id === aId
-                ? { ...msg, content: data.content, imageUrl: base64 }
-                : msg
+              msg.id === aId ? { ...msg, content: data.content, imageUrl: base64 } : msg
             )
           )
           postMessage('assistant', data.content)
         } catch {
           setMessages((m) =>
             m.map((msg) =>
-              msg.id === aId
-                ? { ...msg, content: '❌ Failed to analyze image.' }
-                : msg
+              msg.id === aId ? { ...msg, content: '❌ Failed to analyze image.' } : msg
             )
           )
         }
@@ -258,21 +238,58 @@ function DashboardContent() {
       reader.readAsDataURL(selectedFile)
       setSelectedFile(null)
     } else {
+      // 4) Otherwise, stream from the AI
       handleStream(text, aId)
     }
   }
 
   return (
     <div className="flex flex-col h-full p-4 bg-background text-textPrimary">
+      {/* ────────────────────────────────────────────────── */}
+      {/* Header: Title + Prompt Tracker + “New Chat” Button */}
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">{threadTitle}</h2>
+        {/** Only show the threadTitle if we’re not just clicked “New Chat” */}
+        {editingTitle ? (
+          <input
+            className="text-xl font-bold p-1 border rounded"
+            value={threadTitle}
+            onChange={(e) => setThreadTitle(e.target.value)}
+            onBlur={async () => {
+              setEditingTitle(false)
+              try {
+                await fetch(`${API_BASE_URL}/api/chat/rename/${threadId}`, {
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({ title: threadTitle }),
+                })
+              } catch {
+                console.error('Failed to rename thread')
+              }
+            }}
+          />
+        ) : (
+          <h2
+            className="text-xl font-bold cursor-pointer"
+            onClick={() => setEditingTitle(true)}
+          >
+            {threadTitle}
+          </h2>
+        )}
+
         <div className="flex items-center gap-4">
-          {/* Make PromptTracker bar more visible: */}
-          <PromptTracker used={promptsUsed} limit={promptLimit} />
+          {/* PromptTracker: give it a custom background so it stands out */}
+          <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-md">
+            <PromptTracker used={promptsUsed} limit={promptLimit} />
+          </div>
+
           <button
             onClick={() => {
               createNewThread()
-              setThreadTitle('')
+              setThreadTitle('')        // “hide” the date/time title momentarily
+              setMessages([])
             }}
             className="text-xs bg-accent text-white px-3 py-1 rounded-full flex items-center gap-2 hover:brightness-110"
           >
@@ -281,10 +298,13 @@ function DashboardContent() {
         </div>
       </div>
 
+      {/* ────────────────────────────────────────────────── */}
+      {/* Chat Bubbles Container */}
       <div
         ref={containerRef}
         className="flex-1 overflow-y-auto space-y-6 pb-6"
       >
+        {/* “What can Growfly do for me?” prompt aligned right */}
         {messages.length === 0 && (
           <div className="mb-4 flex justify-end">
             <button
@@ -296,15 +316,17 @@ function DashboardContent() {
           </div>
         )}
 
+        {/* Iterate through messages */}
         {messages.map((msg) => (
           <div
             key={msg.id}
             className={`whitespace-pre-wrap text-sm p-4 rounded-xl shadow-sm max-w-2xl ${
               msg.role === 'user'
                 ? 'bg-accent text-white self-end ml-auto'
-                : 'bg-gray-300 text-black self-start'
+                : 'bg-gray-100 text-black self-start'
             }`}
           >
+            {/* If AI returned an image, show it */}
             {msg.imageUrl && (
               <Image
                 src={msg.imageUrl}
@@ -316,8 +338,10 @@ function DashboardContent() {
             )}
             <p>{msg.content}</p>
 
+            {/* If it’s an assistant bubble, show the follow‐up buttons & icons */}
             {msg.role === 'assistant' && (
               <>
+                {/* 2 Follow‐up Suggestions (deduped) */}
                 <div className="flex gap-2 mt-3 flex-wrap">
                   {msg.followUps?.map((fu, i) => (
                     <button
@@ -329,31 +353,40 @@ function DashboardContent() {
                     </button>
                   ))}
                 </div>
+
+                {/* Reaction / Bookmark / Share / Download icons */}
                 <div className="flex gap-4 mt-3 text-lg">
                   <HiThumbUp
                     onClick={() => {
-                      setFeedbackResponseId(msg.id)
-                      setIsFeedbackModalOpen(true)
+                      /* TODO: wire up “Thumbs Up” sending to FeedbackModal */
                     }}
                     className="cursor-pointer hover:text-green-500"
                   />
                   <HiThumbDown
                     onClick={() => {
-                      setFeedbackResponseId(msg.id)
-                      setIsFeedbackModalOpen(true)
+                      /* TODO: wire up “Thumbs Down” sending to FeedbackModal */
                     }}
                     className="cursor-pointer hover:text-red-500"
                   />
                   <FaRegBookmark
-                    onClick={() => setIsSaveModalOpen(true)}
+                    onClick={() => {
+                      /* TODO: wire up SaveModal: pass content, and set open=true */
+                    }}
                     className="cursor-pointer hover:text-yellow-500"
                   />
                   <FaShareSquare
-                    onClick={() => router.push('/collab-zone')}
+                    onClick={() => {
+                      /* TODO: currently opens FeedbackModal – you can change target logic here */
+                    }}
                     className="cursor-pointer hover:text-blue-500"
                   />
                   {msg.imageUrl && (
-                    <FaFileDownload className="cursor-pointer hover:text-gray-600" />
+                    <FaFileDownload
+                      onClick={() => {
+                        /* TODO: Trigger download of msg.imageUrl */
+                      }}
+                      className="cursor-pointer hover:text-gray-600"
+                    />
                   )}
                 </div>
               </>
@@ -364,6 +397,8 @@ function DashboardContent() {
         <div ref={chatEndRef} />
       </div>
 
+      {/* ────────────────────────────────────────────────── */}
+      {/* Input Bar + File Uploader */}
       <div className="border-t pt-4 mt-4">
         <textarea
           rows={2}
@@ -396,9 +431,7 @@ function DashboardContent() {
             ref={fileInputRef}
           />
           {selectedFile && (
-            <p className="text-xs text-muted-foreground mt-1">
-              {selectedFile.name}
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">{selectedFile.name}</p>
           )}
           <button
             onClick={() => handleSubmit()}
@@ -410,19 +443,24 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* SaveModal and FeedbackModal with required props */}
+      {/* ────────────────────────────────────────────────── */}
+      {/* SaveModal & FeedbackModal */}
+      {/* Note: Pass the required props exactly as the component expects */}
       <SaveModal
-        open={isSaveModalOpen}
-        onClose={() => setIsSaveModalOpen(false)}
+        open={false}              // toggle this to true when user clicks on “bookmark”
+        onClose={() => {
+          /* set state to close SaveModal */
+        }}
         onConfirm={async (title: string) => {
-          // Implement save logic here if needed
-          setIsSaveModalOpen(false)
+          /* persist the saved chat title in your database */
         }}
       />
       <FeedbackModal
-        responseId={feedbackResponseId}
-        open={isFeedbackModalOpen}
-        onClose={() => setIsFeedbackModalOpen(false)}
+        responseId={''}           // pass the assistant’s response ID that the user is rating
+        open={false}              // toggle to true when user clicks thumbs up/down
+        onClose={() => {
+          /* set state to close FeedbackModal */
+        }}
       />
     </div>
   )
