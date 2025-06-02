@@ -1,86 +1,65 @@
 // File: lib/streamChat.ts
-
 export type StreamedChunk = {
-  role: 'user' | 'assistant'
-  content: string
-  followUps?: string[]
-}
+  role: 'user' | 'assistant';
+  content: string;
+  followUps?: string[];
+};
 
-const fallbackFollowUps = [
-  'Can you explain that in more detail?',
-  'How can I apply this to my business?',
-]
-
-type StreamChatProps = {
-  prompt: string
-  token: string
-  onStream: (chunk: StreamedChunk) => void
-  onComplete?: (full: string) => void
-  threadId?: string
-  imageUrl?: string
-  systemInstructions?: string
-}
+type Props = {
+  prompt: string;
+  threadId?: string;
+  token: string;
+  onStream: (chunk: StreamedChunk) => void;
+  onComplete?: (fullText: string) => void;
+  onImage?: (imageUrl: string) => void;
+};
 
 export default async function streamChat({
   prompt,
+  threadId,
   token,
   onStream,
   onComplete,
-  threadId,
-  imageUrl,
-  systemInstructions,
-}: StreamChatProps) {
-  const res = await fetch('/api/ai/chat', {
+  onImage,
+}: Props) {
+  const res = await fetch(`/api/ai/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({
-      prompt,
-      threadId,
-      imageUrl,
-      systemInstructions,
-    }),
-  })
+    body: JSON.stringify({ prompt, threadId }),
+  });
 
-  const reader = res.body?.getReader()
-  if (!reader) throw new Error('No response body')
+  if (!res.ok || !res.body) throw new Error('No response stream');
 
-  const decoder = new TextDecoder()
-  let buffer = ''
-  let fullText = ''
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let fullText = '';
+  let followUps: string[] | undefined;
 
   while (true) {
-    const { value, done } = await reader.read()
-    if (done) break
+    const { done, value } = await reader.read();
+    if (done) break;
 
-    buffer += decoder.decode(value, { stream: true })
-    const lines = buffer.split('\n')
+    const chunk = decoder.decode(value, { stream: true });
 
-    for (let i = 0; i < lines.length - 1; i++) {
-      const line = lines[i].trim()
-      if (!line.startsWith('data:')) continue
+    try {
+      const parsed = JSON.parse(chunk);
+      const role = parsed.role || 'assistant';
+      const content = parsed.content || '';
+      const imageUrl = parsed.imageUrl;
+      followUps = parsed.followUps;
 
-      const json = line.replace(/^data:\s*/, '')
-      if (!json || json === '[DONE]') continue
+      if (imageUrl && onImage) onImage(imageUrl);
 
-      try {
-        const parsed = JSON.parse(json)
-        const role = parsed.role || 'assistant'
-        const content = parsed.content || ''
-        const followUps = parsed.followUps || fallbackFollowUps
+      fullText += content;
 
-        fullText += content
-
-        onStream({ role, content, followUps })
-      } catch (err) {
-        console.warn('Stream parse error:', err)
-      }
+      onStream({ role, content, followUps });
+    } catch (err) {
+      console.warn('Stream parse error:', err);
     }
-
-    buffer = lines[lines.length - 1]
   }
 
-  if (onComplete) onComplete(fullText)
+  if (onComplete) onComplete(fullText);
 }
