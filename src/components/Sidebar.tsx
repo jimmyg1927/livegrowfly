@@ -19,11 +19,11 @@ import {
 
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: HiOutlineHome },
-  { name: 'Saved', href: '/saved', icon: HiOutlineDocumentText },
+  { name: 'Saved Chats', href: '/saved', icon: HiOutlineDocumentText },
   { name: 'Collab Zone', href: '/collab-zone', icon: HiOutlineUserGroup },
-  { name: 'Chats', href: '/recent-chats', icon: HiOutlineClock }, // ✅ NEW
+  { name: 'Chat History', href: '/recent-chats', icon: HiOutlineClock }, // ✅ NEW
   { name: 'Wishlist', href: '/wishlist', icon: HiOutlineHeart },
-  { name: 'Nerdify Me!', href: '/nerd-mode', icon: HiOutlineLightBulb },
+  { name: 'Education Hub!', href: '/nerd-mode', icon: HiOutlineLightBulb },
   { name: 'Refer a Friend', href: '/refer', icon: HiOutlineUserAdd },
   { name: 'Change Plan', href: '/change-plan', icon: HiOutlineCurrencyPound },
   { name: 'Settings', href: '/settings', icon: HiOutlineCog },

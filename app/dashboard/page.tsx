@@ -22,6 +22,12 @@ type Message = {
   followUps?: string[]
 }
 
+const PROMPT_LIMITS = {
+  free: 20,
+  personal: 400,
+  business: 2000,
+}
+
 function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -29,18 +35,14 @@ function DashboardContent() {
 
   const { user, setUser } = useUserStore()
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
-  const promptLimit = user?.promptLimit ?? 0
+  const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || ''] || 0
   const promptsUsed = user?.promptsUsed ?? 0
 
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [threadId, setThreadId] = useState<string | null>(null)
-  const [threadTitle, setThreadTitle] = useState('Untitled Chat')
-  const [showSaveModal, setShowSaveModal] = useState(false)
-  const [saveContent, setSaveContent] = useState('')
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false)
-  const [feedbackTargetId, setFeedbackTargetId] = useState('')
+  const [threadTitle, setThreadTitle] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -59,12 +61,18 @@ function DashboardContent() {
         .then((r) => r.json())
         .then((data) => {
           setMessages(data.messages || [])
-          setThreadTitle(data.title || 'Untitled Chat')
+          setThreadTitle(data.title || formatTitleFromDate(new Date()))
         })
     } else {
       createNewThread()
     }
   }, [paramThreadId])
+
+  const formatTitleFromDate = (date: Date) => {
+    return `${date.toLocaleDateString(undefined, {
+      weekday: 'long',
+    })} Chat – ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+  }
 
   const createNewThread = async () => {
     const res = await fetch(`${API_BASE_URL}/api/chat/create`, {
@@ -74,22 +82,9 @@ function DashboardContent() {
     const data = await res.json()
     setThreadId(data.id)
     setMessages([])
-    setThreadTitle('Untitled Chat')
+    const title = formatTitleFromDate(new Date())
+    setThreadTitle(title)
     localStorage.setItem('growfly_last_thread_id', data.id)
-  }
-
-  const renameThread = async () => {
-    const newTitle = prompt('Rename this chat?', threadTitle)
-    if (!newTitle || !threadId) return
-    await fetch(`${API_BASE_URL}/api/chat/rename/${threadId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ title: newTitle }),
-    })
-    setThreadTitle(newTitle)
   }
 
   useEffect(() => {
@@ -122,7 +117,8 @@ function DashboardContent() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}` },
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ role, content }),
     })
   }
@@ -168,8 +164,8 @@ function DashboardContent() {
     })
   }
 
-  const handleSubmit = async () => {
-    const text = input.trim()
+  const handleSubmit = async (override?: string) => {
+    const text = override || input.trim()
     if (!text && !selectedFile) return
 
     const uId = `u${Date.now()}`
@@ -189,7 +185,8 @@ function DashboardContent() {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}` },
+              Authorization: `Bearer ${token}`,
+            },
             body: JSON.stringify({ imageBase64: base64, message: text }),
           })
           const data = await res.json()
@@ -217,12 +214,7 @@ function DashboardContent() {
   return (
     <div className="flex flex-col h-full p-4 bg-background text-textPrimary">
       <div className="flex justify-between items-center mb-4">
-        <div>
-          <h2 className="text-xl font-bold">{threadTitle}</h2>
-          <button onClick={renameThread} className="text-sm text-blue-500 underline mt-1">
-            Rename Chat
-          </button>
-        </div>
+        <h2 className="text-xl font-bold">{threadTitle}</h2>
         <div className="flex items-center gap-4">
           <PromptTracker used={promptsUsed} limit={promptLimit} />
           <button
@@ -236,12 +228,9 @@ function DashboardContent() {
 
       <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pb-6">
         {messages.length === 0 && (
-          <div className="mb-4">
+          <div className="mb-4 flex justify-end">
             <button
-              onClick={() => {
-                setInput('What can Growfly do for me?')
-                handleSubmit()
-              }}
+              onClick={() => handleSubmit('What can Growfly do for me?')}
               className="bg-blue-100 text-blue-800 hover:bg-blue-200 px-4 py-2 rounded-full text-sm font-medium shadow"
             >
               What can Growfly do for me?
@@ -275,10 +264,7 @@ function DashboardContent() {
                   {msg.followUps?.map((fu, i) => (
                     <button
                       key={i}
-                      onClick={() => {
-                        setInput(fu)
-                        handleSubmit()
-                      }}
+                      onClick={() => handleSubmit(fu)}
                       className="bg-blue-100 text-blue-800 hover:bg-blue-200 px-3 py-1 rounded-full text-xs font-medium shadow-sm"
                     >
                       {fu}
@@ -286,12 +272,12 @@ function DashboardContent() {
                   ))}
                 </div>
                 <div className="flex gap-4 mt-3 text-lg">
-                  <HiThumbUp onClick={() => {}} className="cursor-pointer hover:text-green-500" />
-                  <HiThumbDown onClick={() => {}} className="cursor-pointer hover:text-red-500" />
-                  <FaRegBookmark onClick={() => {}} className="cursor-pointer hover:text-yellow-500" />
+                  <HiThumbUp className="cursor-pointer hover:text-green-500" />
+                  <HiThumbDown className="cursor-pointer hover:text-red-500" />
+                  <FaRegBookmark className="cursor-pointer hover:text-yellow-500" />
                   <FaShareSquare onClick={() => router.push('/collab-zone')} className="cursor-pointer hover:text-blue-500" />
                   {msg.imageUrl && (
-                    <FaFileDownload onClick={() => {}} className="cursor-pointer hover:text-gray-600" />
+                    <FaFileDownload className="cursor-pointer hover:text-gray-600" />
                   )}
                 </div>
               </>
@@ -336,7 +322,7 @@ function DashboardContent() {
             <p className="text-xs text-muted-foreground mt-1">{selectedFile.name}</p>
           )}
           <button
-            onClick={handleSubmit}
+            onClick={() => handleSubmit()}
             disabled={!input.trim() && !selectedFile}
             className="bg-accent hover:bg-accent/90 disabled:bg-gray-400 text-white font-semibold px-6 py-2 rounded-full text-sm shadow transition-all"
           >
