@@ -11,7 +11,7 @@ import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
 import streamChat, { StreamedChunk } from '@lib/streamChat'
 import { useUserStore } from '@lib/store'
-import { API_BASE_URL, defaultFollowUps } from '@lib/constants'
+import { API_BASE_URL } from '@lib/constants'
 
 type Message = {
   id: string
@@ -24,8 +24,8 @@ type Message = {
 export default function DashboardPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-if (!searchParams) return null // or fallback render
-const threadId = searchParams.get('threadId') || ''
+  const chatId = searchParams?.get('threadId')
+
   const { user, setUser } = useUserStore()
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
   const promptLimit = user?.promptLimit ?? 0
@@ -38,52 +38,40 @@ const threadId = searchParams.get('threadId') || ''
   const [saveContent, setSaveContent] = useState('')
   const [showFeedbackModal, setShowFeedbackModal] = useState(false)
   const [feedbackTargetId, setFeedbackTargetId] = useState('')
-  const chatEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  // 🧠 Load thread by ID from backend
-  useEffect(() => {
-    if (!user?.id || !threadId) return
-    fetch(`${API_BASE_URL}/api/threads/${threadId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then(res => res.json())
-      .then(data => {
-        setMessages(data.messages || [])
-      })
-      .catch(err => console.error('Failed to load thread:', err))
-  }, [threadId, user?.id])
+  const chatEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!token) router.push('/onboarding')
   }, [token])
 
   useEffect(() => {
+    if (!user?.id) return
+    const key = chatId ? `growfly_chat_${chatId}` : `growfly_chat_${user.id}`
+    const stored = localStorage.getItem(key)
+    if (stored) {
+      try {
+        const hist = JSON.parse(stored) as Message[]
+        setMessages(hist.slice(-10))
+      } catch {
+        console.warn('⚠️ Failed to parse chat history')
+      }
+    }
+  }, [user?.id, chatId])
+
+  useEffect(() => {
+    if (!user?.id || messages.length === 0) return
+    const key = chatId ? `growfly_chat_${chatId}` : `growfly_chat_${user.id}`
+    localStorage.setItem(key, JSON.stringify(messages))
+  }, [messages, user?.id, chatId])
+
+  useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
-
-  const persistThread = async (updatedMessages: Message[]) => {
-    if (!threadId) return
-    try {
-      await fetch(`${API_BASE_URL}/api/threads/${threadId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ messages: updatedMessages }),
-      })
-    } catch (err) {
-      console.error('❌ Failed to persist thread update:', err)
-    }
-  }
 
   const handleStream = async (prompt: string, aId: string) => {
     let fullContent = ''
     let followUps: string[] = []
-
     await streamChat(
       prompt,
       token,
@@ -122,8 +110,6 @@ const threadId = searchParams.get('threadId') || ''
       promptsUsed: (user?.promptsUsed ?? 0) + 1,
       totalXP: (user?.totalXP ?? 0) + 2.5,
     })
-
-    persistThread([...messages])
   }
 
   const handleSubmit = async () => {
@@ -131,13 +117,11 @@ const threadId = searchParams.get('threadId') || ''
     if (!text && !selectedFile) return
 
     const uId = `u${Date.now()}`
-    const aId = `a${Date.now()}`
-    const newMessages: Message[] = [
-      { id: uId, role: 'user', content: text },
-      { id: aId, role: 'assistant', content: '' },
-    ]
-    setMessages((prev) => [...prev, ...newMessages])
+    setMessages((m) => [...m, { id: uId, role: 'user', content: text }])
     setInput('')
+
+    const aId = `a${Date.now()}`
+    setMessages((m) => [...m, { id: aId, role: 'assistant', content: '' }])
 
     if (selectedFile) {
       const reader = new FileReader()
@@ -153,19 +137,18 @@ const threadId = searchParams.get('threadId') || ''
             body: JSON.stringify({ imageBase64: base64, message: text }),
           })
           const data = await res.json()
-          setMessages((prev) =>
-            prev.map((msg) =>
+          setMessages((m) =>
+            m.map((msg) =>
               msg.id === aId ? { ...msg, content: data.content, imageUrl: base64 } : msg
             )
           )
-        } catch {
-          setMessages((prev) =>
-            prev.map((msg) =>
+        } catch (err) {
+          setMessages((m) =>
+            m.map((msg) =>
               msg.id === aId ? { ...msg, content: '❌ Failed to analyze image.' } : msg
             )
           )
         }
-        persistThread([...messages, ...newMessages])
       }
       reader.readAsDataURL(selectedFile)
       setSelectedFile(null)
@@ -185,11 +168,7 @@ const threadId = searchParams.get('threadId') || ''
   const handleFollowUp = (q: string) => {
     const uId = `u${Date.now()}`
     const aId = `a${Date.now()}`
-    const newMessages: Message[] = [
-      { id: uId, role: 'user', content: q },
-      { id: aId, role: 'assistant', content: '' },
-    ]
-    setMessages((prev) => [...prev, ...newMessages])
+    setMessages((m) => [...m, { id: uId, role: 'user', content: q }, { id: aId, role: 'assistant', content: '' }])
     handleStream(q, aId)
   }
 
@@ -290,30 +269,28 @@ const threadId = searchParams.get('threadId') || ''
           }}
         />
         <div className="flex justify-between items-center mt-2">
-          <div className="text-sm">
-            <div
-              onDrop={(e) => {
-                e.preventDefault()
-                const file = e.dataTransfer.files?.[0]
-                if (file) setSelectedFile(file)
-              }}
-              onDragOver={(e) => e.preventDefault()}
-              onClick={() => fileInputRef.current?.click()}
-              className="cursor-pointer border-2 border-dashed border-blue-400 px-4 py-2 rounded text-blue-600 hover:bg-blue-50"
-            >
-              📎 Upload Image / PDF
-            </div>
-            <input
-              type="file"
-              accept="image/*,application/pdf"
-              onChange={handleFileChange}
-              className="hidden"
-              ref={fileInputRef}
-            />
-            {selectedFile && (
-              <p className="text-xs text-muted-foreground mt-1">{selectedFile.name}</p>
-            )}
+          <div
+            onDrop={(e) => {
+              e.preventDefault()
+              const file = e.dataTransfer.files?.[0]
+              if (file) setSelectedFile(file)
+            }}
+            onDragOver={(e) => e.preventDefault()}
+            onClick={() => fileInputRef.current?.click()}
+            className="cursor-pointer border-2 border-dashed border-blue-400 px-4 py-2 rounded text-blue-600 hover:bg-blue-50"
+          >
+            📎 Upload Image / PDF
           </div>
+          <input
+            type="file"
+            accept="image/*,application/pdf"
+            onChange={handleFileChange}
+            className="hidden"
+            ref={fileInputRef}
+          />
+          {selectedFile && (
+            <p className="text-xs text-muted-foreground mt-1">{selectedFile.name}</p>
+          )}
           <button
             onClick={handleSubmit}
             disabled={!input.trim() && !selectedFile}
