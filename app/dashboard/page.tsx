@@ -47,10 +47,12 @@ function DashboardContent() {
   const chatEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
+  // If no valid token, redirect to onboarding
   useEffect(() => {
     if (!token) router.push('/onboarding')
   }, [token, router])
 
+  // On mount (or when paramThreadId changes), fetch existing thread or create a new one.
   useEffect(() => {
     const rawId = paramThreadId || localStorage.getItem('growfly_last_thread_id')
     if (rawId && rawId !== 'undefined') {
@@ -63,34 +65,40 @@ function DashboardContent() {
           setMessages(data.messages || [])
           setThreadTitle(data.title || formatTitleFromDate(new Date()))
         })
+        .catch((err) => {
+          console.error('❌ Error fetching history:', err)
+        })
     } else {
       createNewThread()
     }
   }, [paramThreadId])
 
+  // Helper to format a fallback title using the current date/time
   const formatTitleFromDate = (date: Date) => {
     return `${date.toLocaleDateString(undefined, {
       weekday: 'long',
     })} Chat – ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
   }
 
+  // Creates a brand-new chat thread on the backend
   const createNewThread = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/chat/create`, {
+      const res = await fetch(`${API_BASE_URL}/api/chats/chat/create`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
       setThreadId(data.threadId)
       setMessages([])
-      // *** HIDE THE DATE/TIME WHEN "New Chat" IS CLICKED ***
+      // Hide date/time when "New Chat" is clicked
       setThreadTitle('')
       localStorage.setItem('growfly_last_thread_id', data.threadId)
     } catch (err) {
-      console.error('❌ Failed to create thread', err)
+      console.error('❌ Failed to create thread:', err)
     }
   }
 
+  // Whenever the messages array updates, auto-scroll if already near bottom
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -98,6 +106,7 @@ function DashboardContent() {
     if (nearBottom) chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  // If AI doesn’t generate follow-ups, fall back to these two
   const fetchFollowUps = async (text: string): Promise<string[]> => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/ai/followups`, {
@@ -115,18 +124,24 @@ function DashboardContent() {
     }
   }
 
+  // Persist each user/assistant message into promptHistory
   const postMessage = async (role: 'user' | 'assistant', content: string) => {
     if (!threadId) return
-    await fetch(`${API_BASE_URL}/api/chatHistory/${threadId}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ role, content }),
-    })
+    try {
+      await fetch(`${API_BASE_URL}/api/chatHistory/${threadId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ role, content }),
+      })
+    } catch (err) {
+      console.error('❌ postMessage error:', err)
+    }
   }
 
+  // Streams an AI response via Server-Sent Events, updating the `messages` array in real time
   const handleStream = async (prompt: string, aId: string) => {
     let fullContent = ''
     let followUps: string[] = []
@@ -139,6 +154,7 @@ function DashboardContent() {
         fullContent += chunk.content
         if (chunk.followUps) followUps = chunk.followUps
 
+        // Update the “assistant” bubble in place
         setMessages((m) =>
           m.map((msg) =>
             msg.id === aId
@@ -152,6 +168,7 @@ function DashboardContent() {
         )
       },
       onComplete: async () => {
+        // If backend didn’t send two follow-ups, generate fallback
         if (!followUps.length) {
           followUps = await fetchFollowUps(fullContent)
           setMessages((m) =>
@@ -159,6 +176,7 @@ function DashboardContent() {
           )
         }
         postMessage('assistant', fullContent)
+        // Update user store (promptsUsed + XP)
         setUser({
           ...user,
           promptsUsed: (user?.promptsUsed ?? 0) + 1,
@@ -168,18 +186,22 @@ function DashboardContent() {
     })
   }
 
+  // Called when user clicks “Send” or a follow-up button
   const handleSubmit = async (override?: string) => {
     const text = override || input.trim()
     if (!text && !selectedFile) return
 
+    // 1️⃣ Add user message to UI
     const uId = `u${Date.now()}`
     setMessages((m) => [...m, { id: uId, role: 'user', content: text }])
     setInput('')
     postMessage('user', text)
 
+    // 2️⃣ Add blank assistant bubble (to be filled via SSE)
     const aId = `a${Date.now()}`
     setMessages((m) => [...m, { id: aId, role: 'assistant', content: '' }])
 
+    // 3️⃣ If an image/PDF was attached, send that separately
     if (selectedFile) {
       const reader = new FileReader()
       reader.onload = async () => {
@@ -194,6 +216,7 @@ function DashboardContent() {
             body: JSON.stringify({ imageBase64: base64, message: text }),
           })
           const data = await res.json()
+          // Insert returned content + image thumbnail
           setMessages((m) =>
             m.map((msg) =>
               msg.id === aId ? { ...msg, content: data.content, imageUrl: base64 } : msg
@@ -211,12 +234,14 @@ function DashboardContent() {
       reader.readAsDataURL(selectedFile)
       setSelectedFile(null)
     } else {
+      // 4️⃣ No file → stream AI response
       handleStream(text, aId)
     }
   }
 
   return (
     <div className="flex flex-col h-full p-4 bg-background text-textPrimary">
+      {/* ─── HEADER ───────────────────────────────────────────────────────────────── */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">{threadTitle}</h2>
         <div className="flex items-center gap-4">
@@ -230,7 +255,9 @@ function DashboardContent() {
         </div>
       </div>
 
+      {/* ─── MESSAGE AREA ─────────────────────────────────────────────────────────────── */}
       <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pb-6">
+        {/* “What can Growfly do for me?” button sits at top when no messages yet */}
         {messages.length === 0 && (
           <div className="mb-4 flex justify-end">
             <button
@@ -294,6 +321,7 @@ function DashboardContent() {
         <div ref={chatEndRef} />
       </div>
 
+      {/* ─── INPUT AREA ──────────────────────────────────────────────────────────────── */}
       <div className="border-t pt-4 mt-4">
         <textarea
           rows={2}
