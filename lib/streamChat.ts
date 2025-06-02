@@ -1,62 +1,86 @@
 // File: lib/streamChat.ts
 
 export type StreamedChunk = {
-  content?: string
+  role: 'user' | 'assistant'
+  content: string
   followUps?: string[]
 }
 
-interface StreamChatArgs {
+const fallbackFollowUps = [
+  'Can you explain that in more detail?',
+  'How can I apply this to my business?',
+]
+
+type StreamChatProps = {
   prompt: string
   token: string
-  onStream?: (chunk: StreamedChunk) => void
-  onComplete?: (full: string, followUps: string[]) => void
+  onStream: (chunk: StreamedChunk) => void
+  onComplete?: (full: string) => void
+  threadId?: string
+  imageUrl?: string
+  systemInstructions?: string
 }
 
-const streamChat = async ({ prompt, token, onStream, onComplete }: StreamChatArgs) => {
+export default async function streamChat({
+  prompt,
+  token,
+  onStream,
+  onComplete,
+  threadId,
+  imageUrl,
+  systemInstructions,
+}: StreamChatProps) {
   const res = await fetch('/api/ai/chat', {
     method: 'POST',
     headers: {
+      'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: (() => {
-      const form = new FormData()
-      form.append('message', prompt)
-      return form
-    })(),
+    body: JSON.stringify({
+      prompt,
+      threadId,
+      imageUrl,
+      systemInstructions,
+    }),
   })
 
-  if (!res.ok || !res.body) throw new Error('Failed to connect to stream')
+  const reader = res.body?.getReader()
+  if (!reader) throw new Error('No response body')
 
-  const reader = res.body.getReader()
-  const decoder = new TextDecoder('utf-8')
-
-  let full = ''
-  let followUps: string[] = []
+  const decoder = new TextDecoder()
+  let buffer = ''
+  let fullText = ''
 
   while (true) {
-    const { done, value } = await reader.read()
+    const { value, done } = await reader.read()
     if (done) break
 
-    const chunk = decoder.decode(value)
-    const lines = chunk.split('\n').filter(Boolean)
+    buffer += decoder.decode(value, { stream: true })
+    const lines = buffer.split('\n')
 
-    for (const line of lines) {
-      if (line === 'data: [DONE]') continue
-      if (!line.startsWith('data: ')) continue
+    for (let i = 0; i < lines.length - 1; i++) {
+      const line = lines[i].trim()
+      if (!line.startsWith('data:')) continue
 
-      const json = JSON.parse(line.replace('data: ', ''))
+      const json = line.replace(/^data:\s*/, '')
+      if (!json || json === '[DONE]') continue
 
-      if (json.type === 'partial') {
-        const content = json.content
-        full += content
-        onStream?.({ content })
-      } else if (json.type === 'complete') {
-        followUps = json.followUps || []
-        onStream?.({ followUps })
-        onComplete?.(full, followUps)
+      try {
+        const parsed = JSON.parse(json)
+        const role = parsed.role || 'assistant'
+        const content = parsed.content || ''
+        const followUps = parsed.followUps || fallbackFollowUps
+
+        fullText += content
+
+        onStream({ role, content, followUps })
+      } catch (err) {
+        console.warn('Stream parse error:', err)
       }
     }
-  }
-}
 
-export default streamChat
+    buffer = lines[lines.length - 1]
+  }
+
+  if (onComplete) onComplete(fullText)
+}
