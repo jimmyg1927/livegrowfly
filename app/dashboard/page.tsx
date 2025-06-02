@@ -1,3 +1,4 @@
+// File: app/dashboard/page.tsx
 'use client'
 export const dynamic = 'force-dynamic'
 
@@ -31,7 +32,6 @@ function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const paramThreadId = searchParams?.get('threadId')
-
   const { user, setUser } = useUserStore()
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
   const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || ''] || 0
@@ -243,7 +243,7 @@ function DashboardContent() {
             className={`whitespace-pre-wrap text-sm p-4 rounded-xl shadow-sm max-w-2xl ${
               msg.role === 'user'
                 ? 'bg-accent text-white self-end ml-auto'
-                : 'bg-gray-200 dark:bg-[#2b2b2b] text-white self-start'
+                : 'bg-gray-100 text-gray-900 self-start'
             }`}
           >
             {msg.imageUrl && (
@@ -275,9 +275,7 @@ function DashboardContent() {
                   <HiThumbDown className="cursor-pointer hover:text-red-500" />
                   <FaRegBookmark className="cursor-pointer hover:text-yellow-500" />
                   <FaShareSquare onClick={() => router.push('/collab-zone')} className="cursor-pointer hover:text-blue-500" />
-                  {msg.imageUrl && (
-                    <FaFileDownload className="cursor-pointer hover:text-gray-600" />
-                  )}
+                  {msg.imageUrl && <FaFileDownload className="cursor-pointer hover:text-gray-600" />}
                 </div>
               </>
             )}
