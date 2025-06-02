@@ -1,3 +1,5 @@
+// File: lib/streamChat.ts
+
 export interface StreamedChunk {
   type: 'partial' | 'complete'
   content?: string
@@ -28,7 +30,6 @@ export default async function streamChat(
   const decoder = new TextDecoder()
   let buffer = ''
 
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const { value, done } = await reader.read()
     if (done) break
@@ -48,7 +49,7 @@ export default async function streamChat(
           const json = JSON.parse(part.replace('data: ', '')) as StreamedChunk
           onChunk(json)
         } catch (err) {
-          console.error('Invalid JSON chunk:', part)
+          console.error('❌ Invalid JSON chunk:', part)
         }
       }
     }

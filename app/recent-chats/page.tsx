@@ -16,6 +16,7 @@ export default function RecentChatsPage() {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
+  const activeThreadId = typeof window !== 'undefined' ? localStorage.getItem('growfly_last_thread_id') : ''
 
   useEffect(() => {
     if (!token) return
@@ -62,7 +63,7 @@ export default function RecentChatsPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold mb-6 text-center text-textPrimary">🕒 Recent Chats</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center text-textPrimary">Recent Chats</h1>
 
       {loading ? (
         <p className="text-center text-muted-foreground">Loading chats...</p>
@@ -76,9 +77,18 @@ export default function RecentChatsPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2 }}
-              className="flex justify-between items-center p-4 rounded-xl bg-white dark:bg-[#1f2937] shadow"
+              className={`flex justify-between items-center p-4 rounded-xl shadow 
+                ${chat.id === activeThreadId
+                  ? 'bg-blue-50 dark:bg-[#2a3a58] border border-blue-400'
+                  : 'bg-white dark:bg-[#1f2937]'}`}
             >
-              <div className="cursor-pointer" onClick={() => router.push(`/dashboard?threadId=${chat.id}`)}>
+              <div
+                className="cursor-pointer"
+                onClick={() => {
+                  localStorage.setItem('growfly_last_thread_id', chat.id)
+                  router.push(`/dashboard?threadId=${chat.id}`)
+                }}
+              >
                 <p className="text-lg font-semibold text-textPrimary hover:underline">{chat.title}</p>
                 <p className="text-xs text-muted-foreground">{new Date(chat.createdAt).toLocaleString()}</p>
               </div>
