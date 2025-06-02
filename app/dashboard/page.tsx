@@ -1,3 +1,4 @@
+// File: app/dashboard/page.tsx
 'use client'
 export const dynamic = 'force-dynamic'
 
@@ -5,12 +6,7 @@ import React, { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { HiThumbUp, HiThumbDown } from 'react-icons/hi'
-import {
-  FaRegBookmark,
-  FaShareSquare,
-  FaFileDownload,
-  FaSyncAlt,
-} from 'react-icons/fa'
+import { FaRegBookmark, FaShareSquare, FaFileDownload, FaSyncAlt } from 'react-icons/fa'
 import PromptTracker from '@/components/PromptTracker'
 import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
@@ -26,7 +22,7 @@ type Message = {
   followUps?: string[]
 }
 
-const PROMPT_LIMITS: Record<string, number> = {
+const PROMPT_LIMITS = {
   free: 20,
   personal: 400,
   business: 2000,
@@ -38,12 +34,8 @@ function DashboardContent() {
   const paramThreadId = searchParams?.get('threadId')
 
   const { user, setUser } = useUserStore()
-  const token =
-    typeof window !== 'undefined'
-      ? localStorage.getItem('growfly_jwt') || ''
-      : ''
-  const promptLimit =
-    PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || ''] || 0
+  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
+  const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || ''] || 0
   const promptsUsed = user?.promptsUsed ?? 0
 
   const [input, setInput] = useState('')
@@ -51,10 +43,6 @@ function DashboardContent() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [threadId, setThreadId] = useState<string | null>(null)
   const [threadTitle, setThreadTitle] = useState('')
-  const [showSaveModal, setShowSaveModal] = useState(false)
-  const [saveContent, setSaveContent] = useState('')
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false)
-  const [feedbackTargetId, setFeedbackTargetId] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -83,10 +71,7 @@ function DashboardContent() {
   const formatTitleFromDate = (date: Date) => {
     return `${date.toLocaleDateString(undefined, {
       weekday: 'long',
-    })} Chat – ${date.toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-    })}`
+    })} Chat – ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
   }
 
   const createNewThread = async () => {
@@ -95,27 +80,21 @@ function DashboardContent() {
       headers: { Authorization: `Bearer ${token}` },
     })
     const data = await res.json()
-    setThreadId(data.threadId || data.id)
+    setThreadId(data.id)
     setMessages([])
     const title = formatTitleFromDate(new Date())
     setThreadTitle(title)
-    localStorage.setItem(
-      'growfly_last_thread_id',
-      data.threadId || data.id
-    )
+    localStorage.setItem('growfly_last_thread_id', data.id)
   }
 
-  // Scroll to bottom when new messages arrive
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
-    const nearBottom =
-      container.scrollTop + container.clientHeight >=
-      container.scrollHeight - 100
+    const nearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 100
     if (nearBottom) chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Fetch two unique follow‐up suggestions from backend (or fallbacks)
+  // Fetch and dedupe follow-ups, ensuring they're strings
   const fetchFollowUps = async (text: string): Promise<string[]> => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/ai/followups`, {
@@ -126,26 +105,26 @@ function DashboardContent() {
         },
         body: JSON.stringify({ message: text }),
       })
+
       if (!res.ok) throw new Error('Followups fetch failed')
-      const data = await res.json()
+      const data: { followUps?: unknown[] } = await res.json()
 
-      // Cast unknown[] to string[]
-      const followUpsFromServer = (data.followUps as unknown) as string[]
+      // Filter out non-string entries
+      const rawUps: string[] = Array.isArray(data.followUps)
+        ? data.followUps.filter((item): item is string => typeof item === 'string')
+        : []
 
-      // Deduplicate then take the first two
-      const unique: string[] = Array.from(
-        new Set(followUpsFromServer || [])
-      ).slice(0, 2)
-
+      // Deduplicate and take first two answers
+      const unique = Array.from(new Set(rawUps)).slice(0, 2)
       return unique.length
         ? unique
         : ['Can you explain that further?', 'How can I apply this?']
     } catch {
-      return ['What’s next?', 'Any examples to help?']
+      return ["What's next?", 'Any examples to help?']
     }
   }
 
-  // Persist each message to chat‐history table
+  // Save each message to chatHistory table
   const postMessage = async (role: 'user' | 'assistant', content: string) => {
     if (!threadId) return
     await fetch(`${API_BASE_URL}/api/chatHistory/${threadId}`, {
@@ -158,7 +137,6 @@ function DashboardContent() {
     })
   }
 
-  // Stream the AI response, update UI as chunks arrive
   const handleStream = async (prompt: string, aId: string) => {
     let fullContent = ''
     let followUps: string[] = []
@@ -166,7 +144,6 @@ function DashboardContent() {
     await streamChat({
       prompt,
       token,
-      threadId: threadId || undefined,
       onStream: (chunk) => {
         if (!chunk.content) return
         fullContent += chunk.content
@@ -178,21 +155,17 @@ function DashboardContent() {
               ? {
                   ...msg,
                   content: fullContent,
-                  followUps:
-                    chunk.followUps ?? msg.followUps ?? [],
+                  followUps: chunk.followUps ?? msg.followUps ?? [],
                 }
               : msg
           )
         )
       },
       onComplete: async () => {
-        // If backend didn’t supply follow‐ups, fetch them now
         if (!followUps.length) {
           followUps = await fetchFollowUps(fullContent)
           setMessages((m) =>
-            m.map((msg) =>
-              msg.id === aId ? { ...msg, followUps } : msg
-            )
+            m.map((msg) => (msg.id === aId ? { ...msg, followUps } : msg))
           )
         }
         postMessage('assistant', fullContent)
@@ -205,7 +178,6 @@ function DashboardContent() {
     })
   }
 
-  // When user clicks “Send” (or a follow‐up button), post user message & show assistant placeholder
   const handleSubmit = async (override?: string) => {
     const text = override || input.trim()
     if (!text && !selectedFile) return
@@ -216,10 +188,7 @@ function DashboardContent() {
     postMessage('user', text)
 
     const aId = `a${Date.now()}`
-    setMessages((m) => [
-      ...m,
-      { id: aId, role: 'assistant', content: '' },
-    ])
+    setMessages((m) => [...m, { id: aId, role: 'assistant', content: '' }])
 
     if (selectedFile) {
       const reader = new FileReader()
@@ -237,18 +206,14 @@ function DashboardContent() {
           const data = await res.json()
           setMessages((m) =>
             m.map((msg) =>
-              msg.id === aId
-                ? { ...msg, content: data.content, imageUrl: base64 }
-                : msg
+              msg.id === aId ? { ...msg, content: data.content, imageUrl: base64 } : msg
             )
           )
           postMessage('assistant', data.content)
         } catch {
           setMessages((m) =>
             m.map((msg) =>
-              msg.id === aId
-                ? { ...msg, content: '❌ Failed to analyze image.' }
-                : msg
+              msg.id === aId ? { ...msg, content: '❌ Failed to analyze image.' } : msg
             )
           )
         }
@@ -256,7 +221,6 @@ function DashboardContent() {
       reader.readAsDataURL(selectedFile)
       setSelectedFile(null)
     } else {
-      // Normal text‐only flow
       handleStream(text, aId)
     }
   }
@@ -276,16 +240,11 @@ function DashboardContent() {
         </div>
       </div>
 
-      <div
-        ref={containerRef}
-        className="flex-1 overflow-y-auto space-y-6 pb-6"
-      >
+      <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pb-6">
         {messages.length === 0 && (
           <div className="mb-4 flex justify-end">
             <button
-              onClick={() =>
-                handleSubmit('What can Growfly do for me?')
-              }
+              onClick={() => handleSubmit('What can Growfly do for me?')}
               className="bg-blue-100 text-blue-800 hover:bg-blue-200 px-4 py-2 rounded-full text-sm font-medium shadow"
             >
               What can Growfly do for me?
@@ -327,33 +286,10 @@ function DashboardContent() {
                   ))}
                 </div>
                 <div className="flex gap-4 mt-3 text-lg">
-                  <HiThumbUp
-                    onClick={() => {
-                      setFeedbackTargetId(msg.id)
-                      setShowFeedbackModal(true)
-                    }}
-                    className="cursor-pointer hover:text-green-500"
-                  />
-                  <HiThumbDown
-                    onClick={() => {
-                      setFeedbackTargetId(msg.id)
-                      setShowFeedbackModal(true)
-                    }}
-                    className="cursor-pointer hover:text-red-500"
-                  />
-                  <FaRegBookmark
-                    onClick={() => {
-                      setSaveContent(msg.content)
-                      setShowSaveModal(true)
-                    }}
-                    className="cursor-pointer hover:text-yellow-500"
-                  />
-                  <FaShareSquare
-                    onClick={() =>
-                      router.push('/collab-zone')
-                    }
-                    className="cursor-pointer hover:text-blue-500"
-                  />
+                  <HiThumbUp className="cursor-pointer hover:text-green-500" />
+                  <HiThumbDown className="cursor-pointer hover:text-red-500" />
+                  <FaRegBookmark className="cursor-pointer hover:text-yellow-500" />
+                  <FaShareSquare onClick={() => router.push('/collab-zone')} className="cursor-pointer hover:text-blue-500" />
                   {msg.imageUrl && (
                     <FaFileDownload className="cursor-pointer hover:text-gray-600" />
                   )}
@@ -397,9 +333,7 @@ function DashboardContent() {
             ref={fileInputRef}
           />
           {selectedFile && (
-            <p className="text-xs text-muted-foreground mt-1">
-              {selectedFile.name}
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">{selectedFile.name}</p>
           )}
           <button
             onClick={() => handleSubmit()}
@@ -410,36 +344,6 @@ function DashboardContent() {
           </button>
         </div>
       </div>
-
-      {/* ----- Save Modal ----- */}
-      <SaveModal
-        open={showSaveModal}
-        onClose={() => setShowSaveModal(false)}
-        onConfirm={async (title: string) => {
-          if (!threadId) return
-          // Save the message under the given title
-          await fetch(`${API_BASE_URL}/api/saved`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              title,
-              content: saveContent,
-              threadId,
-            }),
-          })
-          setShowSaveModal(false)
-        }}
-      />
-
-      {/* ----- Feedback Modal ----- */}
-      <FeedbackModal
-        responseId={feedbackTargetId}
-        open={showFeedbackModal}
-        onClose={() => setShowFeedbackModal(false)}
-      />
     </div>
   )
 }
