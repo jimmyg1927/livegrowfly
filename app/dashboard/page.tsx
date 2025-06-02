@@ -2,7 +2,7 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
-import React, { useEffect, useState, useRef, ChangeEvent, Suspense } from 'react'
+import React, { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { HiThumbUp, HiThumbDown } from 'react-icons/hi'
@@ -43,7 +43,6 @@ function DashboardContent() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [threadId, setThreadId] = useState<string | null>(null)
   const [threadTitle, setThreadTitle] = useState('')
-  const [showTitle, setShowTitle] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -53,10 +52,10 @@ function DashboardContent() {
   }, [token, router])
 
   useEffect(() => {
-    const id = paramThreadId || localStorage.getItem('growfly_last_thread_id')
-    if (id) {
-      setThreadId(id)
-      fetch(`${API_BASE_URL}/api/chat/history/${id}`, {
+    const rawId = paramThreadId || localStorage.getItem('growfly_last_thread_id')
+    if (rawId && rawId !== 'undefined') {
+      setThreadId(rawId)
+      fetch(`${API_BASE_URL}/api/chat/history/${rawId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((r) => r.json())
@@ -76,25 +75,27 @@ function DashboardContent() {
   }
 
   const createNewThread = async () => {
-    const res = await fetch(`${API_BASE_URL}/api/chat/create`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    const data = await res.json()
-    setThreadId(data.id)
-    setMessages([])
-    setThreadTitle(formatTitleFromDate(new Date()))
-    setShowTitle(false)
-    localStorage.setItem('growfly_last_thread_id', data.id)
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/chat/create`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await res.json()
+      setThreadId(data.threadId)
+      setMessages([])
+      // *** HIDE THE DATE/TIME WHEN "New Chat" IS CLICKED ***
+      setThreadTitle('')
+      localStorage.setItem('growfly_last_thread_id', data.threadId)
+    } catch (err) {
+      console.error('❌ Failed to create thread', err)
+    }
   }
 
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
     const nearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 100
-    if (nearBottom) {
-      setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
-    }
+    if (nearBottom) chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
   const fetchFollowUps = async (text: string): Promise<string[]> => {
@@ -217,7 +218,7 @@ function DashboardContent() {
   return (
     <div className="flex flex-col h-full p-4 bg-background text-textPrimary">
       <div className="flex justify-between items-center mb-4">
-        {showTitle && <h2 className="text-xl font-bold">{threadTitle}</h2>}
+        <h2 className="text-xl font-bold">{threadTitle}</h2>
         <div className="flex items-center gap-4">
           <PromptTracker used={promptsUsed} limit={promptLimit} />
           <button
@@ -247,7 +248,7 @@ function DashboardContent() {
             className={`whitespace-pre-wrap text-sm p-4 rounded-xl shadow-sm max-w-2xl ${
               msg.role === 'user'
                 ? 'bg-accent text-white self-end ml-auto'
-                : 'bg-gray-200 text-black self-start'
+                : 'bg-neutral-200 text-white self-start'
             }`}
           >
             {msg.imageUrl && (
@@ -264,7 +265,7 @@ function DashboardContent() {
             {msg.role === 'assistant' && (
               <>
                 <div className="flex gap-2 mt-3 flex-wrap">
-                  {msg.followUps?.slice(0, 2).map((fu, i) => (
+                  {msg.followUps?.map((fu, i) => (
                     <button
                       key={i}
                       onClick={() => handleSubmit(fu)}
@@ -278,7 +279,10 @@ function DashboardContent() {
                   <HiThumbUp className="cursor-pointer hover:text-green-500" />
                   <HiThumbDown className="cursor-pointer hover:text-red-500" />
                   <FaRegBookmark className="cursor-pointer hover:text-yellow-500" />
-                  <FaShareSquare onClick={() => router.push('/collab-zone')} className="cursor-pointer hover:text-blue-500" />
+                  <FaShareSquare
+                    onClick={() => router.push('/collab-zone')}
+                    className="cursor-pointer hover:text-blue-500"
+                  />
                   {msg.imageUrl && (
                     <FaFileDownload className="cursor-pointer hover:text-gray-600" />
                   )}
