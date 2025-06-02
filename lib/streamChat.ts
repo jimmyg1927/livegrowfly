@@ -10,7 +10,7 @@ type Props = {
   threadId?: string;
   token: string;
   onStream: (chunk: StreamedChunk) => void;
-  onComplete?: (fullText: string) => void;
+  onComplete?: (fullText: string, followUps?: string[]) => void;
   onImage?: (imageUrl: string) => void;
 };
 
@@ -38,28 +38,37 @@ export default async function streamChat({
   let fullText = '';
   let followUps: string[] | undefined;
 
+  let buffer = '';
+
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
 
-    const chunk = decoder.decode(value, { stream: true });
+    const chunkText = decoder.decode(value, { stream: true });
+    buffer += chunkText;
 
-    try {
-      const parsed = JSON.parse(chunk);
-      const role = parsed.role || 'assistant';
-      const content = parsed.content || '';
-      const imageUrl = parsed.imageUrl;
-      followUps = parsed.followUps;
+    const parts = buffer.split('\n');
+    buffer = parts.pop() || '';
 
-      if (imageUrl && onImage) onImage(imageUrl);
+    for (const part of parts) {
+      if (!part.trim()) continue;
 
-      fullText += content;
+      try {
+        const parsed = JSON.parse(part);
+        const role = parsed.role || 'assistant';
+        const content = parsed.content || '';
+        const imageUrl = parsed.imageUrl;
+        followUps = parsed.followUps || followUps;
 
-      onStream({ role, content, followUps });
-    } catch (err) {
-      console.warn('Stream parse error:', err);
+        if (imageUrl && onImage) onImage(imageUrl);
+
+        fullText += content;
+        onStream({ role, content, followUps });
+      } catch (err) {
+        console.warn('Stream parse error:', err, part);
+      }
     }
   }
 
-  if (onComplete) onComplete(fullText);
+  if (onComplete) onComplete(fullText, followUps);
 }
