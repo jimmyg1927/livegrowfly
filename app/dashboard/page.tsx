@@ -32,6 +32,7 @@ function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const paramThreadId = searchParams?.get('threadId')
+
   const { user, setUser } = useUserStore()
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
   const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || ''] || 0
@@ -42,6 +43,7 @@ function DashboardContent() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [threadId, setThreadId] = useState<string | null>(null)
   const [threadTitle, setThreadTitle] = useState('')
+  const [showTitle, setShowTitle] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -81,8 +83,8 @@ function DashboardContent() {
     const data = await res.json()
     setThreadId(data.id)
     setMessages([])
-    const title = formatTitleFromDate(new Date())
-    setThreadTitle(title)
+    setThreadTitle(formatTitleFromDate(new Date()))
+    setShowTitle(false)
     localStorage.setItem('growfly_last_thread_id', data.id)
   }
 
@@ -90,7 +92,9 @@ function DashboardContent() {
     const container = containerRef.current
     if (!container) return
     const nearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 100
-    if (nearBottom) chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (nearBottom) {
+      setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
+    }
   }, [messages])
 
   const fetchFollowUps = async (text: string): Promise<string[]> => {
@@ -213,7 +217,7 @@ function DashboardContent() {
   return (
     <div className="flex flex-col h-full p-4 bg-background text-textPrimary">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">{threadTitle}</h2>
+        {showTitle && <h2 className="text-xl font-bold">{threadTitle}</h2>}
         <div className="flex items-center gap-4">
           <PromptTracker used={promptsUsed} limit={promptLimit} />
           <button
@@ -243,7 +247,7 @@ function DashboardContent() {
             className={`whitespace-pre-wrap text-sm p-4 rounded-xl shadow-sm max-w-2xl ${
               msg.role === 'user'
                 ? 'bg-accent text-white self-end ml-auto'
-                : 'bg-gray-100 text-gray-900 self-start'
+                : 'bg-gray-200 text-black self-start'
             }`}
           >
             {msg.imageUrl && (
@@ -260,7 +264,7 @@ function DashboardContent() {
             {msg.role === 'assistant' && (
               <>
                 <div className="flex gap-2 mt-3 flex-wrap">
-                  {msg.followUps?.map((fu, i) => (
+                  {msg.followUps?.slice(0, 2).map((fu, i) => (
                     <button
                       key={i}
                       onClick={() => handleSubmit(fu)}
@@ -275,7 +279,9 @@ function DashboardContent() {
                   <HiThumbDown className="cursor-pointer hover:text-red-500" />
                   <FaRegBookmark className="cursor-pointer hover:text-yellow-500" />
                   <FaShareSquare onClick={() => router.push('/collab-zone')} className="cursor-pointer hover:text-blue-500" />
-                  {msg.imageUrl && <FaFileDownload className="cursor-pointer hover:text-gray-600" />}
+                  {msg.imageUrl && (
+                    <FaFileDownload className="cursor-pointer hover:text-gray-600" />
+                  )}
                 </div>
               </>
             )}
