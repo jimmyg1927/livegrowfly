@@ -1,4 +1,3 @@
-// File: app/dashboard/page.tsx
 'use client'
 export const dynamic = 'force-dynamic'
 
@@ -130,6 +129,7 @@ function DashboardContent() {
     await streamChat({
       prompt,
       token,
+      threadId: threadId || undefined,
       onStream: (chunk) => {
         if (!chunk.content) return
         fullContent += chunk.content

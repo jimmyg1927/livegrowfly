@@ -9,7 +9,7 @@
     --textPrimary: #111111;
     --accent: #1992FF;
     --accent-foreground: #ffffff;
-    --card: #ffffff;
+    --card: #1992FF;
     --card-foreground: #111111;
     --border: #D1D5DB;
     --input: #ffffff;
@@ -20,15 +20,15 @@
 
   /* Dark Theme */
   .dark {
-    --background: #0D1117;
-    --textPrimary: #E6EDF3;
-    --accent: #1992FF;
-    --accent-foreground: #0D1117;
-    --card: #161B22;
+    --background: #1e2d54;
+    --textPrimary: #ffffff;
+    --accent: #58A6FF;
+    --accent-foreground: #1f2f46;
+    --card: #1e2d54;
     --card-foreground: #ffffff;
     --border: #30363D;
-    --input: #2D333B;
-    --input-border: #484F58;
+    --input: #ffffff;
+    --input-border: #0d5fc9;
     --input-focus: #58A6FF;
     --highlight: #003566;
   }

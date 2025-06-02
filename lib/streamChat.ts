@@ -1,5 +1,7 @@
 // File: lib/streamChat.ts
 
+import { API_BASE_URL } from './constants';
+
 export type StreamedChunk = {
   role: 'user' | 'assistant';
   content: string;
@@ -27,7 +29,7 @@ export default async function streamChat({
   let finalThreadId = threadId;
 
   if (!finalThreadId) {
-    const createRes = await fetch('/api/chat/create', {
+    const createRes = await fetch(`${API_BASE_URL}/api/chat/create`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -37,10 +39,14 @@ export default async function streamChat({
     if (!createRes.ok) throw new Error('Failed to create thread');
     const createData = await createRes.json();
     finalThreadId = createData.id;
+
+    if (finalThreadId) {
+      localStorage.setItem('growfly_last_thread_id', finalThreadId);
+    }
   }
 
   // Step 2: Send message to AI
-  const res = await fetch('/api/ai/chat', {
+  const res = await fetch(`${API_BASE_URL}/api/ai/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -62,9 +68,7 @@ export default async function streamChat({
     done = readerDone;
     const chunk = decoder.decode(value, { stream: true });
 
-    // Handle multiple server-sent events in one chunk
     const events = chunk.split('\n\n').filter(Boolean);
-
     for (const evt of events) {
       if (evt.startsWith('data: ')) {
         const json = evt.replace('data: ', '');
