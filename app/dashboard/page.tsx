@@ -243,7 +243,7 @@ function DashboardContent() {
             className={`whitespace-pre-wrap text-sm p-4 rounded-xl shadow-sm max-w-2xl ${
               msg.role === 'user'
                 ? 'bg-accent text-white self-end ml-auto'
-                : 'bg-neutral-700 text-white self-start'
+                : 'bg-gray-200 dark:bg-[#2b2b2b] text-white self-start'
             }`}
           >
             {msg.imageUrl && (
