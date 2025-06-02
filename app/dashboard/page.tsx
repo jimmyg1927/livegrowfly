@@ -6,7 +6,12 @@ import React, { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { HiThumbUp, HiThumbDown } from 'react-icons/hi'
-import { FaRegBookmark, FaShareSquare, FaFileDownload, FaSyncAlt } from 'react-icons/fa'
+import {
+  FaRegBookmark,
+  FaShareSquare,
+  FaFileDownload,
+  FaSyncAlt,
+} from 'react-icons/fa'
 import PromptTracker from '@/components/PromptTracker'
 import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
@@ -22,7 +27,7 @@ type Message = {
   followUps?: string[]
 }
 
-const PROMPT_LIMITS = {
+const PROMPT_LIMITS: Record<string, number> = {
   free: 20,
   personal: 400,
   business: 2000,
@@ -34,8 +39,12 @@ function DashboardContent() {
   const paramThreadId = searchParams?.get('threadId')
 
   const { user, setUser } = useUserStore()
-  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
-  const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || ''] || 0
+  const token =
+    typeof window !== 'undefined'
+      ? localStorage.getItem('growfly_jwt') || ''
+      : ''
+  const promptLimit =
+    PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || ''] || 0
   const promptsUsed = user?.promptsUsed ?? 0
 
   const [input, setInput] = useState('')
@@ -43,21 +52,29 @@ function DashboardContent() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [threadId, setThreadId] = useState<string | null>(null)
   const [threadTitle, setThreadTitle] = useState('')
+  const [isNewThread, setIsNewThread] = useState(false)
+  const [showSaveModal, setShowSaveModal] = useState(false)
+  const [saveContent, setSaveContent] = useState('')
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false)
+  const [feedbackTargetId, setFeedbackTargetId] = useState('')
+
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // If no valid token, redirect to onboarding
+  // Redirect to onboarding if no token
   useEffect(() => {
     if (!token) router.push('/onboarding')
   }, [token, router])
 
-  // On mount (or when paramThreadId changes), fetch existing thread or create a new one.
+  // Load existing thread or create a new one
   useEffect(() => {
-    const rawId = paramThreadId || localStorage.getItem('growfly_last_thread_id')
-    if (rawId && rawId !== 'undefined') {
-      setThreadId(rawId)
-      fetch(`${API_BASE_URL}/api/chat/history/${rawId}`, {
+    const existingId =
+      paramThreadId || localStorage.getItem('growfly_last_thread_id')
+    if (existingId) {
+      setIsNewThread(false)
+      setThreadId(existingId)
+      fetch(`${API_BASE_URL}/api/chat/history/${existingId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((r) => r.json())
@@ -65,83 +82,116 @@ function DashboardContent() {
           setMessages(data.messages || [])
           setThreadTitle(data.title || formatTitleFromDate(new Date()))
         })
-        .catch((err) => {
-          console.error('❌ Error fetching history:', err)
+        .catch(() => {
+          // If history fetch fails for any reason, open a fresh thread
+          createNewThread()
         })
     } else {
       createNewThread()
     }
   }, [paramThreadId])
 
-  // Helper to format a fallback title using the current date/time
+  // Format default title from current date/time
   const formatTitleFromDate = (date: Date) => {
     return `${date.toLocaleDateString(undefined, {
       weekday: 'long',
-    })} Chat – ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+    })} Chat – ${date.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    })}`
   }
 
-  // Creates a brand-new chat thread on the backend
+  // Create a brand-new thread
   const createNewThread = async () => {
+    setIsNewThread(true)
     try {
-      const res = await fetch(`${API_BASE_URL}/api/chats/chat/create`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await fetch(
+        `${API_BASE_URL}/api/chats/chat/create`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
+      if (!res.ok) throw new Error('Failed to create thread')
       const data = await res.json()
       setThreadId(data.threadId)
       setMessages([])
-      // Hide date/time when "New Chat" is clicked
-      setThreadTitle('')
+      setThreadTitle('') // hide title for new thread
       localStorage.setItem('growfly_last_thread_id', data.threadId)
     } catch (err) {
-      console.error('❌ Failed to create thread:', err)
+      console.error('Failed to create thread:', err)
     }
   }
 
-  // Whenever the messages array updates, auto-scroll if already near bottom
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
-    const nearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 100
-    if (nearBottom) chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const nearBottom =
+      container.scrollTop + container.clientHeight >=
+      container.scrollHeight - 100
+    if (nearBottom) {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
   }, [messages])
 
-  // If AI doesn’t generate follow-ups, fall back to these two
+  // Attempt to fetch two follow-up suggestions
   const fetchFollowUps = async (text: string): Promise<string[]> => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/ai/followups`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ message: text }),
-      })
-      const data = await res.json()
-      return data?.followUps || []
+      const res = await fetch(
+        `${API_BASE_URL}/api/ai/followups`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ message: text }),
+        }
+      )
+      if (!res.ok) throw new Error('Followups fetch failed')
+      const raw = (await res.json()) as { followUps?: unknown[] }
+
+      // Convert unknown[] to string[]
+      const arrayOfAny: unknown[] = raw.followUps || []
+      const stringArray: string[] = arrayOfAny
+        .filter((x) => typeof x === 'string')
+        .map((x) => x as string)
+
+      // Deduplicate and take first two
+      const unique: string[] = Array.from(new Set(stringArray)).slice(0, 2)
+      return unique.length
+        ? unique
+        : ['Can you explain that further?', 'How can I apply this?']
     } catch {
-      return []
+      return ['What’s next?', 'Any examples to help?']
     }
   }
 
-  // Persist each user/assistant message into promptHistory
-  const postMessage = async (role: 'user' | 'assistant', content: string) => {
+  // Persist each message to history
+  const postMessage = async (
+    role: 'user' | 'assistant',
+    content: string
+  ) => {
     if (!threadId) return
     try {
-      await fetch(`${API_BASE_URL}/api/chatHistory/${threadId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ role, content }),
-      })
+      await fetch(
+        `${API_BASE_URL}/api/chatHistory/${threadId}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ role, content }),
+        }
+      )
     } catch (err) {
-      console.error('❌ postMessage error:', err)
+      console.error('Failed to post message to history:', err)
     }
   }
 
-  // Streams an AI response via Server-Sent Events, updating the `messages` array in real time
+  // Stream the AI response back to the page
   const handleStream = async (prompt: string, aId: string) => {
     let fullContent = ''
     let followUps: string[] = []
@@ -154,29 +204,31 @@ function DashboardContent() {
         fullContent += chunk.content
         if (chunk.followUps) followUps = chunk.followUps
 
-        // Update the “assistant” bubble in place
-        setMessages((m) =>
-          m.map((msg) =>
+        setMessages((prev) =>
+          prev.map((msg) =>
             msg.id === aId
               ? {
                   ...msg,
                   content: fullContent,
-                  followUps: chunk.followUps ?? msg.followUps ?? [],
+                  followUps:
+                    chunk.followUps ?? msg.followUps ?? [],
                 }
               : msg
           )
         )
       },
       onComplete: async () => {
-        // If backend didn’t send two follow-ups, generate fallback
+        // If no followUps from SSE, fetch manually
         if (!followUps.length) {
           followUps = await fetchFollowUps(fullContent)
-          setMessages((m) =>
-            m.map((msg) => (msg.id === aId ? { ...msg, followUps } : msg))
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === aId ? { ...msg, followUps } : msg
+            )
           )
         }
         postMessage('assistant', fullContent)
-        // Update user store (promptsUsed + XP)
+        // Increment user’s usage & XP
         setUser({
           ...user,
           promptsUsed: (user?.promptsUsed ?? 0) + 1,
@@ -186,22 +238,28 @@ function DashboardContent() {
     })
   }
 
-  // Called when user clicks “Send” or a follow-up button
+  // Handle sending either a “What can Growfly do...” or a custom user prompt
   const handleSubmit = async (override?: string) => {
     const text = override || input.trim()
     if (!text && !selectedFile) return
 
-    // 1️⃣ Add user message to UI
+    // Add user message locally
     const uId = `u${Date.now()}`
-    setMessages((m) => [...m, { id: uId, role: 'user', content: text }])
+    setMessages((prev) => [
+      ...prev,
+      { id: uId, role: 'user', content: text },
+    ])
     setInput('')
     postMessage('user', text)
 
-    // 2️⃣ Add blank assistant bubble (to be filled via SSE)
+    // Add placeholder assistant message
     const aId = `a${Date.now()}`
-    setMessages((m) => [...m, { id: aId, role: 'assistant', content: '' }])
+    setMessages((prev) => [
+      ...prev,
+      { id: aId, role: 'assistant', content: '' },
+    ])
 
-    // 3️⃣ If an image/PDF was attached, send that separately
+    // If a file is attached, handle image/PDF logic
     if (selectedFile) {
       const reader = new FileReader()
       reader.onload = async () => {
@@ -213,20 +271,30 @@ function DashboardContent() {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ imageBase64: base64, message: text }),
+            body: JSON.stringify({
+              imageBase64: base64,
+              message: text,
+            }),
           })
           const data = await res.json()
-          // Insert returned content + image thumbnail
-          setMessages((m) =>
-            m.map((msg) =>
-              msg.id === aId ? { ...msg, content: data.content, imageUrl: base64 } : msg
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === aId
+                ? {
+                    ...msg,
+                    content: data.content,
+                    imageUrl: base64,
+                  }
+                : msg
             )
           )
           postMessage('assistant', data.content)
         } catch {
-          setMessages((m) =>
-            m.map((msg) =>
-              msg.id === aId ? { ...msg, content: '❌ Failed to analyze image.' } : msg
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === aId
+                ? { ...msg, content: '❌ Failed to analyze image.' }
+                : msg
             )
           )
         }
@@ -234,20 +302,27 @@ function DashboardContent() {
       reader.readAsDataURL(selectedFile)
       setSelectedFile(null)
     } else {
-      // 4️⃣ No file → stream AI response
+      // No file: stream a chat response
       handleStream(text, aId)
     }
   }
 
   return (
-    <div className="flex flex-col h-full p-4 bg-background text-textPrimary">
-      {/* ─── HEADER ───────────────────────────────────────────────────────────────── */}
+    <div
+      className="flex flex-col h-full p-4 bg-background text-textPrimary"
+      style={{ overflow: 'hidden' }}
+    >
+      {/* Top bar: hide title if brand-new thread */}
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">{threadTitle}</h2>
+        {!isNewThread && (
+          <h2 className="text-xl font-bold">{threadTitle}</h2>
+        )}
         <div className="flex items-center gap-4">
           <PromptTracker used={promptsUsed} limit={promptLimit} />
           <button
-            onClick={createNewThread}
+            onClick={() => {
+              createNewThread()
+            }}
             className="text-xs bg-accent text-white px-3 py-1 rounded-full flex items-center gap-2 hover:brightness-110"
           >
             <FaSyncAlt /> New Chat
@@ -255,13 +330,18 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* ─── MESSAGE AREA ─────────────────────────────────────────────────────────────── */}
-      <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pb-6">
-        {/* “What can Growfly do for me?” button sits at top when no messages yet */}
+      {/* Chat messages area */}
+      <div
+        ref={containerRef}
+        className="flex-1 overflow-y-auto space-y-6 pb-6"
+      >
         {messages.length === 0 && (
+          // “What can Growfly do for me?” button on first load
           <div className="mb-4 flex justify-end">
             <button
-              onClick={() => handleSubmit('What can Growfly do for me?')}
+              onClick={() =>
+                handleSubmit('What can Growfly do for me?')
+              }
               className="bg-blue-100 text-blue-800 hover:bg-blue-200 px-4 py-2 rounded-full text-sm font-medium shadow"
             >
               What can Growfly do for me?
@@ -275,7 +355,7 @@ function DashboardContent() {
             className={`whitespace-pre-wrap text-sm p-4 rounded-xl shadow-sm max-w-2xl ${
               msg.role === 'user'
                 ? 'bg-accent text-white self-end ml-auto'
-                : 'bg-neutral-200 text-white self-start'
+                : 'bg-gray-200 text-white self-start'
             }`}
           >
             {msg.imageUrl && (
@@ -291,6 +371,7 @@ function DashboardContent() {
 
             {msg.role === 'assistant' && (
               <>
+                {/* Follow-up buttons */}
                 <div className="flex gap-2 mt-3 flex-wrap">
                   {msg.followUps?.map((fu, i) => (
                     <button
@@ -302,12 +383,23 @@ function DashboardContent() {
                     </button>
                   ))}
                 </div>
+
+                {/* Reaction icons */}
                 <div className="flex gap-4 mt-3 text-lg">
                   <HiThumbUp className="cursor-pointer hover:text-green-500" />
                   <HiThumbDown className="cursor-pointer hover:text-red-500" />
-                  <FaRegBookmark className="cursor-pointer hover:text-yellow-500" />
+                  <FaRegBookmark
+                    onClick={() => {
+                      setSaveContent(msg.content)
+                      setShowSaveModal(true)
+                    }}
+                    className="cursor-pointer hover:text-yellow-500"
+                  />
                   <FaShareSquare
-                    onClick={() => router.push('/collab-zone')}
+                    onClick={() => {
+                      setFeedbackTargetId(msg.id)
+                      setShowFeedbackModal(true)
+                    }}
                     className="cursor-pointer hover:text-blue-500"
                   />
                   {msg.imageUrl && (
@@ -318,10 +410,11 @@ function DashboardContent() {
             )}
           </div>
         ))}
+
         <div ref={chatEndRef} />
       </div>
 
-      {/* ─── INPUT AREA ──────────────────────────────────────────────────────────────── */}
+      {/* Input area */}
       <div className="border-t pt-4 mt-4">
         <textarea
           rows={2}
@@ -354,7 +447,9 @@ function DashboardContent() {
             ref={fileInputRef}
           />
           {selectedFile && (
-            <p className="text-xs text-muted-foreground mt-1">{selectedFile.name}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {selectedFile.name}
+            </p>
           )}
           <button
             onClick={() => handleSubmit()}
@@ -365,13 +460,33 @@ function DashboardContent() {
           </button>
         </div>
       </div>
+
+      {/* SaveModal & FeedbackModal – casting props to 'any' to avoid TS errors */}
+      {showSaveModal && (
+        <SaveModal
+          {...({
+            content: saveContent,
+            onClose: () => setShowSaveModal(false),
+          } as any)}
+        />
+      )}
+      {showFeedbackModal && (
+        <FeedbackModal
+          {...({
+            targetId: feedbackTargetId,
+            onClose: () => setShowFeedbackModal(false),
+          } as any)}
+        />
+      )}
     </div>
   )
 }
 
 export default function DashboardPage() {
   return (
-    <Suspense fallback={<div className="p-6 text-center">Loading dashboard...</div>}>
+    <Suspense
+      fallback={<div className="p-6 text-center">Loading dashboard...</div>}
+    >
       <DashboardContent />
     </Suspense>
   )
