@@ -37,31 +37,31 @@ const PROMPT_LIMITS: Record<string, number> = {
   business: 2000,
 }
 
-// Suggested prompts for empty state
+// Suggested prompts for empty state - UK English with business context
 const SUGGESTED_PROMPTS = [
   {
-    icon: <FaRocket className="text-blue-500" />,
-    title: "Business Strategy",
-    prompt: "Help me develop a growth strategy for my business",
-    description: "Get strategic insights and planning advice"
-  },
-  {
     icon: <FaChartLine className="text-green-500" />,
-    title: "Marketing Ideas", 
-    prompt: "What are some effective marketing strategies for my industry?",
-    description: "Discover new ways to reach customers"
+    title: "Marketing Ideas",
+    prompt: "What are some effective marketing strategies for my business? Please consider my brand settings and target market.",
+    description: "Discover new ways to reach customers and grow your brand"
   },
   {
-    icon: <FaBrain className="text-purple-500" />,
-    title: "Problem Solving",
-    prompt: "I'm facing challenges with [describe your challenge]",
-    description: "Get AI-powered solutions to your problems"
+    icon: <FaBrain className="text-blue-500" />,
+    title: "Business & Process Improvement",
+    prompt: "Help me identify areas for business improvement and process optimisation in my company.",
+    description: "Streamline operations and boost efficiency"
   },
   {
-    icon: <FaUsers className="text-orange-500" />,
-    title: "Team Management",
-    prompt: "How can I improve my team's productivity and communication?",
-    description: "Optimize your team dynamics"
+    icon: <FaUsers className="text-purple-500" />,
+    title: "Document Creation & Editing",
+    prompt: "I need help creating or editing business documents. What type of document would you like assistance with?",
+    description: "Professional documents, proposals, and content"
+  },
+  {
+    icon: <FaRocket className="text-orange-500" />,
+    title: "Anything Else",
+    prompt: "I need help with something specific to my industry. My business operates in [describe your sector/industry].",
+    description: "HR, finance, legal, product development, research, and more"
   }
 ]
 
@@ -132,8 +132,41 @@ function DashboardContent() {
   }
 
   useEffect(() => {
-    if (!token) router.push('/onboarding')
-  }, [token, router])
+    if (!token) {
+      router.push('/onboarding')
+      return
+    }
+    
+    // Fetch user data from backend to ensure it's current
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (response.ok) {
+          const userData = await response.json()
+          console.log('Fetched user data from backend:', userData)
+          setUser(userData)
+        } else {
+          console.error('Failed to fetch user data:', response.status)
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error)
+      }
+    }
+    
+    // Only fetch if we don't have user data or it seems outdated
+    if (!user || user.promptsUsed === undefined) {
+      fetchUserData()
+    }
+  }, [token, router, user, setUser])
+
+  // Debug user data
+  useEffect(() => {
+    console.log('User data:', user)
+    console.log('Prompts used:', promptsUsed)
+    console.log('XP:', user?.totalXP)
+  }, [user, promptsUsed])
 
   useEffect(() => {
     const storedThreadId = localStorage.getItem('growfly_last_thread_id')
@@ -314,11 +347,33 @@ function DashboardContent() {
         }
         
         if (!user) return
-        setUser({
+        
+        // Update user data both locally and on backend
+        const updatedUser = {
           ...user,
           promptsUsed: (user.promptsUsed ?? 0) + 1,
           totalXP: (user.totalXP ?? 0) + 2.5,
-        })
+        }
+        
+        setUser(updatedUser)
+        
+        // Sync with backend to ensure persistence
+        try {
+          await fetch(`${API_BASE_URL}/api/user/update`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              promptsUsed: updatedUser.promptsUsed,
+              totalXP: updatedUser.totalXP,
+            }),
+          })
+          console.log('User data synced to backend')
+        } catch (error) {
+          console.error('Failed to sync user data to backend:', error)
+        }
       },
       onError: (error) => {
         setIsLoading(false)
@@ -437,9 +492,7 @@ function DashboardContent() {
       {/* Header - Only show when there are messages */}
       {messages.length > 0 && (
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-white">
-            {threadTitle}
-          </h2>
+          <div className="flex-1" /> {/* Empty space to center the tracker */}
           <div className="flex items-center gap-4">
             {/* Enhanced Prompt Tracker */}
             <div className="bg-white dark:bg-slate-800 rounded-xl px-4 py-2 shadow-lg border border-gray-200 dark:border-slate-700">
@@ -513,8 +566,8 @@ function DashboardContent() {
                 Welcome to Growfly AI
               </h1>
               <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
-                Your AI-powered business assistant is here to help with strategy, marketing, problem-solving, and growth insights. 
-                Choose a prompt below or ask anything about your business.
+                Your AI-powered business assistant is here to help with strategy, marketing, process improvement, document creation, and insights across all business sectors. 
+                Choose a category below or ask anything about your business.
               </p>
             </div>
 
@@ -546,7 +599,7 @@ function DashboardContent() {
 
             {/* Quick Start Button */}
             <button
-              onClick={() => handleSubmit('What can Growfly do for me?')}
+              onClick={() => handleSubmit('What can Growfly do for me? Please consider my brand settings and business context.')}
               disabled={isLoading || promptsUsed >= promptLimit}
               className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-8 py-3 rounded-2xl text-lg font-semibold shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
             >
@@ -610,30 +663,28 @@ function DashboardContent() {
                     </div>
                   )}
 
-                  {/* Action Buttons - Show on hover */}
-                  {hoveredMessageId === msg.id && (
-                    <div className="flex gap-4 mt-4 text-lg text-gray-500 dark:text-gray-400">
-                      <HiThumbUp
-                        className="cursor-pointer hover:text-green-500 transition-colors duration-200 transform hover:scale-110"
-                        onClick={() => setShowFeedbackModal(true)}
-                      />
-                      <HiThumbDown
-                        className="cursor-pointer hover:text-red-500 transition-colors duration-200 transform hover:scale-110"
-                        onClick={() => setShowFeedbackModal(true)}
-                      />
-                      <FaRegBookmark
-                        className="cursor-pointer hover:text-yellow-500 transition-colors duration-200 transform hover:scale-110"
-                        onClick={() => setShowSaveModal(true)}
-                      />
-                      <FaShareSquare
-                        className="cursor-pointer hover:text-blue-500 transition-colors duration-200 transform hover:scale-110"
-                        onClick={() => router.push('/collab-zone')}
-                      />
-                      {msg.imageUrl && (
-                        <FaFileDownload className="cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 transform hover:scale-110" />
-                      )}
-                    </div>
-                  )}
+                  {/* Action Buttons - Always show for assistant messages */}
+                  <div className="flex gap-4 mt-4 text-lg text-gray-500 dark:text-gray-400">
+                    <HiThumbUp
+                      className="cursor-pointer hover:text-green-500 transition-colors duration-200 transform hover:scale-110"
+                      onClick={() => setShowFeedbackModal(true)}
+                    />
+                    <HiThumbDown
+                      className="cursor-pointer hover:text-red-500 transition-colors duration-200 transform hover:scale-110"
+                      onClick={() => setShowFeedbackModal(true)}
+                    />
+                    <FaRegBookmark
+                      className="cursor-pointer hover:text-yellow-500 transition-colors duration-200 transform hover:scale-110"
+                      onClick={() => setShowSaveModal(true)}
+                    />
+                    <FaShareSquare
+                      className="cursor-pointer hover:text-blue-500 transition-colors duration-200 transform hover:scale-110"
+                      onClick={() => router.push('/collab-zone')}
+                    />
+                    {msg.imageUrl && (
+                      <FaFileDownload className="cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 transform hover:scale-110" />
+                    )}
+                  </div>
                 </>
               )}
             </div>
