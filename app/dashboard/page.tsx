@@ -73,10 +73,20 @@ function DashboardContent() {
   const { user, setUser } = useUserStore()
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
 
-  const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || 'free'] || 0
+  // Calculate prompt limits and usage with better debugging
+  const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || 'free'] || 20
   const promptsUsed = user?.promptsUsed ?? 0
-  const promptsRemaining = promptLimit - promptsUsed
-  const usagePercentage = (promptsUsed / promptLimit) * 100
+  const promptsRemaining = Math.max(0, promptLimit - promptsUsed)
+  const usagePercentage = Math.min(100, (promptsUsed / promptLimit) * 100)
+  
+  // Debug logging for prompt tracking
+  console.log('📊 Prompt tracking debug:', {
+    subscriptionType: user?.subscriptionType,
+    promptLimit,
+    promptsUsed,
+    promptsRemaining,
+    usagePercentage: usagePercentage.toFixed(1) + '%'
+  })
 
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
@@ -133,8 +143,14 @@ function DashboardContent() {
         if (response.ok) {
           const userData = await response.json()
           console.log('✅ Fetched fresh user data from database:', userData)
-          console.log('📊 Current prompts used:', userData.promptsUsed)
+          console.log('📊 Current prompts used:', userData.promptsUsed, 'Plan:', userData.subscriptionType)
+          
+          // Ensure we have the latest data
           setUser(userData)
+          
+          // Force re-render of prompt counter by updating state
+          console.log('🎯 Setting user data - Prompts:', userData.promptsUsed, 'Limit:', PROMPT_LIMITS[userData?.subscriptionType?.toLowerCase() || 'free'])
+          
         } else {
           console.error('❌ Failed to fetch user data:', response.status, response.statusText)
           // If we get unauthorized, redirect to onboarding
@@ -402,9 +418,11 @@ function DashboardContent() {
     setError(null)
 
     // Use the latest user data for prompt limit check
-    console.log('🔍 Checking prompt limit - Used:', promptsUsed, 'Limit:', promptLimit)
+    console.log('🔍 Checking prompt limit - Used:', promptsUsed, 'Limit:', promptLimit, 'Plan:', user?.subscriptionType)
     if (promptsUsed >= promptLimit) {
-      setError(`You've reached your daily limit of ${promptLimit} prompts. Upgrade your plan to continue.`)
+      const planType = user?.subscriptionType?.toLowerCase() || 'free'
+      const periodText = planType === 'free' ? 'daily' : 'monthly'
+      setError(`You've reached your ${periodText} limit of ${promptLimit} prompts. Upgrade your plan to continue.`)
       return
     }
 
@@ -487,7 +505,7 @@ function DashboardContent() {
         <div className="flex justify-between items-center mb-4">
           <div className="flex-1" />
           <div className="flex items-center gap-4">
-            {/* Enhanced Prompt Tracker */}
+            {/* Enhanced Prompt Tracker with better debugging */}
             <div className="bg-white dark:bg-white rounded-xl px-4 py-2 shadow-lg border border-gray-200">
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium text-gray-700">
@@ -508,6 +526,11 @@ function DashboardContent() {
                 {promptsRemaining <= 5 && promptsRemaining > 0 && (
                   <span className="text-xs text-orange-600 font-medium">
                     {promptsRemaining} left
+                  </span>
+                )}
+                {promptsUsed >= promptLimit && (
+                  <span className="text-xs text-red-600 font-medium">
+                    Limit reached
                   </span>
                 )}
               </div>
