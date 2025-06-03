@@ -1,4 +1,3 @@
-// File: app/dashboard/page.tsx
 'use client'
 export const dynamic = 'force-dynamic'
 
@@ -6,7 +5,12 @@ import React, { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { HiThumbUp, HiThumbDown } from 'react-icons/hi'
-import { FaRegBookmark, FaShareSquare, FaFileDownload, FaSyncAlt } from 'react-icons/fa'
+import {
+  FaRegBookmark,
+  FaShareSquare,
+  FaFileDownload,
+  FaSyncAlt,
+} from 'react-icons/fa'
 import PromptTracker from '@/components/PromptTracker'
 import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
@@ -34,8 +38,13 @@ function DashboardContent() {
   const paramThreadId = searchParams?.get('threadId')
 
   const { user, setUser } = useUserStore()
-  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
-  const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || ''] || 0
+  const token =
+    typeof window !== 'undefined'
+      ? localStorage.getItem('growfly_jwt') || ''
+      : ''
+
+  const promptLimit =
+    PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || ''] || 0
   const promptsUsed = user?.promptsUsed ?? 0
 
   const [input, setInput] = useState('')
@@ -43,6 +52,9 @@ function DashboardContent() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [threadId, setThreadId] = useState<string | null>(null)
   const [threadTitle, setThreadTitle] = useState('')
+  const [showSaveModal, setShowSaveModal] = useState(false)
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false)
+
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -52,52 +64,79 @@ function DashboardContent() {
   }, [token, router])
 
   useEffect(() => {
-    const id = paramThreadId || localStorage.getItem('growfly_last_thread_id')
-    if (id) {
-      setThreadId(id)
-      fetch(`${API_BASE_URL}/api/chat/history/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((r) => r.json())
-        .then((data) => {
-          setMessages(data.messages || [])
-          setThreadTitle(data.title || formatTitleFromDate(new Date()))
-        })
-    } else {
+    const idFromParam = paramThreadId
+    const lastSavedThread = localStorage.getItem('growfly_last_thread_id')
+    const id = idFromParam || lastSavedThread
+
+    if (!id) {
       createNewThread()
+      return
     }
+
+    setThreadId(id)
+    fetch(`${API_BASE_URL}/chat/history/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        setMessages(data.messages || [])
+        setThreadTitle(
+          data.title || formatTitleFromDate(new Date()) || ''
+        )
+      })
+      .catch((err) => {
+        console.error('Failed to load chat history:', err)
+      })
   }, [paramThreadId])
 
   const formatTitleFromDate = (date: Date) => {
     return `${date.toLocaleDateString(undefined, {
       weekday: 'long',
-    })} Chat – ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+    })} Chat — ${date.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    })}`
   }
 
   const createNewThread = async () => {
-    const res = await fetch(`${API_BASE_URL}/api/chat/create`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    const data = await res.json()
-    setThreadId(data.id)
-    setMessages([])
-    const title = formatTitleFromDate(new Date())
-    setThreadTitle(title)
-    localStorage.setItem('growfly_last_thread_id', data.id)
+    try {
+      const res = await fetch(`${API_BASE_URL}/chat/create`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      if (!res.ok) {
+        const text = await res.text()
+        console.error('Thread creation failed:', text)
+        throw new Error('Thread creation failed')
+      }
+
+      const data = await res.json()
+      const newId = data.threadId
+      setThreadId(newId)
+      setMessages([])
+      const title = formatTitleFromDate(new Date())
+      setThreadTitle(title)
+      localStorage.setItem('growfly_last_thread_id', newId)
+    } catch (err) {
+      console.error('Failed to create new thread:', err)
+    }
   }
 
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
-    const nearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 100
-    if (nearBottom) chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const nearBottom =
+      container.scrollTop + container.clientHeight >=
+      container.scrollHeight - 100
+    if (nearBottom) {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
   }, [messages])
 
-  // Fetch and dedupe follow-ups, ensuring they're strings
   const fetchFollowUps = async (text: string): Promise<string[]> => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/ai/followups`, {
+      const res = await fetch(`${API_BASE_URL}/ai/followups`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -105,18 +144,11 @@ function DashboardContent() {
         },
         body: JSON.stringify({ message: text }),
       })
-
-      if (!res.ok) throw new Error('Followups fetch failed')
-      const data: { followUps?: unknown[] } = await res.json()
-
-      // Filter out non-string entries
-      const rawUps: string[] = Array.isArray(data.followUps)
-        ? data.followUps.filter((item): item is string => typeof item === 'string')
-        : []
-
-      // Deduplicate and take first two answers
-      const unique = Array.from(new Set(rawUps)).slice(0, 2)
-      return unique.length
+      if (!res.ok) throw new Error('Follow-ups fetch failed')
+      const data = await res.json()
+      const rawFollowUps = (data.followUps as string[]) || []
+      const unique = Array.from(new Set(rawFollowUps)).slice(0, 2)
+      return unique.length > 0
         ? unique
         : ['Can you explain that further?', 'How can I apply this?']
     } catch {
@@ -124,17 +156,23 @@ function DashboardContent() {
     }
   }
 
-  // Save each message to chatHistory table
-  const postMessage = async (role: 'user' | 'assistant', content: string) => {
+  const postMessage = async (
+    role: 'user' | 'assistant',
+    content: string
+  ) => {
     if (!threadId) return
-    await fetch(`${API_BASE_URL}/api/chatHistory/${threadId}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ role, content }),
-    })
+    try {
+      await fetch(`${API_BASE_URL}/chat/history/${threadId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ role, content }),
+      })
+    } catch (err) {
+      console.error('Failed to POST message to history:', err)
+    }
   }
 
   const handleStream = async (prompt: string, aId: string) => {
@@ -143,19 +181,21 @@ function DashboardContent() {
 
     await streamChat({
       prompt,
+      threadId: threadId || undefined,
       token,
       onStream: (chunk) => {
         if (!chunk.content) return
         fullContent += chunk.content
         if (chunk.followUps) followUps = chunk.followUps
 
-        setMessages((m) =>
-          m.map((msg) =>
+        setMessages((prev) =>
+          prev.map((msg) =>
             msg.id === aId
               ? {
                   ...msg,
                   content: fullContent,
-                  followUps: chunk.followUps ?? msg.followUps ?? [],
+                  followUps:
+                    chunk.followUps ?? msg.followUps ?? ([] as string[]),
                 }
               : msg
           )
@@ -164,8 +204,10 @@ function DashboardContent() {
       onComplete: async () => {
         if (!followUps.length) {
           followUps = await fetchFollowUps(fullContent)
-          setMessages((m) =>
-            m.map((msg) => (msg.id === aId ? { ...msg, followUps } : msg))
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === aId ? { ...msg, followUps } : msg
+            )
           )
         }
         postMessage('assistant', fullContent)
@@ -183,19 +225,25 @@ function DashboardContent() {
     if (!text && !selectedFile) return
 
     const uId = `u${Date.now()}`
-    setMessages((m) => [...m, { id: uId, role: 'user', content: text }])
+    setMessages((prev) => [
+      ...prev,
+      { id: uId, role: 'user', content: text },
+    ])
     setInput('')
     postMessage('user', text)
 
     const aId = `a${Date.now()}`
-    setMessages((m) => [...m, { id: aId, role: 'assistant', content: '' }])
+    setMessages((prev) => [
+      ...prev,
+      { id: aId, role: 'assistant', content: '' },
+    ])
 
     if (selectedFile) {
       const reader = new FileReader()
       reader.onload = async () => {
         const base64 = reader.result as string
         try {
-          const res = await fetch(`${API_BASE_URL}/api/ai/image`, {
+          const res = await fetch(`${API_BASE_URL}/ai/image`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -204,16 +252,20 @@ function DashboardContent() {
             body: JSON.stringify({ imageBase64: base64, message: text }),
           })
           const data = await res.json()
-          setMessages((m) =>
-            m.map((msg) =>
-              msg.id === aId ? { ...msg, content: data.content, imageUrl: base64 } : msg
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === aId
+                ? { ...msg, content: data.content, imageUrl: base64 }
+                : msg
             )
           )
           postMessage('assistant', data.content)
         } catch {
-          setMessages((m) =>
-            m.map((msg) =>
-              msg.id === aId ? { ...msg, content: '❌ Failed to analyze image.' } : msg
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === aId
+                ? { ...msg, content: '❌ Failed to analyze image.' }
+                : msg
             )
           )
         }
@@ -228,7 +280,9 @@ function DashboardContent() {
   return (
     <div className="flex flex-col h-full p-4 bg-background text-textPrimary">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">{threadTitle}</h2>
+        <h2 className={`text-xl font-bold ${messages.length === 0 ? 'invisible' : ''}`}>
+          {threadTitle}
+        </h2>
         <div className="flex items-center gap-4">
           <PromptTracker used={promptsUsed} limit={promptLimit} />
           <button
@@ -258,7 +312,7 @@ function DashboardContent() {
             className={`whitespace-pre-wrap text-sm p-4 rounded-xl shadow-sm max-w-2xl ${
               msg.role === 'user'
                 ? 'bg-accent text-white self-end ml-auto'
-                : 'bg-neutral-200 text-black self-start'
+                : 'bg-gray-100 text-black self-start'
             }`}
           >
             {msg.imageUrl && (
@@ -286,10 +340,22 @@ function DashboardContent() {
                   ))}
                 </div>
                 <div className="flex gap-4 mt-3 text-lg">
-                  <HiThumbUp className="cursor-pointer hover:text-green-500" />
-                  <HiThumbDown className="cursor-pointer hover:text-red-500" />
-                  <FaRegBookmark className="cursor-pointer hover:text-yellow-500" />
-                  <FaShareSquare onClick={() => router.push('/collab-zone')} className="cursor-pointer hover:text-blue-500" />
+                  <HiThumbUp
+                    className="cursor-pointer hover:text-green-500"
+                    onClick={() => setShowFeedbackModal(true)}
+                  />
+                  <HiThumbDown
+                    className="cursor-pointer hover:text-red-500"
+                    onClick={() => setShowFeedbackModal(true)}
+                  />
+                  <FaRegBookmark
+                    className="cursor-pointer hover:text-yellow-500"
+                    onClick={() => setShowSaveModal(true)}
+                  />
+                  <FaShareSquare
+                    className="cursor-pointer hover:text-blue-500"
+                    onClick={() => router.push('/collab-zone')}
+                  />
                   {msg.imageUrl && (
                     <FaFileDownload className="cursor-pointer hover:text-gray-600" />
                   )}
@@ -344,13 +410,35 @@ function DashboardContent() {
           </button>
         </div>
       </div>
+
+      <SaveModal
+        open={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        onConfirm={async (title: string) => {
+          await fetch(`${API_BASE_URL}/ai/saveResponse`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ title }),
+          })
+          setShowSaveModal(false)
+        }}
+      />
+
+      <FeedbackModal
+        open={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        responseId={threadId || 'unknown'}
+      />
     </div>
   )
 }
 
 export default function DashboardPage() {
   return (
-    <Suspense fallback={<div className="p-6 text-center">Loading dashboard...</div>}>
+    <Suspense fallback={<div className="p-6 text-center">Loading…</div>}>
       <DashboardContent />
     </Suspense>
   )
