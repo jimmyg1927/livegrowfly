@@ -40,24 +40,28 @@ const PROMPT_LIMITS: Record<string, number> = {
 // Quick categories for collapsible bar
 const QUICK_CATEGORIES = [
   {
-    icon: <FaChartLine className="text-green-500" />,
+    icon: <FaChartLine className="text-emerald-500" />,
     title: "Marketing Ideas",
+    description: "Boost your brand and reach new customers",
     prompt: "What are some effective marketing strategies for my business? Please consider my brand settings and target market.",
   },
   {
     icon: <FaBrain className="text-blue-500" />,
     title: "Business & Process Improvement",
+    description: "Streamline operations and increase efficiency",
     prompt: "Help me identify areas for business improvement and process optimisation in my company.",
   },
   {
     icon: <FaUsers className="text-purple-500" />,
     title: "Document Creation & Editing",
+    description: "Professional documents and content creation",
     prompt: "I need help creating or editing business documents. What type of document would you like assistance with?",
   },
   {
     icon: <FaRocket className="text-orange-500" />,
-    title: "Anything Else",
-    prompt: "I need help with something specific to my industry. My business operates in [describe your sector/industry].",
+    title: "Something Random",
+    description: "Surprise me with creative business insights",
+    prompt: "Give me a random but valuable business insight or tip that could help my company grow.",
   }
 ]
 
@@ -206,10 +210,11 @@ function DashboardContent() {
     
     const isNearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 200
     
-    if (!isUserScrolling && isNearBottom && isStreaming) {
+    // Auto-scroll to bottom when new messages arrive or when streaming
+    if (!isUserScrolling && (isStreaming || messages.length > 0)) {
       requestAnimationFrame(() => {
         chatEndRef.current?.scrollIntoView({ 
-          behavior: 'auto',
+          behavior: isStreaming ? 'auto' : 'smooth',
           block: 'end'
         })
       })
@@ -485,29 +490,54 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* Collapsible Categories Bar */}
-      <div className="mb-4">
+      {/* Enhanced Collapsible Categories Bar */}
+      <div className="mb-6">
+        <div className="text-center mb-4">
+          <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">
+            Quick Start
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Find out how we can help you today
+          </p>
+        </div>
+        
         <button
           onClick={() => setShowCategories(!showCategories)}
-          className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors mb-2"
+          className="flex items-center justify-center gap-2 w-full text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors mb-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800/50"
         >
-          {showCategories ? <HiChevronUp /> : <HiChevronDown />}
-          Quick Categories
+          {showCategories ? (
+            <>
+              <HiChevronUp className="w-4 h-4" />
+              <span>Hide this</span>
+            </>
+          ) : (
+            <>
+              <HiChevronDown className="w-4 h-4" />
+              <span>Expand quick actions</span>
+            </>
+          )}
         </button>
         
         {showCategories && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 p-4 bg-white/50 dark:bg-slate-800/50 rounded-xl border border-gray-200 dark:border-slate-700">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-6 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-slate-800/50 dark:to-slate-700/50 rounded-2xl border border-gray-200/50 dark:border-slate-700/50 backdrop-blur-sm shadow-lg">
             {QUICK_CATEGORIES.map((category, index) => (
               <button
                 key={index}
                 onClick={() => handleSubmit(category.prompt)}
                 disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                className="flex items-center gap-3 p-3 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-left"
+                className="group flex flex-col items-center gap-3 p-6 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-gray-200/50 dark:border-slate-700/50 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none backdrop-blur-sm"
               >
-                <div className="text-lg">{category.icon}</div>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {category.title}
-                </span>
+                <div className="text-3xl group-hover:scale-110 transition-transform duration-200">
+                  {category.icon}
+                </div>
+                <div className="text-center">
+                  <h4 className="font-semibold text-slate-800 dark:text-white text-sm mb-1">
+                    {category.title}
+                  </h4>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                    {category.description}
+                  </p>
+                </div>
               </button>
             ))}
           </div>
@@ -538,7 +568,7 @@ function DashboardContent() {
       )}
 
       {/* Chat Messages */}
-      <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pb-6">
+      <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pb-32">
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -622,76 +652,80 @@ function DashboardContent() {
         <div ref={chatEndRef} />
       </div>
 
-      {/* Enhanced Input Section */}
-      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl p-5 mt-4">
-        <textarea
-          ref={textareaRef}
-          rows={1}
-          className="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-textPrimary dark:text-white resize-none text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 min-h-[2.5rem] max-h-32"
-          placeholder="Ask Growfly anything about your business..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              handleSubmit()
-            }
-          }}
-          disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-        />
-        <div className="flex justify-between items-center mt-4">
-          <div className="flex items-center gap-4">
-            <div
-              onClick={() => !isLoading && !isStreaming && promptsUsed < promptLimit && fileInputRef.current?.click()}
-              className={`cursor-pointer border-2 border-dashed px-5 py-3 rounded-xl flex items-center gap-2 transition-all duration-200 ${
-                isLoading || isStreaming || promptsUsed >= promptLimit
-                  ? 'border-gray-300 dark:border-gray-600 text-gray-400 cursor-not-allowed'
-                  : 'border-blue-300 dark:border-blue-600 hover:border-blue-500 dark:hover:border-blue-400 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
-              }`}
-            >
-              📎 <span className="text-sm font-medium">Upload Image / PDF</span>
+      {/* Fixed Input Section at Bottom */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-gray-200 dark:border-slate-700 p-6 shadow-2xl">
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-5 border border-gray-200 dark:border-slate-700">
+            <textarea
+              ref={textareaRef}
+              rows={1}
+              className="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-textPrimary dark:text-white resize-none text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 min-h-[2.5rem] max-h-32"
+              placeholder="Ask Growfly anything about your business..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  handleSubmit()
+                }
+              }}
+              disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+            />
+            <div className="flex justify-between items-center mt-4">
+              <div className="flex items-center gap-4">
+                <div
+                  onClick={() => !isLoading && !isStreaming && promptsUsed < promptLimit && fileInputRef.current?.click()}
+                  className={`cursor-pointer border-2 border-dashed px-5 py-3 rounded-xl flex items-center gap-2 transition-all duration-200 ${
+                    isLoading || isStreaming || promptsUsed >= promptLimit
+                      ? 'border-gray-300 dark:border-gray-600 text-gray-400 cursor-not-allowed'
+                      : 'border-blue-300 dark:border-blue-600 hover:border-blue-500 dark:hover:border-blue-400 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                  }`}
+                >
+                  📎 <span className="text-sm font-medium">Upload Image / PDF</span>
+                </div>
+                {selectedFile && (
+                  <p className="text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-slate-700 px-3 py-1 rounded-full">
+                    📄 {selectedFile.name}
+                  </p>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-3">
+                {input.length > 0 && (
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {input.length} characters
+                  </span>
+                )}
+                <button
+                  onClick={() => handleSubmit()}
+                  disabled={(!input.trim() && !selectedFile) || isLoading || isStreaming || promptsUsed >= promptLimit}
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold px-8 py-3 rounded-xl text-sm shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
+                >
+                  {isLoading || isStreaming ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      {isStreaming ? 'Responding...' : 'Sending...'}
+                    </span>
+                  ) : (
+                    '➤ Send'
+                  )}
+                </button>
+              </div>
             </div>
-            {selectedFile && (
-              <p className="text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-slate-700 px-3 py-1 rounded-full">
-                📄 {selectedFile.name}
-              </p>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {input.length > 0 && (
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                {input.length} characters
-              </span>
-            )}
-            <button
-              onClick={() => handleSubmit()}
-              disabled={(!input.trim() && !selectedFile) || isLoading || isStreaming || promptsUsed >= promptLimit}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold px-8 py-3 rounded-xl text-sm shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
-            >
-              {isLoading || isStreaming ? (
-                <span className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  {isStreaming ? 'Responding...' : 'Sending...'}
-                </span>
-              ) : (
-                '➤ Send'
-              )}
-            </button>
+            
+            <input
+              type="file"
+              accept="image/*,application/pdf"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) setSelectedFile(file)
+              }}
+              className="hidden"
+              ref={fileInputRef}
+              disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+            />
           </div>
         </div>
-        
-        <input
-          type="file"
-          accept="image/*,application/pdf"
-          onChange={(e) => {
-            const file = e.target.files?.[0]
-            if (file) setSelectedFile(file)
-          }}
-          className="hidden"
-          ref={fileInputRef}
-          disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-        />
       </div>
 
       {/* Modals */}
