@@ -86,6 +86,7 @@ function DashboardContent() {
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [showFeedbackModal, setShowFeedbackModal] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isStreaming, setIsStreaming] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null)
   const [isUserScrolling, setIsUserScrolling] = useState(false)
@@ -107,6 +108,7 @@ function DashboardContent() {
 
   const createNewThread = async () => {
     try {
+      setIsLoading(true)
       const res = await fetch(`${API_BASE_URL}/api/chat/create`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -128,6 +130,8 @@ function DashboardContent() {
     } catch (err) {
       console.error('Failed to create new thread:', err)
       setError('Failed to create new chat thread. Please refresh the page.')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -220,16 +224,30 @@ function DashboardContent() {
         clearTimeout(scrollTimeoutRef.current)
       }
       
-      // Set timeout to detect when user stops scrolling
+      // Set timeout to detect when user stops scrolling - increased timeout
       scrollTimeoutRef.current = setTimeout(() => {
         setIsUserScrolling(false)
-      }, 150)
+      }, 500) // Increased from 150ms to 500ms for better manual scroll control
+    }
+
+    const handleWheel = () => {
+      setIsUserScrolling(true)
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current)
+      }
+      scrollTimeoutRef.current = setTimeout(() => {
+        setIsUserScrolling(false)
+      }, 1000) // Even longer timeout for wheel events
     }
 
     container.addEventListener('scroll', handleScroll, { passive: true })
+    container.addEventListener('wheel', handleWheel, { passive: true })
+    container.addEventListener('touchmove', handleScroll, { passive: true })
     
     return () => {
       container.removeEventListener('scroll', handleScroll)
+      container.removeEventListener('wheel', handleWheel)
+      container.removeEventListener('touchmove', handleScroll)
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current)
       }
@@ -240,19 +258,19 @@ function DashboardContent() {
     const container = containerRef.current
     if (!container) return
     
-    // Only auto-scroll if user isn't manually scrolling and is near the bottom
-    const isNearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 100
+    // Only auto-scroll if user isn't manually scrolling, is near the bottom, AND we're actively streaming
+    const isNearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 200
     
-    if (!isUserScrolling && (isNearBottom || isLoading)) {
+    if (!isUserScrolling && isNearBottom && (isStreaming || isLoading)) {
       // Use requestAnimationFrame for smoother scrolling during streaming
       requestAnimationFrame(() => {
         chatEndRef.current?.scrollIntoView({ 
-          behavior: isLoading ? 'auto' : 'smooth',
+          behavior: 'auto', // Always use 'auto' during streaming for smoother experience
           block: 'end'
         })
       })
     }
-  }, [messages, isUserScrolling, isLoading])
+  }, [messages, isUserScrolling, isLoading, isStreaming])
 
   const fetchFollowUps = async (text: string): Promise<string[]> => {
     try {
@@ -305,7 +323,17 @@ function DashboardContent() {
     let fullContent = ''
     let followUps: string[] = []
     setIsLoading(true)
+    setIsStreaming(true)
     setError(null)
+
+    // Show "thinking" message immediately
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === aId
+          ? { ...msg, content: 'Working on your response...' }
+          : msg
+      )
+    )
 
     await streamChat({
       prompt,
@@ -316,14 +344,14 @@ function DashboardContent() {
         fullContent += chunk.content
         if (chunk.followUps) followUps = chunk.followUps
 
+        // Update message with streaming content
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === aId
               ? {
                   ...msg,
                   content: fullContent,
-                  followUps:
-                    chunk.followUps ?? msg.followUps ?? ([] as string[]),
+                  followUps: chunk.followUps ?? msg.followUps ?? [],
                 }
               : msg
           )
@@ -331,14 +359,26 @@ function DashboardContent() {
       },
       onComplete: async () => {
         setIsLoading(false)
+        setIsStreaming(false)
         
-        if (!followUps.length) {
-          followUps = await fetchFollowUps(fullContent)
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === aId ? { ...msg, followUps } : msg
+        // Fetch follow-ups if not provided by stream
+        if (!followUps.length && fullContent.trim()) {
+          try {
+            followUps = await fetchFollowUps(fullContent)
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === aId ? { ...msg, followUps } : msg
+              )
             )
-          )
+          } catch (error) {
+            console.error('Failed to fetch follow-ups:', error)
+            // Set default follow-ups if fetch fails
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === aId ? { ...msg, followUps: ['Can you explain that further?', 'What would you recommend next?'] } : msg
+              )
+            )
+          }
         }
         
         // Only save to history if we have valid content and threadId
@@ -346,9 +386,9 @@ function DashboardContent() {
           postMessage('assistant', fullContent)
         }
         
+        // Update user data
         if (!user) return
         
-        // Update user data both locally and on backend
         const updatedUser = {
           ...user,
           promptsUsed: (user.promptsUsed ?? 0) + 1,
@@ -357,31 +397,26 @@ function DashboardContent() {
         
         setUser(updatedUser)
         
-        // Sync with backend to ensure persistence
-        try {
-          await fetch(`${API_BASE_URL}/api/user/update`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              promptsUsed: updatedUser.promptsUsed,
-              totalXP: updatedUser.totalXP,
-            }),
-          })
-          console.log('User data synced to backend')
-        } catch (error) {
-          console.error('Failed to sync user data to backend:', error)
-        }
+        // Sync with backend (don't block UI)
+        fetch(`${API_BASE_URL}/api/user/update`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            promptsUsed: updatedUser.promptsUsed,
+            totalXP: updatedUser.totalXP,
+          }),
+        }).catch(error => console.error('Failed to sync user data:', error))
       },
       onError: (error) => {
         setIsLoading(false)
+        setIsStreaming(false)
         console.error('StreamChat error:', error)
         
         if (error.type === 'rate_limit') {
           setError(error.message)
-          // Remove the failed assistant message
           setMessages((prev) => prev.filter(msg => msg.id !== aId))
         } else {
           setMessages((prev) =>
@@ -577,7 +612,7 @@ function DashboardContent() {
                 <button
                   key={index}
                   onClick={() => handleSubmit(suggestion.prompt)}
-                  disabled={isLoading || promptsUsed >= promptLimit}
+                  disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
                   className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-6 text-left hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none group"
                 >
                   <div className="flex items-start gap-4">
@@ -633,14 +668,10 @@ function DashboardContent() {
                 />
               )}
               <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                {msg.content || (msg.role === 'assistant' && isLoading ? (
-                  <span className="flex items-center gap-2">
-                    <div className="animate-pulse">Thinking</div>
-                    <div className="flex gap-1">
-                      <div className="w-1 h-1 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-1 h-1 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-1 h-1 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                    </div>
+                {msg.content || (msg.role === 'assistant' && (isLoading || isStreaming) ? (
+                  <span className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                    <span className="animate-pulse">Working on your response...</span>
                   </span>
                 ) : '')}
               </p>
@@ -737,13 +768,13 @@ function DashboardContent() {
             )}
             <button
               onClick={() => handleSubmit()}
-              disabled={(!input.trim() && !selectedFile) || isLoading || promptsUsed >= promptLimit}
+              disabled={(!input.trim() && !selectedFile) || isLoading || isStreaming || promptsUsed >= promptLimit}
               className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold px-8 py-3 rounded-xl text-sm shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
             >
-              {isLoading ? (
+              {isLoading || isStreaming ? (
                 <span className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  Sending...
+                  {isStreaming ? 'Responding...' : 'Sending...'}
                 </span>
               ) : (
                 '➤ Send'
