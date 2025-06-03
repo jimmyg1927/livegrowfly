@@ -1,4 +1,5 @@
 // File: lib/streamChat.ts
+import { API_BASE_URL } from './constants'
 
 type StreamedChunk = {
   type: 'partial' | 'complete'
@@ -28,7 +29,7 @@ export default async function streamChat({
   }
 
   try {
-    const res = await fetch(`/api/ai/chat`, {
+    const res = await fetch(`${API_BASE_URL}/api/ai/chat`, {  // Your backend route
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
