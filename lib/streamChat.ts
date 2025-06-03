@@ -28,14 +28,14 @@ export default async function streamChat({
   }
 
   try {
-    const res = await fetch(`/api/ai/chat`, {  // Remove API_BASE_URL if calling from same domain
+    const res = await fetch(`/api/ai/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ 
-        message: prompt,  // CHANGED: Your backend expects 'message', not 'prompt'
+        message: prompt,
         threadId 
       }),
     })
@@ -50,6 +50,7 @@ export default async function streamChat({
     const decoder = new TextDecoder()
     let buffer = ''
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
