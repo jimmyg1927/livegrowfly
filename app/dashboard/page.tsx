@@ -117,7 +117,7 @@ function DashboardContent() {
     localStorage.removeItem('growfly_last_thread_id')
   }
 
-  // Fetch user data from database on mount
+  // Enhanced user data fetching with better error handling and sync
   useEffect(() => {
     if (!token) {
       router.push('/onboarding')
@@ -126,23 +126,35 @@ function DashboardContent() {
     
     const fetchUserData = async () => {
       try {
+        console.log('🔄 Fetching fresh user data from database...')
         const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         if (response.ok) {
           const userData = await response.json()
           console.log('✅ Fetched fresh user data from database:', userData)
+          console.log('📊 Current prompts used:', userData.promptsUsed)
           setUser(userData)
         } else {
-          console.error('❌ Failed to fetch user data:', response.status)
+          console.error('❌ Failed to fetch user data:', response.status, response.statusText)
+          // If we get unauthorized, redirect to onboarding
+          if (response.status === 401) {
+            localStorage.removeItem('growfly_jwt')
+            router.push('/onboarding')
+          }
         }
       } catch (error) {
         console.error('❌ Error fetching user data:', error)
       }
     }
     
-    // Always fetch fresh data from database
+    // Always fetch fresh data from database on mount
     fetchUserData()
+    
+    // Also set up an interval to periodically sync user data
+    const syncInterval = setInterval(fetchUserData, 30000) // Sync every 30 seconds
+    
+    return () => clearInterval(syncInterval)
   }, [token, router, setUser])
 
   // Load existing thread if available
@@ -207,8 +219,6 @@ function DashboardContent() {
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
-    
-    const isNearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 200
     
     // Auto-scroll to bottom when new messages arrive or when streaming
     if (!isUserScrolling && (isStreaming || messages.length > 0)) {
@@ -303,38 +313,53 @@ function DashboardContent() {
             )
           )
           
-          // Update user data in database
+          // Update user data and sync to database immediately
           if (user) {
             const newPromptsUsed = (user.promptsUsed ?? 0) + 1
             const newXP = (user.totalXP ?? 0) + 2.5
             
             console.log('💾 Updating user data:', { promptsUsed: newPromptsUsed, totalXP: newXP })
             
-            // Update local state
+            // Update local state first
             setUser({
               ...user,
               promptsUsed: newPromptsUsed,
               totalXP: newXP,
             })
             
-            // Sync to database
-            fetch(`${API_BASE_URL}/api/user/update`, {
-              method: 'PATCH',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                promptsUsed: newPromptsUsed,
-                totalXP: newXP,
-              }),
-            }).then(res => {
-              if (res.ok) {
+            // Sync to database and fetch fresh data to ensure consistency
+            try {
+              const updateResponse = await fetch(`${API_BASE_URL}/api/user/update`, {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                  promptsUsed: newPromptsUsed,
+                  totalXP: newXP,
+                }),
+              })
+              
+              if (updateResponse.ok) {
                 console.log('✅ User data synced to database')
+                
+                // Fetch fresh user data to ensure sync
+                const freshDataResponse = await fetch(`${API_BASE_URL}/api/user/profile`, {
+                  headers: { Authorization: `Bearer ${token}` }
+                })
+                
+                if (freshDataResponse.ok) {
+                  const freshUserData = await freshDataResponse.json()
+                  console.log('🔄 Refreshed user data after update:', freshUserData)
+                  setUser(freshUserData)
+                }
               } else {
-                console.error('❌ Failed to sync user data')
+                console.error('❌ Failed to sync user data:', updateResponse.status)
               }
-            }).catch(error => console.error('❌ Database sync error:', error))
+            } catch (error) {
+              console.error('❌ Database sync error:', error)
+            }
           }
         },
         onError: (error) => {
@@ -376,6 +401,8 @@ function DashboardContent() {
 
     setError(null)
 
+    // Use the latest user data for prompt limit check
+    console.log('🔍 Checking prompt limit - Used:', promptsUsed, 'Limit:', promptLimit)
     if (promptsUsed >= promptLimit) {
       setError(`You've reached your daily limit of ${promptLimit} prompts. Upgrade your plan to continue.`)
       return
@@ -393,15 +420,6 @@ function DashboardContent() {
     const userMessage = { id: uId, role: 'user' as const, content: text }
     setMessages((prev) => [...prev, userMessage])
     setInput('')
-    
-    // Ensure user message is visible above input area
-    setTimeout(() => {
-      const container = containerRef.current
-      if (container) {
-        // Scroll to show the user message but keep some margin from input
-        container.scrollTop = container.scrollHeight - container.clientHeight + 20
-      }
-    }, 100)
     
     const aId = `a${Date.now()}`
     setMessages((prev) => [...prev, { id: aId, role: 'assistant', content: '' }])
@@ -460,216 +478,221 @@ function DashboardContent() {
   const dismissError = () => setError(null)
 
   return (
-    <div className="flex flex-col h-full p-6 bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-textPrimary dark:text-white transition-colors duration-300">
-      {/* Header with Prompts Used and New Chat */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex-1" />
-        <div className="flex items-center gap-4">
-          {/* Enhanced Prompt Tracker */}
-          <div className="bg-white dark:bg-white rounded-xl px-4 py-2 shadow-lg border border-gray-200">
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-gray-700">
-                Prompts Used
-              </span>
-              <div className="flex items-center gap-2">
-                <div className="relative w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
-                    className={`absolute top-0 left-0 h-full bg-gradient-to-r ${getPromptLimitColor()} rounded-full transition-all duration-300 ease-out`}
-                    style={{ width: `${Math.min(usagePercentage, 100)}%` }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+    <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-textPrimary dark:text-white transition-colors duration-300">
+      
+      {/* Main Content Area with proper padding */}
+      <div className="flex-1 overflow-hidden p-6">
+        
+        {/* Header with Prompts Used and New Chat */}
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex-1" />
+          <div className="flex items-center gap-4">
+            {/* Enhanced Prompt Tracker */}
+            <div className="bg-white dark:bg-white rounded-xl px-4 py-2 shadow-lg border border-gray-200">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-700">
+                  Prompts Used
+                </span>
+                <div className="flex items-center gap-2">
+                  <div className="relative w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className={`absolute top-0 left-0 h-full bg-gradient-to-r ${getPromptLimitColor()} rounded-full transition-all duration-300 ease-out`}
+                      style={{ width: `${Math.min(usagePercentage, 100)}%` }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+                  </div>
+                  <span className="text-sm font-bold text-gray-800 min-w-[3rem]">
+                    {promptsUsed}/{promptLimit}
+                  </span>
                 </div>
-                <span className="text-sm font-bold text-gray-800 min-w-[3rem]">
-                  {promptsUsed}/{promptLimit}
-                </span>
+                {promptsRemaining <= 5 && promptsRemaining > 0 && (
+                  <span className="text-xs text-orange-600 font-medium">
+                    {promptsRemaining} left
+                  </span>
+                )}
               </div>
-              {promptsRemaining <= 5 && promptsRemaining > 0 && (
-                <span className="text-xs text-orange-600 font-medium">
-                  {promptsRemaining} left
-                </span>
-              )}
             </div>
+            
+            <button
+              onClick={createNewThread}
+              className="text-sm bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105"
+            >
+              <FaSyncAlt className="text-xs" /> New Chat
+            </button>
+          </div>
+        </div>
+
+        {/* Enhanced Collapsible Categories Bar */}
+        <div className="mb-6">
+          <div className="text-center mb-3">
+            <h3 className="text-xl font-bold text-blue-500 mb-1">
+              Quick Start
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              Find out how we can help you today
+            </p>
           </div>
           
           <button
-            onClick={createNewThread}
-            className="text-sm bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105"
+            onClick={() => setShowCategories(!showCategories)}
+            className="flex items-center justify-center gap-2 w-full text-sm font-medium text-white hover:text-white transition-all duration-200 mb-4 py-3 px-4 rounded-xl bg-blue-500 hover:bg-blue-600 border border-blue-400 hover:border-blue-500 backdrop-blur-sm shadow-lg hover:shadow-xl"
           >
-            <FaSyncAlt className="text-xs" /> New Chat
+            {showCategories ? (
+              <>
+                <HiChevronUp className="w-4 h-4" />
+                <span>Hide Quick Start</span>
+              </>
+            ) : (
+              <>
+                <HiChevronDown className="w-4 h-4" />
+                <span>Show Quick Start</span>
+              </>
+            )}
           </button>
-        </div>
-      </div>
-
-      {/* Enhanced Collapsible Categories Bar */}
-      <div className="mb-6">
-        <div className="text-center mb-3">
-          <h3 className="text-xl font-bold text-blue-500 mb-1">
-            Quick Start
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Find out how we can help you today
-          </p>
-        </div>
-        
-        <button
-          onClick={() => setShowCategories(!showCategories)}
-          className="flex items-center justify-center gap-2 w-full text-sm font-medium text-white hover:text-white transition-all duration-200 mb-4 py-3 px-4 rounded-xl bg-blue-500 hover:bg-blue-600 border border-blue-400 hover:border-blue-500 backdrop-blur-sm shadow-lg hover:shadow-xl"
-        >
-          {showCategories ? (
-            <>
-              <HiChevronUp className="w-4 h-4" />
-              <span>Hide Quick Start</span>
-            </>
-          ) : (
-            <>
-              <HiChevronDown className="w-4 h-4" />
-              <span>Show Quick Start</span>
-            </>
+          
+          {showCategories && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 p-3 bg-gradient-to-br from-blue-50/80 via-indigo-50/60 to-purple-50/80 dark:from-slate-800/80 dark:via-slate-700/60 dark:to-slate-800/80 rounded-2xl border border-blue-200/40 dark:border-slate-600/40 backdrop-blur-sm shadow-lg">
+              {QUICK_CATEGORIES.map((category, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleSubmit(category.prompt)}
+                  disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+                  className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/95 dark:bg-slate-800/95 border border-gray-200/70 dark:border-slate-700/70 hover:border-blue-300/70 dark:hover:border-blue-500/70 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none backdrop-blur-sm hover:bg-blue-50/30 dark:hover:bg-slate-700/95"
+                >
+                  <div className="text-xl group-hover:scale-110 transition-transform duration-300">
+                    {category.icon}
+                  </div>
+                  <div className="text-center space-y-1">
+                    <h4 className="font-semibold text-slate-800 dark:text-white text-xs leading-tight">
+                      {category.title}
+                    </h4>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                      {category.description}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
           )}
-        </button>
-        
-        {showCategories && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 p-3 bg-gradient-to-br from-blue-50/80 via-indigo-50/60 to-purple-50/80 dark:from-slate-800/80 dark:via-slate-700/60 dark:to-slate-800/80 rounded-2xl border border-blue-200/40 dark:border-slate-600/40 backdrop-blur-sm shadow-lg">
-            {QUICK_CATEGORIES.map((category, index) => (
-              <button
-                key={index}
-                onClick={() => handleSubmit(category.prompt)}
-                disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/95 dark:bg-slate-800/95 border border-gray-200/70 dark:border-slate-700/70 hover:border-blue-300/70 dark:hover:border-blue-500/70 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none backdrop-blur-sm hover:bg-blue-50/30 dark:hover:bg-slate-700/95"
-              >
-                <div className="text-xl group-hover:scale-110 transition-transform duration-300">
-                  {category.icon}
-                </div>
-                <div className="text-center space-y-1">
-                  <h4 className="font-semibold text-slate-800 dark:text-white text-xs leading-tight">
-                    {category.title}
-                  </h4>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                    {category.description}
-                  </p>
-                </div>
-              </button>
-            ))}
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
+            <button 
+              onClick={dismissError}
+              className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+            >
+              <HiX className="w-4 h-4" />
+            </button>
+            <strong>⚠️ {error}</strong>
+            {error.includes('limit') && (
+              <div className="mt-2">
+                <button
+                  onClick={() => router.push('/change-plan')}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors"
+                >
+                  Upgrade Plan
+                </button>
+              </div>
+            )}
           </div>
         )}
-      </div>
 
-      {/* Error Message */}
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
-          <button 
-            onClick={dismissError}
-            className="absolute top-2 right-2 text-red-500 hover:text-red-700"
-          >
-            <HiX className="w-4 h-4" />
-          </button>
-          <strong>⚠️ {error}</strong>
-          {error.includes('limit') && (
-            <div className="mt-2">
-              <button
-                onClick={() => router.push('/change-plan')}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors"
-              >
-                Upgrade Plan
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Chat Messages with much more padding to prevent overlap */}
-      <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pb-64">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            onMouseEnter={() => setHoveredMessageId(msg.id)}
-            onMouseLeave={() => setHoveredMessageId(null)}
-          >
+        {/* Chat Messages - now with proper spacing for fixed input */}
+        <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pb-8">
+          {messages.map((msg) => (
             <div
-              className={`max-w-4xl p-5 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl relative ${
-                msg.role === 'user'
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white ml-auto'
-                  : 'bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-gray-800 dark:text-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm'
-              }`}
+              key={msg.id}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              onMouseEnter={() => setHoveredMessageId(msg.id)}
+              onMouseLeave={() => setHoveredMessageId(null)}
             >
-              {msg.imageUrl && (
-                <Image
-                  src={msg.imageUrl}
-                  alt="Uploaded"
-                  width={280}
-                  height={280}
-                  className="mb-4 rounded-xl shadow-md"
-                />
-              )}
-              
-              <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                {msg.content ? (
-                  msg.content
-                ) : msg.role === 'assistant' && (isLoading || isStreaming) ? (
-                  <span className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
-                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                    <span className="animate-pulse">Working on your response...</span>
-                  </span>
-                ) : ''}
-              </p>
+              <div
+                className={`max-w-4xl p-5 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl relative ${
+                  msg.role === 'user'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white ml-auto'
+                    : 'bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-gray-800 dark:text-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm'
+                }`}
+              >
+                {msg.imageUrl && (
+                  <Image
+                    src={msg.imageUrl}
+                    alt="Uploaded"
+                    width={280}
+                    height={280}
+                    className="mb-4 rounded-xl shadow-md"
+                  />
+                )}
+                
+                <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                  {msg.content ? (
+                    msg.content
+                  ) : msg.role === 'assistant' && (isLoading || isStreaming) ? (
+                    <span className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                      <span className="animate-pulse">Working on your response...</span>
+                    </span>
+                  ) : ''}
+                </p>
 
-              {msg.role === 'assistant' && msg.content && (
-                <>
-                  {/* Follow-up Questions */}
-                  {msg.followUps && msg.followUps.length > 0 && (
-                    <div className="flex gap-3 mt-5 flex-wrap">
-                      {msg.followUps.map((fu, i) => (
-                        <button
-                          key={i}
-                          onClick={() => handleSubmit(fu)}
-                          disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                          className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 hover:from-indigo-100 hover:to-blue-100 dark:hover:from-indigo-800/40 dark:hover:to-blue-800/40 disabled:from-gray-100 disabled:to-gray-100 dark:disabled:from-gray-800 dark:disabled:to-gray-800 text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 disabled:text-gray-500 dark:disabled:text-gray-500 px-4 py-2 rounded-xl text-xs font-medium shadow-sm border border-indigo-200 dark:border-indigo-700 disabled:border-gray-200 dark:disabled:border-gray-600 transition-all duration-200 hover:shadow-md transform hover:scale-[1.02] disabled:transform-none disabled:cursor-not-allowed"
-                        >
-                          💡 {fu}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-4 mt-4 text-lg text-gray-500 dark:text-gray-400">
-                    <HiThumbUp
-                      className="cursor-pointer hover:text-green-500 transition-colors duration-200 transform hover:scale-110"
-                      onClick={() => setShowFeedbackModal(true)}
-                    />
-                    <HiThumbDown
-                      className="cursor-pointer hover:text-red-500 transition-colors duration-200 transform hover:scale-110"
-                      onClick={() => setShowFeedbackModal(true)}
-                    />
-                    <FaRegBookmark
-                      className="cursor-pointer hover:text-yellow-500 transition-colors duration-200 transform hover:scale-110"
-                      onClick={() => setShowSaveModal(true)}
-                    />
-                    <FaShareSquare
-                      className="cursor-pointer hover:text-blue-500 transition-colors duration-200 transform hover:scale-110"
-                      onClick={() => router.push('/collab-zone')}
-                    />
-                    {msg.imageUrl && (
-                      <FaFileDownload className="cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 transform hover:scale-110" />
+                {msg.role === 'assistant' && msg.content && (
+                  <>
+                    {/* Follow-up Questions */}
+                    {msg.followUps && msg.followUps.length > 0 && (
+                      <div className="flex gap-3 mt-5 flex-wrap">
+                        {msg.followUps.map((fu, i) => (
+                          <button
+                            key={i}
+                            onClick={() => handleSubmit(fu)}
+                            disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+                            className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 hover:from-indigo-100 hover:to-blue-100 dark:hover:from-indigo-800/40 dark:hover:to-blue-800/40 disabled:from-gray-100 disabled:to-gray-100 dark:disabled:from-gray-800 dark:disabled:to-gray-800 text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 disabled:text-gray-500 dark:disabled:text-gray-500 px-4 py-2 rounded-xl text-xs font-medium shadow-sm border border-indigo-200 dark:border-indigo-700 disabled:border-gray-200 dark:disabled:border-gray-600 transition-all duration-200 hover:shadow-md transform hover:scale-[1.02] disabled:transform-none disabled:cursor-not-allowed"
+                          >
+                            💡 {fu}
+                          </button>
+                        ))}
+                      </div>
                     )}
-                  </div>
-                </>
-              )}
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-4 mt-4 text-lg text-gray-500 dark:text-gray-400">
+                      <HiThumbUp
+                        className="cursor-pointer hover:text-green-500 transition-colors duration-200 transform hover:scale-110"
+                        onClick={() => setShowFeedbackModal(true)}
+                      />
+                      <HiThumbDown
+                        className="cursor-pointer hover:text-red-500 transition-colors duration-200 transform hover:scale-110"
+                        onClick={() => setShowFeedbackModal(true)}
+                      />
+                      <FaRegBookmark
+                        className="cursor-pointer hover:text-yellow-500 transition-colors duration-200 transform hover:scale-110"
+                        onClick={() => setShowSaveModal(true)}
+                      />
+                      <FaShareSquare
+                        className="cursor-pointer hover:text-blue-500 transition-colors duration-200 transform hover:scale-110"
+                        onClick={() => router.push('/collab-zone')}
+                      />
+                      {msg.imageUrl && (
+                        <FaFileDownload className="cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 transform hover:scale-110" />
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
-        <div ref={chatEndRef} />
+          ))}
+          <div ref={chatEndRef} />
+        </div>
       </div>
 
-      {/* Fixed Input Section at Bottom - Just the input box */}
-      <div className="fixed bottom-0 left-44 right-0 p-6">
+      {/* Fixed Input Section at Bottom - now part of the layout */}
+      <div className="bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 p-6 shadow-2xl">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-5 border border-gray-200 dark:border-slate-700 backdrop-blur-md">
+          <div className="bg-gray-50 dark:bg-slate-700 rounded-2xl p-4 shadow-inner">
             <textarea
               ref={textareaRef}
-              rows={4}
-              className="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-textPrimary dark:text-white resize-none text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 min-h-[6rem] max-h-40"
+              rows={3}
+              className="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-textPrimary dark:text-white resize-none text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 min-h-[4rem] max-h-32"
               placeholder="Type out your prompt here..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -685,10 +708,10 @@ function DashboardContent() {
               <div className="flex items-center gap-4">
                 <div
                   onClick={() => !isLoading && !isStreaming && promptsUsed < promptLimit && fileInputRef.current?.click()}
-                  className={`cursor-pointer border-2 px-5 py-3 rounded-xl flex items-center gap-2 transition-all duration-200 ${
+                  className={`cursor-pointer border-2 px-4 py-2 rounded-xl flex items-center gap-2 transition-all duration-200 ${
                     isLoading || isStreaming || promptsUsed >= promptLimit
                       ? 'border-gray-300 dark:border-gray-600 text-gray-400 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
-                      : 'border-blue-500 text-white bg-blue-500 hover:bg-blue-600 hover:border-blue-600 shadow-lg hover:shadow-xl transform hover:scale-[1.02]'
+                      : 'border-blue-500 text-blue-600 bg-blue-50 hover:bg-blue-100 hover:border-blue-600 shadow-sm hover:shadow-md transform hover:scale-[1.02]'
                   }`}
                 >
                   📎 <span className="text-sm font-medium">Upload Image / PDF</span>
@@ -709,7 +732,7 @@ function DashboardContent() {
                 <button
                   onClick={() => handleSubmit()}
                   disabled={(!input.trim() && !selectedFile) || isLoading || isStreaming || promptsUsed >= promptLimit}
-                  className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white font-semibold p-3 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
+                  className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white font-semibold px-6 py-3 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
                 >
                   {isLoading || isStreaming ? (
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
