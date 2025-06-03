@@ -1,21 +1,19 @@
 // File: lib/streamChat.ts
 
-import { API_BASE_URL } from './constants';
+type StreamedChunk = {
+  type: 'partial' | 'complete'
+  content?: string
+  followUps?: string[]
+  responseId?: string
+}
 
-export type StreamedChunk = {
-  role: 'user' | 'assistant';
-  content: string;
-  followUps?: string[];
-};
-
-type Props = {
-  prompt: string;
-  threadId?: string;
-  token: string;
-  onStream: (chunk: StreamedChunk) => void;
-  onComplete?: (fullText: string) => void;
-  onImage?: (imageUrl: string) => void;
-};
+interface StreamChatOptions {
+  prompt: string
+  threadId?: string
+  token: string
+  onStream: (chunk: StreamedChunk) => void
+  onComplete: () => void
+}
 
 export default async function streamChat({
   prompt,
@@ -23,71 +21,61 @@ export default async function streamChat({
   token,
   onStream,
   onComplete,
-  onImage,
-}: Props) {
-  // Step 1: Ensure thread exists (or create one if not provided)
-  let finalThreadId = threadId;
-
-  if (!finalThreadId) {
-    const createRes = await fetch(`${API_BASE_URL}/api/chat/create`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!createRes.ok) throw new Error('Failed to create thread');
-    const createData = await createRes.json();
-    finalThreadId = createData.id;
-
-    if (finalThreadId) {
-      localStorage.setItem('growfly_last_thread_id', finalThreadId);
-    }
+}: StreamChatOptions) {
+  if (!token) {
+    console.error('Missing auth token in streamChat')
+    return
   }
 
-  // Step 2: Send message to AI
-  const res = await fetch(`${API_BASE_URL}/api/ai/chat`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ message: prompt, threadId: finalThreadId }),
-  });
+  try {
+    const res = await fetch(`/api/ai/chat`, {  // Remove API_BASE_URL if calling from same domain
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ 
+        message: prompt,  // CHANGED: Your backend expects 'message', not 'prompt'
+        threadId 
+      }),
+    })
 
-  if (!res.ok || !res.body) throw new Error('No response stream');
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`)
+    }
 
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let fullText = '';
-  let followUps: string[] | undefined;
-  let done = false;
+    if (!res.body) throw new Error('No response stream')
 
-  while (!done) {
-    const { value, done: readerDone } = await reader.read();
-    done = readerDone;
-    const chunk = decoder.decode(value, { stream: true });
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
 
-    const events = chunk.split('\n\n').filter(Boolean);
-    for (const evt of events) {
-      if (evt.startsWith('data: ')) {
-        const json = evt.replace('data: ', '');
-        try {
-          const parsed = JSON.parse(json);
-          const role = parsed.role || 'assistant';
-          const content = parsed.content || '';
-          const imageUrl = parsed.imageUrl;
-          followUps = parsed.followUps;
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
 
-          if (imageUrl && onImage) onImage(imageUrl);
-          fullText += content;
-          onStream({ role, content, followUps });
-        } catch (err) {
-          console.warn('Stream parse error:', err);
+      const parts = buffer.split('\n\n')
+      buffer = parts.pop() || ''
+
+      for (const part of parts) {
+        if (part.startsWith('data: ')) {
+          const json = part.replace('data: ', '')
+          if (json === '[DONE]') continue
+          try {
+            const parsed: StreamedChunk = JSON.parse(json)
+            onStream(parsed)
+          } catch (err) {
+            console.error('Failed to parse streamed chunk:', err)
+          }
         }
       }
     }
-  }
 
-  if (onComplete) onComplete(fullText);
+    onComplete()
+  } catch (err) {
+    console.error('StreamChat error:', err)
+    onStream({ type: 'partial', content: '❌ Failed to get response. Please try again.' })
+    onComplete()
+  }
 }

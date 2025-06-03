@@ -38,13 +38,9 @@ function DashboardContent() {
   const paramThreadId = searchParams?.get('threadId')
 
   const { user, setUser } = useUserStore()
-  const token =
-    typeof window !== 'undefined'
-      ? localStorage.getItem('growfly_jwt') || ''
-      : ''
+  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
 
-  const promptLimit =
-    PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || ''] || 0
+  const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || ''] || 0
   const promptsUsed = user?.promptsUsed ?? 0
 
   const [input, setInput] = useState('')
@@ -64,9 +60,8 @@ function DashboardContent() {
   }, [token, router])
 
   useEffect(() => {
-    const idFromParam = paramThreadId
-    const lastSavedThread = localStorage.getItem('growfly_last_thread_id')
-    const id = idFromParam || lastSavedThread
+    const storedThreadId = localStorage.getItem('growfly_last_thread_id')
+    const id = paramThreadId || storedThreadId
 
     if (!id) {
       createNewThread()
@@ -75,7 +70,7 @@ function DashboardContent() {
 
     setThreadId(id)
 
-    if (!token) return
+    if (!token || !id) return
 
     fetch(`${API_BASE_URL}/chat/history/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -86,8 +81,8 @@ function DashboardContent() {
           const data = JSON.parse(text)
           setMessages(data.messages || [])
           setThreadTitle(data.title || formatTitleFromDate(new Date()))
-        } catch {
-          console.error('Failed to parse chat history JSON:', text)
+        } catch (err) {
+          console.error('Failed to parse chat history JSON:', { error: err, text })
         }
       })
       .catch((err) => {
@@ -108,7 +103,7 @@ function DashboardContent() {
     try {
       const res = await fetch(`${API_BASE_URL}/chat/create`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
 
       if (!res.ok) {
@@ -132,11 +127,11 @@ function DashboardContent() {
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
-    const nearBottom =
-      container.scrollTop + container.clientHeight >=
-      container.scrollHeight - 100
+    const nearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 100
     if (nearBottom) {
-      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      setTimeout(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      }, 50)
     }
   }, [messages])
 
@@ -217,10 +212,11 @@ function DashboardContent() {
           )
         }
         postMessage('assistant', fullContent)
+        if (!user) return
         setUser({
           ...user,
-          promptsUsed: (user?.promptsUsed ?? 0) + 1,
-          totalXP: (user?.totalXP ?? 0) + 2.5,
+          promptsUsed: (user.promptsUsed ?? 0) + 1,
+          totalXP: (user.totalXP ?? 0) + 2.5,
         })
       },
     })
@@ -231,18 +227,12 @@ function DashboardContent() {
     if (!text && !selectedFile) return
 
     const uId = `u${Date.now()}`
-    setMessages((prev) => [
-      ...prev,
-      { id: uId, role: 'user', content: text },
-    ])
+    setMessages((prev) => [...prev, { id: uId, role: 'user', content: text }])
     setInput('')
     postMessage('user', text)
 
     const aId = `a${Date.now()}`
-    setMessages((prev) => [
-      ...prev,
-      { id: aId, role: 'assistant', content: '' },
-    ])
+    setMessages((prev) => [...prev, { id: aId, role: 'assistant', content: '' }])
 
     if (selectedFile) {
       const reader = new FileReader()
@@ -284,30 +274,32 @@ function DashboardContent() {
   }
 
   return (
-    <div className="flex flex-col h-full p-4 bg-background text-textPrimary">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className={`text-xl font-bold ${messages.length === 0 ? 'invisible' : ''}`}>
+    <div className="flex flex-col h-full p-6 bg-gradient-to-br from-slate-50 via-white to-blue-50 text-textPrimary">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className={`text-2xl font-bold text-slate-800 ${messages.length === 0 ? 'invisible' : ''}`}>
           {threadTitle}
         </h2>
         <div className="flex items-center gap-4">
           <PromptTracker used={promptsUsed} limit={promptLimit} />
           <button
             onClick={createNewThread}
-            className="text-xs bg-accent text-white px-3 py-1 rounded-full flex items-center gap-2 hover:brightness-110"
+            className="text-sm bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105"
           >
-            <FaSyncAlt /> New Chat
+            <FaSyncAlt className="text-xs" /> New Chat
           </button>
         </div>
       </div>
 
+      {/* Chat Messages */}
       <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pb-6">
         {messages.length === 0 && (
-          <div className="mb-4 flex justify-end">
+          <div className="mb-6 flex justify-center">
             <button
               onClick={() => handleSubmit('What can Growfly do for me?')}
-              className="bg-blue-100 text-blue-800 hover:bg-blue-200 px-4 py-2 rounded-full text-sm font-medium shadow"
+              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-6 py-3 rounded-2xl text-sm font-semibold shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
             >
-              What can Growfly do for me?
+              ✨ What can Growfly do for me?
             </button>
           </div>
         )}
@@ -315,69 +307,81 @@ function DashboardContent() {
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`whitespace-pre-wrap text-sm p-4 rounded-xl shadow-sm max-w-2xl ${
-              msg.role === 'user'
-                ? 'bg-accent text-white self-end ml-auto'
-                : 'bg-gray-100 text-black self-start'
-            }`}
+            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
-            {msg.imageUrl && (
-              <Image
-                src={msg.imageUrl}
-                alt="Uploaded"
-                width={240}
-                height={240}
-                className="mb-2 rounded shadow"
-              />
-            )}
-            <p>{msg.content}</p>
+            <div
+              className={`max-w-4xl p-5 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl ${
+                msg.role === 'user'
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white ml-auto'
+                  : 'bg-white border border-gray-100 text-gray-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm'
+              }`}
+            >
+              {msg.imageUrl && (
+                <Image
+                  src={msg.imageUrl}
+                  alt="Uploaded"
+                  width={280}
+                  height={280}
+                  className="mb-4 rounded-xl shadow-md"
+                />
+              )}
+              <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                {msg.content}
+              </p>
 
-            {msg.role === 'assistant' && (
-              <>
-                <div className="flex gap-2 mt-3 flex-wrap">
-                  {msg.followUps?.map((fu, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleSubmit(fu)}
-                      className="bg-blue-100 text-blue-800 hover:bg-blue-200 px-3 py-1 rounded-full text-xs font-medium shadow-sm"
-                    >
-                      {fu}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex gap-4 mt-3 text-lg">
-                  <HiThumbUp
-                    className="cursor-pointer hover:text-green-500"
-                    onClick={() => setShowFeedbackModal(true)}
-                  />
-                  <HiThumbDown
-                    className="cursor-pointer hover:text-red-500"
-                    onClick={() => setShowFeedbackModal(true)}
-                  />
-                  <FaRegBookmark
-                    className="cursor-pointer hover:text-yellow-500"
-                    onClick={() => setShowSaveModal(true)}
-                  />
-                  <FaShareSquare
-                    className="cursor-pointer hover:text-blue-500"
-                    onClick={() => router.push('/collab-zone')}
-                  />
-                  {msg.imageUrl && (
-                    <FaFileDownload className="cursor-pointer hover:text-gray-600" />
+              {msg.role === 'assistant' && (
+                <>
+                  {/* Follow-up Questions */}
+                  {msg.followUps && msg.followUps.length > 0 && (
+                    <div className="flex gap-3 mt-5 flex-wrap">
+                      {msg.followUps.map((fu, i) => (
+                        <button
+                          key={i}
+                          onClick={() => handleSubmit(fu)}
+                          className="bg-gradient-to-r from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 text-indigo-700 hover:text-indigo-800 px-4 py-2 rounded-xl text-xs font-medium shadow-sm border border-indigo-200 transition-all duration-200 hover:shadow-md transform hover:scale-[1.02]"
+                        >
+                          💡 {fu}
+                        </button>
+                      ))}
+                    </div>
                   )}
-                </div>
-              </>
-            )}
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-4 mt-4 text-lg text-gray-500">
+                    <HiThumbUp
+                      className="cursor-pointer hover:text-green-500 transition-colors duration-200 transform hover:scale-110"
+                      onClick={() => setShowFeedbackModal(true)}
+                    />
+                    <HiThumbDown
+                      className="cursor-pointer hover:text-red-500 transition-colors duration-200 transform hover:scale-110"
+                      onClick={() => setShowFeedbackModal(true)}
+                    />
+                    <FaRegBookmark
+                      className="cursor-pointer hover:text-yellow-500 transition-colors duration-200 transform hover:scale-110"
+                      onClick={() => setShowSaveModal(true)}
+                    />
+                    <FaShareSquare
+                      className="cursor-pointer hover:text-blue-500 transition-colors duration-200 transform hover:scale-110"
+                      onClick={() => router.push('/collab-zone')}
+                    />
+                    {msg.imageUrl && (
+                      <FaFileDownload className="cursor-pointer hover:text-gray-700 transition-colors duration-200 transform hover:scale-110" />
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         ))}
         <div ref={chatEndRef} />
       </div>
 
-      <div className="border-t pt-4 mt-4">
+      {/* Input Section */}
+      <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-xl p-5 mt-4">
         <textarea
-          rows={2}
-          className="w-full p-3 rounded border bg-input text-textPrimary resize-none text-sm"
-          placeholder="Type your message..."
+          rows={3}
+          className="w-full p-4 rounded-xl border border-gray-200 bg-white text-textPrimary resize-none text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+          placeholder="Ask Growfly anything about your business..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
@@ -387,12 +391,12 @@ function DashboardContent() {
             }
           }}
         />
-        <div className="flex justify-between items-center mt-2">
+        <div className="flex justify-between items-center mt-4">
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="cursor-pointer border-2 border-dashed border-blue-400 px-4 py-2 rounded text-blue-600 hover:bg-blue-50"
+            className="cursor-pointer border-2 border-dashed border-blue-300 hover:border-blue-500 px-5 py-3 rounded-xl text-blue-600 hover:bg-blue-50 transition-all duration-200 flex items-center gap-2"
           >
-            📎 Upload Image / PDF
+            📎 <span className="text-sm font-medium">Upload Image / PDF</span>
           </div>
           <input
             type="file"
@@ -405,18 +409,21 @@ function DashboardContent() {
             ref={fileInputRef}
           />
           {selectedFile && (
-            <p className="text-xs text-muted-foreground mt-1">{selectedFile.name}</p>
+            <p className="text-xs text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+              📄 {selectedFile.name}
+            </p>
           )}
           <button
             onClick={() => handleSubmit()}
             disabled={!input.trim() && !selectedFile}
-            className="bg-accent hover:bg-accent/90 disabled:bg-gray-400 text-white font-semibold px-6 py-2 rounded-full text-sm shadow transition-all"
+            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold px-8 py-3 rounded-xl text-sm shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
           >
             ➤ Send
           </button>
         </div>
       </div>
 
+      {/* Modals */}
       <SaveModal
         open={showSaveModal}
         onClose={() => setShowSaveModal(false)}
