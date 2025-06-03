@@ -107,8 +107,17 @@ function DashboardContent() {
   }
 
   const createNewThread = async () => {
+    // Prevent multiple clicks
+    if (isLoading) return
+    
     try {
       setIsLoading(true)
+      
+      // Clear messages immediately to prevent glitching
+      setMessages([])
+      setThreadId(null)
+      setThreadTitle('')
+      
       const res = await fetch(`${API_BASE_URL}/api/chat/create`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -123,7 +132,6 @@ function DashboardContent() {
       const data = await res.json()
       const newId = data.threadId
       setThreadId(newId)
-      setMessages([])
       const title = formatTitleFromDate(new Date())
       setThreadTitle(title)
       localStorage.setItem('growfly_last_thread_id', newId)
@@ -326,109 +334,135 @@ function DashboardContent() {
     setIsStreaming(true)
     setError(null)
 
-    // Show "thinking" message immediately
+    // Initialize message with empty content
     setMessages((prev) =>
       prev.map((msg) =>
         msg.id === aId
-          ? { ...msg, content: 'Working on your response...' }
+          ? { ...msg, content: '' }
           : msg
       )
     )
 
-    await streamChat({
-      prompt,
-      threadId: threadId || undefined,
-      token,
-      onStream: (chunk) => {
-        if (!chunk.content) return
-        fullContent += chunk.content
-        if (chunk.followUps) followUps = chunk.followUps
-
-        // Update message with streaming content
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === aId
-              ? {
-                  ...msg,
-                  content: fullContent,
-                  followUps: chunk.followUps ?? msg.followUps ?? [],
-                }
-              : msg
+    try {
+      await streamChat({
+        prompt,
+        threadId: threadId || undefined,
+        token,
+        onStream: (chunk) => {
+          console.log('Stream chunk received:', chunk)
+          
+          if (chunk.content) {
+            fullContent += chunk.content
+            
+            // Update message with streaming content immediately
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === aId
+                  ? {
+                      ...msg,
+                      content: fullContent,
+                      followUps: chunk.followUps || msg.followUps || [],
+                    }
+                  : msg
+              )
+            )
+          }
+          
+          if (chunk.followUps) {
+            followUps = chunk.followUps
+          }
+        },
+        onComplete: async () => {
+          console.log('Stream completed, full content:', fullContent)
+          setIsLoading(false)
+          setIsStreaming(false)
+          
+          // Ensure final content is set
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === aId
+                ? { ...msg, content: fullContent }
+                : msg
+            )
           )
-        )
-      },
-      onComplete: async () => {
-        setIsLoading(false)
-        setIsStreaming(false)
-        
-        // Fetch follow-ups if not provided by stream
-        if (!followUps.length && fullContent.trim()) {
-          try {
-            followUps = await fetchFollowUps(fullContent)
+          
+          // Fetch follow-ups if not provided by stream
+          if (!followUps.length && fullContent.trim()) {
+            try {
+              followUps = await fetchFollowUps(fullContent)
+              console.log('Fetched follow-ups:', followUps)
+            } catch (error) {
+              console.error('Failed to fetch follow-ups:', error)
+              followUps = ['Can you explain that further?', 'What would you recommend next?']
+            }
+            
             setMessages((prev) =>
               prev.map((msg) =>
                 msg.id === aId ? { ...msg, followUps } : msg
               )
             )
-          } catch (error) {
-            console.error('Failed to fetch follow-ups:', error)
-            // Set default follow-ups if fetch fails
+          }
+          
+          // Save to history
+          if (fullContent.trim() && threadId && threadId !== 'undefined') {
+            postMessage('assistant', fullContent)
+          }
+          
+          // Update user data
+          if (user) {
+            const updatedUser = {
+              ...user,
+              promptsUsed: (user.promptsUsed ?? 0) + 1,
+              totalXP: (user.totalXP ?? 0) + 2.5,
+            }
+            
+            setUser(updatedUser)
+            
+            // Non-blocking backend sync
+            fetch(`${API_BASE_URL}/api/user/update`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                promptsUsed: updatedUser.promptsUsed,
+                totalXP: updatedUser.totalXP,
+              }),
+            }).catch(error => console.error('Failed to sync user data:', error))
+          }
+        },
+        onError: (error) => {
+          console.error('StreamChat error:', error)
+          setIsLoading(false)
+          setIsStreaming(false)
+          
+          if (error.type === 'rate_limit') {
+            setError(error.message)
+            setMessages((prev) => prev.filter(msg => msg.id !== aId))
+          } else {
             setMessages((prev) =>
               prev.map((msg) =>
-                msg.id === aId ? { ...msg, followUps: ['Can you explain that further?', 'What would you recommend next?'] } : msg
+                msg.id === aId
+                  ? { ...msg, content: '❌ Failed to get response. Please try again.' }
+                  : msg
               )
             )
           }
-        }
-        
-        // Only save to history if we have valid content and threadId
-        if (fullContent.trim() && threadId && threadId !== 'undefined') {
-          postMessage('assistant', fullContent)
-        }
-        
-        // Update user data
-        if (!user) return
-        
-        const updatedUser = {
-          ...user,
-          promptsUsed: (user.promptsUsed ?? 0) + 1,
-          totalXP: (user.totalXP ?? 0) + 2.5,
-        }
-        
-        setUser(updatedUser)
-        
-        // Sync with backend (don't block UI)
-        fetch(`${API_BASE_URL}/api/user/update`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            promptsUsed: updatedUser.promptsUsed,
-            totalXP: updatedUser.totalXP,
-          }),
-        }).catch(error => console.error('Failed to sync user data:', error))
-      },
-      onError: (error) => {
-        setIsLoading(false)
-        setIsStreaming(false)
-        console.error('StreamChat error:', error)
-        
-        if (error.type === 'rate_limit') {
-          setError(error.message)
-          setMessages((prev) => prev.filter(msg => msg.id !== aId))
-        } else {
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === aId
-                ? { ...msg, content: '❌ Failed to get response. Please try again.' }
-                : msg
-            )
-          )
-        }
-      },
-    })
+        },
+      })
+    } catch (error) {
+      console.error('Stream setup error:', error)
+      setIsLoading(false)
+      setIsStreaming(false)
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === aId
+            ? { ...msg, content: '❌ Failed to get response. Please try again.' }
+            : msg
+        )
+      )
+    }
   }
 
   const handleSubmit = async (override?: string) => {
@@ -557,9 +591,19 @@ function DashboardContent() {
             
             <button
               onClick={createNewThread}
-              className="text-sm bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105"
+              disabled={isLoading}
+              className="text-sm bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 disabled:transform-none"
             >
-              <FaSyncAlt className="text-xs" /> New Chat
+              {isLoading ? (
+                <>
+                  <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <FaSyncAlt className="text-xs" /> New Chat
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -668,12 +712,14 @@ function DashboardContent() {
                 />
               )}
               <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                {msg.content || (msg.role === 'assistant' && (isLoading || isStreaming) ? (
+                {msg.content ? (
+                  msg.content
+                ) : msg.role === 'assistant' && (isLoading || isStreaming) ? (
                   <span className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
                     <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
                     <span className="animate-pulse">Working on your response...</span>
                   </span>
-                ) : '')}
+                ) : ''}
               </p>
 
               {msg.role === 'assistant' && (
