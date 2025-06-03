@@ -503,17 +503,17 @@ function DashboardContent() {
         
         <button
           onClick={() => setShowCategories(!showCategories)}
-          className="flex items-center justify-center gap-2 w-full text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors mb-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800/50"
+          className="flex items-center justify-center gap-2 w-full text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 mb-4 py-3 px-4 rounded-xl hover:bg-white/60 dark:hover:bg-slate-800/60 border border-gray-200/50 dark:border-slate-700/50 backdrop-blur-sm shadow-sm hover:shadow-md"
         >
           {showCategories ? (
             <>
               <HiChevronUp className="w-4 h-4" />
-              <span>Hide this</span>
+              <span>Hide Quick Start</span>
             </>
           ) : (
             <>
               <HiChevronDown className="w-4 h-4" />
-              <span>Expand quick actions</span>
+              <span>Show Quick Start</span>
             </>
           )}
         </button>
@@ -567,8 +567,8 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* Chat Messages */}
-      <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pb-32">
+      {/* Chat Messages with extra padding for fixed input */}
+      <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pb-48">
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -652,15 +652,15 @@ function DashboardContent() {
         <div ref={chatEndRef} />
       </div>
 
-      {/* Fixed Input Section at Bottom */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-gray-200 dark:border-slate-700 p-6 shadow-2xl">
-        <div className="max-w-6xl mx-auto">
+      {/* Fixed Input Section at Bottom - Centered and Padded */}
+      <div className="fixed bottom-0 left-44 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-gray-200 dark:border-slate-700 p-6 shadow-2xl">
+        <div className="max-w-4xl mx-auto">
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-5 border border-gray-200 dark:border-slate-700">
             <textarea
               ref={textareaRef}
-              rows={1}
-              className="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-textPrimary dark:text-white resize-none text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 min-h-[2.5rem] max-h-32"
-              placeholder="Ask Growfly anything about your business..."
+              rows={4}
+              className="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-textPrimary dark:text-white resize-none text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 min-h-[6rem] max-h-40"
+              placeholder="Type out your prompt here..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
@@ -699,7 +699,7 @@ function DashboardContent() {
                 <button
                   onClick={() => handleSubmit()}
                   disabled={(!input.trim() && !selectedFile) || isLoading || isStreaming || promptsUsed >= promptLimit}
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold px-8 py-3 rounded-xl text-sm shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
+                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold px-8 py-3 rounded-xl text-sm shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
                 >
                   {isLoading || isStreaming ? (
                     <span className="flex items-center gap-2">
