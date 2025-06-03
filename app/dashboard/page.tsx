@@ -16,7 +16,9 @@ import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
 import streamChat from '@lib/streamChat'
 import { useUserStore } from '@lib/store'
-import { API_BASE_URL } from '@lib/constants'
+
+// Use environment variable directly instead of importing from constants
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://glowfly-api-production.up.railway.app'
 
 type Message = {
   id: string
@@ -72,7 +74,7 @@ function DashboardContent() {
 
     if (!token || !id) return
 
-    fetch(`${API_BASE_URL}/chat/history/${id}`, {
+    fetch(`${API_BASE_URL}/api/chat/history/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(async (res) => {
@@ -101,7 +103,7 @@ function DashboardContent() {
 
   const createNewThread = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/chat/create`, {
+      const res = await fetch(`${API_BASE_URL}/api/chat/create`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
@@ -137,7 +139,7 @@ function DashboardContent() {
 
   const fetchFollowUps = async (text: string): Promise<string[]> => {
     try {
-      const res = await fetch(`${API_BASE_URL}/ai/followups`, {
+      const res = await fetch(`${API_BASE_URL}/api/ai/followups`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -163,7 +165,7 @@ function DashboardContent() {
   ) => {
     if (!threadId) return
     try {
-      await fetch(`${API_BASE_URL}/chat/history/${threadId}`, {
+      await fetch(`${API_BASE_URL}/api/chat/history/${threadId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -239,7 +241,7 @@ function DashboardContent() {
       reader.onload = async () => {
         const base64 = reader.result as string
         try {
-          const res = await fetch(`${API_BASE_URL}/ai/image`, {
+          const res = await fetch(`${API_BASE_URL}/api/ai/image`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -281,7 +283,27 @@ function DashboardContent() {
           {threadTitle}
         </h2>
         <div className="flex items-center gap-4">
-          <PromptTracker used={promptsUsed} limit={promptLimit} />
+          {/* Enhanced Prompt Tracker with Better Visibility */}
+          <div className="bg-white rounded-xl px-4 py-2 shadow-lg border border-gray-200">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-gray-700">
+                Prompts Used
+              </span>
+              <div className="flex items-center gap-2">
+                <div className="relative w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div 
+                    className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-300 ease-out"
+                    style={{ width: `${(promptsUsed / promptLimit) * 100}%` }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+                </div>
+                <span className="text-sm font-bold text-gray-800 min-w-[3rem]">
+                  {promptsUsed}/{promptLimit}
+                </span>
+              </div>
+            </div>
+          </div>
+          
           <button
             onClick={createNewThread}
             className="text-sm bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105"
@@ -428,7 +450,7 @@ function DashboardContent() {
         open={showSaveModal}
         onClose={() => setShowSaveModal(false)}
         onConfirm={async (title: string) => {
-          await fetch(`${API_BASE_URL}/ai/saveResponse`, {
+          await fetch(`${API_BASE_URL}/api/ai/saveResponse`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
