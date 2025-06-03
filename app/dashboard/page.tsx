@@ -28,7 +28,7 @@ type Message = {
   followUps?: string[]
 }
 
-const PROMPT_LIMITS = {
+const PROMPT_LIMITS: Record<string, number> = {
   free: 20,
   personal: 400,
   business: 2000,
@@ -42,7 +42,7 @@ function DashboardContent() {
   const { user, setUser } = useUserStore()
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
 
-  const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || ''] || 0
+  const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || 'free'] || 0
   const promptsUsed = user?.promptsUsed ?? 0
 
   const [input, setInput] = useState('')
@@ -52,6 +52,8 @@ function DashboardContent() {
   const [threadTitle, setThreadTitle] = useState('')
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [showFeedbackModal, setShowFeedbackModal] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
@@ -123,6 +125,7 @@ function DashboardContent() {
       localStorage.setItem('growfly_last_thread_id', newId)
     } catch (err) {
       console.error('Failed to create new thread:', err)
+      setError('Failed to create new chat thread. Please refresh the page.')
     }
   }
 
@@ -163,7 +166,12 @@ function DashboardContent() {
     role: 'user' | 'assistant',
     content: string
   ) => {
-    if (!threadId) return
+    // FIXED: Only try to post message if we have a valid threadId
+    if (!threadId || threadId === 'undefined') {
+      console.warn('Skipping postMessage - no valid threadId:', threadId)
+      return
+    }
+    
     try {
       await fetch(`${API_BASE_URL}/api/chat/history/${threadId}`, {
         method: 'POST',
@@ -175,12 +183,15 @@ function DashboardContent() {
       })
     } catch (err) {
       console.error('Failed to POST message to history:', err)
+      // Don't show error to user for history saving failures
     }
   }
 
   const handleStream = async (prompt: string, aId: string) => {
     let fullContent = ''
     let followUps: string[] = []
+    setIsLoading(true)
+    setError(null)
 
     await streamChat({
       prompt,
@@ -205,6 +216,8 @@ function DashboardContent() {
         )
       },
       onComplete: async () => {
+        setIsLoading(false)
+        
         if (!followUps.length) {
           followUps = await fetchFollowUps(fullContent)
           setMessages((prev) =>
@@ -213,13 +226,36 @@ function DashboardContent() {
             )
           )
         }
-        postMessage('assistant', fullContent)
+        
+        // Only save to history if we have valid content and threadId
+        if (fullContent.trim() && threadId && threadId !== 'undefined') {
+          postMessage('assistant', fullContent)
+        }
+        
         if (!user) return
         setUser({
           ...user,
           promptsUsed: (user.promptsUsed ?? 0) + 1,
           totalXP: (user.totalXP ?? 0) + 2.5,
         })
+      },
+      onError: (error) => {
+        setIsLoading(false)
+        console.error('StreamChat error:', error)
+        
+        if (error.type === 'rate_limit') {
+          setError(error.message)
+          // Remove the failed assistant message
+          setMessages((prev) => prev.filter(msg => msg.id !== aId))
+        } else {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === aId
+                ? { ...msg, content: '❌ Failed to get response. Please try again.' }
+                : msg
+            )
+          )
+        }
       },
     })
   }
@@ -228,10 +264,23 @@ function DashboardContent() {
     const text = override || input.trim()
     if (!text && !selectedFile) return
 
+    // Clear any previous errors
+    setError(null)
+
+    // Check rate limit before sending
+    if (promptsUsed >= promptLimit) {
+      setError(`You've reached your daily limit of ${promptLimit} prompts. Upgrade your plan to continue.`)
+      return
+    }
+
     const uId = `u${Date.now()}`
     setMessages((prev) => [...prev, { id: uId, role: 'user', content: text }])
     setInput('')
-    postMessage('user', text)
+    
+    // Only save user message to history if we have a valid threadId
+    if (threadId && threadId !== 'undefined') {
+      postMessage('user', text)
+    }
 
     const aId = `a${Date.now()}`
     setMessages((prev) => [...prev, { id: aId, role: 'assistant', content: '' }])
@@ -241,6 +290,7 @@ function DashboardContent() {
       reader.onload = async () => {
         const base64 = reader.result as string
         try {
+          setIsLoading(true)
           const res = await fetch(`${API_BASE_URL}/api/ai/image`, {
             method: 'POST',
             headers: {
@@ -249,6 +299,17 @@ function DashboardContent() {
             },
             body: JSON.stringify({ imageBase64: base64, message: text }),
           })
+          
+          if (res.status === 403) {
+            const errorData = await res.json()
+            if (errorData.error === 'Prompt limit reached.') {
+              setError(`You've reached your daily limit of ${errorData.promptLimit} prompts. Upgrade your plan to continue.`)
+              setMessages((prev) => prev.filter(msg => msg.id !== aId))
+              setIsLoading(false)
+              return
+            }
+          }
+          
           const data = await res.json()
           setMessages((prev) =>
             prev.map((msg) =>
@@ -257,8 +318,14 @@ function DashboardContent() {
                 : msg
             )
           )
-          postMessage('assistant', data.content)
-        } catch {
+          
+          if (threadId && threadId !== 'undefined') {
+            postMessage('assistant', data.content)
+          }
+          
+          setIsLoading(false)
+        } catch (err) {
+          console.error('Image analysis failed:', err)
           setMessages((prev) =>
             prev.map((msg) =>
               msg.id === aId
@@ -266,6 +333,7 @@ function DashboardContent() {
                 : msg
             )
           )
+          setIsLoading(false)
         }
       }
       reader.readAsDataURL(selectedFile)
@@ -313,13 +381,31 @@ function DashboardContent() {
         </div>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+          <strong>⚠️ {error}</strong>
+          {error.includes('limit') && (
+            <div className="mt-2">
+              <button
+                onClick={() => router.push('/billing')}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors"
+              >
+                Upgrade Plan
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Chat Messages */}
       <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pb-6">
         {messages.length === 0 && (
           <div className="mb-6 flex justify-center">
             <button
               onClick={() => handleSubmit('What can Growfly do for me?')}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-6 py-3 rounded-2xl text-sm font-semibold shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
+              disabled={isLoading || promptsUsed >= promptLimit}
+              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-3 rounded-2xl text-sm font-semibold shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
             >
               ✨ What can Growfly do for me?
             </button>
@@ -348,7 +434,7 @@ function DashboardContent() {
                 />
               )}
               <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                {msg.content}
+                {msg.content || (msg.role === 'assistant' && isLoading ? 'Thinking...' : '')}
               </p>
 
               {msg.role === 'assistant' && (
@@ -360,7 +446,8 @@ function DashboardContent() {
                         <button
                           key={i}
                           onClick={() => handleSubmit(fu)}
-                          className="bg-gradient-to-r from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 text-indigo-700 hover:text-indigo-800 px-4 py-2 rounded-xl text-xs font-medium shadow-sm border border-indigo-200 transition-all duration-200 hover:shadow-md transform hover:scale-[1.02]"
+                          disabled={isLoading || promptsUsed >= promptLimit}
+                          className="bg-gradient-to-r from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 disabled:from-gray-100 disabled:to-gray-100 text-indigo-700 hover:text-indigo-800 disabled:text-gray-500 px-4 py-2 rounded-xl text-xs font-medium shadow-sm border border-indigo-200 disabled:border-gray-200 transition-all duration-200 hover:shadow-md transform hover:scale-[1.02] disabled:transform-none disabled:cursor-not-allowed"
                         >
                           💡 {fu}
                         </button>
@@ -412,11 +499,16 @@ function DashboardContent() {
               handleSubmit()
             }
           }}
+          disabled={isLoading || promptsUsed >= promptLimit}
         />
         <div className="flex justify-between items-center mt-4">
           <div
-            onClick={() => fileInputRef.current?.click()}
-            className="cursor-pointer border-2 border-dashed border-blue-300 hover:border-blue-500 px-5 py-3 rounded-xl text-blue-600 hover:bg-blue-50 transition-all duration-200 flex items-center gap-2"
+            onClick={() => !isLoading && promptsUsed < promptLimit && fileInputRef.current?.click()}
+            className={`cursor-pointer border-2 border-dashed px-5 py-3 rounded-xl flex items-center gap-2 transition-all duration-200 ${
+              isLoading || promptsUsed >= promptLimit
+                ? 'border-gray-300 text-gray-400 cursor-not-allowed'
+                : 'border-blue-300 hover:border-blue-500 text-blue-600 hover:bg-blue-50'
+            }`}
           >
             📎 <span className="text-sm font-medium">Upload Image / PDF</span>
           </div>
@@ -429,6 +521,7 @@ function DashboardContent() {
             }}
             className="hidden"
             ref={fileInputRef}
+            disabled={isLoading || promptsUsed >= promptLimit}
           />
           {selectedFile && (
             <p className="text-xs text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
@@ -437,10 +530,10 @@ function DashboardContent() {
           )}
           <button
             onClick={() => handleSubmit()}
-            disabled={!input.trim() && !selectedFile}
+            disabled={(!input.trim() && !selectedFile) || isLoading || promptsUsed >= promptLimit}
             className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold px-8 py-3 rounded-xl text-sm shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
           >
-            ➤ Send
+            {isLoading ? '⏳ Sending...' : '➤ Send'}
           </button>
         </div>
       </div>

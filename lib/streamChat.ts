@@ -15,6 +15,7 @@ interface StreamChatOptions {
   token: string
   onStream: (chunk: StreamedChunk) => void
   onComplete: () => void
+  onError?: (error: { type: 'rate_limit' | 'network' | 'other', message: string }) => void
 }
 
 export default async function streamChat({
@@ -23,13 +24,17 @@ export default async function streamChat({
   token,
   onStream,
   onComplete,
+  onError,
 }: StreamChatOptions) {
   if (!token) {
     console.error('Missing auth token in streamChat')
+    onError?.({ type: 'other', message: 'Missing authentication token' })
     return
   }
 
   try {
+    console.log('🚀 StreamChat: Making request to /api/ai/chat', { prompt: prompt.substring(0, 50), threadId })
+    
     const res = await fetch(`${API_BASE_URL}/api/ai/chat`, {
       method: 'POST',
       headers: {
@@ -42,20 +47,51 @@ export default async function streamChat({
       }),
     })
 
+    console.log('🚀 StreamChat: Response status:', res.status)
+
     if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`)
+      const errorText = await res.text()
+      console.error('🚀 StreamChat: HTTP error:', errorText)
+      
+      // Handle specific error types
+      if (res.status === 403) {
+        try {
+          const errorData = JSON.parse(errorText)
+          if (errorData.error === 'Prompt limit reached.') {
+            onError?.({ 
+              type: 'rate_limit', 
+              message: `You've reached your daily limit of ${errorData.promptLimit} prompts. Upgrade your plan to continue.` 
+            })
+            return
+          }
+        } catch (e) {
+          // If we can't parse the error, fall through to generic handling
+        }
+      }
+      
+      onError?.({ 
+        type: 'network', 
+        message: `Request failed with status ${res.status}. Please try again.` 
+      })
+      return
     }
 
-    if (!res.body) throw new Error('No response stream')
+    if (!res.body) {
+      onError?.({ type: 'network', message: 'No response stream received' })
+      return
+    }
 
     const reader = res.body.getReader()
     const decoder = new TextDecoder()
     let buffer = ''
 
+    console.log('🚀 StreamChat: Starting to read stream...')
+
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
+      
       buffer += decoder.decode(value, { stream: true })
 
       const parts = buffer.split('\n\n')
@@ -69,16 +105,19 @@ export default async function streamChat({
             const parsed: StreamedChunk = JSON.parse(json)
             onStream(parsed)
           } catch (err) {
-            console.error('Failed to parse streamed chunk:', err)
+            console.error('Failed to parse streamed chunk:', err, 'Raw data:', json)
           }
         }
       }
     }
 
+    console.log('🚀 StreamChat: Stream completed successfully')
     onComplete()
   } catch (err) {
     console.error('StreamChat error:', err)
-    onStream({ type: 'partial', content: '❌ Failed to get response. Please try again.' })
-    onComplete()
+    onError?.({ 
+      type: 'network', 
+      message: 'Connection failed. Please check your internet and try again.' 
+    })
   }
 }
