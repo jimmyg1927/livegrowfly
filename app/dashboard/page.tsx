@@ -492,11 +492,11 @@ function DashboardContent() {
 
       {/* Enhanced Collapsible Categories Bar */}
       <div className="mb-6">
-        <div className="text-center mb-6">
-          <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3">
+        <div className="text-center mb-4">
+          <h3 className="text-2xl font-bold text-blue-500 mb-2">
             Quick Start
           </h3>
-          <p className="text-base text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+          <p className="text-sm text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
             Find out how we can help you today
           </p>
         </div>
@@ -519,22 +519,22 @@ function DashboardContent() {
         </button>
         
         {showCategories && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-8 bg-gradient-to-br from-blue-50/80 via-indigo-50/60 to-purple-50/80 dark:from-slate-800/80 dark:via-slate-700/60 dark:to-slate-800/80 rounded-3xl border border-blue-200/40 dark:border-slate-600/40 backdrop-blur-sm shadow-xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-gradient-to-br from-blue-50/80 via-indigo-50/60 to-purple-50/80 dark:from-slate-800/80 dark:via-slate-700/60 dark:to-slate-800/80 rounded-2xl border border-blue-200/40 dark:border-slate-600/40 backdrop-blur-sm shadow-lg">
             {QUICK_CATEGORIES.map((category, index) => (
               <button
                 key={index}
                 onClick={() => handleSubmit(category.prompt)}
                 disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                className="group flex flex-col items-center gap-4 p-8 rounded-2xl bg-white/95 dark:bg-slate-800/95 border border-gray-200/70 dark:border-slate-700/70 hover:border-blue-300/70 dark:hover:border-blue-500/70 hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.03] hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none backdrop-blur-sm hover:bg-blue-50/30 dark:hover:bg-slate-700/95"
+                className="group flex flex-col items-center gap-2 p-4 rounded-xl bg-white/95 dark:bg-slate-800/95 border border-gray-200/70 dark:border-slate-700/70 hover:border-blue-300/70 dark:hover:border-blue-500/70 hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none backdrop-blur-sm hover:bg-blue-50/30 dark:hover:bg-slate-700/95"
               >
-                <div className="text-4xl group-hover:scale-110 transition-transform duration-300 drop-shadow-lg">
+                <div className="text-2xl group-hover:scale-110 transition-transform duration-300">
                   {category.icon}
                 </div>
-                <div className="text-center space-y-2">
-                  <h4 className="font-bold text-slate-800 dark:text-white text-base leading-tight">
+                <div className="text-center space-y-1">
+                  <h4 className="font-semibold text-slate-800 dark:text-white text-sm leading-tight">
                     {category.title}
                   </h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed max-w-[200px]">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
                     {category.description}
                   </p>
                 </div>
