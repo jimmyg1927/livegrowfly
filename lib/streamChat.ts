@@ -1,5 +1,6 @@
 // File: lib/streamChat.ts
-import { API_BASE_URL } from './constants'
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://glowfly-api-production.up.railway.app'
 
 type StreamedChunk = {
   type: 'partial' | 'complete'
@@ -29,7 +30,7 @@ export default async function streamChat({
   }
 
   try {
-    const res = await fetch(`${API_BASE_URL}/api/ai/chat`, {  // Your backend route
+    const res = await fetch(`${API_BASE_URL}/api/ai/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
