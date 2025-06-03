@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 import React, { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import { HiThumbUp, HiThumbDown, HiX } from 'react-icons/hi'
+import { HiThumbUp, HiThumbDown, HiX, HiChevronDown, HiChevronUp } from 'react-icons/hi'
 import {
   FaRegBookmark,
   FaShareSquare,
@@ -37,31 +37,27 @@ const PROMPT_LIMITS: Record<string, number> = {
   business: 2000,
 }
 
-// Suggested prompts for empty state - UK English with business context
-const SUGGESTED_PROMPTS = [
+// Quick categories for collapsible bar
+const QUICK_CATEGORIES = [
   {
     icon: <FaChartLine className="text-green-500" />,
     title: "Marketing Ideas",
     prompt: "What are some effective marketing strategies for my business? Please consider my brand settings and target market.",
-    description: "Discover new ways to reach customers and grow your brand"
   },
   {
     icon: <FaBrain className="text-blue-500" />,
     title: "Business & Process Improvement",
     prompt: "Help me identify areas for business improvement and process optimisation in my company.",
-    description: "Streamline operations and boost efficiency"
   },
   {
     icon: <FaUsers className="text-purple-500" />,
     title: "Document Creation & Editing",
     prompt: "I need help creating or editing business documents. What type of document would you like assistance with?",
-    description: "Professional documents, proposals, and content"
   },
   {
     icon: <FaRocket className="text-orange-500" />,
     title: "Anything Else",
     prompt: "I need help with something specific to my industry. My business operates in [describe your sector/industry].",
-    description: "HR, finance, legal, product development, research, and more"
   }
 ]
 
@@ -90,6 +86,7 @@ function DashboardContent() {
   const [error, setError] = useState<string | null>(null)
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null)
   const [isUserScrolling, setIsUserScrolling] = useState(false)
+  const [showCategories, setShowCategories] = useState(true)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
@@ -107,27 +104,22 @@ function DashboardContent() {
   }
 
   const createNewThread = () => {
-    // Simple state reset - no API calls, no loading states
     setMessages([])
     setThreadId(null)
     setThreadTitle('')
     setError(null)
     setInput('')
     setSelectedFile(null)
-    
-    // Clear localStorage to start fresh
     localStorage.removeItem('growfly_last_thread_id')
-    
-    // That's it! Much simpler.
   }
 
+  // Fetch user data from database on mount
   useEffect(() => {
     if (!token) {
       router.push('/onboarding')
       return
     }
     
-    // Fetch user data from backend to ensure it's current
     const fetchUserData = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
@@ -135,59 +127,45 @@ function DashboardContent() {
         })
         if (response.ok) {
           const userData = await response.json()
-          console.log('Fetched user data from backend:', userData)
+          console.log('✅ Fetched fresh user data from database:', userData)
           setUser(userData)
         } else {
-          console.error('Failed to fetch user data:', response.status)
+          console.error('❌ Failed to fetch user data:', response.status)
         }
       } catch (error) {
-        console.error('Error fetching user data:', error)
+        console.error('❌ Error fetching user data:', error)
       }
     }
     
-    // Only fetch if we don't have user data or it seems outdated
-    if (!user || user.promptsUsed === undefined) {
-      fetchUserData()
-    }
-  }, [token, router, user, setUser])
+    // Always fetch fresh data from database
+    fetchUserData()
+  }, [token, router, setUser])
 
-  // Debug user data
+  // Load existing thread if available
   useEffect(() => {
-    console.log('User data:', user)
-    console.log('Prompts used:', promptsUsed)
-    console.log('XP:', user?.totalXP)
-  }, [user, promptsUsed])
-
-  useEffect(() => {
+    if (!token) return
+    
     const storedThreadId = localStorage.getItem('growfly_last_thread_id')
     const id = paramThreadId || storedThreadId
 
-    if (!id) {
-      createNewThread()
-      return
+    if (id && id !== 'undefined') {
+      setThreadId(id)
+      
+      fetch(`${API_BASE_URL}/api/chat/history/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(async (res) => {
+          if (res.ok) {
+            const data = await res.json()
+            setMessages(data.messages || [])
+            setThreadTitle(data.title || formatTitleFromDate(new Date()))
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to load chat history:', err)
+        })
     }
-
-    setThreadId(id)
-
-    if (!token || !id) return
-
-    fetch(`${API_BASE_URL}/api/chat/history/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(async (res) => {
-        const text = await res.text()
-        try {
-          const data = JSON.parse(text)
-          setMessages(data.messages || [])
-          setThreadTitle(data.title || formatTitleFromDate(new Date()))
-        } catch (err) {
-          console.error('Failed to parse chat history JSON:', { error: err, text })
-        }
-      })
-      .catch((err) => {
-        console.error('Failed to load chat history:', err)
-      })
-  }, [paramThreadId, token, createNewThread])
+  }, [paramThreadId, token])
 
   // Auto-resize textarea
   useEffect(() => {
@@ -197,43 +175,25 @@ function DashboardContent() {
     }
   }, [input])
 
-  // Improved auto-scroll that doesn't interfere with manual scrolling
+  // Improved scroll handling
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
 
     const handleScroll = () => {
       setIsUserScrolling(true)
-      
-      // Clear existing timeout
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current)
-      }
-      
-      // Set timeout to detect when user stops scrolling - increased timeout
-      scrollTimeoutRef.current = setTimeout(() => {
-        setIsUserScrolling(false)
-      }, 500) // Increased from 150ms to 500ms for better manual scroll control
-    }
-
-    const handleWheel = () => {
-      setIsUserScrolling(true)
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current)
       }
       scrollTimeoutRef.current = setTimeout(() => {
         setIsUserScrolling(false)
-      }, 1000) // Even longer timeout for wheel events
+      }, 1000)
     }
 
     container.addEventListener('scroll', handleScroll, { passive: true })
-    container.addEventListener('wheel', handleWheel, { passive: true })
-    container.addEventListener('touchmove', handleScroll, { passive: true })
     
     return () => {
       container.removeEventListener('scroll', handleScroll)
-      container.removeEventListener('wheel', handleWheel)
-      container.removeEventListener('touchmove', handleScroll)
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current)
       }
@@ -244,19 +204,17 @@ function DashboardContent() {
     const container = containerRef.current
     if (!container) return
     
-    // Only auto-scroll if user isn't manually scrolling, is near the bottom, AND we're actively streaming
     const isNearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 200
     
-    if (!isUserScrolling && isNearBottom && (isStreaming || isLoading)) {
-      // Use requestAnimationFrame for smoother scrolling during streaming
+    if (!isUserScrolling && isNearBottom && isStreaming) {
       requestAnimationFrame(() => {
         chatEndRef.current?.scrollIntoView({ 
-          behavior: 'auto', // Always use 'auto' during streaming for smoother experience
+          behavior: 'auto',
           block: 'end'
         })
       })
     }
-  }, [messages, isUserScrolling, isLoading, isStreaming])
+  }, [messages, isUserScrolling, isStreaming])
 
   const fetchFollowUps = async (text: string): Promise<string[]> => {
     try {
@@ -274,34 +232,9 @@ function DashboardContent() {
       const unique = Array.from(new Set(rawFollowUps)).slice(0, 2)
       return unique.length > 0
         ? unique
-        : ['Can you explain that further?', 'How can I apply this?']
+        : ['Can you explain that further?', 'What would you recommend next?']
     } catch {
-      return ["What's next?", 'Any examples to help?']
-    }
-  }
-
-  const postMessage = async (
-    role: 'user' | 'assistant',
-    content: string
-  ) => {
-    // FIXED: Only try to post message if we have a valid threadId
-    if (!threadId || threadId === 'undefined') {
-      console.warn('Skipping postMessage - no valid threadId:', threadId)
-      return
-    }
-    
-    try {
-      await fetch(`${API_BASE_URL}/api/chat/history/${threadId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ role, content }),
-      })
-    } catch (err) {
-      console.error('Failed to POST message to history:', err)
-      // Don't show error to user for history saving failures
+      return ['Tell me more about this', 'How can I implement this?']
     }
   }
 
@@ -312,12 +245,12 @@ function DashboardContent() {
     setIsStreaming(true)
     setError(null)
 
-    // Initialize message with empty content
+    console.log('🚀 Starting stream for prompt:', prompt)
+
+    // Initialize empty message
     setMessages((prev) =>
       prev.map((msg) =>
-        msg.id === aId
-          ? { ...msg, content: '' }
-          : msg
+        msg.id === aId ? { ...msg, content: '' } : msg
       )
     )
 
@@ -327,20 +260,16 @@ function DashboardContent() {
         threadId: threadId || undefined,
         token,
         onStream: (chunk) => {
-          console.log('Stream chunk received:', chunk)
+          console.log('📡 Stream chunk received:', chunk)
           
           if (chunk.content) {
             fullContent += chunk.content
             
-            // Update message with streaming content immediately
+            // Update message with streaming content
             setMessages((prev) =>
               prev.map((msg) =>
                 msg.id === aId
-                  ? {
-                      ...msg,
-                      content: fullContent,
-                      followUps: chunk.followUps || msg.followUps || [],
-                    }
+                  ? { ...msg, content: fullContent }
                   : msg
               )
             )
@@ -351,52 +280,39 @@ function DashboardContent() {
           }
         },
         onComplete: async () => {
-          console.log('Stream completed, full content:', fullContent)
+          console.log('✅ Stream completed. Full content:', fullContent)
           setIsLoading(false)
           setIsStreaming(false)
           
-          // Ensure final content is set
+          // Get follow-ups if not provided
+          if (!followUps.length && fullContent.trim()) {
+            console.log('🔍 Fetching follow-ups...')
+            followUps = await fetchFollowUps(fullContent)
+            console.log('📋 Follow-ups received:', followUps)
+          }
+          
+          // Update final message with follow-ups
           setMessages((prev) =>
             prev.map((msg) =>
-              msg.id === aId
-                ? { ...msg, content: fullContent }
-                : msg
+              msg.id === aId ? { ...msg, content: fullContent, followUps } : msg
             )
           )
           
-          // Fetch follow-ups if not provided by stream
-          if (!followUps.length && fullContent.trim()) {
-            try {
-              followUps = await fetchFollowUps(fullContent)
-              console.log('Fetched follow-ups:', followUps)
-            } catch (error) {
-              console.error('Failed to fetch follow-ups:', error)
-              followUps = ['Can you explain that further?', 'What would you recommend next?']
-            }
-            
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === aId ? { ...msg, followUps } : msg
-              )
-            )
-          }
-          
-          // Save to history
-          if (fullContent.trim() && threadId && threadId !== 'undefined') {
-            postMessage('assistant', fullContent)
-          }
-          
-          // Update user data
+          // Update user data in database
           if (user) {
-            const updatedUser = {
+            const newPromptsUsed = (user.promptsUsed ?? 0) + 1
+            const newXP = (user.totalXP ?? 0) + 2.5
+            
+            console.log('💾 Updating user data:', { promptsUsed: newPromptsUsed, totalXP: newXP })
+            
+            // Update local state
+            setUser({
               ...user,
-              promptsUsed: (user.promptsUsed ?? 0) + 1,
-              totalXP: (user.totalXP ?? 0) + 2.5,
-            }
+              promptsUsed: newPromptsUsed,
+              totalXP: newXP,
+            })
             
-            setUser(updatedUser)
-            
-            // Non-blocking backend sync
+            // Sync to database
             fetch(`${API_BASE_URL}/api/user/update`, {
               method: 'PATCH',
               headers: {
@@ -404,14 +320,20 @@ function DashboardContent() {
                 Authorization: `Bearer ${token}`,
               },
               body: JSON.stringify({
-                promptsUsed: updatedUser.promptsUsed,
-                totalXP: updatedUser.totalXP,
+                promptsUsed: newPromptsUsed,
+                totalXP: newXP,
               }),
-            }).catch(error => console.error('Failed to sync user data:', error))
+            }).then(res => {
+              if (res.ok) {
+                console.log('✅ User data synced to database')
+              } else {
+                console.error('❌ Failed to sync user data')
+              }
+            }).catch(error => console.error('❌ Database sync error:', error))
           }
         },
         onError: (error) => {
-          console.error('StreamChat error:', error)
+          console.error('❌ StreamChat error:', error)
           setIsLoading(false)
           setIsStreaming(false)
           
@@ -430,7 +352,7 @@ function DashboardContent() {
         },
       })
     } catch (error) {
-      console.error('Stream setup error:', error)
+      console.error('❌ Stream setup error:', error)
       setIsLoading(false)
       setIsStreaming(false)
       setMessages((prev) =>
@@ -454,7 +376,7 @@ function DashboardContent() {
       return
     }
 
-    // Create thread ID only when actually needed (first message)
+    // Create thread ID only when needed
     let currentThreadId = threadId
     if (!currentThreadId) {
       currentThreadId = `thread_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -470,7 +392,7 @@ function DashboardContent() {
     setMessages((prev) => [...prev, { id: aId, role: 'assistant', content: '' }])
 
     if (selectedFile) {
-      // Handle file upload (keeping existing logic)
+      // Handle file upload
       const reader = new FileReader()
       reader.onload = async () => {
         const base64 = reader.result as string
@@ -484,16 +406,6 @@ function DashboardContent() {
             },
             body: JSON.stringify({ imageBase64: base64, message: text }),
           })
-          
-          if (res.status === 403) {
-            const errorData = await res.json()
-            if (errorData.error === 'Prompt limit reached.') {
-              setError(`You've reached your daily limit of ${errorData.promptLimit} prompts. Upgrade your plan to continue.`)
-              setMessages((prev) => prev.filter(msg => msg.id !== aId))
-              setIsLoading(false)
-              return
-            }
-          }
           
           const data = await res.json()
           setMessages((prev) =>
@@ -534,53 +446,80 @@ function DashboardContent() {
 
   return (
     <div className="flex flex-col h-full p-6 bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-textPrimary dark:text-white transition-colors duration-300">
-      {/* Header - Only show when there are messages */}
-      {messages.length > 0 && (
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex-1" /> {/* Empty space to center the tracker */}
-          <div className="flex items-center gap-4">
-            {/* Enhanced Prompt Tracker */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl px-4 py-2 shadow-lg border border-gray-200 dark:border-slate-700">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Prompts Used
-                </span>
-                <div className="flex items-center gap-2">
-                  <div className="relative w-24 h-2 bg-gray-200 dark:bg-slate-600 rounded-full overflow-hidden">
-                    <div 
-                      className={`absolute top-0 left-0 h-full bg-gradient-to-r ${getPromptLimitColor()} rounded-full transition-all duration-300 ease-out`}
-                      style={{ width: `${Math.min(usagePercentage, 100)}%` }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
-                  </div>
-                  <span className="text-sm font-bold text-gray-800 dark:text-white min-w-[3rem]">
-                    {promptsUsed}/{promptLimit}
-                  </span>
+      {/* Header with Prompts Used and New Chat */}
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex-1" />
+        <div className="flex items-center gap-4">
+          {/* Enhanced Prompt Tracker */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl px-4 py-2 shadow-lg border border-gray-200 dark:border-slate-700">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Prompts Used
+              </span>
+              <div className="flex items-center gap-2">
+                <div className="relative w-24 h-2 bg-gray-200 dark:bg-slate-600 rounded-full overflow-hidden">
+                  <div 
+                    className={`absolute top-0 left-0 h-full bg-gradient-to-r ${getPromptLimitColor()} rounded-full transition-all duration-300 ease-out`}
+                    style={{ width: `${Math.min(usagePercentage, 100)}%` }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
                 </div>
-                {promptsRemaining <= 5 && promptsRemaining > 0 && (
-                  <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">
-                    {promptsRemaining} left
-                  </span>
-                )}
+                <span className="text-sm font-bold text-gray-800 dark:text-white min-w-[3rem]">
+                  {promptsUsed}/{promptLimit}
+                </span>
               </div>
+              {promptsRemaining <= 5 && promptsRemaining > 0 && (
+                <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+                  {promptsRemaining} left
+                </span>
+              )}
             </div>
-            
-            <button
-              onClick={createNewThread}
-              className="text-sm bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105"
-            >
-              <FaSyncAlt className="text-xs" /> New Chat
-            </button>
           </div>
+          
+          <button
+            onClick={createNewThread}
+            className="text-sm bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105"
+          >
+            <FaSyncAlt className="text-xs" /> New Chat
+          </button>
         </div>
-      )}
+      </div>
 
-      {/* Error Message with Dismiss */}
+      {/* Collapsible Categories Bar */}
+      <div className="mb-4">
+        <button
+          onClick={() => setShowCategories(!showCategories)}
+          className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors mb-2"
+        >
+          {showCategories ? <HiChevronUp /> : <HiChevronDown />}
+          Quick Categories
+        </button>
+        
+        {showCategories && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 p-4 bg-white/50 dark:bg-slate-800/50 rounded-xl border border-gray-200 dark:border-slate-700">
+            {QUICK_CATEGORIES.map((category, index) => (
+              <button
+                key={index}
+                onClick={() => handleSubmit(category.prompt)}
+                disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+                className="flex items-center gap-3 p-3 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-left"
+              >
+                <div className="text-lg">{category.icon}</div>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {category.title}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Error Message */}
       {error && (
         <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
           <button 
             onClick={dismissError}
-            className="absolute top-2 right-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+            className="absolute top-2 right-2 text-red-500 hover:text-red-700"
           >
             <HiX className="w-4 h-4" />
           </button>
@@ -600,60 +539,6 @@ function DashboardContent() {
 
       {/* Chat Messages */}
       <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pb-6">
-        {/* Enhanced Empty State */}
-        {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full space-y-8">
-            <div className="text-center space-y-4 max-w-2xl">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FaBrain className="text-white text-2xl" />
-              </div>
-              <h1 className="text-3xl font-bold text-slate-800 dark:text-white">
-                Welcome to Growfly AI
-              </h1>
-              <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
-                Your AI-powered business assistant is here to help with strategy, marketing, process improvement, document creation, and insights across all business sectors. 
-                Choose a category below or ask anything about your business.
-              </p>
-            </div>
-
-            {/* Suggested Prompts Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl">
-              {SUGGESTED_PROMPTS.map((suggestion, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleSubmit(suggestion.prompt)}
-                  disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                  className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-6 text-left hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none group"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="text-2xl group-hover:scale-110 transition-transform duration-200">
-                      {suggestion.icon}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-slate-800 dark:text-white text-lg mb-2">
-                        {suggestion.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                        {suggestion.description}
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {/* Quick Start Button */}
-            <button
-              onClick={() => handleSubmit('What can Growfly do for me? Please consider my brand settings and business context.')}
-              disabled={isLoading || promptsUsed >= promptLimit}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-8 py-3 rounded-2xl text-lg font-semibold shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
-            >
-              ✨ Explore Growfly&apos;s Capabilities
-            </button>
-          </div>
-        )}
-
-        {/* Messages */}
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -677,6 +562,7 @@ function DashboardContent() {
                   className="mb-4 rounded-xl shadow-md"
                 />
               )}
+              
               <p className="whitespace-pre-wrap text-sm leading-relaxed">
                 {msg.content ? (
                   msg.content
@@ -688,7 +574,7 @@ function DashboardContent() {
                 ) : ''}
               </p>
 
-              {msg.role === 'assistant' && (
+              {msg.role === 'assistant' && msg.content && (
                 <>
                   {/* Follow-up Questions */}
                   {msg.followUps && msg.followUps.length > 0 && (
@@ -697,7 +583,7 @@ function DashboardContent() {
                         <button
                           key={i}
                           onClick={() => handleSubmit(fu)}
-                          disabled={isLoading || promptsUsed >= promptLimit}
+                          disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
                           className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 hover:from-indigo-100 hover:to-blue-100 dark:hover:from-indigo-800/40 dark:hover:to-blue-800/40 disabled:from-gray-100 disabled:to-gray-100 dark:disabled:from-gray-800 dark:disabled:to-gray-800 text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 disabled:text-gray-500 dark:disabled:text-gray-500 px-4 py-2 rounded-xl text-xs font-medium shadow-sm border border-indigo-200 dark:border-indigo-700 disabled:border-gray-200 dark:disabled:border-gray-600 transition-all duration-200 hover:shadow-md transform hover:scale-[1.02] disabled:transform-none disabled:cursor-not-allowed"
                         >
                           💡 {fu}
@@ -706,7 +592,7 @@ function DashboardContent() {
                     </div>
                   )}
 
-                  {/* Action Buttons - Always show for assistant messages */}
+                  {/* Action Buttons */}
                   <div className="flex gap-4 mt-4 text-lg text-gray-500 dark:text-gray-400">
                     <HiThumbUp
                       className="cursor-pointer hover:text-green-500 transition-colors duration-200 transform hover:scale-110"
@@ -751,14 +637,14 @@ function DashboardContent() {
               handleSubmit()
             }
           }}
-          disabled={isLoading || promptsUsed >= promptLimit}
+          disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
         />
         <div className="flex justify-between items-center mt-4">
           <div className="flex items-center gap-4">
             <div
-              onClick={() => !isLoading && promptsUsed < promptLimit && fileInputRef.current?.click()}
+              onClick={() => !isLoading && !isStreaming && promptsUsed < promptLimit && fileInputRef.current?.click()}
               className={`cursor-pointer border-2 border-dashed px-5 py-3 rounded-xl flex items-center gap-2 transition-all duration-200 ${
-                isLoading || promptsUsed >= promptLimit
+                isLoading || isStreaming || promptsUsed >= promptLimit
                   ? 'border-gray-300 dark:border-gray-600 text-gray-400 cursor-not-allowed'
                   : 'border-blue-300 dark:border-blue-600 hover:border-blue-500 dark:hover:border-blue-400 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
               }`}
@@ -804,7 +690,7 @@ function DashboardContent() {
           }}
           className="hidden"
           ref={fileInputRef}
-          disabled={isLoading || promptsUsed >= promptLimit}
+          disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
         />
       </div>
 
