@@ -14,9 +14,7 @@ import {
   FaChartLine,
   FaBrain,
   FaUsers,
-  FaEllipsisV,
 } from 'react-icons/fa'
-import PromptTracker from '@/components/PromptTracker'
 import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
 import streamChat from '@lib/streamChat'
@@ -90,7 +88,6 @@ function DashboardContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null)
-  const [showActionsMenu, setShowActionsMenu] = useState<string | null>(null)
   const [isUserScrolling, setIsUserScrolling] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -98,6 +95,41 @@ function DashboardContent() {
   const containerRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const scrollTimeoutRef = useRef<NodeJS.Timeout>()
+
+  const formatTitleFromDate = (date: Date) => {
+    return `${date.toLocaleDateString(undefined, {
+      weekday: 'long',
+    })} Chat — ${date.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    })}`
+  }
+
+  const createNewThread = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/chat/create`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+
+      if (!res.ok) {
+        const text = await res.text()
+        console.error('Thread creation failed:', text)
+        throw new Error('Thread creation failed')
+      }
+
+      const data = await res.json()
+      const newId = data.threadId
+      setThreadId(newId)
+      setMessages([])
+      const title = formatTitleFromDate(new Date())
+      setThreadTitle(title)
+      localStorage.setItem('growfly_last_thread_id', newId)
+    } catch (err) {
+      console.error('Failed to create new thread:', err)
+      setError('Failed to create new chat thread. Please refresh the page.')
+    }
+  }
 
   useEffect(() => {
     if (!token) router.push('/onboarding')
@@ -132,7 +164,7 @@ function DashboardContent() {
       .catch((err) => {
         console.error('Failed to load chat history:', err)
       })
-  }, [paramThreadId, token])
+  }, [paramThreadId, token, createNewThread])
 
   // Auto-resize textarea
   useEffect(() => {
@@ -189,41 +221,6 @@ function DashboardContent() {
     }
   }, [messages, isUserScrolling, isLoading])
 
-  const formatTitleFromDate = (date: Date) => {
-    return `${date.toLocaleDateString(undefined, {
-      weekday: 'long',
-    })} Chat — ${date.toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-    })}`
-  }
-
-  const createNewThread = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/chat/create`, {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      })
-
-      if (!res.ok) {
-        const text = await res.text()
-        console.error('Thread creation failed:', text)
-        throw new Error('Thread creation failed')
-      }
-
-      const data = await res.json()
-      const newId = data.threadId
-      setThreadId(newId)
-      setMessages([])
-      const title = formatTitleFromDate(new Date())
-      setThreadTitle(title)
-      localStorage.setItem('growfly_last_thread_id', newId)
-    } catch (err) {
-      console.error('Failed to create new thread:', err)
-      setError('Failed to create new chat thread. Please refresh the page.')
-    }
-  }
-
   const fetchFollowUps = async (text: string): Promise<string[]> => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/ai/followups`, {
@@ -250,6 +247,7 @@ function DashboardContent() {
     role: 'user' | 'assistant',
     content: string
   ) => {
+    // FIXED: Only try to post message if we have a valid threadId
     if (!threadId || threadId === 'undefined') {
       console.warn('Skipping postMessage - no valid threadId:', threadId)
       return
@@ -266,6 +264,7 @@ function DashboardContent() {
       })
     } catch (err) {
       console.error('Failed to POST message to history:', err)
+      // Don't show error to user for history saving failures
     }
   }
 
@@ -309,6 +308,7 @@ function DashboardContent() {
           )
         }
         
+        // Only save to history if we have valid content and threadId
         if (fullContent.trim() && threadId && threadId !== 'undefined') {
           postMessage('assistant', fullContent)
         }
@@ -326,6 +326,7 @@ function DashboardContent() {
         
         if (error.type === 'rate_limit') {
           setError(error.message)
+          // Remove the failed assistant message
           setMessages((prev) => prev.filter(msg => msg.id !== aId))
         } else {
           setMessages((prev) =>
@@ -344,8 +345,10 @@ function DashboardContent() {
     const text = override || input.trim()
     if (!text && !selectedFile) return
 
+    // Clear any previous errors
     setError(null)
 
+    // Check rate limit before sending
     if (promptsUsed >= promptLimit) {
       setError(`You've reached your daily limit of ${promptLimit} prompts. Upgrade your plan to continue.`)
       return
@@ -355,6 +358,7 @@ function DashboardContent() {
     setMessages((prev) => [...prev, { id: uId, role: 'user', content: text }])
     setInput('')
     
+    // Only save user message to history if we have a valid threadId
     if (threadId && threadId !== 'undefined') {
       postMessage('user', text)
     }
@@ -486,7 +490,7 @@ function DashboardContent() {
           {error.includes('limit') && (
             <div className="mt-2">
               <button
-                onClick={() => router.push('https://app.growfly.io/change-plan')}
+                onClick={() => router.push('/change-plan')}
                 className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors"
               >
                 Upgrade Plan
@@ -546,7 +550,7 @@ function DashboardContent() {
               disabled={isLoading || promptsUsed >= promptLimit}
               className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-8 py-3 rounded-2xl text-lg font-semibold shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
             >
-              ✨ Explore Growfly's Capabilities
+              ✨ Explore Growfly&apos;s Capabilities
             </button>
           </div>
         )}
@@ -606,8 +610,8 @@ function DashboardContent() {
                     </div>
                   )}
 
-                  {/* Action Buttons - Show on hover or when menu is open */}
-                  {(hoveredMessageId === msg.id || showActionsMenu === msg.id) && (
+                  {/* Action Buttons - Show on hover */}
+                  {hoveredMessageId === msg.id && (
                     <div className="flex gap-4 mt-4 text-lg text-gray-500 dark:text-gray-400">
                       <HiThumbUp
                         className="cursor-pointer hover:text-green-500 transition-colors duration-200 transform hover:scale-110"
