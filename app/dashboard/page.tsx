@@ -456,25 +456,25 @@ function DashboardContent() {
         <div className="flex-1" />
         <div className="flex items-center gap-4">
           {/* Enhanced Prompt Tracker */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl px-4 py-2 shadow-lg border border-gray-200 dark:border-slate-700">
+          <div className="bg-white dark:bg-white rounded-xl px-4 py-2 shadow-lg border border-gray-200">
             <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <span className="text-sm font-medium text-gray-700">
                 Prompts Used
               </span>
               <div className="flex items-center gap-2">
-                <div className="relative w-24 h-2 bg-gray-200 dark:bg-slate-600 rounded-full overflow-hidden">
+                <div className="relative w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div 
                     className={`absolute top-0 left-0 h-full bg-gradient-to-r ${getPromptLimitColor()} rounded-full transition-all duration-300 ease-out`}
                     style={{ width: `${Math.min(usagePercentage, 100)}%` }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
                 </div>
-                <span className="text-sm font-bold text-gray-800 dark:text-white min-w-[3rem]">
+                <span className="text-sm font-bold text-gray-800 min-w-[3rem]">
                   {promptsUsed}/{promptLimit}
                 </span>
               </div>
               {promptsRemaining <= 5 && promptsRemaining > 0 && (
-                <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+                <span className="text-xs text-orange-600 font-medium">
                   {promptsRemaining} left
                 </span>
               )}
@@ -483,7 +483,7 @@ function DashboardContent() {
           
           <button
             onClick={createNewThread}
-            className="text-sm bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105"
+            className="text-sm bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105"
           >
             <FaSyncAlt className="text-xs" /> New Chat
           </button>
@@ -492,18 +492,18 @@ function DashboardContent() {
 
       {/* Enhanced Collapsible Categories Bar */}
       <div className="mb-6">
-        <div className="text-center mb-4">
-          <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">
+        <div className="text-center mb-6">
+          <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3">
             Quick Start
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-base text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
             Find out how we can help you today
           </p>
         </div>
         
         <button
           onClick={() => setShowCategories(!showCategories)}
-          className="flex items-center justify-center gap-2 w-full text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 mb-4 py-3 px-4 rounded-xl hover:bg-white/60 dark:hover:bg-slate-800/60 border border-gray-200/50 dark:border-slate-700/50 backdrop-blur-sm shadow-sm hover:shadow-md"
+          className="flex items-center justify-center gap-2 w-full text-sm font-medium text-white hover:text-white transition-all duration-200 mb-4 py-3 px-4 rounded-xl bg-blue-500 hover:bg-blue-600 border border-blue-400 hover:border-blue-500 backdrop-blur-sm shadow-lg hover:shadow-xl"
         >
           {showCategories ? (
             <>
@@ -519,22 +519,22 @@ function DashboardContent() {
         </button>
         
         {showCategories && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-6 bg-gradient-to-r from-emerald-50/70 via-blue-50/70 to-purple-50/70 dark:from-slate-800/70 dark:via-slate-700/70 dark:to-slate-800/70 rounded-2xl border border-emerald-200/30 dark:border-slate-600/30 backdrop-blur-sm shadow-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-8 bg-gradient-to-br from-blue-50/80 via-indigo-50/60 to-purple-50/80 dark:from-slate-800/80 dark:via-slate-700/60 dark:to-slate-800/80 rounded-3xl border border-blue-200/40 dark:border-slate-600/40 backdrop-blur-sm shadow-xl">
             {QUICK_CATEGORIES.map((category, index) => (
               <button
                 key={index}
                 onClick={() => handleSubmit(category.prompt)}
                 disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                className="group flex flex-col items-center gap-3 p-6 rounded-xl bg-white/90 dark:bg-slate-800/90 border border-gray-200/60 dark:border-slate-700/60 hover:border-emerald-300/60 dark:hover:border-emerald-500/60 hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none backdrop-blur-sm hover:bg-emerald-50/50 dark:hover:bg-slate-700/90"
+                className="group flex flex-col items-center gap-4 p-8 rounded-2xl bg-white/95 dark:bg-slate-800/95 border border-gray-200/70 dark:border-slate-700/70 hover:border-blue-300/70 dark:hover:border-blue-500/70 hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.03] hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none backdrop-blur-sm hover:bg-blue-50/30 dark:hover:bg-slate-700/95"
               >
-                <div className="text-3xl group-hover:scale-110 transition-transform duration-200">
+                <div className="text-4xl group-hover:scale-110 transition-transform duration-300 drop-shadow-lg">
                   {category.icon}
                 </div>
-                <div className="text-center">
-                  <h4 className="font-semibold text-slate-800 dark:text-white text-sm mb-1">
+                <div className="text-center space-y-2">
+                  <h4 className="font-bold text-slate-800 dark:text-white text-base leading-tight">
                     {category.title}
                   </h4>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed max-w-[200px]">
                     {category.description}
                   </p>
                 </div>
@@ -675,10 +675,10 @@ function DashboardContent() {
               <div className="flex items-center gap-4">
                 <div
                   onClick={() => !isLoading && !isStreaming && promptsUsed < promptLimit && fileInputRef.current?.click()}
-                  className={`cursor-pointer border-2 border-dashed px-5 py-3 rounded-xl flex items-center gap-2 transition-all duration-200 ${
+                  className={`cursor-pointer border-2 px-5 py-3 rounded-xl flex items-center gap-2 transition-all duration-200 ${
                     isLoading || isStreaming || promptsUsed >= promptLimit
-                      ? 'border-gray-300 dark:border-gray-600 text-gray-400 cursor-not-allowed'
-                      : 'border-emerald-300 dark:border-emerald-600 hover:border-emerald-500 dark:hover:border-emerald-400 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                      ? 'border-gray-300 dark:border-gray-600 text-gray-400 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
+                      : 'border-blue-500 text-white bg-blue-500 hover:bg-blue-600 hover:border-blue-600 shadow-lg hover:shadow-xl transform hover:scale-[1.02]'
                   }`}
                 >
                   📎 <span className="text-sm font-medium">Upload Image / PDF</span>
@@ -699,15 +699,14 @@ function DashboardContent() {
                 <button
                   onClick={() => handleSubmit()}
                   disabled={(!input.trim() && !selectedFile) || isLoading || isStreaming || promptsUsed >= promptLimit}
-                  className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white font-semibold px-8 py-3 rounded-xl text-sm shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
+                  className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white font-semibold p-3 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
                 >
                   {isLoading || isStreaming ? (
-                    <span className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      {isStreaming ? 'Responding...' : 'Sending...'}
-                    </span>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   ) : (
-                    '➤ Send'
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    </svg>
                   )}
                 </button>
               </div>
