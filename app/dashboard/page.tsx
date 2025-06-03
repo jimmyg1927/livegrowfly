@@ -577,8 +577,8 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* Chat Messages with sufficient padding to prevent overlap */}
-      <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pb-48">
+      {/* Chat Messages with much more padding to prevent overlap */}
+      <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pb-64">
         {messages.map((msg) => (
           <div
             key={msg.id}
