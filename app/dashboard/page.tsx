@@ -394,9 +394,13 @@ function DashboardContent() {
     setMessages((prev) => [...prev, userMessage])
     setInput('')
     
-    // Scroll to bottom immediately after adding user message
+    // Ensure user message is visible above input area
     setTimeout(() => {
-      chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+      const container = containerRef.current
+      if (container) {
+        // Scroll to show the user message but keep some margin from input
+        container.scrollTop = container.scrollHeight - container.clientHeight + 20
+      }
     }, 100)
     
     const aId = `a${Date.now()}`
@@ -525,13 +529,13 @@ function DashboardContent() {
         </button>
         
         {showCategories && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 p-3 bg-gradient-to-br from-blue-50/80 via-indigo-50/60 to-purple-50/80 dark:from-slate-800/80 dark:via-slate-700/60 dark:to-slate-800/80 rounded-xl border border-blue-200/40 dark:border-slate-600/40 backdrop-blur-sm shadow-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 p-3 bg-gradient-to-br from-blue-50/80 via-indigo-50/60 to-purple-50/80 dark:from-slate-800/80 dark:via-slate-700/60 dark:to-slate-800/80 rounded-2xl border border-blue-200/40 dark:border-slate-600/40 backdrop-blur-sm shadow-lg">
             {QUICK_CATEGORIES.map((category, index) => (
               <button
                 key={index}
                 onClick={() => handleSubmit(category.prompt)}
                 disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                className="group flex flex-col items-center gap-2 p-3 rounded-lg bg-white/95 dark:bg-slate-800/95 border border-gray-200/70 dark:border-slate-700/70 hover:border-blue-300/70 dark:hover:border-blue-500/70 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none backdrop-blur-sm hover:bg-blue-50/30 dark:hover:bg-slate-700/95"
+                className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/95 dark:bg-slate-800/95 border border-gray-200/70 dark:border-slate-700/70 hover:border-blue-300/70 dark:hover:border-blue-500/70 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none backdrop-blur-sm hover:bg-blue-50/30 dark:hover:bg-slate-700/95"
               >
                 <div className="text-xl group-hover:scale-110 transition-transform duration-300">
                   {category.icon}
@@ -573,8 +577,8 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* Chat Messages with proper padding for compact input */}
-      <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pb-44">
+      {/* Chat Messages with sufficient padding to prevent overlap */}
+      <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pb-48">
         {messages.map((msg) => (
           <div
             key={msg.id}
