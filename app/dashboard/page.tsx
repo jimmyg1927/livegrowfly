@@ -74,20 +74,26 @@ function DashboardContent() {
     }
 
     setThreadId(id)
+
+    if (!token) return
+
     fetch(`${API_BASE_URL}/chat/history/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((r) => r.json())
-      .then((data) => {
-        setMessages(data.messages || [])
-        setThreadTitle(
-          data.title || formatTitleFromDate(new Date()) || ''
-        )
+      .then(async (res) => {
+        const text = await res.text()
+        try {
+          const data = JSON.parse(text)
+          setMessages(data.messages || [])
+          setThreadTitle(data.title || formatTitleFromDate(new Date()))
+        } catch {
+          console.error('Failed to parse chat history JSON:', text)
+        }
       })
       .catch((err) => {
         console.error('Failed to load chat history:', err)
       })
-  }, [paramThreadId])
+  }, [paramThreadId, token])
 
   const formatTitleFromDate = (date: Date) => {
     return `${date.toLocaleDateString(undefined, {
