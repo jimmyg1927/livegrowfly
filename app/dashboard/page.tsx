@@ -106,41 +106,19 @@ function DashboardContent() {
     })}`
   }
 
-  const createNewThread = async () => {
-    // Prevent multiple clicks
-    if (isLoading) return
+  const createNewThread = () => {
+    // Simple state reset - no API calls, no loading states
+    setMessages([])
+    setThreadId(null)
+    setThreadTitle('')
+    setError(null)
+    setInput('')
+    setSelectedFile(null)
     
-    try {
-      setIsLoading(true)
-      
-      // Clear messages immediately to prevent glitching
-      setMessages([])
-      setThreadId(null)
-      setThreadTitle('')
-      
-      const res = await fetch(`${API_BASE_URL}/api/chat/create`, {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      })
-
-      if (!res.ok) {
-        const text = await res.text()
-        console.error('Thread creation failed:', text)
-        throw new Error('Thread creation failed')
-      }
-
-      const data = await res.json()
-      const newId = data.threadId
-      setThreadId(newId)
-      const title = formatTitleFromDate(new Date())
-      setThreadTitle(title)
-      localStorage.setItem('growfly_last_thread_id', newId)
-    } catch (err) {
-      console.error('Failed to create new thread:', err)
-      setError('Failed to create new chat thread. Please refresh the page.')
-    } finally {
-      setIsLoading(false)
-    }
+    // Clear localStorage to start fresh
+    localStorage.removeItem('growfly_last_thread_id')
+    
+    // That's it! Much simpler.
   }
 
   useEffect(() => {
@@ -469,28 +447,30 @@ function DashboardContent() {
     const text = override || input.trim()
     if (!text && !selectedFile) return
 
-    // Clear any previous errors
     setError(null)
 
-    // Check rate limit before sending
     if (promptsUsed >= promptLimit) {
       setError(`You've reached your daily limit of ${promptLimit} prompts. Upgrade your plan to continue.`)
       return
+    }
+
+    // Create thread ID only when actually needed (first message)
+    let currentThreadId = threadId
+    if (!currentThreadId) {
+      currentThreadId = `thread_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      setThreadId(currentThreadId)
+      localStorage.setItem('growfly_last_thread_id', currentThreadId)
     }
 
     const uId = `u${Date.now()}`
     setMessages((prev) => [...prev, { id: uId, role: 'user', content: text }])
     setInput('')
     
-    // Only save user message to history if we have a valid threadId
-    if (threadId && threadId !== 'undefined') {
-      postMessage('user', text)
-    }
-
     const aId = `a${Date.now()}`
     setMessages((prev) => [...prev, { id: aId, role: 'assistant', content: '' }])
 
     if (selectedFile) {
+      // Handle file upload (keeping existing logic)
       const reader = new FileReader()
       reader.onload = async () => {
         const base64 = reader.result as string
@@ -523,10 +503,6 @@ function DashboardContent() {
                 : msg
             )
           )
-          
-          if (threadId && threadId !== 'undefined') {
-            postMessage('assistant', data.content)
-          }
           
           setIsLoading(false)
         } catch (err) {
@@ -591,19 +567,9 @@ function DashboardContent() {
             
             <button
               onClick={createNewThread}
-              disabled={isLoading}
-              className="text-sm bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 disabled:transform-none"
+              className="text-sm bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105"
             >
-              {isLoading ? (
-                <>
-                  <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <FaSyncAlt className="text-xs" /> New Chat
-                </>
-              )}
+              <FaSyncAlt className="text-xs" /> New Chat
             </button>
           </div>
         </div>
