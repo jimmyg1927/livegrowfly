@@ -58,10 +58,10 @@ const QUICK_CATEGORIES = [
     prompt: "I need help creating or editing business documents. What type of document would you like assistance with?",
   },
   {
-    icon: <FaRocket className="text-orange-500" />,
-    title: "Something Random",
-    description: "Surprise me with creative business insights",
-    prompt: "Give me a random but valuable business insight or tip that could help my company grow.",
+    icon: <FaRocket className="text-amber-500" />,
+    title: "How can Growfly improve my output today?",
+    description: "Don't know where to start today? Ask Growfly for some ideas!",
+    prompt: "I'm looking for ways to improve my productivity and output today. Can you give me some personalized suggestions based on my business needs?",
   }
 ]
 
@@ -519,13 +519,13 @@ function DashboardContent() {
         </button>
         
         {showCategories && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-6 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-slate-800/50 dark:to-slate-700/50 rounded-2xl border border-gray-200/50 dark:border-slate-700/50 backdrop-blur-sm shadow-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-6 bg-gradient-to-r from-emerald-50/70 via-blue-50/70 to-purple-50/70 dark:from-slate-800/70 dark:via-slate-700/70 dark:to-slate-800/70 rounded-2xl border border-emerald-200/30 dark:border-slate-600/30 backdrop-blur-sm shadow-lg">
             {QUICK_CATEGORIES.map((category, index) => (
               <button
                 key={index}
                 onClick={() => handleSubmit(category.prompt)}
                 disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                className="group flex flex-col items-center gap-3 p-6 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-gray-200/50 dark:border-slate-700/50 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none backdrop-blur-sm"
+                className="group flex flex-col items-center gap-3 p-6 rounded-xl bg-white/90 dark:bg-slate-800/90 border border-gray-200/60 dark:border-slate-700/60 hover:border-emerald-300/60 dark:hover:border-emerald-500/60 hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none backdrop-blur-sm hover:bg-emerald-50/50 dark:hover:bg-slate-700/90"
               >
                 <div className="text-3xl group-hover:scale-110 transition-transform duration-200">
                   {category.icon}
@@ -652,14 +652,14 @@ function DashboardContent() {
         <div ref={chatEndRef} />
       </div>
 
-      {/* Fixed Input Section at Bottom - Centered and Padded */}
-      <div className="fixed bottom-0 left-44 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-gray-200 dark:border-slate-700 p-6 shadow-2xl">
+      {/* Fixed Input Section at Bottom - Just the input box */}
+      <div className="fixed bottom-0 left-44 right-0 p-6">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-5 border border-gray-200 dark:border-slate-700">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-5 border border-gray-200 dark:border-slate-700 backdrop-blur-md">
             <textarea
               ref={textareaRef}
               rows={4}
-              className="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-textPrimary dark:text-white resize-none text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 min-h-[6rem] max-h-40"
+              className="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-textPrimary dark:text-white resize-none text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 min-h-[6rem] max-h-40"
               placeholder="Type out your prompt here..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -678,7 +678,7 @@ function DashboardContent() {
                   className={`cursor-pointer border-2 border-dashed px-5 py-3 rounded-xl flex items-center gap-2 transition-all duration-200 ${
                     isLoading || isStreaming || promptsUsed >= promptLimit
                       ? 'border-gray-300 dark:border-gray-600 text-gray-400 cursor-not-allowed'
-                      : 'border-blue-300 dark:border-blue-600 hover:border-blue-500 dark:hover:border-blue-400 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                      : 'border-emerald-300 dark:border-emerald-600 hover:border-emerald-500 dark:hover:border-emerald-400 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
                   }`}
                 >
                   📎 <span className="text-sm font-medium">Upload Image / PDF</span>
@@ -699,7 +699,7 @@ function DashboardContent() {
                 <button
                   onClick={() => handleSubmit()}
                   disabled={(!input.trim() && !selectedFile) || isLoading || isStreaming || promptsUsed >= promptLimit}
-                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold px-8 py-3 rounded-xl text-sm shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
+                  className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white font-semibold px-8 py-3 rounded-xl text-sm shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
                 >
                   {isLoading || isStreaming ? (
                     <span className="flex items-center gap-2">
