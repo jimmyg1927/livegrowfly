@@ -4,12 +4,17 @@ export const dynamic = 'force-dynamic'
 import React, { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import { HiThumbUp, HiThumbDown } from 'react-icons/hi'
+import { HiThumbUp, HiThumbDown, HiX } from 'react-icons/hi'
 import {
   FaRegBookmark,
   FaShareSquare,
   FaFileDownload,
   FaSyncAlt,
+  FaRocket,
+  FaChartLine,
+  FaBrain,
+  FaUsers,
+  FaEllipsisV,
 } from 'react-icons/fa'
 import PromptTracker from '@/components/PromptTracker'
 import SaveModal from '@/components/SaveModal'
@@ -34,6 +39,34 @@ const PROMPT_LIMITS: Record<string, number> = {
   business: 2000,
 }
 
+// Suggested prompts for empty state
+const SUGGESTED_PROMPTS = [
+  {
+    icon: <FaRocket className="text-blue-500" />,
+    title: "Business Strategy",
+    prompt: "Help me develop a growth strategy for my business",
+    description: "Get strategic insights and planning advice"
+  },
+  {
+    icon: <FaChartLine className="text-green-500" />,
+    title: "Marketing Ideas", 
+    prompt: "What are some effective marketing strategies for my industry?",
+    description: "Discover new ways to reach customers"
+  },
+  {
+    icon: <FaBrain className="text-purple-500" />,
+    title: "Problem Solving",
+    prompt: "I'm facing challenges with [describe your challenge]",
+    description: "Get AI-powered solutions to your problems"
+  },
+  {
+    icon: <FaUsers className="text-orange-500" />,
+    title: "Team Management",
+    prompt: "How can I improve my team's productivity and communication?",
+    description: "Optimize your team dynamics"
+  }
+]
+
 function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -44,6 +77,8 @@ function DashboardContent() {
 
   const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || 'free'] || 0
   const promptsUsed = user?.promptsUsed ?? 0
+  const promptsRemaining = promptLimit - promptsUsed
+  const usagePercentage = (promptsUsed / promptLimit) * 100
 
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
@@ -54,10 +89,15 @@ function DashboardContent() {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null)
+  const [showActionsMenu, setShowActionsMenu] = useState<string | null>(null)
+  const [isUserScrolling, setIsUserScrolling] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const scrollTimeoutRef = useRef<NodeJS.Timeout>()
 
   useEffect(() => {
     if (!token) router.push('/onboarding')
@@ -94,6 +134,61 @@ function DashboardContent() {
       })
   }, [paramThreadId, token])
 
+  // Auto-resize textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'
+    }
+  }, [input])
+
+  // Improved auto-scroll that doesn't interfere with manual scrolling
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const handleScroll = () => {
+      setIsUserScrolling(true)
+      
+      // Clear existing timeout
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current)
+      }
+      
+      // Set timeout to detect when user stops scrolling
+      scrollTimeoutRef.current = setTimeout(() => {
+        setIsUserScrolling(false)
+      }, 150)
+    }
+
+    container.addEventListener('scroll', handleScroll, { passive: true })
+    
+    return () => {
+      container.removeEventListener('scroll', handleScroll)
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    
+    // Only auto-scroll if user isn't manually scrolling and is near the bottom
+    const isNearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 100
+    
+    if (!isUserScrolling && (isNearBottom || isLoading)) {
+      // Use requestAnimationFrame for smoother scrolling during streaming
+      requestAnimationFrame(() => {
+        chatEndRef.current?.scrollIntoView({ 
+          behavior: isLoading ? 'auto' : 'smooth',
+          block: 'end'
+        })
+      })
+    }
+  }, [messages, isUserScrolling, isLoading])
+
   const formatTitleFromDate = (date: Date) => {
     return `${date.toLocaleDateString(undefined, {
       weekday: 'long',
@@ -129,17 +224,6 @@ function DashboardContent() {
     }
   }
 
-  useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-    const nearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 100
-    if (nearBottom) {
-      setTimeout(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-      }, 50)
-    }
-  }, [messages])
-
   const fetchFollowUps = async (text: string): Promise<string[]> => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/ai/followups`, {
@@ -166,7 +250,6 @@ function DashboardContent() {
     role: 'user' | 'assistant',
     content: string
   ) => {
-    // FIXED: Only try to post message if we have a valid threadId
     if (!threadId || threadId === 'undefined') {
       console.warn('Skipping postMessage - no valid threadId:', threadId)
       return
@@ -183,7 +266,6 @@ function DashboardContent() {
       })
     } catch (err) {
       console.error('Failed to POST message to history:', err)
-      // Don't show error to user for history saving failures
     }
   }
 
@@ -227,7 +309,6 @@ function DashboardContent() {
           )
         }
         
-        // Only save to history if we have valid content and threadId
         if (fullContent.trim() && threadId && threadId !== 'undefined') {
           postMessage('assistant', fullContent)
         }
@@ -245,7 +326,6 @@ function DashboardContent() {
         
         if (error.type === 'rate_limit') {
           setError(error.message)
-          // Remove the failed assistant message
           setMessages((prev) => prev.filter(msg => msg.id !== aId))
         } else {
           setMessages((prev) =>
@@ -264,10 +344,8 @@ function DashboardContent() {
     const text = override || input.trim()
     if (!text && !selectedFile) return
 
-    // Clear any previous errors
     setError(null)
 
-    // Check rate limit before sending
     if (promptsUsed >= promptLimit) {
       setError(`You've reached your daily limit of ${promptLimit} prompts. Upgrade your plan to continue.`)
       return
@@ -277,7 +355,6 @@ function DashboardContent() {
     setMessages((prev) => [...prev, { id: uId, role: 'user', content: text }])
     setInput('')
     
-    // Only save user message to history if we have a valid threadId
     if (threadId && threadId !== 'undefined') {
       postMessage('user', text)
     }
@@ -343,52 +420,73 @@ function DashboardContent() {
     }
   }
 
+  const getPromptLimitColor = () => {
+    if (usagePercentage >= 90) return 'from-red-500 to-red-600'
+    if (usagePercentage >= 70) return 'from-yellow-500 to-orange-500'
+    return 'from-blue-500 to-purple-600'
+  }
+
+  const dismissError = () => setError(null)
+
   return (
-    <div className="flex flex-col h-full p-6 bg-gradient-to-br from-slate-50 via-white to-blue-50 text-textPrimary">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className={`text-2xl font-bold text-slate-800 ${messages.length === 0 ? 'invisible' : ''}`}>
-          {threadTitle}
-        </h2>
-        <div className="flex items-center gap-4">
-          {/* Enhanced Prompt Tracker with Better Visibility */}
-          <div className="bg-white rounded-xl px-4 py-2 shadow-lg border border-gray-200">
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-gray-700">
-                Prompts Used
-              </span>
-              <div className="flex items-center gap-2">
-                <div className="relative w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
-                    className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-300 ease-out"
-                    style={{ width: `${(promptsUsed / promptLimit) * 100}%` }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
-                </div>
-                <span className="text-sm font-bold text-gray-800 min-w-[3rem]">
-                  {promptsUsed}/{promptLimit}
+    <div className="flex flex-col h-full p-6 bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-textPrimary dark:text-white transition-colors duration-300">
+      {/* Header - Only show when there are messages */}
+      {messages.length > 0 && (
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-white">
+            {threadTitle}
+          </h2>
+          <div className="flex items-center gap-4">
+            {/* Enhanced Prompt Tracker */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl px-4 py-2 shadow-lg border border-gray-200 dark:border-slate-700">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Prompts Used
                 </span>
+                <div className="flex items-center gap-2">
+                  <div className="relative w-24 h-2 bg-gray-200 dark:bg-slate-600 rounded-full overflow-hidden">
+                    <div 
+                      className={`absolute top-0 left-0 h-full bg-gradient-to-r ${getPromptLimitColor()} rounded-full transition-all duration-300 ease-out`}
+                      style={{ width: `${Math.min(usagePercentage, 100)}%` }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+                  </div>
+                  <span className="text-sm font-bold text-gray-800 dark:text-white min-w-[3rem]">
+                    {promptsUsed}/{promptLimit}
+                  </span>
+                </div>
+                {promptsRemaining <= 5 && promptsRemaining > 0 && (
+                  <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+                    {promptsRemaining} left
+                  </span>
+                )}
               </div>
             </div>
+            
+            <button
+              onClick={createNewThread}
+              className="text-sm bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105"
+            >
+              <FaSyncAlt className="text-xs" /> New Chat
+            </button>
           </div>
-          
-          <button
-            onClick={createNewThread}
-            className="text-sm bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105"
-          >
-            <FaSyncAlt className="text-xs" /> New Chat
-          </button>
         </div>
-      </div>
+      )}
 
-      {/* Error Message */}
+      {/* Error Message with Dismiss */}
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+        <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
+          <button 
+            onClick={dismissError}
+            className="absolute top-2 right-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+          >
+            <HiX className="w-4 h-4" />
+          </button>
           <strong>⚠️ {error}</strong>
           {error.includes('limit') && (
             <div className="mt-2">
               <button
-                onClick={() => router.push('/billing')}
+                onClick={() => router.push('https://app.growfly.io/change-plan')}
                 className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors"
               >
                 Upgrade Plan
@@ -400,28 +498,72 @@ function DashboardContent() {
 
       {/* Chat Messages */}
       <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pb-6">
+        {/* Enhanced Empty State */}
         {messages.length === 0 && (
-          <div className="mb-6 flex justify-center">
+          <div className="flex flex-col items-center justify-center h-full space-y-8">
+            <div className="text-center space-y-4 max-w-2xl">
+              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FaBrain className="text-white text-2xl" />
+              </div>
+              <h1 className="text-3xl font-bold text-slate-800 dark:text-white">
+                Welcome to Growfly AI
+              </h1>
+              <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
+                Your AI-powered business assistant is here to help with strategy, marketing, problem-solving, and growth insights. 
+                Choose a prompt below or ask anything about your business.
+              </p>
+            </div>
+
+            {/* Suggested Prompts Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl">
+              {SUGGESTED_PROMPTS.map((suggestion, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleSubmit(suggestion.prompt)}
+                  disabled={isLoading || promptsUsed >= promptLimit}
+                  className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-6 text-left hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none group"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="text-2xl group-hover:scale-110 transition-transform duration-200">
+                      {suggestion.icon}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-slate-800 dark:text-white text-lg mb-2">
+                        {suggestion.title}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                        {suggestion.description}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* Quick Start Button */}
             <button
               onClick={() => handleSubmit('What can Growfly do for me?')}
               disabled={isLoading || promptsUsed >= promptLimit}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-3 rounded-2xl text-sm font-semibold shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
+              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-8 py-3 rounded-2xl text-lg font-semibold shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
             >
-              ✨ What can Growfly do for me?
+              ✨ Explore Growfly's Capabilities
             </button>
           </div>
         )}
 
+        {/* Messages */}
         {messages.map((msg) => (
           <div
             key={msg.id}
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            onMouseEnter={() => setHoveredMessageId(msg.id)}
+            onMouseLeave={() => setHoveredMessageId(null)}
           >
             <div
-              className={`max-w-4xl p-5 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl ${
+              className={`max-w-4xl p-5 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl relative ${
                 msg.role === 'user'
                   ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white ml-auto'
-                  : 'bg-white border border-gray-100 text-gray-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm'
+                  : 'bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-gray-800 dark:text-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm'
               }`}
             >
               {msg.imageUrl && (
@@ -434,7 +576,16 @@ function DashboardContent() {
                 />
               )}
               <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                {msg.content || (msg.role === 'assistant' && isLoading ? 'Thinking...' : '')}
+                {msg.content || (msg.role === 'assistant' && isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <div className="animate-pulse">Thinking</div>
+                    <div className="flex gap-1">
+                      <div className="w-1 h-1 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-1 h-1 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-1 h-1 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
+                  </span>
+                ) : '')}
               </p>
 
               {msg.role === 'assistant' && (
@@ -447,7 +598,7 @@ function DashboardContent() {
                           key={i}
                           onClick={() => handleSubmit(fu)}
                           disabled={isLoading || promptsUsed >= promptLimit}
-                          className="bg-gradient-to-r from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 disabled:from-gray-100 disabled:to-gray-100 text-indigo-700 hover:text-indigo-800 disabled:text-gray-500 px-4 py-2 rounded-xl text-xs font-medium shadow-sm border border-indigo-200 disabled:border-gray-200 transition-all duration-200 hover:shadow-md transform hover:scale-[1.02] disabled:transform-none disabled:cursor-not-allowed"
+                          className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 hover:from-indigo-100 hover:to-blue-100 dark:hover:from-indigo-800/40 dark:hover:to-blue-800/40 disabled:from-gray-100 disabled:to-gray-100 dark:disabled:from-gray-800 dark:disabled:to-gray-800 text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 disabled:text-gray-500 dark:disabled:text-gray-500 px-4 py-2 rounded-xl text-xs font-medium shadow-sm border border-indigo-200 dark:border-indigo-700 disabled:border-gray-200 dark:disabled:border-gray-600 transition-all duration-200 hover:shadow-md transform hover:scale-[1.02] disabled:transform-none disabled:cursor-not-allowed"
                         >
                           💡 {fu}
                         </button>
@@ -455,28 +606,30 @@ function DashboardContent() {
                     </div>
                   )}
 
-                  {/* Action Buttons */}
-                  <div className="flex gap-4 mt-4 text-lg text-gray-500">
-                    <HiThumbUp
-                      className="cursor-pointer hover:text-green-500 transition-colors duration-200 transform hover:scale-110"
-                      onClick={() => setShowFeedbackModal(true)}
-                    />
-                    <HiThumbDown
-                      className="cursor-pointer hover:text-red-500 transition-colors duration-200 transform hover:scale-110"
-                      onClick={() => setShowFeedbackModal(true)}
-                    />
-                    <FaRegBookmark
-                      className="cursor-pointer hover:text-yellow-500 transition-colors duration-200 transform hover:scale-110"
-                      onClick={() => setShowSaveModal(true)}
-                    />
-                    <FaShareSquare
-                      className="cursor-pointer hover:text-blue-500 transition-colors duration-200 transform hover:scale-110"
-                      onClick={() => router.push('/collab-zone')}
-                    />
-                    {msg.imageUrl && (
-                      <FaFileDownload className="cursor-pointer hover:text-gray-700 transition-colors duration-200 transform hover:scale-110" />
-                    )}
-                  </div>
+                  {/* Action Buttons - Show on hover or when menu is open */}
+                  {(hoveredMessageId === msg.id || showActionsMenu === msg.id) && (
+                    <div className="flex gap-4 mt-4 text-lg text-gray-500 dark:text-gray-400">
+                      <HiThumbUp
+                        className="cursor-pointer hover:text-green-500 transition-colors duration-200 transform hover:scale-110"
+                        onClick={() => setShowFeedbackModal(true)}
+                      />
+                      <HiThumbDown
+                        className="cursor-pointer hover:text-red-500 transition-colors duration-200 transform hover:scale-110"
+                        onClick={() => setShowFeedbackModal(true)}
+                      />
+                      <FaRegBookmark
+                        className="cursor-pointer hover:text-yellow-500 transition-colors duration-200 transform hover:scale-110"
+                        onClick={() => setShowSaveModal(true)}
+                      />
+                      <FaShareSquare
+                        className="cursor-pointer hover:text-blue-500 transition-colors duration-200 transform hover:scale-110"
+                        onClick={() => router.push('/collab-zone')}
+                      />
+                      {msg.imageUrl && (
+                        <FaFileDownload className="cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 transform hover:scale-110" />
+                      )}
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -485,11 +638,12 @@ function DashboardContent() {
         <div ref={chatEndRef} />
       </div>
 
-      {/* Input Section */}
-      <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-xl p-5 mt-4">
+      {/* Enhanced Input Section */}
+      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl p-5 mt-4">
         <textarea
-          rows={3}
-          className="w-full p-4 rounded-xl border border-gray-200 bg-white text-textPrimary resize-none text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+          ref={textareaRef}
+          rows={1}
+          className="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-textPrimary dark:text-white resize-none text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 min-h-[2.5rem] max-h-32"
           placeholder="Ask Growfly anything about your business..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -502,40 +656,58 @@ function DashboardContent() {
           disabled={isLoading || promptsUsed >= promptLimit}
         />
         <div className="flex justify-between items-center mt-4">
-          <div
-            onClick={() => !isLoading && promptsUsed < promptLimit && fileInputRef.current?.click()}
-            className={`cursor-pointer border-2 border-dashed px-5 py-3 rounded-xl flex items-center gap-2 transition-all duration-200 ${
-              isLoading || promptsUsed >= promptLimit
-                ? 'border-gray-300 text-gray-400 cursor-not-allowed'
-                : 'border-blue-300 hover:border-blue-500 text-blue-600 hover:bg-blue-50'
-            }`}
-          >
-            📎 <span className="text-sm font-medium">Upload Image / PDF</span>
+          <div className="flex items-center gap-4">
+            <div
+              onClick={() => !isLoading && promptsUsed < promptLimit && fileInputRef.current?.click()}
+              className={`cursor-pointer border-2 border-dashed px-5 py-3 rounded-xl flex items-center gap-2 transition-all duration-200 ${
+                isLoading || promptsUsed >= promptLimit
+                  ? 'border-gray-300 dark:border-gray-600 text-gray-400 cursor-not-allowed'
+                  : 'border-blue-300 dark:border-blue-600 hover:border-blue-500 dark:hover:border-blue-400 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+              }`}
+            >
+              📎 <span className="text-sm font-medium">Upload Image / PDF</span>
+            </div>
+            {selectedFile && (
+              <p className="text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-slate-700 px-3 py-1 rounded-full">
+                📄 {selectedFile.name}
+              </p>
+            )}
           </div>
-          <input
-            type="file"
-            accept="image/*,application/pdf"
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (file) setSelectedFile(file)
-            }}
-            className="hidden"
-            ref={fileInputRef}
-            disabled={isLoading || promptsUsed >= promptLimit}
-          />
-          {selectedFile && (
-            <p className="text-xs text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-              📄 {selectedFile.name}
-            </p>
-          )}
-          <button
-            onClick={() => handleSubmit()}
-            disabled={(!input.trim() && !selectedFile) || isLoading || promptsUsed >= promptLimit}
-            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold px-8 py-3 rounded-xl text-sm shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
-          >
-            {isLoading ? '⏳ Sending...' : '➤ Send'}
-          </button>
+          
+          <div className="flex items-center gap-3">
+            {input.length > 0 && (
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {input.length} characters
+              </span>
+            )}
+            <button
+              onClick={() => handleSubmit()}
+              disabled={(!input.trim() && !selectedFile) || isLoading || promptsUsed >= promptLimit}
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold px-8 py-3 rounded-xl text-sm shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
+            >
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Sending...
+                </span>
+              ) : (
+                '➤ Send'
+              )}
+            </button>
+          </div>
         </div>
+        
+        <input
+          type="file"
+          accept="image/*,application/pdf"
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (file) setSelectedFile(file)
+          }}
+          className="hidden"
+          ref={fileInputRef}
+          disabled={isLoading || promptsUsed >= promptLimit}
+        />
       </div>
 
       {/* Modals */}
@@ -566,7 +738,14 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <Suspense fallback={<div className="p-6 text-center">Loading…</div>}>
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-full">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading your dashboard...</p>
+        </div>
+      </div>
+    }>
       <DashboardContent />
     </Suspense>
   )
