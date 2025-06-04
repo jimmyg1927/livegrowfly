@@ -592,7 +592,44 @@ function DashboardContent() {
     }
   }
 
-  // ✅ FIXED: Save to Collab Zone (correct endpoint)
+  // ✅ FIXED: Save to Saved Responses (personal saves)
+  const handleSaveResponse = async (title: string, messageId: string) => {
+    try {
+      // Get the specific message content
+      const message = messages.find(m => m.id === messageId)
+      if (!message || message.role !== 'assistant') {
+        throw new Error('Invalid message to save')
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/saved`, {  // ✅ FIXED: Personal saved responses
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ 
+          title, 
+          content: message.content
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to save response')
+      }
+
+      const result = await response.json()
+      setShowSaveModal(false)
+      setError(null)
+      
+      return result
+    } catch (error) {
+      console.error('Error saving response:', error)
+      setError('Failed to save response. Please try again.')
+      return null
+    }
+  }
+
+  // ✅ FIXED: Save to Collab Zone (for sharing/collaboration)
   const handleSaveToCollabZone = async (title: string, messageId: string) => {
     try {
       // Get the specific message content
@@ -601,7 +638,7 @@ function DashboardContent() {
         throw new Error('Invalid message to save')
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/collab`, {  // ✅ FIXED: Correct endpoint
+      const response = await fetch(`${API_BASE_URL}/api/collab`, {  // ✅ Collab Zone for sharing
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -619,7 +656,6 @@ function DashboardContent() {
       }
 
       const result = await response.json()
-      setShowSaveModal(false)
       setError(null)
       
       return result
@@ -893,10 +929,12 @@ function DashboardContent() {
                           setCurrentSaveMessageId(msg.id)
                           setShowSaveModal(true)
                         }}
+                        title="Save to Saved Responses"
                       />
                       <FaShareSquare
                         className="cursor-pointer hover:text-blue-500 transition-colors duration-200 transform hover:scale-110"
                         onClick={() => handleShareToCollabZone(msg.id)}
+                        title="Share to Collab Zone"
                       />
                       {msg.imageUrl && (
                         <FaFileDownload className="cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 transform hover:scale-110" />
@@ -1023,7 +1061,7 @@ function DashboardContent() {
         }}
         onConfirm={async (title: string) => {
           if (currentSaveMessageId) {
-            await handleSaveToCollabZone(title, currentSaveMessageId)
+            await handleSaveResponse(title, currentSaveMessageId)  // ✅ FIXED: Save to personal saved responses
           }
         }}
       />
