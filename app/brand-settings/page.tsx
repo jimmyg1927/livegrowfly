@@ -29,6 +29,7 @@ export default function BrandSettingsPage() {
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -40,6 +41,8 @@ export default function BrandSettingsPage() {
           return
         }
 
+        console.log('🔍 Fetching user data...')
+        
         // Fetch user settings/profile data
         const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
           method: 'GET',
@@ -49,17 +52,18 @@ export default function BrandSettingsPage() {
           },
         })
 
+        console.log('📡 API Response status:', res.status)
+
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`)
         }
 
         const userData = await res.json()
-        console.log('Fetched user data:', userData)
+        console.log('✅ Fetched user data:', userData)
 
         if (userData) {
           // Map the user data to form fields
-          setFormData(prev => ({
-            ...prev,
+          const mappedData = {
             brandName: userData.brandName || '',
             brandDescription: userData.brandDescription || '',
             brandValues: userData.brandValues || '',
@@ -73,10 +77,13 @@ export default function BrandSettingsPage() {
             primaryProducts: userData.primaryProducts || '',
             USP: userData.USP || '',
             inspiredBy: userData.inspiredBy || '',
-          }))
+          }
+          
+          console.log('📝 Setting form data:', mappedData)
+          setFormData(mappedData)
         }
       } catch (error) {
-        console.error('Error fetching user settings:', error)
+        console.error('❌ Error fetching user settings:', error)
         // In real app: toast.error('Failed to load brand settings.')
       } finally {
         setLoading(false)
@@ -95,12 +102,16 @@ export default function BrandSettingsPage() {
     
     try {
       setSaving(true)
+      setSaveSuccess(false)
+      
       const token = localStorage.getItem('growfly_jwt')
       
       if (!token) {
-        console.error('No authentication token found')
+        console.error('❌ No authentication token found')
         return
       }
+
+      console.log('💾 Saving brand settings...', formData)
 
       // Update user profile with brand settings
       const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
@@ -112,18 +123,26 @@ export default function BrandSettingsPage() {
         body: JSON.stringify(formData)
       })
 
+      console.log('📡 Save response status:', res.status)
+
       if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`)
+        const errorText = await res.text()
+        console.error('❌ Save failed:', errorText)
+        throw new Error(`HTTP error! status: ${res.status} - ${errorText}`)
       }
 
       const updatedUser = await res.json()
-      console.log('Updated user data:', updatedUser)
+      console.log('✅ Save successful, updated user:', updatedUser)
+      
+      // Show success feedback
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 3000) // Hide after 3 seconds
       
       // In real app: toast.success('Brand settings saved successfully!')
-      console.log('Brand settings saved successfully!')
+      console.log('🎉 Brand settings saved successfully!')
       
     } catch (error) {
-      console.error('Error saving brand settings:', error)
+      console.error('❌ Error saving brand settings:', error)
       // In real app: toast.error('Failed to save brand settings. Please try again.')
     } finally {
       setSaving(false)
@@ -269,17 +288,49 @@ export default function BrandSettingsPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-2xl text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            className={`inline-flex items-center gap-3 px-8 py-4 rounded-2xl text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
+              saveSuccess 
+                ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white' 
+                : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
+            }`}
           >
-            {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
-            {saving ? 'Saving Your Settings...' : 'Save Brand Settings'}
+            {saving ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Saving Your Settings...
+              </>
+            ) : saveSuccess ? (
+              <>
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Successfully Saved!
+              </>
+            ) : (
+              <>
+                <Save className="h-5 w-5" />
+                Save Brand Settings
+              </>
+            )}
           </button>
+          
+          {/* Success Message */}
+          {saveSuccess && (
+            <div className="mt-4 p-4 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-xl border border-green-200 dark:border-green-800">
+              <div className="flex items-center justify-center">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Your brand settings have been updated successfully! Growfly will now use this information to personalize your responses.
+              </div>
+            </div>
+          )}
           
           {/* Progress Indicator */}
           <div className="mt-6">
             <div className="flex items-center justify-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span>Changes are saved automatically to your account</span>
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+              <span>Open browser console to see detailed API logs</span>
             </div>
           </div>
         </div>
