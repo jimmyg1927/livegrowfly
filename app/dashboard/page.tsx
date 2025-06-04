@@ -125,9 +125,14 @@ function DashboardContent() {
     setInput('')
     setSelectedFile(null)
     localStorage.removeItem('growfly_last_thread_id')
+    
+    // Also clear the URL parameter to prevent reload
+    if (window.history.replaceState) {
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
   }
 
-  // Enhanced user data fetching with better error handling and sync
+  // Enhanced user data fetching with better error handling and CORS fix
   useEffect(() => {
     if (!token) {
       router.push('/onboarding')
@@ -136,72 +141,38 @@ function DashboardContent() {
     
     const fetchUserData = async () => {
       try {
-        // console.log('🔄 Fetching fresh user data from database...')
-        const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
+        // Try relative URL first to avoid CORS issues
+        const response = await fetch('/api/user/profile', {
           method: 'GET',
           headers: { 
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          credentials: 'include', // Add credentials for CORS
         })
-        
-        // console.log('📡 Response status:', response.status)
         
         if (response.ok) {
           const userData = await response.json()
-          // console.log('✅ Fetched fresh user data from database:', userData)
-          // console.log('📊 Current prompts used:', userData.promptsUsed, 'Plan:', userData.subscriptionType)
-          
-          // Ensure we have the latest data
           setUser(userData)
-          
-          // console.log('🎯 Setting user data - Prompts:', userData.promptsUsed, 'Limit:', PROMPT_LIMITS[userData?.subscriptionType?.toLowerCase() || 'free'])
-          
         } else {
           console.error('❌ Failed to fetch user data:', response.status, response.statusText)
           
-          // Try alternative API endpoint if main one fails
-          // console.log('🔄 Trying alternative API endpoint...')
-          try {
-            const altResponse = await fetch(`/api/user/profile`, {
-              method: 'GET',
-              headers: { 
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-              },
-            })
-            
-            if (altResponse.ok) {
-              const userData = await altResponse.json()
-              // console.log('✅ Fetched user data from alternative endpoint:', userData)
-              setUser(userData)
-            } else {
-              console.error('❌ Alternative endpoint also failed:', altResponse.status)
-              // If we get unauthorized, redirect to onboarding
-              if (altResponse.status === 401) {
-                localStorage.removeItem('growfly_jwt')
-                router.push('/onboarding')
-              }
-            }
-          } catch (altError) {
-            console.error('❌ Alternative endpoint error:', altError)
+          // If we get unauthorized, redirect to onboarding
+          if (response.status === 401) {
+            localStorage.removeItem('growfly_jwt')
+            router.push('/onboarding')
           }
         }
       } catch (error) {
         console.error('❌ Error fetching user data:', error)
-        
-        // Try local storage fallback or set default values
-        // console.log('🔄 Setting default values due to fetch error')
         // Don't redirect on network errors, just log them
       }
     }
     
-    // Always fetch fresh data from database on mount
+    // Fetch data on mount
     fetchUserData()
     
-    // Also set up an interval to periodically sync user data (less frequent to avoid CORS spam)
-    const syncInterval = setInterval(fetchUserData, 60000) // Sync every 60 seconds instead of 30
+    // Set up periodic sync (less frequent to avoid spam)
+    const syncInterval = setInterval(fetchUserData, 60000)
     
     return () => clearInterval(syncInterval)
   }, [token, router, setUser])
@@ -213,7 +184,8 @@ function DashboardContent() {
     const storedThreadId = localStorage.getItem('growfly_last_thread_id')
     const id = paramThreadId || storedThreadId
 
-    if (id && id !== 'undefined') {
+    // Only load thread if there's a valid ID and it's not 'undefined'
+    if (id && id !== 'undefined' && id !== 'null') {
       setThreadId(id)
       
       fetch(`${API_BASE_URL}/api/chat/history/${id}`, {
@@ -222,12 +194,19 @@ function DashboardContent() {
         .then(async (res) => {
           if (res.ok) {
             const data = await res.json()
-            setMessages(data.messages || [])
-            setThreadTitle(data.title || formatTitleFromDate(new Date()))
+            // Only set messages if we actually have messages from the thread
+            if (data.messages && data.messages.length > 0) {
+              setMessages(data.messages)
+              setThreadTitle(data.title || formatTitleFromDate(new Date()))
+            }
+          } else {
+            // If thread doesn't exist, clear the stored ID
+            localStorage.removeItem('growfly_last_thread_id')
           }
         })
         .catch((err) => {
           console.error('Failed to load chat history:', err)
+          localStorage.removeItem('growfly_last_thread_id')
         })
     }
   }, [paramThreadId, token])
