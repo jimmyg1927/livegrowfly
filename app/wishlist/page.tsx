@@ -86,6 +86,14 @@ export default function WishlistPage() {
 
   const handleVote = async (id: string, vote: 'positive' | 'negative') => {
     if (!token) return
+    
+    // Find the current item to check existing vote
+    const currentItem = items.find(item => item.id === id)
+    if (!currentItem) return
+    
+    // If user clicks the same vote they already have, remove the vote
+    const finalVote = currentItem.userVote === vote ? 'none' : vote
+    
     try {
       const res = await fetch(`${API_BASE_URL}/api/wishlist/${id}/vote`, {
         method: 'POST',
@@ -93,7 +101,7 @@ export default function WishlistPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ vote }),
+        body: JSON.stringify({ vote: finalVote }),
       })
       if (!res.ok) throw new Error()
       fetchItems()
@@ -111,7 +119,9 @@ export default function WishlistPage() {
     if (sortBy === 'votes') {
       return b.positiveVotes - a.positiveVotes
     }
-    return 0 // Would sort by date if we had timestamps
+    // For recent sorting, we'd ideally use timestamps from the API
+    // For now, we'll reverse the order (assuming newer items are added last)
+    return filteredItems.indexOf(b) - filteredItems.indexOf(a)
   })
 
   const getPopularityBadge = (votes: number) => {
@@ -135,9 +145,26 @@ export default function WishlistPage() {
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
               🎯 Feature Wishlist
             </h1>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-6">
               Help shape the future of Growfly! Suggest features, vote on ideas, and see what&apos;s coming next.
             </p>
+            
+            <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-2xl p-6 max-w-4xl mx-auto">
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-white/20 rounded-xl flex-shrink-0">
+                  <Users className="w-6 h-6" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-lg font-bold mb-2">How It Works</h3>
+                  <p className="text-blue-100 text-sm leading-relaxed">
+                    We review the <strong>most favourited and beneficial suggestions</strong> from our community each month. 
+                    The best ideas get prioritised for development and included in our future updates. 
+                    <strong> Users whose suggestions are chosen for implementation receive special rewards</strong> including 
+                    bonus prompts, early access to features, and recognition in our community highlights!
+                  </p>
+                </div>
+              </div>
+            </div>
           </motion.div>
         </div>
 
@@ -298,7 +325,7 @@ export default function WishlistPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {items.reduce((sum, item) => sum + item.positiveVotes, 0)}
+                  {items.reduce((sum, item) => sum + item.positiveVotes + item.negativeVotes, 0)}
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Total Votes</p>
               </div>
@@ -434,6 +461,7 @@ export default function WishlistPage() {
                         }`}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
+                        title={item.userVote === 'positive' ? 'Remove your upvote' : 'Upvote this feature'}
                       >
                         <ThumbsUp className="w-4 h-4" />
                         <span>{item.positiveVotes}</span>
@@ -448,6 +476,7 @@ export default function WishlistPage() {
                         }`}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
+                        title={item.userVote === 'negative' ? 'Remove your downvote' : 'Downvote this feature'}
                       >
                         <ThumbsDown className="w-4 h-4" />
                         <span>{item.negativeVotes}</span>
