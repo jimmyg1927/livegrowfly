@@ -180,7 +180,7 @@ export default function ChangePlanPage() {
           Change Your Plan
         </h1>
         <p className="text-xl text-gray-700 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
-          You're in complete control. Upgrade or downgrade anytime with no hidden fees. 
+          You&apos;re in complete control. Upgrade or downgrade anytime with no hidden fees. 
           Paid plans unlock advanced AI capabilities, increased limits, and premium features.
         </p>
       </div>
