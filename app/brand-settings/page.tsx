@@ -41,10 +41,10 @@ export default function BrandSettingsPage() {
           return
         }
 
-        console.log('🔍 Fetching user data...')
+        console.log('🔍 Fetching user data from /api/user/settings...')
         
-        // Fetch user settings/profile data
-        const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
+        // Fetch user settings/profile data from the correct endpoint
+        const res = await fetch(`${API_BASE_URL}/api/user/settings`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -83,7 +83,8 @@ export default function BrandSettingsPage() {
           setFormData(mappedData)
         }
       } catch (error) {
-        console.error('❌ Error fetching user settings:', error)
+        const errorMessage = error instanceof Error ? error.message : 'Failed to load brand settings'
+        console.error('❌ Error fetching user settings:', errorMessage, error)
         // In real app: toast.error('Failed to load brand settings.')
       } finally {
         setLoading(false)
@@ -94,7 +95,8 @@ export default function BrandSettingsPage() {
   }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
   }
 
   const handleSave = async () => {
@@ -107,14 +109,16 @@ export default function BrandSettingsPage() {
       const token = localStorage.getItem('growfly_jwt')
       
       if (!token) {
+        alert('❌ No authentication token found - please log in again')
         console.error('❌ No authentication token found')
         return
       }
 
-      console.log('💾 Saving brand settings...', formData)
+      alert('💾 Starting save to /api/user/settings...')
+      console.log('💾 Saving brand settings to /api/user/settings...', formData)
 
-      // Update user profile with brand settings
-      const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      // Update user profile with brand settings using the correct endpoint
+      const res = await fetch(`${API_BASE_URL}/api/user/settings`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -123,16 +127,19 @@ export default function BrandSettingsPage() {
         body: JSON.stringify(formData)
       })
 
+      alert(`📡 Save response status: ${res.status}`)
       console.log('📡 Save response status:', res.status)
 
       if (!res.ok) {
         const errorText = await res.text()
+        alert(`❌ Save failed: ${res.status} - ${errorText}`)
         console.error('❌ Save failed:', errorText)
         throw new Error(`HTTP error! status: ${res.status} - ${errorText}`)
       }
 
-      const updatedUser = await res.json()
-      console.log('✅ Save successful, updated user:', updatedUser)
+      const result = await res.json()
+      alert('✅ Save successful!')
+      console.log('✅ Save successful, result:', result)
       
       // Show success feedback
       setSaveSuccess(true)
@@ -142,6 +149,8 @@ export default function BrandSettingsPage() {
       console.log('🎉 Brand settings saved successfully!')
       
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      alert(`❌ Error: ${errorMessage}`)
       console.error('❌ Error saving brand settings:', error)
       // In real app: toast.error('Failed to save brand settings. Please try again.')
     } finally {
@@ -151,7 +160,7 @@ export default function BrandSettingsPage() {
 
   const renderField = (
     label: string,
-    name: keyof typeof formData,
+    name: string,
     placeholder: string,
     description: string,
     textarea = false
@@ -167,9 +176,10 @@ export default function BrandSettingsPage() {
         <textarea
           id={name}
           name={name}
-          value={formData[name]}
+          value={formData[name as keyof typeof formData] || ''}
           onChange={handleChange}
           placeholder={placeholder}
+          autoComplete="off"
           className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-4 text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
           rows={4}
         />
@@ -178,9 +188,10 @@ export default function BrandSettingsPage() {
           id={name}
           name={name}
           type="text"
-          value={formData[name]}
+          value={formData[name as keyof typeof formData] || ''}
           onChange={handleChange}
           placeholder={placeholder}
+          autoComplete="off"
           className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-4 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
         />
       )}
