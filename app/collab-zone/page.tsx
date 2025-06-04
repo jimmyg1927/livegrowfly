@@ -149,6 +149,19 @@ export default function CollabZonePage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [commentsVisible, setCommentsVisible] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  
+  // Comments state
+  const [comments, setComments] = useState<Array<{
+    id: string
+    text: string
+    author: string
+    timestamp: Date
+    position?: { x: number; y: number }
+    selectedText?: string
+  }>>([])
+  const [newComment, setNewComment] = useState('')
+  const [selectedText, setSelectedText] = useState('')
+  const [showCommentForm, setShowCommentForm] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem('growfly_jwt')
