@@ -103,7 +103,7 @@ function InteractivePromptBuilder() {
   const [selectedTone, setSelectedTone] = useState('professional');
   const [context, setContext] = useState('');
 
-  const actions = ['Write', 'Generate', 'Create', 'Summarise', 'Analyze'];
+  const actions = ['Write', 'Generate', 'Create', 'Summarise', 'Analyse'];
   const contentTypes = ['email', 'social media post', 'blog article', 'product description', 'strategy', 'presentation'];
   const audiences = ['customers', 'team members', 'investors', 'Gen Z audience', 'B2B clients', 'executives'];
   const tones = ['professional', 'casual', 'friendly', 'authoritative', 'creative', 'persuasive'];
@@ -371,7 +371,7 @@ export default function NerdModePage() {
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
               Master AI-powered growth with our comprehensive prompt library. From marketing campaigns to financial planning, 
-              we've got the prompts that turn your ideas into results.
+              we&apos;ve got the prompts that turn your ideas into results.
             </p>
           </motion.div>
         </div>
@@ -406,7 +406,7 @@ export default function NerdModePage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Brain className="w-4 h-4" />
-                  <span>Summarize PDFs and documents instantly</span>
+                  <span>Summarise PDFs and documents instantly</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Zap className="w-4 h-4" />
