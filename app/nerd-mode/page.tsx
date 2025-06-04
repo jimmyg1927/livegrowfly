@@ -193,7 +193,7 @@ function InteractivePromptBuilder() {
           </button>
         </div>
         <p className="text-gray-800 dark:text-gray-200 font-medium bg-white dark:bg-slate-800 rounded-lg p-4 border border-gray-200 dark:border-slate-600">
-          "{generatedPrompt}"
+          &quot;{generatedPrompt}&quot;
         </p>
       </div>
 
@@ -222,7 +222,7 @@ function UseCaseScenarios() {
   const scenarios = {
     'startup-founder': {
       title: '🚀 Startup Founder',
-      morning: 'Review yesterday\'s metrics and plan today\'s priorities',
+      morning: 'Review yesterday&apos;s metrics and plan today&apos;s priorities',
       tasks: [
         { time: '9:00 AM', task: 'Analyze user feedback', prompt: 'Summarize this user feedback into 3 key themes and suggest actionable improvements.' },
         { time: '10:30 AM', task: 'Investor update email', prompt: 'Write a monthly investor update highlighting our 40% user growth and new feature launches.' },
