@@ -14,6 +14,11 @@ import {
   FaChartLine,
   FaBrain,
   FaUsers,
+  FaFilePdf,
+  FaFileImage,
+  FaFileAlt,
+  FaTimes,
+  FaPaperclip
 } from 'react-icons/fa'
 import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
@@ -29,12 +34,67 @@ type Message = {
   content: string
   imageUrl?: string
   followUps?: string[]
+  files?: UploadedFile[]
+}
+
+interface UploadedFile {
+  id: string
+  name: string
+  type: string
+  size: number
+  url?: string
+  preview?: string
+  content?: string
 }
 
 const PROMPT_LIMITS: Record<string, number> = {
   free: 20,
   personal: 400,
   business: 2000,
+}
+
+// File Preview Component
+const FilePreview: React.FC<{ file: UploadedFile; onRemove: () => void }> = ({ file, onRemove }) => {
+  const getFileIcon = () => {
+    if (file.type.startsWith('image/')) {
+      return file.preview ? (
+        <img src={file.preview} alt={file.name} className="w-12 h-12 object-cover rounded border-2 border-gray-200" />
+      ) : (
+        <FaFileImage className="w-12 h-12 text-blue-500" />
+      )
+    } else if (file.type === 'application/pdf') {
+      return <FaFilePdf className="w-12 h-12 text-red-500" />
+    } else {
+      return <FaFileAlt className="w-12 h-12 text-gray-500" />
+    }
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
+
+  return (
+    <div className="relative bg-gray-50 dark:bg-slate-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+      <button
+        onClick={onRemove}
+        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+      >
+        <FaTimes className="w-3 h-3" />
+      </button>
+      <div className="flex items-center gap-3">
+        {getFileIcon()}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{file.name}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{formatFileSize(file.size)}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">{file.type}</p>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // Quick categories for collapsible bar
@@ -78,19 +138,10 @@ function DashboardContent() {
   const promptsUsed = user?.promptsUsed ?? 0
   const promptsRemaining = Math.max(0, promptLimit - promptsUsed)
   const usagePercentage = Math.min(100, (promptsUsed / promptLimit) * 100)
-  
-  // Debug logging for prompt tracking (commented out for production)
-  // console.log('📊 Prompt tracking debug:', {
-  //   subscriptionType: user?.subscriptionType,
-  //   promptLimit,
-  //   promptsUsed,
-  //   promptsRemaining,
-  //   usagePercentage: usagePercentage.toFixed(1) + '%'
-  // })
 
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [threadId, setThreadId] = useState<string | null>(null)
   const [threadTitle, setThreadTitle] = useState('')
   const [showSaveModal, setShowSaveModal] = useState(false)
@@ -101,6 +152,7 @@ function DashboardContent() {
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null)
   const [isUserScrolling, setIsUserScrolling] = useState(false)
   const [showCategories, setShowCategories] = useState(true)
+  const [currentSaveMessageId, setCurrentSaveMessageId] = useState<string | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
@@ -123,7 +175,7 @@ function DashboardContent() {
     setThreadTitle('')
     setError(null)
     setInput('')
-    setSelectedFile(null)
+    setUploadedFiles([])
     localStorage.removeItem('growfly_last_thread_id')
     
     // Also clear the URL parameter to prevent reload
@@ -259,6 +311,46 @@ function DashboardContent() {
     }
   }, [messages, isUserScrolling, isStreaming])
 
+  // Enhanced file handling
+  const handleFileSelect = (files: FileList) => {
+    Array.from(files).forEach(file => {
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        setError(`File ${file.name} is too large. Maximum size is 10MB.`)
+        return
+      }
+
+      const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      const newFile: UploadedFile = {
+        id: fileId,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+      }
+
+      // Generate preview for images
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          setUploadedFiles(prev => prev.map(f => 
+            f.id === fileId ? { ...f, preview: e.target?.result as string } : f
+          ))
+        }
+        reader.readAsDataURL(file)
+      }
+
+      // Extract text from PDFs (simplified)
+      if (file.type === 'application/pdf') {
+        newFile.content = `PDF file: ${file.name}`
+      }
+
+      setUploadedFiles(prev => [...prev, newFile])
+    })
+  }
+
+  const removeFile = (fileId: string) => {
+    setUploadedFiles(prev => prev.filter(f => f.id !== fileId))
+  }
+
   const fetchFollowUps = async (text: string): Promise<string[]> => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/ai/followups`, {
@@ -287,8 +379,6 @@ function DashboardContent() {
     setIsLoading(true)
     setIsStreaming(true)
     setError(null)
-
-    // console.log('🚀 Starting stream for prompt:', prompt)
 
     // Initialize empty message
     setMessages((prev) =>
@@ -323,15 +413,12 @@ function DashboardContent() {
           }
         },
         onComplete: async () => {
-          // console.log('✅ Stream completed. Full content:', fullContent)
           setIsLoading(false)
           setIsStreaming(false)
           
           // Get follow-ups if not provided
           if (!followUps.length && fullContent.trim()) {
-            // console.log('🔍 Fetching follow-ups...')
             followUps = await fetchFollowUps(fullContent)
-            // console.log('📋 Follow-ups received:', followUps)
           }
           
           // Update final message with follow-ups
@@ -345,8 +432,6 @@ function DashboardContent() {
           if (user) {
             const newPromptsUsed = (user.promptsUsed ?? 0) + 1
             const newXP = (user.totalXP ?? 0) + 2.5
-            
-            // console.log('💾 Updating user data:', { promptsUsed: newPromptsUsed, totalXP: newXP })
             
             // Update local state first
             setUser({
@@ -370,16 +455,13 @@ function DashboardContent() {
               })
               
               if (updateResponse.ok) {
-                // console.log('✅ User data synced to database')
-                
                 // Fetch fresh user data to ensure sync
-                const freshDataResponse = await fetch(`${API_BASE_URL}/api/auth/me`, {  // ← Add API_BASE_URL
+                const freshDataResponse = await fetch(`${API_BASE_URL}/api/auth/me`, {
                   headers: { Authorization: `Bearer ${token}` }
                 })
                 
                 if (freshDataResponse.ok) {
                   const freshUserData = await freshDataResponse.json()
-                  // console.log('🔄 Refreshed user data after update:', freshUserData)
                   setUser(freshUserData)
                 }
               } else {
@@ -425,12 +507,11 @@ function DashboardContent() {
 
   const handleSubmit = async (override?: string) => {
     const text = override || input.trim()
-    if (!text && !selectedFile) return
+    if (!text && uploadedFiles.length === 0) return
 
     setError(null)
 
     // Use the latest user data for prompt limit check
-    // console.log('🔍 Checking prompt limit - Used:', promptsUsed, 'Limit:', promptLimit, 'Plan:', user?.subscriptionType)
     if (promptsUsed >= promptLimit) {
       const planType = user?.subscriptionType?.toLowerCase() || 'free'
       const periodText = planType === 'free' ? 'daily' : 'monthly'
@@ -447,18 +528,27 @@ function DashboardContent() {
     }
 
     const uId = `u${Date.now()}`
-    const userMessage = { id: uId, role: 'user' as const, content: text }
+    const userMessage = { 
+      id: uId, 
+      role: 'user' as const, 
+      content: text,
+      files: uploadedFiles.length > 0 ? [...uploadedFiles] : undefined
+    }
     setMessages((prev) => [...prev, userMessage])
     setInput('')
+    setUploadedFiles([]) // Clear uploaded files after sending
     
     const aId = `a${Date.now()}`
     setMessages((prev) => [...prev, { id: aId, role: 'assistant', content: '' }])
 
-    if (selectedFile) {
-      // Handle file upload
-      const reader = new FileReader()
-      reader.onload = async () => {
-        const base64 = reader.result as string
+    // Handle file uploads (enhanced)
+    if (uploadedFiles.length > 0) {
+      // For now, include file info in the prompt and use existing image analysis for images
+      const imageFiles = uploadedFiles.filter(f => f.type.startsWith('image/'))
+      const otherFiles = uploadedFiles.filter(f => !f.type.startsWith('image/'))
+      
+      if (imageFiles.length > 0 && imageFiles[0].preview) {
+        // Use existing image analysis for the first image
         try {
           setIsLoading(true)
           const res = await fetch(`${API_BASE_URL}/api/ai/image`, {
@@ -467,14 +557,14 @@ function DashboardContent() {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ imageBase64: base64, message: text }),
+            body: JSON.stringify({ imageBase64: imageFiles[0].preview, message: text }),
           })
           
           const data = await res.json()
           setMessages((prev) =>
             prev.map((msg) =>
               msg.id === aId
-                ? { ...msg, content: data.content, imageUrl: base64 }
+                ? { ...msg, content: data.content, imageUrl: imageFiles[0].preview }
                 : msg
             )
           )
@@ -491,11 +581,72 @@ function DashboardContent() {
           )
           setIsLoading(false)
         }
+      } else {
+        // Handle other files with enhanced prompt
+        const fileInfo = uploadedFiles.map(f => `[File: ${f.name} (${f.type})]`).join('\n')
+        const enhancedPrompt = `${text}\n\nAttached files:\n${fileInfo}`
+        handleStream(enhancedPrompt, aId)
       }
-      reader.readAsDataURL(selectedFile)
-      setSelectedFile(null)
     } else {
       handleStream(text, aId)
+    }
+  }
+
+  // ✅ FIXED: Save to Collab Zone (correct endpoint)
+  const handleSaveToCollabZone = async (title: string, messageId: string) => {
+    try {
+      // Get the specific message content
+      const message = messages.find(m => m.id === messageId)
+      if (!message || message.role !== 'assistant') {
+        throw new Error('Invalid message to save')
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/collab`, {  // ✅ FIXED: Correct endpoint
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ 
+          title, 
+          content: message.content,
+          type: 'document'
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to save to Collab Zone')
+      }
+
+      const result = await response.json()
+      setShowSaveModal(false)
+      setError(null)
+      
+      return result
+    } catch (error) {
+      console.error('Error saving to Collab Zone:', error)
+      setError('Failed to save to Collab Zone. Please try again.')
+      return null
+    }
+  }
+
+  // ✅ FIXED: Share to Collab Zone (save then redirect)
+  const handleShareToCollabZone = async (messageId: string) => {
+    const message = messages.find(m => m.id === messageId)
+    if (!message || message.role !== 'assistant') return
+
+    try {
+      // First save to Collab Zone with auto-generated title
+      const autoTitle = `Shared Response - ${new Date().toLocaleDateString()}`
+      const result = await handleSaveToCollabZone(autoTitle, messageId)
+      
+      if (result) {
+        // Then redirect to Collab Zone with the document ID
+        router.push(`/collab-zone?document=${result.id}`)
+      }
+    } catch (error) {
+      console.error('Error sharing to Collab Zone:', error)
+      setError('Failed to share to Collab Zone. Please try again.')
     }
   }
 
@@ -666,6 +817,27 @@ function DashboardContent() {
                     : 'bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-gray-800 dark:text-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm'
                 }`}
               >
+                {/* ✅ ENHANCED: Display uploaded files for user messages */}
+                {msg.role === 'user' && msg.files && msg.files.length > 0 && (
+                  <div className="mb-4 space-y-2">
+                    <p className="text-xs text-blue-100 font-medium">📎 Attached Files:</p>
+                    <div className="grid grid-cols-1 gap-2">
+                      {msg.files.map((file) => (
+                        <div key={file.id} className="bg-blue-500/20 rounded-lg p-2 flex items-center gap-2">
+                          {file.type.startsWith('image/') && file.preview ? (
+                            <img src={file.preview} alt={file.name} className="w-8 h-8 object-cover rounded" />
+                          ) : file.type === 'application/pdf' ? (
+                            <FaFilePdf className="w-6 h-6 text-red-300" />
+                          ) : (
+                            <FaFileAlt className="w-6 h-6 text-gray-300" />
+                          )}
+                          <span className="text-xs text-blue-100">{file.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {msg.imageUrl && (
                   <Image
                     src={msg.imageUrl}
@@ -705,7 +877,7 @@ function DashboardContent() {
                       </div>
                     )}
 
-                    {/* Action Buttons */}
+                    {/* ✅ ENHANCED: Action Buttons with individual message saving */}
                     <div className="flex gap-4 mt-4 text-lg text-gray-500 dark:text-gray-400">
                       <HiThumbUp
                         className="cursor-pointer hover:text-green-500 transition-colors duration-200 transform hover:scale-110"
@@ -717,11 +889,14 @@ function DashboardContent() {
                       />
                       <FaRegBookmark
                         className="cursor-pointer hover:text-yellow-500 transition-colors duration-200 transform hover:scale-110"
-                        onClick={() => setShowSaveModal(true)}
+                        onClick={() => {
+                          setCurrentSaveMessageId(msg.id)
+                          setShowSaveModal(true)
+                        }}
                       />
                       <FaShareSquare
                         className="cursor-pointer hover:text-blue-500 transition-colors duration-200 transform hover:scale-110"
-                        onClick={() => router.push('/collab-zone')}
+                        onClick={() => handleShareToCollabZone(msg.id)}
                       />
                       {msg.imageUrl && (
                         <FaFileDownload className="cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 transform hover:scale-110" />
@@ -737,7 +912,37 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* Fixed Input Section at Bottom - now part of the layout */}
+      {/* ✅ ENHANCED: File Upload Preview */}
+      {uploadedFiles.length > 0 && (
+        <div className="px-6 pb-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  📎 Attached Files ({uploadedFiles.length})
+                </h4>
+                <button
+                  onClick={() => setUploadedFiles([])}
+                  className="text-xs text-red-600 hover:text-red-800 font-medium"
+                >
+                  Clear All
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {uploadedFiles.map((file) => (
+                  <FilePreview
+                    key={file.id}
+                    file={file}
+                    onRemove={() => removeFile(file.id)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ ENHANCED: Fixed Input Section with multiple file support */}
       <div className="bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 p-6 shadow-2xl">
         <div className="max-w-4xl mx-auto">
           <div className="bg-gray-50 dark:bg-slate-700 rounded-2xl p-4 shadow-inner">
@@ -766,13 +971,9 @@ function DashboardContent() {
                       : 'border-blue-500 text-blue-600 bg-blue-50 hover:bg-blue-100 hover:border-blue-600 shadow-sm hover:shadow-md transform hover:scale-[1.02]'
                   }`}
                 >
-                  📎 <span className="text-sm font-medium">Upload Image / PDF</span>
+                  <FaPaperclip className="text-sm" />
+                  <span className="text-sm font-medium">Upload Files</span>
                 </div>
-                {selectedFile && (
-                  <p className="text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-slate-700 px-3 py-1 rounded-full">
-                    📄 {selectedFile.name}
-                  </p>
-                )}
               </div>
               
               <div className="flex items-center gap-3">
@@ -783,7 +984,7 @@ function DashboardContent() {
                 )}
                 <button
                   onClick={() => handleSubmit()}
-                  disabled={(!input.trim() && !selectedFile) || isLoading || isStreaming || promptsUsed >= promptLimit}
+                  disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || promptsUsed >= promptLimit}
                   className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white font-semibold px-6 py-3 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
                 >
                   {isLoading || isStreaming ? (
@@ -799,33 +1000,31 @@ function DashboardContent() {
             
             <input
               type="file"
-              accept="image/*,application/pdf"
+              accept="image/*,application/pdf,.txt,.doc,.docx"
               onChange={(e) => {
-                const file = e.target.files?.[0]
-                if (file) setSelectedFile(file)
+                const files = e.target.files
+                if (files) handleFileSelect(files)
               }}
               className="hidden"
               ref={fileInputRef}
               disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+              multiple
             />
           </div>
         </div>
       </div>
 
-      {/* Modals */}
+      {/* ✅ FIXED: Modals with enhanced save functionality */}
       <SaveModal
         open={showSaveModal}
-        onClose={() => setShowSaveModal(false)}
-        onConfirm={async (title: string) => {
-          await fetch(`${API_BASE_URL}/api/ai/saveResponse`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ title }),
-          })
+        onClose={() => {
           setShowSaveModal(false)
+          setCurrentSaveMessageId(null)
+        }}
+        onConfirm={async (title: string) => {
+          if (currentSaveMessageId) {
+            await handleSaveToCollabZone(title, currentSaveMessageId)
+          }
         }}
       />
 
