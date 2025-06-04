@@ -79,14 +79,14 @@ function DashboardContent() {
   const promptsRemaining = Math.max(0, promptLimit - promptsUsed)
   const usagePercentage = Math.min(100, (promptsUsed / promptLimit) * 100)
   
-  // Debug logging for prompt tracking
-  console.log('📊 Prompt tracking debug:', {
-    subscriptionType: user?.subscriptionType,
-    promptLimit,
-    promptsUsed,
-    promptsRemaining,
-    usagePercentage: usagePercentage.toFixed(1) + '%'
-  })
+  // Debug logging for prompt tracking (commented out for production)
+  // console.log('📊 Prompt tracking debug:', {
+  //   subscriptionType: user?.subscriptionType,
+  //   promptLimit,
+  //   promptsUsed,
+  //   promptsRemaining,
+  //   usagePercentage: usagePercentage.toFixed(1) + '%'
+  // })
 
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
@@ -136,7 +136,7 @@ function DashboardContent() {
     
     const fetchUserData = async () => {
       try {
-        console.log('🔄 Fetching fresh user data from database...')
+        // console.log('🔄 Fetching fresh user data from database...')
         const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
           method: 'GET',
           headers: { 
@@ -146,24 +146,23 @@ function DashboardContent() {
           credentials: 'include', // Add credentials for CORS
         })
         
-        console.log('📡 Response status:', response.status)
+        // console.log('📡 Response status:', response.status)
         
         if (response.ok) {
           const userData = await response.json()
-          console.log('✅ Fetched fresh user data from database:', userData)
-          console.log('📊 Current prompts used:', userData.promptsUsed, 'Plan:', userData.subscriptionType)
+          // console.log('✅ Fetched fresh user data from database:', userData)
+          // console.log('📊 Current prompts used:', userData.promptsUsed, 'Plan:', userData.subscriptionType)
           
           // Ensure we have the latest data
           setUser(userData)
           
-          // Force re-render of prompt counter by updating state
-          console.log('🎯 Setting user data - Prompts:', userData.promptsUsed, 'Limit:', PROMPT_LIMITS[userData?.subscriptionType?.toLowerCase() || 'free'])
+          // console.log('🎯 Setting user data - Prompts:', userData.promptsUsed, 'Limit:', PROMPT_LIMITS[userData?.subscriptionType?.toLowerCase() || 'free'])
           
         } else {
           console.error('❌ Failed to fetch user data:', response.status, response.statusText)
           
           // Try alternative API endpoint if main one fails
-          console.log('🔄 Trying alternative API endpoint...')
+          // console.log('🔄 Trying alternative API endpoint...')
           try {
             const altResponse = await fetch(`/api/user/profile`, {
               method: 'GET',
@@ -175,7 +174,7 @@ function DashboardContent() {
             
             if (altResponse.ok) {
               const userData = await altResponse.json()
-              console.log('✅ Fetched user data from alternative endpoint:', userData)
+              // console.log('✅ Fetched user data from alternative endpoint:', userData)
               setUser(userData)
             } else {
               console.error('❌ Alternative endpoint also failed:', altResponse.status)
@@ -193,7 +192,7 @@ function DashboardContent() {
         console.error('❌ Error fetching user data:', error)
         
         // Try local storage fallback or set default values
-        console.log('🔄 Setting default values due to fetch error')
+        // console.log('🔄 Setting default values due to fetch error')
         // Don't redirect on network errors, just log them
       }
     }
@@ -310,7 +309,7 @@ function DashboardContent() {
     setIsStreaming(true)
     setError(null)
 
-    console.log('🚀 Starting stream for prompt:', prompt)
+    // console.log('🚀 Starting stream for prompt:', prompt)
 
     // Initialize empty message
     setMessages((prev) =>
@@ -345,15 +344,15 @@ function DashboardContent() {
           }
         },
         onComplete: async () => {
-          console.log('✅ Stream completed. Full content:', fullContent)
+          // console.log('✅ Stream completed. Full content:', fullContent)
           setIsLoading(false)
           setIsStreaming(false)
           
           // Get follow-ups if not provided
           if (!followUps.length && fullContent.trim()) {
-            console.log('🔍 Fetching follow-ups...')
+            // console.log('🔍 Fetching follow-ups...')
             followUps = await fetchFollowUps(fullContent)
-            console.log('📋 Follow-ups received:', followUps)
+            // console.log('📋 Follow-ups received:', followUps)
           }
           
           // Update final message with follow-ups
@@ -368,7 +367,7 @@ function DashboardContent() {
             const newPromptsUsed = (user.promptsUsed ?? 0) + 1
             const newXP = (user.totalXP ?? 0) + 2.5
             
-            console.log('💾 Updating user data:', { promptsUsed: newPromptsUsed, totalXP: newXP })
+            // console.log('💾 Updating user data:', { promptsUsed: newPromptsUsed, totalXP: newXP })
             
             // Update local state first
             setUser({
@@ -392,7 +391,7 @@ function DashboardContent() {
               })
               
               if (updateResponse.ok) {
-                console.log('✅ User data synced to database')
+                // console.log('✅ User data synced to database')
                 
                 // Fetch fresh user data to ensure sync
                 const freshDataResponse = await fetch(`${API_BASE_URL}/api/user/profile`, {
@@ -401,7 +400,7 @@ function DashboardContent() {
                 
                 if (freshDataResponse.ok) {
                   const freshUserData = await freshDataResponse.json()
-                  console.log('🔄 Refreshed user data after update:', freshUserData)
+                  // console.log('🔄 Refreshed user data after update:', freshUserData)
                   setUser(freshUserData)
                 }
               } else {
@@ -452,7 +451,7 @@ function DashboardContent() {
     setError(null)
 
     // Use the latest user data for prompt limit check
-    console.log('🔍 Checking prompt limit - Used:', promptsUsed, 'Limit:', promptLimit, 'Plan:', user?.subscriptionType)
+    // console.log('🔍 Checking prompt limit - Used:', promptsUsed, 'Limit:', promptLimit, 'Plan:', user?.subscriptionType)
     if (promptsUsed >= promptLimit) {
       const planType = user?.subscriptionType?.toLowerCase() || 'free'
       const periodText = planType === 'free' ? 'daily' : 'monthly'
@@ -669,7 +668,7 @@ function DashboardContent() {
                   Ready to get started? Click one of the Quick Start buttons above or type your question in the box below to begin your first conversation.
                 </p>
                 <div className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                  ✨ Choose a Quick Start option or ask anything you'd like!
+                  ✨ Choose a Quick Start option or ask anything you&apos;d like!
                 </div>
               </div>
             </div>
