@@ -3,8 +3,12 @@
 import React, { useEffect, useState } from 'react'
 import { Loader2, Save } from 'lucide-react'
 
-// Mock API_BASE_URL for artifact
-const API_BASE_URL = 'https://api.example.com'
+// In your real app, import these properly:
+// import { toast } from 'react-hot-toast'
+// import { API_BASE_URL } from '@lib/constants'
+
+// Mock for artifact
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.example.com'
 
 export default function BrandSettingsPage() {
   const [formData, setFormData] = useState({
@@ -29,26 +33,56 @@ export default function BrandSettingsPage() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null
-        const res = await fetch(`${API_BASE_URL}/api/user/settings`, {
+        const token = localStorage.getItem('growfly_jwt')
+        if (!token) {
+          console.error('No authentication token found')
+          setLoading(false)
+          return
+        }
+
+        // Fetch user settings/profile data
+        const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
+          method: 'GET',
           headers: {
-            Authorization: `Bearer ${token}`,
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
           },
         })
-        const data = await res.json()
-        if (data) {
+
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`)
+        }
+
+        const userData = await res.json()
+        console.log('Fetched user data:', userData)
+
+        if (userData) {
+          // Map the user data to form fields
           setFormData(prev => ({
             ...prev,
-            ...data
+            brandName: userData.brandName || '',
+            brandDescription: userData.brandDescription || '',
+            brandValues: userData.brandValues || '',
+            brandTone: userData.brandTone || '',
+            brandVoice: userData.brandVoice || '',
+            brandMission: userData.brandMission || '',
+            audienceType: userData.audienceType || '',
+            audienceInterests: userData.audienceInterests || '',
+            locationFocus: userData.locationFocus || '',
+            platformFocus: userData.platformFocus || '',
+            primaryProducts: userData.primaryProducts || '',
+            USP: userData.USP || '',
+            inspiredBy: userData.inspiredBy || '',
           }))
         }
-      } catch {
-        // Toast would be called here in real app
-        console.error('Failed to load brand settings.')
+      } catch (error) {
+        console.error('Error fetching user settings:', error)
+        // In real app: toast.error('Failed to load brand settings.')
       } finally {
         setLoading(false)
       }
     }
+    
     fetchSettings()
   }, [])
 
@@ -57,22 +91,40 @@ export default function BrandSettingsPage() {
   }
 
   const handleSave = async () => {
+    if (saving) return
+    
     try {
       setSaving(true)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') : null
-      await fetch(`${API_BASE_URL}/api/user/settings`, {
+      const token = localStorage.getItem('growfly_jwt')
+      
+      if (!token) {
+        console.error('No authentication token found')
+        return
+      }
+
+      // Update user profile with brand settings
+      const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
         method: 'PUT',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(formData)
       })
-      // Toast would be called here in real app
-      console.log('Brand settings saved!')
-    } catch {
-      // Toast would be called here in real app
-      console.error('Something went wrong saving your settings.')
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`)
+      }
+
+      const updatedUser = await res.json()
+      console.log('Updated user data:', updatedUser)
+      
+      // In real app: toast.success('Brand settings saved successfully!')
+      console.log('Brand settings saved successfully!')
+      
+    } catch (error) {
+      console.error('Error saving brand settings:', error)
+      // In real app: toast.error('Failed to save brand settings. Please try again.')
     } finally {
       setSaving(false)
     }
