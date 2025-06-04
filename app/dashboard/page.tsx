@@ -142,7 +142,7 @@ function DashboardContent() {
     const fetchUserData = async () => {
       try {
         // Try relative URL first to avoid CORS issues
-        const response = await fetch('/api/user/profile', {
+        const response = await fetch('/api/user', {  // ← CHANGED: removed "/profile"
           method: 'GET',
           headers: { 
             'Authorization': `Bearer ${token}`,
