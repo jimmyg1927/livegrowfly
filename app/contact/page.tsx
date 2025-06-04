@@ -55,7 +55,7 @@ export default function ContactPage() {
           
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-6">
             <p className="text-sm text-blue-800 dark:text-blue-300">
-              💡 <strong>What happens next?</strong> We'll review your requirements and prepare a custom proposal tailored specifically to your business needs.
+              💡 <strong>What happens next?</strong> We&apos;ll review your requirements and prepare a custom proposal tailored specifically to your business needs.
             </p>
           </div>
           
