@@ -158,10 +158,134 @@ export default function CollabZonePage() {
     timestamp: Date
     position?: { x: number; y: number }
     selectedText?: string
+    documentId?: string
+    isRead?: boolean
   }>>([])
   const [newComment, setNewComment] = useState('')
   const [selectedText, setSelectedText] = useState('')
   const [showCommentForm, setShowCommentForm] = useState(false)
+  const [highlightedTextId, setHighlightedTextId] = useState<string | null>(null)
+  const [documentViewTimes, setDocumentViewTimes] = useState<Record<string, number>>({})
+
+  // Track document view time for auto-read
+  useEffect(() => {
+    if (!activeDoc) return
+    
+    const startTime = Date.now()
+    const timer = setTimeout(() => {
+      // Mark comments as read after 5 seconds
+      setComments(prev => prev.map(comment => 
+        comment.documentId === activeDoc.id ? { ...comment, isRead: true } : comment
+      ))
+    }, 5000)
+
+    return () => {
+      clearTimeout(timer)
+      const viewTime = Date.now() - startTime
+      setDocumentViewTimes(prev => ({
+        ...prev,
+        [activeDoc.id]: (prev[activeDoc.id] || 0) + viewTime
+      }))
+    }
+  }, [activeDoc?.id])
+
+  // Get unread comment count for a document
+  const getUnreadCount = (docId: string) => {
+    return comments.filter(c => c.documentId === docId && !c.isRead).length
+  }
+
+  // Handle text selection with persistent highlighting
+  const handleTextSelection = () => {
+    const selection = window.getSelection()
+    if (selection && selection.toString().trim()) {
+      const selectedText = selection.toString().trim()
+      const range = selection.getRangeAt(0)
+      
+      // Create unique ID for this selection
+      const highlightId = `highlight_${Date.now()}`
+      
+      // Wrap selected text in a highlight span
+      try {
+        const span = document.createElement('span')
+        span.className = 'comment-highlight'
+        span.id = highlightId
+        span.style.backgroundColor = '#3b82f6'
+        span.style.color = 'white'
+        span.style.padding = '2px 4px'
+        span.style.borderRadius = '4px'
+        span.style.fontWeight = '500'
+        
+        range.surroundContents(span)
+        selection.removeAllRanges()
+        
+        setSelectedText(selectedText)
+        setHighlightedTextId(highlightId)
+        setShowCommentForm(true)
+        setCommentsVisible(true)
+      } catch (error) {
+        // Fallback if surrounding fails
+        setSelectedText(selectedText)
+        setShowCommentForm(true)
+        setCommentsVisible(true)
+      }
+    }
+  }
+
+  // Add comment with persistent highlighting
+  const addComment = () => {
+    if (!newComment.trim() || !activeDoc) return
+    
+    const comment = {
+      id: `comment_${Date.now()}`,
+      text: newComment,
+      author: 'You',
+      timestamp: new Date(),
+      selectedText: selectedText || undefined,
+      documentId: activeDoc.id,
+      isRead: false
+    }
+    
+    setComments(prev => [...prev, comment])
+    setNewComment('')
+    setSelectedText('')
+    setShowCommentForm(false)
+    
+    // Keep the highlight but change its color to indicate it has a comment
+    if (highlightedTextId) {
+      const highlightElement = document.getElementById(highlightedTextId)
+      if (highlightElement) {
+        highlightElement.style.backgroundColor = '#10b981' // Green for commented
+        highlightElement.style.cursor = 'pointer'
+        highlightElement.title = 'This text has a comment'
+      }
+    }
+    setHighlightedTextId(null)
+  }
+
+  // Cancel comment and remove highlight
+  const cancelComment = () => {
+    if (highlightedTextId) {
+      const highlightElement = document.getElementById(highlightedTextId)
+      if (highlightElement) {
+        // Remove the highlight span and restore original text
+        const parent = highlightElement.parentNode
+        if (parent) {
+          parent.replaceChild(document.createTextNode(highlightElement.textContent || ''), highlightElement)
+          parent.normalize()
+        }
+      }
+    }
+    
+    setShowCommentForm(false)
+    setSelectedText('')
+    setNewComment('')
+    setHighlightedTextId(null)
+  }
+
+  // Delete comment
+  const deleteComment = (commentId: string) => {
+    setComments(prev => prev.filter(c => c.id !== commentId))
+  }
 
   useEffect(() => {
     const token = localStorage.getItem('growfly_jwt')
@@ -347,7 +471,7 @@ export default function CollabZonePage() {
   if (isFullscreen && activeDoc) {
     return (
       <div className="fixed inset-0 bg-white dark:bg-slate-900 z-50 flex flex-col">
-        {/* Fullscreen Header */}
+        {/* Fullscreen Header with ALL buttons visible */}
         <header className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
@@ -361,6 +485,23 @@ export default function CollabZonePage() {
             </h2>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCommentsVisible(!commentsVisible)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-colors ${
+                commentsVisible 
+                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' 
+                  : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600'
+              }`}
+              title="Toggle Comments"
+            >
+              <MessageSquare className="w-4 h-4" />
+              {commentsVisible ? 'Hide' : 'Show'} Comments
+              {comments.filter(c => c.documentId === activeDoc.id && !c.isRead).length > 0 && (
+                <span className="bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                  {comments.filter(c => c.documentId === activeDoc.id && !c.isRead).length}
+                </span>
+              )}
+            </button>
             <button
               onClick={() => setShowShareModal(true)}
               className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
@@ -378,17 +519,143 @@ export default function CollabZonePage() {
           </div>
         </header>
 
-        {/* Fullscreen Editor */}
-        <div className="flex-1 p-6 overflow-hidden">
-          <div className="h-full bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
-            <Editor
-              key={`fullscreen-${activeDoc.id}`}
-              content={activeDoc.content}
-              setContent={(html: string) => setActiveDoc({ ...activeDoc, content: html })}
-              docId={activeDoc.id}
-              showComments={false}
-            />
+        {/* Fullscreen Editor with comments support */}
+        <div className="flex-1 overflow-hidden flex">
+          <div className={`${commentsVisible ? 'flex-1' : 'w-full'} transition-all duration-300`}>
+            <div className="h-full p-6 overflow-hidden">
+              <div className="h-full bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+                <div className="h-full overflow-y-auto" onMouseUp={handleTextSelection}>
+                  <Editor
+                    key={`fullscreen-${activeDoc.id}`}
+                    content={activeDoc.content}
+                    setContent={(html: string) => setActiveDoc({ ...activeDoc, content: html })}
+                    docId={activeDoc.id}
+                    showComments={false}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
+
+          {/* Comments panel in fullscreen */}
+          {commentsVisible && (
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 320, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white dark:bg-slate-800 border-l border-gray-200 dark:border-slate-700 flex flex-col overflow-hidden"
+            >
+              {/* Comments Header */}
+              <div className="p-4 border-b border-gray-200 dark:border-slate-700">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4" />
+                    Comments
+                  </h3>
+                  <button
+                    onClick={() => setCommentsVisible(false)}
+                    className="p-1 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Comments Content */}
+              <div className="flex-1 overflow-y-auto p-4">
+                {comments.filter(c => c.documentId === activeDoc.id).length === 0 ? (
+                  <div className="text-center py-8">
+                    <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">
+                      No comments yet
+                    </p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                      Select text to add comments
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {comments.filter(c => c.documentId === activeDoc.id).map((comment) => (
+                      <div key={comment.id} className={`bg-gray-50 dark:bg-slate-700 rounded-lg p-3 border ${comment.isRead ? 'border-gray-200 dark:border-slate-600' : 'border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20'}`}>
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                              {comment.author.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="text-sm font-medium text-gray-900 dark:text-white">
+                              {comment.author}
+                            </span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {formatDistanceToNow(comment.timestamp, { addSuffix: true })}
+                            </span>
+                            {!comment.isRead && (
+                              <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">
+                                New
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => deleteComment(comment.id)}
+                            className="p-1 hover:bg-gray-200 dark:hover:bg-slate-600 rounded text-gray-400 hover:text-red-500"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                        
+                        {comment.selectedText && (
+                          <div className="mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border-l-2 border-blue-500">
+                            <p className="text-xs text-gray-600 dark:text-gray-400 italic">
+                              "{comment.selectedText}"
+                            </p>
+                          </div>
+                        )}
+                        
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                          {comment.text}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Add Comment Form in fullscreen */}
+              <div className="p-4 border-t border-gray-200 dark:border-slate-700">
+                {showCommentForm && selectedText && (
+                  <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border-l-2 border-blue-500">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Selected text:</p>
+                    <p className="text-xs text-gray-700 dark:text-gray-300 italic">"{selectedText}"</p>
+                  </div>
+                )}
+                
+                <textarea
+                  placeholder={selectedText ? "Add a comment about the selected text..." : "Add a general comment..."}
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  className="w-full p-3 border border-gray-200 dark:border-slate-600 rounded-xl bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={3}
+                />
+                <div className="flex justify-between items-center mt-2">
+                  {showCommentForm && (
+                    <button 
+                      onClick={cancelComment}
+                      className="px-3 py-1 text-gray-500 hover:text-gray-700 text-sm"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  <button 
+                    onClick={addComment}
+                    disabled={!newComment.trim()}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
+                  >
+                    {selectedText ? 'Add Comment' : 'Comment'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
     )
@@ -527,9 +794,17 @@ export default function CollabZonePage() {
                             autoFocus
                           />
                         ) : (
-                          <h3 className="font-medium text-gray-900 dark:text-white truncate text-sm">
-                            {doc.title}
-                          </h3>
+                          <div className="relative">
+                            <h3 className="font-medium text-gray-900 dark:text-white truncate text-sm pr-6">
+                              {doc.title}
+                            </h3>
+                            {/* Comment Badge */}
+                            {getUnreadCount(doc.id) > 0 && (
+                              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                                {getUnreadCount(doc.id)}
+                              </span>
+                            )}
+                          </div>
                         )}
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -620,6 +895,11 @@ export default function CollabZonePage() {
                 >
                   <MessageSquare className="w-4 h-4" />
                   {commentsVisible ? 'Hide' : 'Show'} Comments
+                  {comments.filter(c => c.documentId === activeDoc.id && !c.isRead).length > 0 && (
+                    <span className="bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                      {comments.filter(c => c.documentId === activeDoc.id && !c.isRead).length}
+                    </span>
+                  )}
                 </button>
                 <button
                   onClick={() => setIsFullscreen(true)}
@@ -672,7 +952,7 @@ export default function CollabZonePage() {
           <div className={`${commentsVisible ? 'flex-1' : 'w-full'} transition-all duration-300`}>
             {activeDoc ? (
               <div className="h-full bg-white dark:bg-slate-800 m-6 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
-                <div className="h-full overflow-y-auto">
+                <div className="h-full overflow-y-auto" onMouseUp={handleTextSelection}>
                   <Editor
                     key={activeDoc.id}
                     content={activeDoc.content}
@@ -731,27 +1011,93 @@ export default function CollabZonePage() {
 
               {/* Comments Content */}
               <div className="flex-1 overflow-y-auto p-4">
-                <div className="text-center py-8">
-                  <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">
-                    No comments yet
-                  </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                    Select text in the document to add comments
-                  </p>
-                </div>
+                {comments.filter(c => c.documentId === activeDoc.id).length === 0 ? (
+                  <div className="text-center py-8">
+                    <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">
+                      No comments yet
+                    </p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                      Select text in the document to add comments
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {comments.filter(c => c.documentId === activeDoc.id).map((comment) => (
+                      <div key={comment.id} className={`bg-gray-50 dark:bg-slate-700 rounded-lg p-3 border ${comment.isRead ? 'border-gray-200 dark:border-slate-600' : 'border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20'}`}>
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                              {comment.author.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="text-sm font-medium text-gray-900 dark:text-white">
+                              {comment.author}
+                            </span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {formatDistanceToNow(comment.timestamp, { addSuffix: true })}
+                            </span>
+                            {!comment.isRead && (
+                              <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">
+                                New
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => deleteComment(comment.id)}
+                            className="p-1 hover:bg-gray-200 dark:hover:bg-slate-600 rounded text-gray-400 hover:text-red-500"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                        
+                        {comment.selectedText && (
+                          <div className="mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border-l-2 border-blue-500">
+                            <p className="text-xs text-gray-600 dark:text-gray-400 italic">
+                              "{comment.selectedText}"
+                            </p>
+                          </div>
+                        )}
+                        
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                          {comment.text}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* Add Comment Input */}
+              {/* Add Comment Form */}
               <div className="p-4 border-t border-gray-200 dark:border-slate-700">
+                {showCommentForm && selectedText && (
+                  <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border-l-2 border-blue-500">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Selected text:</p>
+                    <p className="text-xs text-gray-700 dark:text-gray-300 italic">"{selectedText}"</p>
+                  </div>
+                )}
+                
                 <textarea
-                  placeholder="Add a comment..."
-                  className="w-full p-3 border border-gray-200 dark:border-slate-600 rounded-xl bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-sm resize-none"
+                  placeholder={selectedText ? "Add a comment about the selected text..." : "Add a general comment..."}
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  className="w-full p-3 border border-gray-200 dark:border-slate-600 rounded-xl bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                   rows={3}
                 />
-                <div className="flex justify-end mt-2">
-                  <button className="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors">
-                    Comment
+                <div className="flex justify-between items-center mt-2">
+                  {showCommentForm && (
+                    <button 
+                      onClick={cancelComment}
+                      className="px-3 py-1 text-gray-500 hover:text-gray-700 text-sm"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  <button 
+                    onClick={addComment}
+                    disabled={!newComment.trim()}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
+                  >
+                    {selectedText ? 'Add Comment' : 'Comment'}
                   </button>
                 </div>
               </div>
