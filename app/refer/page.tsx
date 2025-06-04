@@ -236,9 +236,9 @@ export default function ReferPage() {
           </button>
 
           {showHowItWorks && (
-            <div className="space-y-3">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-3">
+            <div className="space-y-4 pt-2">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-4">
                   <div className="flex items-start">
                     <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">1</div>
                     <div>
@@ -256,7 +256,7 @@ export default function ReferPage() {
                   </div>
                 </div>
                 
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div className="flex items-start">
                     <div className="w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">3</div>
                     <div>
