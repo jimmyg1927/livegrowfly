@@ -224,9 +224,9 @@ function UseCaseScenarios() {
       title: '🚀 Startup Founder',
       morning: 'Review yesterday&apos;s metrics and plan today&apos;s priorities',
       tasks: [
-        { time: '9:00 AM', task: 'Analyze user feedback', prompt: 'Summarize this user feedback into 3 key themes and suggest actionable improvements.' },
+        { time: '9:00 AM', task: 'Analyse user feedback', prompt: 'Summarise this user feedback into 3 key themes and suggest actionable improvements.' },
         { time: '10:30 AM', task: 'Investor update email', prompt: 'Write a monthly investor update highlighting our 40% user growth and new feature launches.' },
-        { time: '2:00 PM', task: 'Product roadmap planning', prompt: 'Help me prioritize these 8 feature requests based on user impact and development effort.' },
+        { time: '2:00 PM', task: 'Product roadmap planning', prompt: 'Help me prioritise these 8 feature requests based on user impact and development effort.' },
         { time: '4:00 PM', task: 'Team all-hands prep', prompt: 'Create an engaging team meeting agenda covering Q3 wins and Q4 goals.' }
       ]
     },
@@ -234,10 +234,10 @@ function UseCaseScenarios() {
       title: '📢 Marketing Manager',
       morning: 'Check campaign performance and social media engagement',
       tasks: [
-        { time: '9:00 AM', task: 'Campaign analysis', prompt: 'Analyze this Google Ads campaign data and suggest 3 optimization strategies.' },
+        { time: '9:00 AM', task: 'Campaign analysis', prompt: 'Analyse this Google Ads campaign data and suggest 3 optimisation strategies.' },
         { time: '11:00 AM', task: 'Content calendar', prompt: 'Create a 2-week Instagram content calendar for our sustainable fashion brand.' },
         { time: '1:00 PM', task: 'Email newsletter', prompt: 'Write a compelling newsletter about our new product launch for our 10k subscribers.' },
-        { time: '3:30 PM', task: 'Competitor research', prompt: 'Summarize this competitor\'s marketing strategy and identify 3 opportunities for us.' }
+        { time: '3:30 PM', task: 'Competitor research', prompt: 'Summarise this competitor&apos;s marketing strategy and identify 3 opportunities for us.' }
       ]
     },
     'freelancer': {
@@ -245,9 +245,9 @@ function UseCaseScenarios() {
       morning: 'Client check-ins and project status updates',
       tasks: [
         { time: '9:00 AM', task: 'Proposal writing', prompt: 'Write a consulting proposal for a 3-month digital transformation project.' },
-        { time: '11:30 AM', task: 'Client report', prompt: 'Create an executive summary of our website optimization results for the client.' },
+        { time: '11:30 AM', task: 'Client report', prompt: 'Create an executive summary of our website optimisation results for the client.' },
         { time: '2:00 PM', task: 'Invoice follow-up', prompt: 'Write a polite but firm follow-up email for an overdue invoice.' },
-        { time: '4:00 PM', task: 'New client research', prompt: 'Research this company\'s industry challenges and create 5 consultation talking points.' }
+        { time: '4:00 PM', task: 'New client research', prompt: 'Research this company&apos;s industry challenges and create 5 consultation talking points.' }
       ]
     },
     'e-commerce-owner': {
@@ -307,7 +307,7 @@ function UseCaseScenarios() {
                     </span>
                     <h4 className="font-semibold text-gray-900 dark:text-white">{item.task}</h4>
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 italic">"{item.prompt}"</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 italic">&quot;{item.prompt}&quot;</p>
                 </div>
                 <Copy className="w-4 h-4 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200 ml-3 flex-shrink-0 mt-1" />
               </div>
@@ -319,7 +319,7 @@ function UseCaseScenarios() {
           <h4 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">💡 Pro Tip for {currentScenario.title.split(' ')[1]}s:</h4>
           <p className="text-sm text-blue-800 dark:text-blue-300">
             {selectedRole === 'startup-founder' && "Save successful prompts to your Saved tab and create templates for recurring tasks like investor updates and team communications."}
-            {selectedRole === 'marketing-manager' && "Use Growfly's brand settings to maintain consistent voice across all campaigns and content creation."}
+            {selectedRole === 'marketing-manager' && "Use Growfly&apos;s brand settings to maintain consistent voice across all campaigns and content creation."}
             {selectedRole === 'freelancer' && "Create a library of proposal templates and client communication drafts to speed up your workflow."}
             {selectedRole === 'e-commerce-owner' && "Batch similar tasks like product descriptions together, and use seasonal prompts for holiday campaigns."}
           </p>
@@ -390,7 +390,7 @@ export default function NerdModePage() {
             <div className="flex-1">
               <h2 className="text-2xl font-bold mb-2">Welcome to Your Growth Journey</h2>
               <p className="text-blue-100 mb-4 leading-relaxed">
-                Whether you're launching your first startup or scaling an enterprise, this hub contains battle-tested prompts 
+                Whether you&apos;re launching your first startup or scaling an enterprise, this hub contains battle-tested prompts 
                 that have helped thousands of entrepreneurs accelerate their growth.
               </p>
               <div className="bg-white/10 rounded-xl p-4 mb-4">
@@ -477,7 +477,7 @@ export default function NerdModePage() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white">Start with Action Verbs</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Begin prompts with "Write", "Generate", "Summarise", "Create", "Analyze" for better results</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Begin prompts with &quot;Write&quot;, &quot;Generate&quot;, &quot;Summarise&quot;, &quot;Create&quot;, &quot;Analyse&quot; for better results</p>
                 </div>
               </div>
               
@@ -487,7 +487,7 @@ export default function NerdModePage() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white">Add Specific Context</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Include details like "for Gen Z audience", "for UK tax laws", "B2B SaaS company"</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Include details like &quot;for Gen Z audience&quot;, &quot;for UK tax laws&quot;, &quot;B2B SaaS company&quot;</p>
                 </div>
               </div>
             </div>
