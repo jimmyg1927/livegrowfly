@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -16,6 +16,8 @@ import {
   HiOutlineShieldCheck,
   HiOutlineClock,
   HiOutlineAdjustments,
+  HiOutlineMenuAlt2,
+  HiOutlineX,
 } from 'react-icons/hi'
 
 // Reordered by usage frequency and logical grouping
@@ -43,6 +45,7 @@ const settingsItems = [
 
 export default function Sidebar() {
   const pathname = usePathname() || ''
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
   const hiddenRoutes = [
     '/onboarding',
@@ -61,21 +64,32 @@ export default function Sidebar() {
 
   const NavSection = ({ items, showDivider = false }) => (
     <>
-      {showDivider && <div className="border-t border-white/10 my-2" />}
+      {showDivider && !isCollapsed && <div className="border-t border-white/10 my-2" />}
+      {showDivider && isCollapsed && <div className="w-8 h-px bg-white/10 mx-auto my-2" />}
       {items.map(item => {
         const isActive = pathname === item.href
         return (
           <Link
             key={item.name}
             href={item.href}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium ${
+            className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium ${
               isActive
-                ? 'bg-white text-[#0f172a] shadow-lg font-semibold transform scale-[0.98]'
-                : 'text-white/90 hover:text-white hover:bg-white/10 hover:shadow-md hover:transform hover:scale-[0.99]'
-            }`}
+                ? 'bg-white text-[#0f172a] shadow-lg font-semibold'
+                : 'text-white/90 hover:text-white hover:bg-white/10 hover:shadow-md'
+            } ${isCollapsed ? 'justify-center' : ''}`}
+            title={isCollapsed ? item.name : ''}
           >
-            <item.icon className={`h-5 w-5 ${isActive ? 'text-[#0f172a]' : ''}`} />
-            <span className="hidden sm:inline">{item.name}</span>
+            <item.icon className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-[#0f172a]' : ''}`} />
+            <span className={`transition-all duration-200 ${isCollapsed ? 'w-0 opacity-0 overflow-hidden' : 'opacity-100'}`}>
+              {item.name}
+            </span>
+            
+            {/* Tooltip for collapsed state */}
+            {isCollapsed && (
+              <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                {item.name}
+              </div>
+            )}
           </Link>
         )
       })}
@@ -83,20 +97,38 @@ export default function Sidebar() {
   )
 
   return (
-    <div className="bg-gradient-to-b from-[#0f172a] via-[#1e3a8a] to-[#1e40af] text-white w-20 sm:w-64 flex flex-col items-center sm:items-start py-6 px-3 sm:px-5 min-h-screen shadow-2xl">
+    <div className={`bg-gradient-to-b from-[#0f172a] via-[#1e3a8a] to-[#1e40af] text-white flex flex-col py-5 min-h-screen shadow-2xl transition-all duration-300 ${
+      isCollapsed ? 'w-16' : 'w-16 sm:w-56'
+    }`}>
+      
       {/* Logo Section */}
-      <div className="mb-8 w-full flex justify-center">
+      <div className="mb-6 w-full flex justify-center relative">
         <Link href="/dashboard" className="group">
           <img
             src="/growfly-logo.png"
             alt="growfly"
-            className="w-16 h-16 sm:w-20 sm:h-20 object-contain transition-transform duration-200 group-hover:scale-105"
+            className={`object-contain transition-all duration-300 group-hover:scale-105 ${
+              isCollapsed ? 'w-10 h-10' : 'w-12 h-12 sm:w-16 sm:h-16'
+            }`}
           />
         </Link>
+        
+        {/* Collapse Toggle - Only visible on larger screens */}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="hidden sm:block absolute -right-3 top-1/2 transform -translate-y-1/2 bg-white text-[#0f172a] rounded-full p-1.5 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
+          aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {isCollapsed ? (
+            <HiOutlineMenuAlt2 className="w-4 h-4" />
+          ) : (
+            <HiOutlineX className="w-4 h-4" />
+          )}
+        </button>
       </div>
 
       {/* Main Navigation */}
-      <nav className="flex flex-col gap-1 w-full flex-1">
+      <nav className={`flex flex-col gap-1 flex-1 transition-all duration-200 ${isCollapsed ? 'px-2' : 'px-2 sm:px-4'}`}>
         {/* Primary Navigation */}
         <NavSection items={navItems} />
         
@@ -108,16 +140,28 @@ export default function Sidebar() {
       </nav>
 
       {/* Logout Button */}
-      <div className="w-full pt-4 border-t border-white/10">
+      <div className={`w-full pt-4 border-t border-white/10 transition-all duration-200 ${isCollapsed ? 'px-2' : 'px-2 sm:px-4'}`}>
         <button
           onClick={() => {
             localStorage.removeItem('growfly_jwt')
             window.location.href = '/login'
           }}
-          className="flex items-center gap-3 w-full px-4 py-3 text-white/90 hover:text-white hover:bg-red-500/20 hover:shadow-md rounded-xl transition-all duration-200 text-sm font-medium group"
+          className={`group relative flex items-center gap-3 w-full px-3 py-2.5 text-white/90 hover:text-white hover:bg-red-500/20 hover:shadow-md rounded-lg transition-all duration-200 text-sm font-medium ${
+            isCollapsed ? 'justify-center' : ''
+          }`}
+          title={isCollapsed ? 'Logout' : ''}
         >
-          <HiOutlineLogout className="h-5 w-5 group-hover:rotate-12 transition-transform duration-200" />
-          <span className="hidden sm:inline">Logout</span>
+          <HiOutlineLogout className="h-5 w-5 flex-shrink-0 group-hover:rotate-12 transition-transform duration-200" />
+          <span className={`transition-all duration-200 ${isCollapsed ? 'w-0 opacity-0 overflow-hidden' : 'opacity-100'}`}>
+            Logout
+          </span>
+          
+          {/* Tooltip for collapsed state */}
+          {isCollapsed && (
+            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+              Logout
+            </div>
+          )}
         </button>
       </div>
     </div>
