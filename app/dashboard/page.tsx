@@ -141,8 +141,8 @@ function DashboardContent() {
     
     const fetchUserData = async () => {
       try {
-        // Try relative URL first to avoid CORS issues
-        const response = await fetch('/api/user', {  // ← CHANGED: removed "/profile"
+        // Use the existing /me endpoint that has all the data we need
+        const response = await fetch('/api/me', {  // ← PERFECT! This route has everything
           method: 'GET',
           headers: { 
             'Authorization': `Bearer ${token}`,
@@ -373,7 +373,7 @@ function DashboardContent() {
                 // console.log('✅ User data synced to database')
                 
                 // Fetch fresh user data to ensure sync
-                const freshDataResponse = await fetch(`${API_BASE_URL}/api/user/profile`, {
+                const freshDataResponse = await fetch('/api/me', {  // ← Use /me endpoint
                   headers: { Authorization: `Bearer ${token}` }
                 })
                 

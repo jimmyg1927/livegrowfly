@@ -1,3 +1,6 @@
+'use client'
+
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 const plans = [
@@ -72,6 +75,7 @@ const plans = [
 ]
 
 export default function ChangePlanPage() {
+  const router = useRouter()
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
   const [currentPlan, setCurrentPlan] = useState<string | null>(null)
   const [message, setMessage] = useState('')
@@ -79,23 +83,15 @@ export default function ChangePlanPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // For artifact demo - in your real app, uncomment localStorage and API calls
-    const storedToken = 'demo_token' // localStorage.getItem('growfly_jwt')
+    const storedToken = localStorage.getItem('growfly_jwt')
     if (!storedToken) {
-      setMessage('Please log in to access plan management')
-      setLoading(false)
+      router.push('/login')
       return
     }
     
     setToken(storedToken)
     
-    // Demo: simulate API call - replace with actual call in your app
-    setTimeout(() => {
-      setCurrentPlan('free') // Mock current plan
-      setLoading(false)
-    }, 1500)
-    
-    /* UNCOMMENT FOR REAL APP:
+    // Fetch current user plan
     fetch('/api/auth/me', {
       headers: { Authorization: `Bearer ${storedToken}` },
     })
@@ -115,12 +111,11 @@ export default function ChangePlanPage() {
       .finally(() => {
         setLoading(false)
       })
-    */
-  }, [])
+  }, [router])
 
   const handleSelect = async (planId: string) => {
     if (!token) {
-      setMessage('Please log in to change plans')
+      router.push('/login')
       return
     }
 
@@ -128,29 +123,15 @@ export default function ChangePlanPage() {
     setMessage('')
 
     if (planId === 'free') {
-      // Demo: simulate success - in real app use: router.push('/dashboard')
-      setTimeout(() => {
-        setMessage('Successfully switched to Free plan!')
-        setCurrentPlan('free')
-        setSelectedPlan(null)
-      }, 1000)
+      router.push('/dashboard')
       return
     }
 
     if (planId === 'enterprise') {
-      // Demo: show message - in real app use: router.push('/contact')
-      setMessage('Redirecting to contact page for Enterprise pricing...')
-      setSelectedPlan(null)
+      router.push('/contact')
       return
     }
 
-    // Demo: simulate API call - replace with actual call in your app
-    setTimeout(() => {
-      setMessage(`Plan change to ${planId} initiated! In real app, you'd be redirected to Stripe.`)
-      setSelectedPlan(null)
-    }, 2000)
-
-    /* UNCOMMENT FOR REAL APP:
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/change-plan`, {
         method: 'POST',
@@ -178,7 +159,6 @@ export default function ChangePlanPage() {
       setMessage('Unable to process plan change. Please try again.')
       setSelectedPlan(null)
     }
-    */
   }
 
   if (loading) {
