@@ -141,8 +141,8 @@ function DashboardContent() {
     
     const fetchUserData = async () => {
       try {
-        // Use the existing /me endpoint that has all the data we need
-        const response = await fetch('/api/me', {  // ← PERFECT! This route has everything
+        // Use the correct endpoint path from your server setup
+        const response = await fetch('/api/auth/me', {  // ← CORRECT! Your route is /api/auth/me
           method: 'GET',
           headers: { 
             'Authorization': `Bearer ${token}`,
@@ -373,7 +373,7 @@ function DashboardContent() {
                 // console.log('✅ User data synced to database')
                 
                 // Fetch fresh user data to ensure sync
-                const freshDataResponse = await fetch('/api/me', {  // ← Use /me endpoint
+                const freshDataResponse = await fetch('/api/auth/me', {  // ← Correct path
                   headers: { Authorization: `Bearer ${token}` }
                 })
                 
