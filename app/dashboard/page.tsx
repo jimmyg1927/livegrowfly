@@ -138,8 +138,16 @@ function DashboardContent() {
       try {
         console.log('🔄 Fetching fresh user data from database...')
         const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
-          headers: { Authorization: `Bearer ${token}` }
+          method: 'GET',
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include', // Add credentials for CORS
         })
+        
+        console.log('📡 Response status:', response.status)
+        
         if (response.ok) {
           const userData = await response.json()
           console.log('✅ Fetched fresh user data from database:', userData)
@@ -153,22 +161,48 @@ function DashboardContent() {
           
         } else {
           console.error('❌ Failed to fetch user data:', response.status, response.statusText)
-          // If we get unauthorized, redirect to onboarding
-          if (response.status === 401) {
-            localStorage.removeItem('growfly_jwt')
-            router.push('/onboarding')
+          
+          // Try alternative API endpoint if main one fails
+          console.log('🔄 Trying alternative API endpoint...')
+          try {
+            const altResponse = await fetch(`/api/user/profile`, {
+              method: 'GET',
+              headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+            })
+            
+            if (altResponse.ok) {
+              const userData = await altResponse.json()
+              console.log('✅ Fetched user data from alternative endpoint:', userData)
+              setUser(userData)
+            } else {
+              console.error('❌ Alternative endpoint also failed:', altResponse.status)
+              // If we get unauthorized, redirect to onboarding
+              if (altResponse.status === 401) {
+                localStorage.removeItem('growfly_jwt')
+                router.push('/onboarding')
+              }
+            }
+          } catch (altError) {
+            console.error('❌ Alternative endpoint error:', altError)
           }
         }
       } catch (error) {
         console.error('❌ Error fetching user data:', error)
+        
+        // Try local storage fallback or set default values
+        console.log('🔄 Setting default values due to fetch error')
+        // Don't redirect on network errors, just log them
       }
     }
     
     // Always fetch fresh data from database on mount
     fetchUserData()
     
-    // Also set up an interval to periodically sync user data
-    const syncInterval = setInterval(fetchUserData, 30000) // Sync every 30 seconds
+    // Also set up an interval to periodically sync user data (less frequent to avoid CORS spam)
+    const syncInterval = setInterval(fetchUserData, 60000) // Sync every 60 seconds instead of 30
     
     return () => clearInterval(syncInterval)
   }, [token, router, setUser])
@@ -624,7 +658,23 @@ function DashboardContent() {
 
         {/* Chat Messages - now with proper spacing for fixed input */}
         <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pb-8">
-          {messages.map((msg) => (
+          {messages.length === 0 ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center max-w-md">
+                <div className="text-6xl mb-4">👋</div>
+                <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
+                  Welcome to Growfly!
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Ready to get started? Click one of the Quick Start buttons above or type your question in the box below to begin your first conversation.
+                </p>
+                <div className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                  ✨ Choose a Quick Start option or ask anything you'd like!
+                </div>
+              </div>
+            </div>
+          ) : (
+            messages.map((msg) => (
             <div
               key={msg.id}
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -703,7 +753,8 @@ function DashboardContent() {
                 )}
               </div>
             </div>
-          ))}
+            ))
+          )}
           <div ref={chatEndRef} />
         </div>
       </div>
