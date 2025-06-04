@@ -91,8 +91,8 @@ export default function ChangePlanPage() {
     
     setToken(storedToken)
     
-    // Fetch current user plan
-    fetch('/api/auth/me', {
+    // Fetch current user plan using full API URL
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${storedToken}` },
     })
       .then((res) => {

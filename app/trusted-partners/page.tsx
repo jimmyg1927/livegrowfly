@@ -51,9 +51,7 @@ export default function TrustedPartnersPage() {
 
             <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl p-6 border border-green-200 dark:border-green-800">
               <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
+                <span className="text-white text-xl font-bold">£</span>
               </div>
               <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Financial Experts</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">Want an accountant to double-check your financials?</p>
@@ -139,7 +137,9 @@ export default function TrustedPartnersPage() {
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-slate-700">
             <h3 className="font-bold text-gray-900 dark:text-white mb-3 flex items-center">
               <span className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center mr-3">
-                <span className="text-white text-sm">✅</span>
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
               </span>
               Verified Professionals
             </h3>
