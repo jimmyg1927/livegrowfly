@@ -67,7 +67,7 @@ function ShareModal({ isOpen, onClose, document, onShare }: ShareModalProps) {
       >
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-gray-900 dark:text-white">Share Document</h3>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg">
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -81,12 +81,12 @@ function ShareModal({ isOpen, onClose, document, onShare }: ShareModalProps) {
                 placeholder="Enter email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+                className="flex-1 px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
               />
               <select
                 value={permission}
                 onChange={(e) => setPermission(e.target.value)}
-                className="px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+                className="px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
               >
                 <option value="view">View</option>
                 <option value="edit">Edit</option>
@@ -94,7 +94,7 @@ function ShareModal({ isOpen, onClose, document, onShare }: ShareModalProps) {
             </div>
             <button
               onClick={handleShare}
-              className="w-full mt-2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="w-full mt-2 bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700 transition-colors"
             >
               Send Invite
             </button>
@@ -107,11 +107,11 @@ function ShareModal({ isOpen, onClose, document, onShare }: ShareModalProps) {
                 type="text"
                 value={shareLink}
                 readOnly
-                className="flex-1 px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-sm"
+                className="flex-1 px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-xl bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-sm"
               />
               <button
                 onClick={copyLink}
-                className={`px-4 py-2 rounded-lg transition-colors ${
+                className={`px-4 py-2 rounded-xl transition-colors ${
                   linkCopied 
                     ? 'bg-green-600 text-white' 
                     : 'bg-gray-100 dark:bg-slate-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-500'
@@ -157,22 +157,35 @@ export default function CollabZonePage() {
       const ownedRes = await fetch(`${API_URL}/api/collab`, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      const ownedDocs = await ownedRes.json()
-
-      // Load shared documents
-      const sharedRes = await fetch(`${API_URL}/api/collab/shared`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const sharedDocs = await sharedRes.json()
-
-      if (Array.isArray(ownedDocs)) {
-        setDocs(ownedDocs)
-        if (!activeDoc && ownedDocs.length) setActiveDoc(ownedDocs[0])
+      
+      if (ownedRes.ok) {
+        const ownedDocs = await ownedRes.json()
+        if (Array.isArray(ownedDocs)) {
+          setDocs(ownedDocs)
+          if (!activeDoc && ownedDocs.length) setActiveDoc(ownedDocs[0])
+        }
       }
 
-      if (Array.isArray(sharedDocs)) {
-        setSharedDocs(sharedDocs.map((doc: any) => ({ ...doc, isShared: true })))
+      // Load shared documents - handle 404 gracefully
+      try {
+        const sharedRes = await fetch(`${API_URL}/api/collab/shared`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        
+        if (sharedRes.ok) {
+          const sharedDocs = await sharedRes.json()
+          if (Array.isArray(sharedDocs)) {
+            setSharedDocs(sharedDocs.map((doc: any) => ({ ...doc, isShared: true })))
+          }
+        } else if (sharedRes.status === 404) {
+          // Endpoint doesn't exist yet, that's ok
+          setSharedDocs([])
+        }
+      } catch (sharedError) {
+        console.log('Shared documents endpoint not available yet')
+        setSharedDocs([])
       }
+      
     } catch (error) {
       console.error('Error loading documents:', error)
       setStatusMsg({ type: 'error', text: 'Failed to load documents' })
@@ -322,7 +335,7 @@ export default function CollabZonePage() {
             <h1 className="text-lg font-bold text-gray-900 dark:text-white">Collab Zone</h1>
             <button
               onClick={handleNew}
-              className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
             >
               <Plus className="w-4 h-4" />
               New
@@ -337,7 +350,7 @@ export default function CollabZonePage() {
               placeholder="Search documents..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-white"
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl text-sm text-gray-900 dark:text-white"
             />
           </div>
 
@@ -346,7 +359,7 @@ export default function CollabZonePage() {
             <div className="flex gap-1">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded ${viewMode === 'grid' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600' : 'text-gray-400'}`}
+                className={`p-2 rounded-xl ${viewMode === 'grid' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600' : 'text-gray-400'}`}
               >
                 <div className="grid grid-cols-2 gap-0.5 w-3 h-3">
                   <div className="bg-current rounded-sm"></div>
@@ -357,19 +370,19 @@ export default function CollabZonePage() {
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded ${viewMode === 'list' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600' : 'text-gray-400'}`}
+                className={`p-2 rounded-xl ${viewMode === 'list' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600' : 'text-gray-400'}`}
               >
                 <div className="space-y-1 w-3 h-3">
-                  <div className="bg-current h-0.5 rounded"></div>
-                  <div className="bg-current h-0.5 rounded"></div>
-                  <div className="bg-current h-0.5 rounded"></div>
+                  <div className="bg-current h-0.5 rounded-xl"></div>
+                  <div className="bg-current h-0.5 rounded-xl"></div>
+                  <div className="bg-current h-0.5 rounded-xl"></div>
                 </div>
               </button>
             </div>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="text-xs bg-transparent text-gray-600 dark:text-gray-400"
+              className="text-xs bg-transparent text-gray-600 dark:text-gray-400 rounded-xl"
             >
               <option value="updated">Last updated</option>
               <option value="created">Date created</option>
@@ -383,7 +396,7 @@ export default function CollabZonePage() {
           {loading ? (
             <div className="space-y-3">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-16 bg-gray-200 dark:bg-slate-700 rounded-lg animate-pulse"></div>
+                <div key={i} className="h-16 bg-gray-200 dark:bg-slate-700 rounded-xl animate-pulse"></div>
               ))}
             </div>
           ) : sortedDocs.length === 0 ? (
@@ -407,7 +420,7 @@ export default function CollabZonePage() {
                 <motion.div
                   key={doc.id}
                   layout
-                  className={`group cursor-pointer rounded-lg border transition-all duration-200 ${
+                  className={`group cursor-pointer rounded-xl border transition-all duration-200 ${
                     activeDoc?.id === doc.id
                       ? 'border-blue-300 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-600'
                       : 'border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 hover:border-gray-300 dark:hover:border-slate-500'
@@ -424,7 +437,7 @@ export default function CollabZonePage() {
                             if (e.key === 'Enter') handleRename(doc.id)
                             if (e.key === 'Escape') setTitleEditId(null)
                           }}
-                          className="w-full px-2 py-1 text-sm border rounded"
+                          className="w-full px-2 py-1 text-sm border rounded-xl"
                           autoFocus
                         />
                       ) : (
@@ -453,7 +466,7 @@ export default function CollabZonePage() {
                             setTitleEditId(doc.id)
                             setNewTitle(doc.title)
                           }}
-                          className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                          className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-xl"
                         >
                           <Edit3 className="w-3 h-3" />
                         </button>
@@ -462,7 +475,7 @@ export default function CollabZonePage() {
                             e.stopPropagation()
                             handleDelete(doc.id)
                           }}
-                          className="p-1 text-gray-400 hover:text-red-600"
+                          className="p-1 text-gray-400 hover:text-red-600 rounded-xl"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -498,14 +511,14 @@ export default function CollabZonePage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowShareModal(true)}
-                  className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
                 >
                   <Share2 className="w-4 h-4" />
                   Share
                 </button>
                 <button
                   onClick={handleSave}
-                  className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   Save
@@ -522,7 +535,7 @@ export default function CollabZonePage() {
               initial={{ opacity: 0, y: -50 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -50 }}
-              className={`mx-6 mt-4 flex items-center gap-2 px-4 py-3 rounded-lg ${
+              className={`mx-6 mt-4 flex items-center gap-2 px-4 py-3 rounded-xl ${
                 statusMsg.type === 'success'
                   ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800'
                   : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
@@ -537,7 +550,7 @@ export default function CollabZonePage() {
         {/* Editor Area */}
         <div className="flex-1 overflow-hidden">
           {activeDoc ? (
-            <div className="h-full bg-white dark:bg-slate-800 m-6 rounded-lg border border-gray-200 dark:border-slate-700 overflow-hidden">
+            <div className="h-full bg-white dark:bg-slate-800 m-6 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
               <Editor
                 key={activeDoc.id}
                 content={activeDoc.content}
@@ -558,7 +571,7 @@ export default function CollabZonePage() {
                 </p>
                 <button
                   onClick={handleNew}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mx-auto"
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors mx-auto"
                 >
                   <Plus className="w-4 h-4" />
                   Create New Document
