@@ -36,12 +36,9 @@ export default function BrandSettingsPage() {
       try {
         const token = localStorage.getItem('growfly_jwt')
         if (!token) {
-          console.error('No authentication token found')
           setLoading(false)
           return
         }
-
-        console.log('🔍 Fetching user data from /api/user/settings...')
         
         // Fetch user settings/profile data from the correct endpoint
         const res = await fetch(`${API_BASE_URL}/api/user/settings`, {
@@ -52,14 +49,11 @@ export default function BrandSettingsPage() {
           },
         })
 
-        console.log('📡 API Response status:', res.status)
-
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`)
         }
 
         const userData = await res.json()
-        console.log('✅ Fetched user data:', userData)
 
         if (userData) {
           // Map the user data to form fields
@@ -79,12 +73,11 @@ export default function BrandSettingsPage() {
             inspiredBy: userData.inspiredBy || '',
           }
           
-          console.log('📝 Setting form data:', mappedData)
           setFormData(mappedData)
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Failed to load brand settings'
-        console.error('❌ Error fetching user settings:', errorMessage, error)
+        console.error('Error fetching user settings:', errorMessage)
         // In real app: toast.error('Failed to load brand settings.')
       } finally {
         setLoading(false)
@@ -109,13 +102,9 @@ export default function BrandSettingsPage() {
       const token = localStorage.getItem('growfly_jwt')
       
       if (!token) {
-        alert('❌ No authentication token found - please log in again')
-        console.error('❌ No authentication token found')
+        console.error('No authentication token found')
         return
       }
-
-      alert('💾 Starting save to /api/user/settings...')
-      console.log('💾 Saving brand settings to /api/user/settings...', formData)
 
       // Update user profile with brand settings using the correct endpoint
       const res = await fetch(`${API_BASE_URL}/api/user/settings`, {
@@ -127,31 +116,22 @@ export default function BrandSettingsPage() {
         body: JSON.stringify(formData)
       })
 
-      alert(`📡 Save response status: ${res.status}`)
-      console.log('📡 Save response status:', res.status)
-
       if (!res.ok) {
         const errorText = await res.text()
-        alert(`❌ Save failed: ${res.status} - ${errorText}`)
-        console.error('❌ Save failed:', errorText)
         throw new Error(`HTTP error! status: ${res.status} - ${errorText}`)
       }
 
       const result = await res.json()
-      alert('✅ Save successful!')
-      console.log('✅ Save successful, result:', result)
       
       // Show success feedback
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 3000) // Hide after 3 seconds
       
       // In real app: toast.success('Brand settings saved successfully!')
-      console.log('🎉 Brand settings saved successfully!')
       
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-      alert(`❌ Error: ${errorMessage}`)
-      console.error('❌ Error saving brand settings:', error)
+      console.error('Error saving brand settings:', errorMessage)
       // In real app: toast.error('Failed to save brand settings. Please try again.')
     } finally {
       setSaving(false)
@@ -341,7 +321,7 @@ export default function BrandSettingsPage() {
           <div className="mt-6">
             <div className="flex items-center justify-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
               <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-              <span>Open browser console to see detailed API logs</span>
+              <span>Changes are saved automatically to your account</span>
             </div>
           </div>
         </div>
