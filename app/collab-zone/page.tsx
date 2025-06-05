@@ -131,8 +131,7 @@ function ShareModal({ isOpen, onClose, document, onShare }: ShareModalProps) {
   )
 }
 
-export default function CollabZonePage() {
-  const router = useRouter()
+export default function CollabZonePage() {  const router = useRouter()
   const [docs, setDocs] = useState<Doc[]>([])
   const [sharedDocs, setSharedDocs] = useState<Doc[]>([])
   const [activeDoc, setActiveDoc] = useState<Doc | null>(null)
@@ -606,7 +605,7 @@ export default function CollabZonePage() {
                         {comment.selectedText && (
                           <div className="mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border-l-2 border-blue-500">
                             <p className="text-xs text-gray-600 dark:text-gray-400 italic">
-                              "{comment.selectedText}"
+                              &quot;{comment.selectedText}&quot;
                             </p>
                           </div>
                         )}
@@ -625,7 +624,7 @@ export default function CollabZonePage() {
                 {showCommentForm && selectedText && (
                   <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border-l-2 border-blue-500">
                     <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Selected text:</p>
-                    <p className="text-xs text-gray-700 dark:text-gray-300 italic">"{selectedText}"</p>
+                    <p className="text-xs text-gray-700 dark:text-gray-300 italic">&quot;{selectedText}&quot;</p>
                   </div>
                 )}
                 
