@@ -2,10 +2,10 @@
 
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FaImage, FaSpinner, FaDownload, FaSave, FaTimes } from 'react-icons/fa'
-import { useUserStore } from '@/lib/store'
+import { useUserStore } from '@lib/store'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://glowfly-api-production.up.railway.app'
 
@@ -43,14 +43,8 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ isOpen, onClose, onImag
   const [error, setError] = useState<string | null>(null)
   const [usage, setUsage] = useState<Usage | null>(null)
 
-  // Load usage data when component opens
-  useEffect(() => {
-    if (isOpen && token) {
-      loadUsageData()
-    }
-  }, [isOpen, token])
-
-  const loadUsageData = async () => {
+  // ✅ FIXED: Make loadUsageData a useCallback to satisfy ESLint dependency
+  const loadUsageData = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/dalle/limits`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -63,7 +57,14 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ isOpen, onClose, onImag
     } catch (error) {
       console.error('Failed to load usage data:', error)
     }
-  }
+  }, [token])
+
+  // ✅ FIXED: Now loadUsageData is included in dependencies
+  useEffect(() => {
+    if (isOpen && token) {
+      loadUsageData()
+    }
+  }, [isOpen, token, loadUsageData])
 
   const generateImage = async () => {
     if (!prompt.trim()) {
@@ -107,11 +108,13 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ isOpen, onClose, onImag
         onImageGenerated(data.image.url)
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) { // ✅ FIXED: Use unknown instead of any
       console.error('Image generation failed:', error)
       
-      if (error.message.includes('limit')) {
-        setError(error.message)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate image'
+      
+      if (errorMessage.includes('limit')) {
+        setError(errorMessage)
       } else {
         setError('Failed to generate image. Please try again.')
       }

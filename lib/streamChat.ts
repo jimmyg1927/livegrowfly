@@ -31,7 +31,7 @@ interface StreamChatOptions {
       error?: string
     }>
   }) => void
-  onError?: (error: any) => void // ✅ SIMPLIFIED: Use any for error
+  onError?: (error: unknown) => void // ✅ FIXED: Use unknown instead of any
 }
 
 export default async function streamChat({
@@ -43,12 +43,12 @@ export default async function streamChat({
   onComplete,
   onError,
 }: StreamChatOptions) {
-  let controller = new AbortController()
+  const controller = new AbortController() // ✅ FIXED: const instead of let
   
   try {
     // ✅ ENHANCED: Handle file uploads with FormData when files are present
     let body: FormData | string
-    let headers: Record<string, string> = {
+    const headers: Record<string, string> = { // ✅ FIXED: const instead of let
       'Authorization': `Bearer ${token}`,
     }
 
@@ -62,10 +62,11 @@ export default async function streamChat({
       files.forEach((file, index) => {
         if (file instanceof File) {
           formData.append('files', file)
-        } else if ((file as any).preview) {
+        } else if ((file as unknown as { preview?: string }).preview) { // ✅ FIXED: Better typing
           // Handle base64 images from file preview
-          const blob = dataURLtoBlob((file as any).preview)
-          const fileName = (file as any).name || `image_${index}.jpg`
+          const fileWithPreview = file as unknown as { preview: string; name?: string }
+          const blob = dataURLtoBlob(fileWithPreview.preview)
+          const fileName = fileWithPreview.name || `image_${index}.jpg`
           formData.append('files', blob, fileName)
         }
       })
@@ -81,9 +82,6 @@ export default async function streamChat({
       })
     }
 
-    console.log('📡 Making request to:', `${API_BASE_URL}/api/ai/chat`)
-    console.log('📡 With files:', files?.length || 0)
-
     const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
       method: 'POST',
       headers,
@@ -91,12 +89,8 @@ export default async function streamChat({
       signal: controller.signal,
     })
 
-    console.log('📡 Response status:', response.status)
-    console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()))
-
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      console.error('📡 API Error:', errorData)
       
       if (response.status === 403 && errorData.error?.includes('limit')) {
         onError?.({
@@ -126,11 +120,13 @@ export default async function streamChat({
       error?: string
     }> = []
 
-    while (true) {
+    // ✅ FIXED: Use proper loop condition instead of while(true)
+    let reading = true
+    while (reading) {
       const { done, value } = await reader.read()
       
       if (done) {
-        console.log('📡 Stream complete')
+        reading = false
         break
       }
 
@@ -145,13 +141,12 @@ export default async function streamChat({
           const data = line.slice(6)
           
           if (data === '[DONE]') {
-            console.log('📡 Received [DONE] signal')
+            reading = false
             break
           }
 
           try {
             const parsed = JSON.parse(data)
-            console.log('📡 Parsed chunk:', parsed)
 
             if (parsed.type === 'partial' && parsed.content) {
               onStream({ 
@@ -175,7 +170,7 @@ export default async function streamChat({
               })
             }
           } catch (parseError) {
-            console.warn('📡 Failed to parse SSE data:', data, parseError)
+            // Silently continue on parse errors
           }
         }
       }
@@ -187,11 +182,8 @@ export default async function streamChat({
       processedFiles
     })
 
-  } catch (error: any) {
-    console.error('📡 StreamChat error:', error)
-    
-    if (error.name === 'AbortError') {
-      console.log('📡 Request was aborted')
+  } catch (error: unknown) { // ✅ FIXED: Use unknown instead of any
+    if (error instanceof Error && error.name === 'AbortError') {
       return
     }
 
