@@ -1,226 +1,191 @@
 // File: components/ImageGeneration/ImageGallery.tsx
-
-'use client'
+// This component was likely created but has a syntax error
 
 import React, { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { FaImages, FaDownload, FaTrash, FaTimes, FaEye, FaChevronLeft, FaChevronRight } from 'react-icons/fa'
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://glowfly-api-production.up.railway.app'
-
-interface ImageGalleryProps {
-  isOpen: boolean
-  onClose: () => void
-}
+import { HiX } from 'react-icons/hi'
+import { FaImages, FaSpinner, FaDownload, FaTrash } from 'react-icons/fa'
 
 interface GeneratedImage {
   id: string
-  prompt: string
-  imageUrl: string
+  url: string
+  originalPrompt: string
+  revisedPrompt: string
   size: string
   quality: string
+  style: string
   createdAt: string
 }
 
-interface Pagination {
-  page: number
-  limit: number
-  total: number
-  pages: number
+interface ImageGalleryProps {
+  open: boolean
+  onClose: () => void
 }
 
-const ImageGallery: React.FC<ImageGalleryProps> = ({ isOpen, onClose }) => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://glowfly-api-production.up.railway.app'
 
+const ImageGallery: React.FC<ImageGalleryProps> = ({ open, onClose }) => {
   const [images, setImages] = useState<GeneratedImage[]>([])
   const [loading, setLoading] = useState(false)
-  const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 12, total: 0, pages: 0 })
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
 
   useEffect(() => {
-    if (isOpen) {
-      loadImages()
+    if (open && token) {
+      setLoading(true)
+      fetch(`${API_BASE_URL}/api/dalle/images?limit=20`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          setImages(data.images || [])
+        })
+        .catch(err => console.error('Failed to fetch images:', err))
+        .finally(() => setLoading(false))
     }
-  }, [isOpen, pagination.page])
+  }, [open, token])
 
-  const loadImages = async () => {
-    if (!token) return
-
-    setLoading(true)
-    setError(null)
-
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/dalle/images?page=${pagination.page}&limit=${pagination.limit}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error('Failed to load images')
-      }
-
-      const data = await response.json()
-      setImages(data.images)
-      setPagination(data.pagination)
-
-    } catch (error: any) {
-      console.error('Failed to load images:', error)
-      setError('Failed to load your images. Please try again.')
-    } finally {
-      setLoading(false)
-    }
+  const handleDownloadImage = (image: GeneratedImage) => {
+    const link = document.createElement('a')
+    link.href = image.url
+    link.download = `growfly-${image.id}.png`
+    link.click()
   }
 
-  const downloadImage = async (image: GeneratedImage) => {
-    try {
-      const response = await fetch(image.imageUrl)
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `growfly-${image.id}.png`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      
-      URL.revokeObjectURL(url)
-    } catch (error) {
-      console.error('Download failed:', error)
-      setError('Failed to download image')
-      setTimeout(() => setError(null), 3000)
-    }
-  }
-
-  const deleteImage = async (imageId: string) => {
-    if (!confirm('Are you sure you want to delete this image?')) return
-
+  const handleDeleteImage = async (imageId: string) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/dalle/images/${imageId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       })
-
-      if (!response.ok) {
-        throw new Error('Failed to delete image')
-      }
-
-      // Remove from local state
-      setImages(prev => prev.filter(img => img.id !== imageId))
-      setSelectedImage(null)
       
-      // Reload if current page is empty
-      if (images.length === 1 && pagination.page > 1) {
-        setPagination(prev => ({ ...prev, page: prev.page - 1 }))
-      } else {
-        loadImages()
+      if (response.ok) {
+        setImages(prev => prev.filter(img => img.id !== imageId))
+        setSelectedImage(null)
       }
-
-    } catch (error) {
-      console.error('Delete failed:', error)
-      setError('Failed to delete image')
-      setTimeout(() => setError(null), 3000)
+    } catch (err) {
+      console.error('Failed to delete image:', err)
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    })
-  }
-
-  const nextPage = () => {
-    if (pagination.page < pagination.pages) {
-      setPagination(prev => ({ ...prev, page: prev.page + 1 }))
-    }
-  }
-
-  const prevPage = () => {
-    if (pagination.page > 1) {
-      setPagination(prev => ({ ...prev, page: prev.page - 1 }))
-    }
-  }
-
-  if (!isOpen) return null
+  if (!open) return null
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <FaImages className="text-blue-500" />
-                Your Generated Images
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
-                {pagination.total} images total
-              </p>
-            </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <FaImages className="text-blue-500" />
+              Your Generated Images
+            </h2>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
-              <FaTimes className="text-gray-500" />
+              <HiX className="w-6 h-6" />
             </button>
           </div>
 
-          {/* Error Display */}
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <p className="text-red-700 dark:text-red-300 text-sm">{error}</p>
-            </div>
-          )}
-
-          {/* Loading State */}
-          {loading && (
+          {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-              <span className="ml-2 text-gray-600 dark:text-gray-400">Loading images...</span>
+              <FaSpinner className="animate-spin text-blue-500 text-2xl" />
             </div>
-          )}
-
-          {/* Empty State */}
-          {!loading && images.length === 0 && (
+          ) : images.length === 0 ? (
             <div className="text-center py-12">
-              <FaImages className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                No images generated yet
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                Generate your first image to see it here!
-              </p>
+              <FaImages className="text-gray-400 text-6xl mx-auto mb-4" />
+              <p className="text-gray-600 dark:text-gray-400">No images generated yet</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {images.map((image) => (
+                <div
+                  key={image.id}
+                  className="group relative bg-gray-50 dark:bg-slate-700 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600 hover:shadow-lg transition-all duration-200"
+                >
+                  <img
+                    src={image.url}
+                    alt={image.originalPrompt}
+                    className="w-full h-48 object-cover cursor-pointer"
+                    onClick={() => setSelectedImage(image)}
+                  />
+                  <div className="p-3">
+                    <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 mb-2">
+                      {image.originalPrompt}
+                    </p>
+                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <span>{new Date(image.createdAt).toLocaleDateString()}</span>
+                      <span>{image.size}</span>
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={() => handleDownloadImage(image)}
+                        className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs flex items-center justify-center gap-1"
+                      >
+                        <FaDownload className="w-3 h-3" />
+                        Download
+                      </button>
+                      <button
+                        onClick={() => handleDeleteImage(image.id)}
+                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs flex items-center justify-center"
+                      >
+                        <FaTrash className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
-          {/* Images Grid */}
-          {!loading && images.length > 0 && (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
-                {images.map((image) => (
-                  <motion.div
-                    key={image.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    className="group relative bg-gray-50 dark:bg-slate-700 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-shadow"
-                  ></motion.div>
+          {/* Image Detail Modal */}
+          {selectedImage && (
+            <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">Image Details</h3>
+                    <button
+                      onClick={() => setSelectedImage(null)}
+                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    >
+                      <HiX className="w-6 h-6" />
+                    </button>
+                  </div>
+                  <img
+                    src={selectedImage.url}
+                    alt={selectedImage.originalPrompt}
+                    className="w-full max-h-96 object-contain rounded-xl mb-4"
+                  />
+                  <div className="space-y-2 text-sm">
+                    <div><strong>Original Prompt:</strong> {selectedImage.originalPrompt}</div>
+                    <div><strong>Revised Prompt:</strong> {selectedImage.revisedPrompt}</div>
+                    <div><strong>Size:</strong> {selectedImage.size} | <strong>Quality:</strong> {selectedImage.quality} | <strong>Style:</strong> {selectedImage.style}</div>
+                    <div><strong>Created:</strong> {new Date(selectedImage.createdAt).toLocaleString()}</div>
+                  </div>
+                  <div className="flex gap-3 mt-4">
+                    <button
+                      onClick={() => handleDownloadImage(selectedImage)}
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                    >
+                      <FaDownload />
+                      Download
+                    </button>
+                    <button
+                      onClick={() => handleDeleteImage(selectedImage.id)}
+                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                    >
+                      <FaTrash />
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default ImageGallery

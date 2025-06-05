@@ -27,7 +27,6 @@ import {
 } from 'react-icons/fa'
 import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
-// @ts-ignore
 import streamChat from '@lib/streamChat'
 import { useUserStore } from '@lib/store'
 
