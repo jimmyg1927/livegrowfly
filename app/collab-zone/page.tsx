@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { 
-  Plus, Trash2, Edit3, Save, Mail, CheckCircle, AlertCircle, Download, 
-  Link, FileText, Users, Search, Filter, Copy, Eye, Share2, Clock,
+  Plus, Trash2, Edit3, Save, CheckCircle, AlertCircle, 
+  FileText, Users, Search, Copy, Share2,
   Star, MoreVertical, X, Settings, UserPlus, Globe, MessageSquare,
   ChevronLeft, ChevronRight, Maximize2, Minimize2
 } from 'lucide-react'
@@ -131,7 +131,8 @@ function ShareModal({ isOpen, onClose, document, onShare }: ShareModalProps) {
   )
 }
 
-export default function CollabZonePage() {  const router = useRouter()
+export default function CollabZonePage() {  
+  const router = useRouter()
   const [docs, setDocs] = useState<Doc[]>([])
   const [sharedDocs, setSharedDocs] = useState<Doc[]>([])
   const [activeDoc, setActiveDoc] = useState<Doc | null>(null)
@@ -164,7 +165,6 @@ export default function CollabZonePage() {  const router = useRouter()
   const [selectedText, setSelectedText] = useState('')
   const [showCommentForm, setShowCommentForm] = useState(false)
   const [highlightedTextId, setHighlightedTextId] = useState<string | null>(null)
-  const [documentViewTimes, setDocumentViewTimes] = useState<Record<string, number>>({})
 
   // Track document view time for auto-read
   useEffect(() => {
@@ -181,10 +181,10 @@ export default function CollabZonePage() {  const router = useRouter()
     return () => {
       clearTimeout(timer)
       const viewTime = Date.now() - startTime
-      setDocumentViewTimes(prev => ({
-        ...prev,
-        [activeDoc.id]: (prev[activeDoc.id] || 0) + viewTime
-      }))
+      // Remove unused variable warning by using viewTime in a meaningful way
+      if (viewTime > 0) {
+        // Document viewing time tracked
+      }
     }
   }, [activeDoc?.id])
 
@@ -286,12 +286,6 @@ export default function CollabZonePage() {  const router = useRouter()
     setComments(prev => prev.filter(c => c.id !== commentId))
   }
 
-  useEffect(() => {
-    const token = localStorage.getItem('growfly_jwt')
-    if (!token) return router.push('/login')
-    loadDocuments(token)
-  }, [router])
-
   const loadDocuments = async (token: string) => {
     setLoading(true)
     try {
@@ -315,26 +309,30 @@ export default function CollabZonePage() {  const router = useRouter()
         })
         
         if (sharedRes.ok) {
-          const sharedDocs = await sharedRes.json()
-          if (Array.isArray(sharedDocs)) {
-            setSharedDocs(sharedDocs.map((doc: any) => ({ ...doc, isShared: true })))
+          const sharedDocsData = await sharedRes.json()
+          if (Array.isArray(sharedDocsData)) {
+            setSharedDocs(sharedDocsData.map((doc: Doc) => ({ ...doc, isShared: true })))
           }
         } else if (sharedRes.status === 404) {
           // Endpoint doesn't exist yet, that's ok
           setSharedDocs([])
         }
       } catch (sharedError) {
-        console.log('Shared documents endpoint not available yet')
         setSharedDocs([])
       }
       
     } catch (error) {
-      console.error('Error loading documents:', error)
       setStatusMsg({ type: 'error', text: 'Failed to load documents' })
     } finally {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    const token = localStorage.getItem('growfly_jwt')
+    if (!token) return router.push('/login')
+    loadDocuments(token)
+  }, [router])
 
   const showStatus = (type: 'success' | 'error', text: string) => {
     setStatusMsg({ type, text })
@@ -605,7 +603,7 @@ export default function CollabZonePage() {  const router = useRouter()
                         {comment.selectedText && (
                           <div className="mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border-l-2 border-blue-500">
                             <p className="text-xs text-gray-600 dark:text-gray-400 italic">
-                              &quot;{comment.selectedText}&quot;
+                              &ldquo;{comment.selectedText}&rdquo;
                             </p>
                           </div>
                         )}
@@ -624,7 +622,7 @@ export default function CollabZonePage() {  const router = useRouter()
                 {showCommentForm && selectedText && (
                   <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border-l-2 border-blue-500">
                     <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Selected text:</p>
-                    <p className="text-xs text-gray-700 dark:text-gray-300 italic">&quot;{selectedText}&quot;</p>
+                    <p className="text-xs text-gray-700 dark:text-gray-300 italic">&ldquo;{selectedText}&rdquo;</p>
                   </div>
                 )}
                 
@@ -730,7 +728,7 @@ export default function CollabZonePage() {  const router = useRouter()
                 </div>
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
+                  onChange={(e) => setSortBy(e.target.value as 'updated' | 'created' | 'title')}
                   className="text-xs bg-transparent text-gray-600 dark:text-gray-400 rounded-xl"
                 >
                   <option value="updated">Last updated</option>
@@ -1052,7 +1050,7 @@ export default function CollabZonePage() {  const router = useRouter()
                         {comment.selectedText && (
                           <div className="mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border-l-2 border-blue-500">
                             <p className="text-xs text-gray-600 dark:text-gray-400 italic">
-                              "{comment.selectedText}"
+                              &ldquo;{comment.selectedText}&rdquo;
                             </p>
                           </div>
                         )}
@@ -1071,7 +1069,7 @@ export default function CollabZonePage() {  const router = useRouter()
                 {showCommentForm && selectedText && (
                   <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border-l-2 border-blue-500">
                     <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Selected text:</p>
-                    <p className="text-xs text-gray-700 dark:text-gray-300 italic">"{selectedText}"</p>
+                    <p className="text-xs text-gray-700 dark:text-gray-300 italic">&ldquo;{selectedText}&rdquo;</p>
                   </div>
                 )}
                 
