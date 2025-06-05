@@ -4,7 +4,7 @@
 
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { FaFileExport, FaFileExcel, FaFilePdf, FaDownload, FaSpinner } from 'react-icons/fa'
+import { FaFileExport, FaFileExcel, FaFilePdf, FaSpinner } from 'react-icons/fa'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://glowfly-api-production.up.railway.app'
 
@@ -16,6 +16,13 @@ interface BulkActionsProps {
     content: string
   }>
   onClear: () => void
+}
+
+interface RequestBody {
+  content: string
+  title: string
+  type?: string
+  includeMetadata?: boolean
 }
 
 const BulkActions: React.FC<BulkActionsProps> = ({ selectedMessages, messages, onClear }) => {
@@ -45,32 +52,32 @@ const BulkActions: React.FC<BulkActionsProps> = ({ selectedMessages, messages, o
       const content = getSelectedContent()
       const title = `Growfly Export - ${new Date().toLocaleDateString()}`
 
-      let endpoint = ''
-      let requestBody: any = { content, title }
+      // ✅ FIXED: Handle text export first to avoid switch statement issues
+      if (format === 'txt') {
+        const blob = new Blob([content], { type: 'text/plain' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `${title.replace(/[^a-zA-Z0-9]/g, '_')}.txt`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+        setIsExporting(false)
+        onClear()
+        return
+      }
 
-      switch (format) {
-        case 'excel':
-          endpoint = '/api/file-generation/excel'
-          requestBody.type = 'auto'
-          break
-        case 'pdf':
-          endpoint = '/api/file-generation/pdf'
-          requestBody.includeMetadata = true
-          break
-        case 'txt':
-          // Handle text export locally
-          const blob = new Blob([content], { type: 'text/plain' })
-          const url = URL.createObjectURL(blob)
-          const link = document.createElement('a')
-          link.href = url
-          link.download = `${title.replace(/[^a-zA-Z0-9]/g, '_')}.txt`
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link)
-          URL.revokeObjectURL(url)
-          setIsExporting(false)
-          onClear()
-          return
+      // ✅ FIXED: Use proper typing instead of any and avoid switch statement
+      let endpoint = ''
+      const requestBody: RequestBody = { content, title } // ✅ FIXED: Proper typing
+
+      if (format === 'excel') {
+        endpoint = '/api/file-generation/excel/generate'
+        requestBody.type = 'auto'
+      } else if (format === 'pdf') {
+        endpoint = '/api/file-generation/pdf/generate'
+        requestBody.includeMetadata = true
       }
 
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -106,9 +113,10 @@ const BulkActions: React.FC<BulkActionsProps> = ({ selectedMessages, messages, o
 
       onClear() // Clear selection after successful export
 
-    } catch (error: any) {
+    } catch (error: unknown) { // ✅ FIXED: Use unknown instead of any
       console.error('Export failed:', error)
-      setError(`Export failed: ${error.message}`)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      setError(`Export failed: ${errorMessage}`)
       setTimeout(() => setError(null), 5000)
     } finally {
       setIsExporting(false)

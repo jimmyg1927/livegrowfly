@@ -4,7 +4,7 @@
 
 import React from 'react'
 import { motion } from 'framer-motion'
-import { FaLightbulb, FaChartLine, FaFileImage, FaFilePdf, FaFileAlt } from 'react-icons/fa'
+import { FaLightbulb, FaChartLine, FaFileImage, FaFilePdf, FaFileAlt, FaFileExcel } from 'react-icons/fa'
 
 interface UploadedFile {
   id: string
@@ -28,7 +28,7 @@ const SmartPrompts: React.FC<SmartPromptsProps> = ({ files, onPromptSelect, clas
     const hasImages = fileTypes.some(type => type.startsWith('image/'))
     const hasPDFs = fileTypes.some(type => type === 'application/pdf')
     const hasDocuments = fileTypes.some(type => type.includes('word') || type.includes('document'))
-    const hasSpreadsheets = fileTypes.some(type => type.includes('spreadsheet') || type.includes('excel'))
+    const hasSpreadsheets = fileTypes.some(type => type.includes('spreadsheet') || type.includes('excel')) // ✅ Now we'll use this
 
     const prompts: Array<{ icon: React.ReactNode; text: string; category: string }> = []
 
@@ -55,6 +55,15 @@ const SmartPrompts: React.FC<SmartPromptsProps> = ({ files, onPromptSelect, clas
       prompts.push(
         { icon: <FaFileAlt className="text-purple-500" />, text: "Convert this document into actionable business tasks and timelines", category: "Project Management" },
         { icon: <FaChartLine className="text-green-500" />, text: "Analyze this document for compliance and process improvement opportunities", category: "Operations" }
+      )
+    }
+
+    // ✅ FIXED: Added spreadsheet-specific prompts to use the hasSpreadsheets variable
+    if (hasSpreadsheets) {
+      prompts.push(
+        { icon: <FaFileExcel className="text-green-600" />, text: "Analyze this spreadsheet data for trends, patterns, and business insights", category: "Data Analysis" },
+        { icon: <FaChartLine className="text-green-500" />, text: "What key metrics and KPIs can we extract from this spreadsheet data?", category: "Financial Analysis" },
+        { icon: <FaLightbulb className="text-yellow-500" />, text: "How can we optimize operations based on this spreadsheet data?", category: "Operations Strategy" }
       )
     }
 
