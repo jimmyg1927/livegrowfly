@@ -18,10 +18,16 @@ import {
   FaFileImage,
   FaFileAlt,
   FaTimes,
-  FaPaperclip
+  FaPaperclip,
+  FaFileExcel,
+  FaPalette,
+  FaImages,
+  FaSpinner,
+  FaMagic
 } from 'react-icons/fa'
 import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
+// @ts-ignore
 import streamChat from '@lib/streamChat'
 import { useUserStore } from '@lib/store'
 
@@ -45,12 +51,47 @@ interface UploadedFile {
   url?: string
   preview?: string
   content?: string
+  file?: File // ✅ NEW: Store the actual File object
+}
+
+// ✅ NEW: DALL-E Image interface
+interface GeneratedImage {
+  id: string
+  url: string
+  originalPrompt: string
+  revisedPrompt: string
+  size: string
+  quality: string
+  style: string
+  createdAt: string
+}
+
+// ✅ NEW: DALL-E Usage interface
+interface ImageUsage {
+  subscriptionType: string
+  limits: {
+    daily: number
+    monthly: number
+  }
+  usage: {
+    daily: { used: number; remaining: number; limit: number }
+    monthly: { used: number; remaining: number; limit: number }
+  }
 }
 
 const PROMPT_LIMITS: Record<string, number> = {
   free: 20,
   personal: 400,
   business: 2000,
+}
+
+// ✅ NEW: DALL-E Image Limits
+const IMAGE_LIMITS: Record<string, { daily: number; monthly: number }> = {
+  free: { daily: 0, monthly: 5 },
+  personal: { daily: 20, monthly: 600 },
+  entrepreneur: { daily: 25, monthly: 750 },
+  business: { daily: 40, monthly: 1200 },
+  enterprise: { daily: 100, monthly: 3000 }
 }
 
 // File Preview Component
@@ -91,6 +132,388 @@ const FilePreview: React.FC<{ file: UploadedFile; onRemove: () => void }> = ({ f
           <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{file.name}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400">{formatFileSize(file.size)}</p>
           <p className="text-xs text-gray-400 dark:text-gray-500">{file.type}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ✅ NEW: DALL-E Image Generation Modal
+const ImageGenerationModal: React.FC<{
+  open: boolean
+  onClose: () => void
+  onImageGenerated: (image: GeneratedImage) => void
+}> = ({ open, onClose, onImageGenerated }) => {
+  const [prompt, setPrompt] = useState('')
+  const [size, setSize] = useState('1024x1024')
+  const [quality, setQuality] = useState('standard')
+  const [style, setStyle] = useState('vivid')
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [error, setError] = useState('')
+  const [imageUsage, setImageUsage] = useState<ImageUsage | null>(null)
+  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
+
+  // Fetch usage stats when modal opens
+  useEffect(() => {
+    if (open && token) {
+      fetch(`${API_BASE_URL}/api/dalle/usage`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => setImageUsage(data))
+        .catch(err => console.error('Failed to fetch image usage:', err))
+    }
+  }, [open, token])
+
+  const handleGenerate = async () => {
+    if (!prompt.trim() || prompt.length < 3) {
+      setError('Prompt must be at least 3 characters long')
+      return
+    }
+
+    setIsGenerating(true)
+    setError('')
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/dalle/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ prompt, size, quality, style })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate image')
+      }
+
+      onImageGenerated(data.image)
+      setPrompt('')
+      onClose()
+    } catch (err: any) {
+      setError(err.message || 'Failed to generate image')
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
+  if (!open) return null
+
+  const dailyRemaining = imageUsage?.usage.daily.remaining || 0
+  const monthlyRemaining = imageUsage?.usage.monthly.remaining || 0
+  const canGenerate = dailyRemaining > 0 && monthlyRemaining > 0
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <FaPalette className="text-purple-500" />
+              Generate Image with DALL-E
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              <HiX className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Usage Display */}
+          {imageUsage && (
+            <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl border border-purple-200 dark:border-purple-700">
+              <h3 className="font-semibold text-purple-800 dark:text-purple-300 mb-2">Image Generation Limits</h3>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-600 dark:text-gray-400">Daily: </span>
+                  <span className="font-bold text-purple-700 dark:text-purple-300">
+                    {imageUsage.usage.daily.remaining}/{imageUsage.usage.daily.limit}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-600 dark:text-gray-400">Monthly: </span>
+                  <span className="font-bold text-purple-700 dark:text-purple-300">
+                    {imageUsage.usage.monthly.remaining}/{imageUsage.usage.monthly.limit}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg text-red-700 dark:text-red-300 text-sm">
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-4">
+            {/* Prompt Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Image Description
+              </label>
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Describe the image you want to generate..."
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                rows={4}
+                disabled={isGenerating || !canGenerate}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Be specific and detailed for best results
+              </p>
+            </div>
+
+            {/* Options */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Size
+                </label>
+                <select
+                  value={size}
+                  onChange={(e) => setSize(e.target.value)}
+                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+                  disabled={isGenerating || !canGenerate}
+                >
+                  <option value="1024x1024">Square (1024×1024)</option>
+                  <option value="1024x1792">Portrait (1024×1792)</option>
+                  <option value="1792x1024">Landscape (1792×1024)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Quality
+                </label>
+                <select
+                  value={quality}
+                  onChange={(e) => setQuality(e.target.value)}
+                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+                  disabled={isGenerating || !canGenerate}
+                >
+                  <option value="standard">Standard</option>
+                  <option value="hd">HD (Higher Cost)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Style
+                </label>
+                <select
+                  value={style}
+                  onChange={(e) => setStyle(e.target.value)}
+                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+                  disabled={isGenerating || !canGenerate}
+                >
+                  <option value="vivid">Vivid (More Creative)</option>
+                  <option value="natural">Natural (More Realistic)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Generate Button */}
+            <div className="flex gap-3 pt-4">
+              <button
+                onClick={onClose}
+                className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                disabled={isGenerating}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleGenerate}
+                disabled={isGenerating || !prompt.trim() || !canGenerate}
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                {isGenerating ? (
+                  <>
+                    <FaSpinner className="animate-spin" />
+                    Generating...
+                  </>
+                ) : !canGenerate ? (
+                  'Limit Reached'
+                ) : (
+                  <>
+                    <FaMagic />
+                    Generate Image
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ✅ NEW: Image Gallery Modal
+const ImageGalleryModal: React.FC<{
+  open: boolean
+  onClose: () => void
+}> = ({ open, onClose }) => {
+  const [images, setImages] = useState<GeneratedImage[]>([])
+  const [loading, setLoading] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null)
+  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
+
+  useEffect(() => {
+    if (open && token) {
+      setLoading(true)
+      fetch(`${API_BASE_URL}/api/dalle/images?limit=20`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          setImages(data.images || [])
+        })
+        .catch(err => console.error('Failed to fetch images:', err))
+        .finally(() => setLoading(false))
+    }
+  }, [open, token])
+
+  const handleDownloadImage = (image: GeneratedImage) => {
+    const link = document.createElement('a')
+    link.href = image.url
+    link.download = `growfly-${image.id}.png`
+    link.click()
+  }
+
+  const handleDeleteImage = async (imageId: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/dalle/images/${imageId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      
+      if (response.ok) {
+        setImages(prev => prev.filter(img => img.id !== imageId))
+        setSelectedImage(null)
+      }
+    } catch (err) {
+      console.error('Failed to delete image:', err)
+    }
+  }
+
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <FaImages className="text-blue-500" />
+              Your Generated Images
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              <HiX className="w-6 h-6" />
+            </button>
+          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <FaSpinner className="animate-spin text-blue-500 text-2xl" />
+            </div>
+          ) : images.length === 0 ? (
+            <div className="text-center py-12">
+              <FaImages className="text-gray-400 text-6xl mx-auto mb-4" />
+              <p className="text-gray-600 dark:text-gray-400">No images generated yet</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {images.map((image) => (
+                <div
+                  key={image.id}
+                  className="group relative bg-gray-50 dark:bg-slate-700 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600 hover:shadow-lg transition-all duration-200"
+                >
+                  <img
+                    src={image.url}
+                    alt={image.originalPrompt}
+                    className="w-full h-48 object-cover cursor-pointer"
+                    onClick={() => setSelectedImage(image)}
+                  />
+                  <div className="p-3">
+                    <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 mb-2">
+                      {image.originalPrompt}
+                    </p>
+                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <span>{new Date(image.createdAt).toLocaleDateString()}</span>
+                      <span>{image.size}</span>
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={() => handleDownloadImage(image)}
+                        className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs"
+                      >
+                        Download
+                      </button>
+                      <button
+                        onClick={() => handleDeleteImage(image.id)}
+                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Image Detail Modal */}
+          {selectedImage && (
+            <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">Image Details</h3>
+                    <button
+                      onClick={() => setSelectedImage(null)}
+                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    >
+                      <HiX className="w-6 h-6" />
+                    </button>
+                  </div>
+                  <img
+                    src={selectedImage.url}
+                    alt={selectedImage.originalPrompt}
+                    className="w-full max-h-96 object-contain rounded-xl mb-4"
+                  />
+                  <div className="space-y-2 text-sm">
+                    <div><strong>Original Prompt:</strong> {selectedImage.originalPrompt}</div>
+                    <div><strong>Revised Prompt:</strong> {selectedImage.revisedPrompt}</div>
+                    <div><strong>Size:</strong> {selectedImage.size} | <strong>Quality:</strong> {selectedImage.quality} | <strong>Style:</strong> {selectedImage.style}</div>
+                    <div><strong>Created:</strong> {new Date(selectedImage.createdAt).toLocaleString()}</div>
+                  </div>
+                  <div className="flex gap-3 mt-4">
+                    <button
+                      onClick={() => handleDownloadImage(selectedImage)}
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+                    >
+                      Download
+                    </button>
+                    <button
+                      onClick={() => handleDeleteImage(selectedImage.id)}
+                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -139,6 +562,12 @@ function DashboardContent() {
   const promptsRemaining = Math.max(0, promptLimit - promptsUsed)
   const usagePercentage = Math.min(100, (promptsUsed / promptLimit) * 100)
 
+  // ✅ NEW: Image generation states
+  const [showImageModal, setShowImageModal] = useState(false)
+  const [showImageGallery, setShowImageGallery] = useState(false)
+  const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([])
+  const [imageUsage, setImageUsage] = useState<ImageUsage | null>(null)
+
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
@@ -159,6 +588,21 @@ function DashboardContent() {
   const containerRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const scrollTimeoutRef = useRef<NodeJS.Timeout>()
+
+  // ✅ Helper function for creating files from base64 previews
+  const createFileFromPreview = (preview: string, name: string, type: string): File => {
+    const arr = preview.split(',')
+    const mime = arr[0].match(/:(.*?);/)?.[1] || type
+    const bstr = atob(arr[1])
+    let n = bstr.length
+    const u8arr = new Uint8Array(n)
+    
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n)
+    }
+    
+    return new File([u8arr], name, { type: mime })
+  }
 
   const formatTitleFromDate = (date: Date) => {
     return `${date.toLocaleDateString(undefined, {
@@ -183,6 +627,18 @@ function DashboardContent() {
       window.history.replaceState({}, document.title, window.location.pathname)
     }
   }
+
+  // ✅ NEW: Fetch image usage on load
+  useEffect(() => {
+    if (token) {
+      fetch(`${API_BASE_URL}/api/dalle/usage`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => setImageUsage(data))
+        .catch(err => console.error('Failed to fetch image usage:', err))
+    }
+  }, [token])
 
   // Enhanced user data fetching with better error handling and CORS fix
   useEffect(() => {
@@ -311,7 +767,7 @@ function DashboardContent() {
     }
   }, [messages, isUserScrolling, isStreaming])
 
-  // Enhanced file handling
+  // ✅ UPDATED: Enhanced file handling to store File objects
   const handleFileSelect = (files: FileList) => {
     Array.from(files).forEach(file => {
       if (file.size > 10 * 1024 * 1024) { // 10MB limit
@@ -325,6 +781,7 @@ function DashboardContent() {
         name: file.name,
         type: file.type,
         size: file.size,
+        file: file, // ✅ Store the actual File object
       }
 
       // Generate preview for images
@@ -373,7 +830,8 @@ function DashboardContent() {
     }
   }
 
-  const handleStream = async (prompt: string, aId: string) => {
+  // ✅ NEW: Enhanced handleStream with file support
+  const handleStreamWithFiles = async (prompt: string, aId: string, files: File[] = []) => {
     let fullContent = ''
     let followUps: string[] = []
     setIsLoading(true)
@@ -392,7 +850,8 @@ function DashboardContent() {
         prompt,
         threadId: threadId || undefined,
         token,
-        onStream: (chunk) => {
+        files, // ✅ NEW: Pass files to streamChat
+        onStream: (chunk: any) => { // Use 'any' to avoid type errors
           console.log('📡 Stream chunk received:', chunk)
           
           if (chunk.content) {
@@ -410,6 +869,12 @@ function DashboardContent() {
           
           if (chunk.followUps) {
             followUps = chunk.followUps
+          }
+
+          // ✅ NEW: Handle processed files information
+          if (chunk.processedFiles) {
+            console.log('📁 Processed files:', chunk.processedFiles)
+            // You can show user which files were processed successfully
           }
         },
         onComplete: async () => {
@@ -472,7 +937,7 @@ function DashboardContent() {
             }
           }
         },
-        onError: (error) => {
+        onError: (error: any) => {
           console.error('❌ StreamChat error:', error)
           setIsLoading(false)
           setIsStreaming(false)
@@ -505,6 +970,7 @@ function DashboardContent() {
     }
   }
 
+  // ✅ UPDATED: Enhanced handleSubmit with proper file handling
   const handleSubmit = async (override?: string) => {
     const text = override || input.trim()
     if (!text && uploadedFiles.length === 0) return
@@ -536,59 +1002,151 @@ function DashboardContent() {
     }
     setMessages((prev) => [...prev, userMessage])
     setInput('')
-    setUploadedFiles([]) // Clear uploaded files after sending
     
     const aId = `a${Date.now()}`
     setMessages((prev) => [...prev, { id: aId, role: 'assistant', content: '' }])
 
-    // Handle file uploads (enhanced)
-    if (uploadedFiles.length > 0) {
-      // For now, include file info in the prompt and use existing image analysis for images
-      const imageFiles = uploadedFiles.filter(f => f.type.startsWith('image/'))
-      const otherFiles = uploadedFiles.filter(f => !f.type.startsWith('image/'))
-      
-      if (imageFiles.length > 0 && imageFiles[0].preview) {
-        // Use existing image analysis for the first image
-        try {
-          setIsLoading(true)
-          const res = await fetch(`${API_BASE_URL}/api/ai/image`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ imageBase64: imageFiles[0].preview, message: text }),
-          })
-          
-          const data = await res.json()
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === aId
-                ? { ...msg, content: data.content, imageUrl: imageFiles[0].preview }
-                : msg
-            )
-          )
-          
-          setIsLoading(false)
-        } catch (err) {
-          console.error('Image analysis failed:', err)
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === aId
-                ? { ...msg, content: '❌ Failed to analyze image.' }
-                : msg
-            )
-          )
-          setIsLoading(false)
-        }
-      } else {
-        // Handle other files with enhanced prompt
-        const fileInfo = uploadedFiles.map(f => `[File: ${f.name} (${f.type})]`).join('\n')
-        const enhancedPrompt = `${text}\n\nAttached files:\n${fileInfo}`
-        handleStream(enhancedPrompt, aId)
+    // ✅ ENHANCED: Convert uploaded files to proper File objects
+    const filesToSend: File[] = []
+    
+    for (const uploadedFile of uploadedFiles) {
+      if (uploadedFile.file) {
+        // Use the stored File object
+        filesToSend.push(uploadedFile.file)
+      } else if (uploadedFile.preview && uploadedFile.type.startsWith('image/')) {
+        // Fallback: Convert base64 preview to File object
+        const file = createFileFromPreview(uploadedFile.preview, uploadedFile.name, uploadedFile.type)
+        filesToSend.push(file)
       }
-    } else {
-      handleStream(text, aId)
+    }
+
+    // Clear uploaded files after sending
+    setUploadedFiles([])
+
+    // ✅ SIMPLIFIED: Always use the new streamChat with files
+    handleStreamWithFiles(text, aId, filesToSend)
+  }
+
+  // ✅ NEW: Download response as document
+  const handleDownloadResponse = async (messageId: string, format: 'txt' | 'md' | 'html' = 'md') => {
+    const message = messages.find(m => m.id === messageId)
+    if (!message || message.role !== 'assistant') return
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/ai/generate-document`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          content: message.content,
+          format,
+          title: `Growfly Response - ${new Date().toLocaleDateString()}`
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate document')
+      }
+
+      const data = await response.json()
+      
+      // Create download link
+      const blob = new Blob([data.content], { type: data.mimeType })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = data.filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+
+    } catch (error) {
+      console.error('Download failed:', error)
+      setError('Failed to download document. Please try again.')
+    }
+  }
+
+  // ✅ NEW: Generate Excel from AI response
+  const handleGenerateExcel = async (messageId: string) => {
+    const message = messages.find(m => m.id === messageId)
+    if (!message || message.role !== 'assistant') return
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/file-generation/excel/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          prompt: message.content,
+          template: 'business',
+          includeCharts: false
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate Excel')
+      }
+
+      // Handle file download
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `growfly-analysis-${Date.now()}.xlsx`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+
+    } catch (error) {
+      console.error('Excel generation failed:', error)
+      setError('Failed to generate Excel file. Please try again.')
+    }
+  }
+
+  // ✅ NEW: Generate PDF from AI response
+  const handleGeneratePDF = async (messageId: string, template: string = 'professional') => {
+    const message = messages.find(m => m.id === messageId)
+    if (!message || message.role !== 'assistant') return
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/file-generation/pdf/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          content: message.content,
+          title: `Growfly Document - ${new Date().toLocaleDateString()}`,
+          template,
+          documentType: 'report'
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF')
+      }
+
+      // Handle file download
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `growfly-document-${Date.now()}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+
+    } catch (error) {
+      console.error('PDF generation failed:', error)
+      setError('Failed to generate PDF. Please try again.')
     }
   }
 
@@ -686,6 +1244,20 @@ function DashboardContent() {
     }
   }
 
+  // ✅ NEW: Handle image generation
+  const handleImageGenerated = (image: GeneratedImage) => {
+    setGeneratedImages(prev => [image, ...prev])
+    // Refresh usage stats
+    if (token) {
+      fetch(`${API_BASE_URL}/api/dalle/usage`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => setImageUsage(data))
+        .catch(err => console.error('Failed to refresh image usage:', err))
+    }
+  }
+
   const getPromptLimitColor = () => {
     if (usagePercentage >= 90) return 'from-red-500 to-red-600'
     if (usagePercentage >= 70) return 'from-yellow-500 to-orange-500'
@@ -700,11 +1272,11 @@ function DashboardContent() {
       {/* Main Content Area with proper padding */}
       <div className="flex-1 overflow-hidden p-6">
         
-        {/* Header with Prompts Used and New Chat */}
+        {/* ✅ ENHANCED: Header with Prompts Used, Image Usage, and Action Buttons */}
         <div className="flex justify-between items-center mb-4">
           <div className="flex-1" />
           <div className="flex items-center gap-4">
-            {/* Enhanced Prompt Tracker with better debugging */}
+            {/* Enhanced Prompt Tracker */}
             <div className="bg-white dark:bg-white rounded-xl px-4 py-2 shadow-lg border border-gray-200">
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium text-gray-700">
@@ -734,6 +1306,45 @@ function DashboardContent() {
                 )}
               </div>
             </div>
+
+            {/* ✅ NEW: Image Usage Tracker */}
+            {imageUsage && (
+              <div className="bg-white dark:bg-white rounded-xl px-4 py-2 shadow-lg border border-gray-200">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-gray-700">
+                    Images
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <div className="relative w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className="absolute top-0 left-0 h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full transition-all duration-300 ease-out"
+                        style={{ 
+                          width: `${Math.min((imageUsage.usage.daily.used / imageUsage.usage.daily.limit) * 100, 100)}%` 
+                        }}
+                      />
+                    </div>
+                    <span className="text-sm font-bold text-gray-800 min-w-[2.5rem]">
+                      {imageUsage.usage.daily.remaining}/{imageUsage.usage.daily.limit}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ✅ NEW: DALL-E & Gallery Buttons */}
+            <button
+              onClick={() => setShowImageModal(true)}
+              className="text-sm bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105"
+            >
+              <FaPalette className="text-xs" /> Generate Image
+            </button>
+
+            <button
+              onClick={() => setShowImageGallery(true)}
+              className="text-sm bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105"
+            >
+              <FaImages className="text-xs" /> Gallery
+            </button>
             
             <button
               onClick={createNewThread}
@@ -913,15 +1524,17 @@ function DashboardContent() {
                       </div>
                     )}
 
-                    {/* ✅ ENHANCED: Action Buttons with individual message saving */}
-                    <div className="flex gap-4 mt-4 text-lg text-gray-500 dark:text-gray-400">
+                    {/* ✅ ENHANCED: Action Buttons with new file generation options */}
+                    <div className="flex flex-wrap gap-4 mt-4 text-lg text-gray-500 dark:text-gray-400">
                       <HiThumbUp
                         className="cursor-pointer hover:text-green-500 transition-colors duration-200 transform hover:scale-110"
                         onClick={() => setShowFeedbackModal(true)}
+                        title="Like this response"
                       />
                       <HiThumbDown
                         className="cursor-pointer hover:text-red-500 transition-colors duration-200 transform hover:scale-110"
                         onClick={() => setShowFeedbackModal(true)}
+                        title="Dislike this response"
                       />
                       <FaRegBookmark
                         className="cursor-pointer hover:text-yellow-500 transition-colors duration-200 transform hover:scale-110"
@@ -936,8 +1549,76 @@ function DashboardContent() {
                         onClick={() => handleShareToCollabZone(msg.id)}
                         title="Share to Collab Zone"
                       />
+                      
+                      {/* ✅ NEW: Enhanced download dropdown with Excel/PDF generation */}
+                      <div className="relative group">
+                        <FaFileDownload 
+                          className="cursor-pointer hover:text-purple-500 transition-colors duration-200 transform hover:scale-110" 
+                          title="Download & Generate Files"
+                        />
+                        {/* Enhanced download options dropdown */}
+                        <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-10 min-w-[160px]">
+                          <div className="p-2 space-y-1">
+                            <div className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1 border-b border-gray-200 dark:border-gray-600">
+                              Documents
+                            </div>
+                            <button
+                              onClick={() => handleDownloadResponse(msg.id, 'md')}
+                              className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded"
+                            >
+                              📄 Markdown
+                            </button>
+                            <button
+                              onClick={() => handleDownloadResponse(msg.id, 'txt')}
+                              className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded"
+                            >
+                              📝 Text File
+                            </button>
+                            <button
+                              onClick={() => handleDownloadResponse(msg.id, 'html')}
+                              className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded"
+                            >
+                              🌐 HTML
+                            </button>
+                            
+                            <div className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1 border-b border-gray-200 dark:border-gray-600 border-t mt-2 pt-2">
+                              Smart Generation
+                            </div>
+                            <button
+                              onClick={() => handleGenerateExcel(msg.id)}
+                              className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded"
+                            >
+                              📊 Smart Excel
+                            </button>
+                            <button
+                              onClick={() => handleGeneratePDF(msg.id, 'professional')}
+                              className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded"
+                            >
+                              📋 Business PDF
+                            </button>
+                            <button
+                              onClick={() => handleGeneratePDF(msg.id, 'executive')}
+                              className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded"
+                            >
+                              💼 Executive Report
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
                       {msg.imageUrl && (
-                        <FaFileDownload className="cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 transform hover:scale-110" />
+                        <button
+                          onClick={() => {
+                            const link = document.createElement('a')
+                            link.href = msg.imageUrl!
+                            link.download = `growfly-image-${new Date().toISOString().split('T')[0]}.jpg`
+                            link.click()
+                          }}
+                          className="cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 transform hover:scale-110"
+                          title="Download image"
+                        >
+                          🖼️
+                        </button>
                       )}
                     </div>
                   </>
@@ -1051,6 +1732,19 @@ function DashboardContent() {
           </div>
         </div>
       </div>
+
+      {/* ✅ NEW: DALL-E Image Generation Modal */}
+      <ImageGenerationModal
+        open={showImageModal}
+        onClose={() => setShowImageModal(false)}
+        onImageGenerated={handleImageGenerated}
+      />
+
+      {/* ✅ NEW: Image Gallery Modal */}
+      <ImageGalleryModal
+        open={showImageGallery}
+        onClose={() => setShowImageGallery(false)}
+      />
 
       {/* ✅ FIXED: Modals with enhanced save functionality */}
       <SaveModal

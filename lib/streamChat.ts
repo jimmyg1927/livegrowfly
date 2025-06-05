@@ -6,118 +6,216 @@ type StreamedChunk = {
   type: 'partial' | 'complete'
   content?: string
   followUps?: string[]
-  responseId?: string
+  responseId?: string | null // ✅ FIXED: Allow null
+  processedFiles?: Array<{
+    name: string
+    type: string
+    processed: boolean
+    error?: string
+  }>
 }
 
 interface StreamChatOptions {
   prompt: string
   threadId?: string
   token: string
+  files?: File[]
   onStream: (chunk: StreamedChunk) => void
-  onComplete: () => void
-  onError?: (error: { type: 'rate_limit' | 'network' | 'other', message: string }) => void
+  onComplete: (result?: {
+    followUps?: string[]
+    responseId?: string | null // ✅ FIXED: Allow null
+    processedFiles?: Array<{
+      name: string
+      type: string
+      processed: boolean
+      error?: string
+    }>
+  }) => void
+  onError?: (error: any) => void // ✅ SIMPLIFIED: Use any for error
 }
 
 export default async function streamChat({
   prompt,
   threadId,
   token,
+  files = [],
   onStream,
   onComplete,
   onError,
 }: StreamChatOptions) {
-  if (!token) {
-    console.error('Missing auth token in streamChat')
-    onError?.({ type: 'other', message: 'Missing authentication token' })
-    return
-  }
-
+  let controller = new AbortController()
+  
   try {
-    console.log('🚀 StreamChat: Making request to /api/ai/chat', { prompt: prompt.substring(0, 50), threadId })
-    
-    const res = await fetch(`${API_BASE_URL}/api/ai/chat`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ 
+    // ✅ ENHANCED: Handle file uploads with FormData when files are present
+    let body: FormData | string
+    let headers: Record<string, string> = {
+      'Authorization': `Bearer ${token}`,
+    }
+
+    if (files && files.length > 0) {
+      // Use FormData for file uploads
+      const formData = new FormData()
+      formData.append('message', prompt)
+      if (threadId) formData.append('threadId', threadId)
+      
+      // Add files to FormData
+      files.forEach((file, index) => {
+        if (file instanceof File) {
+          formData.append('files', file)
+        } else if ((file as any).preview) {
+          // Handle base64 images from file preview
+          const blob = dataURLtoBlob((file as any).preview)
+          const fileName = (file as any).name || `image_${index}.jpg`
+          formData.append('files', blob, fileName)
+        }
+      })
+      
+      body = formData
+      // Don't set Content-Type header - let browser set it with boundary
+    } else {
+      // Use JSON for text-only requests
+      headers['Content-Type'] = 'application/json'
+      body = JSON.stringify({
         message: prompt,
-        threadId 
-      }),
+        threadId,
+      })
+    }
+
+    console.log('📡 Making request to:', `${API_BASE_URL}/api/ai/chat`)
+    console.log('📡 With files:', files?.length || 0)
+
+    const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
+      method: 'POST',
+      headers,
+      body,
+      signal: controller.signal,
     })
 
-    console.log('🚀 StreamChat: Response status:', res.status)
+    console.log('📡 Response status:', response.status)
+    console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()))
 
-    if (!res.ok) {
-      const errorText = await res.text()
-      console.error('🚀 StreamChat: HTTP error:', errorText)
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      console.error('📡 API Error:', errorData)
       
-      // Handle specific error types
-      if (res.status === 403) {
-        try {
-          const errorData = JSON.parse(errorText)
-          if (errorData.error === 'Prompt limit reached.') {
-            onError?.({ 
-              type: 'rate_limit', 
-              message: `You've reached your daily limit of ${errorData.promptLimit} prompts. Upgrade your plan to continue.` 
-            })
-            return
-          }
-        } catch (e) {
-          // If we can't parse the error, fall through to generic handling
-        }
+      if (response.status === 403 && errorData.error?.includes('limit')) {
+        onError?.({
+          type: 'rate_limit',
+          message: errorData.error,
+        })
+        return
       }
       
-      onError?.({ 
-        type: 'network', 
-        message: `Request failed with status ${res.status}. Please try again.` 
-      })
-      return
+      throw new Error(errorData.error || `HTTP ${response.status}`)
     }
 
-    if (!res.body) {
-      onError?.({ type: 'network', message: 'No response stream received' })
-      return
+    if (!response.body) {
+      throw new Error('No response body')
     }
 
-    const reader = res.body.getReader()
+    const reader = response.body.getReader()
     const decoder = new TextDecoder()
+
     let buffer = ''
+    let followUps: string[] = []
+    let responseId: string | null = null // ✅ FIXED: Allow null
+    let processedFiles: Array<{
+      name: string
+      type: string
+      processed: boolean
+      error?: string
+    }> = []
 
-    console.log('🚀 StreamChat: Starting to read stream...')
-
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const { done, value } = await reader.read()
-      if (done) break
       
+      if (done) {
+        console.log('📡 Stream complete')
+        break
+      }
+
       buffer += decoder.decode(value, { stream: true })
+      
+      // Process complete lines
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || '' // Keep incomplete line in buffer
 
-      const parts = buffer.split('\n\n')
-      buffer = parts.pop() || ''
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6)
+          
+          if (data === '[DONE]') {
+            console.log('📡 Received [DONE] signal')
+            break
+          }
 
-      for (const part of parts) {
-        if (part.startsWith('data: ')) {
-          const json = part.replace('data: ', '')
-          if (json === '[DONE]') continue
           try {
-            const parsed: StreamedChunk = JSON.parse(json)
-            onStream(parsed)
-          } catch (err) {
-            console.error('Failed to parse streamed chunk:', err, 'Raw data:', json)
+            const parsed = JSON.parse(data)
+            console.log('📡 Parsed chunk:', parsed)
+
+            if (parsed.type === 'partial' && parsed.content) {
+              onStream({ 
+                type: 'partial',
+                content: parsed.content,
+                followUps,
+                responseId,
+                processedFiles
+              })
+            } else if (parsed.type === 'complete') {
+              followUps = parsed.followUps || []
+              responseId = parsed.responseId || null // ✅ FIXED: Handle null properly
+              processedFiles = parsed.processedFiles || []
+              
+              onStream({ 
+                type: 'complete',
+                content: '',
+                followUps,
+                responseId,
+                processedFiles
+              })
+            }
+          } catch (parseError) {
+            console.warn('📡 Failed to parse SSE data:', data, parseError)
           }
         }
       }
     }
 
-    console.log('🚀 StreamChat: Stream completed successfully')
-    onComplete()
-  } catch (err) {
-    console.error('StreamChat error:', err)
-    onError?.({ 
-      type: 'network', 
-      message: 'Connection failed. Please check your internet and try again.' 
+    onComplete({
+      followUps,
+      responseId,
+      processedFiles
     })
+
+  } catch (error: any) {
+    console.error('📡 StreamChat error:', error)
+    
+    if (error.name === 'AbortError') {
+      console.log('📡 Request was aborted')
+      return
+    }
+
+    onError?.(error)
   }
+}
+
+// ✅ HELPER: Convert data URL to Blob for file uploads
+function dataURLtoBlob(dataURL: string): Blob {
+  const arr = dataURL.split(',')
+  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg'
+  const bstr = atob(arr[1])
+  let n = bstr.length
+  const u8arr = new Uint8Array(n)
+  
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n)
+  }
+  
+  return new Blob([u8arr], { type: mime })
+}
+
+// ✅ HELPER: Create File object from base64 preview
+export function createFileFromPreview(preview: string, name: string, type: string): File {
+  const blob = dataURLtoBlob(preview)
+  return new File([blob], name, { type })
 }

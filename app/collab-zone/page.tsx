@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation'
 import { 
   Plus, Trash2, Edit3, Save, CheckCircle, AlertCircle, 
   FileText, Users, Search, Copy, Share2,
-  Star, MoreVertical, X, Settings, UserPlus, Globe, MessageSquare,
-  ChevronLeft, ChevronRight, Maximize2, Minimize2
+  ChevronLeft, ChevronRight, Maximize2, Minimize2, MessageSquare, X,
+  Palette, Type, AlignLeft, AlignCenter, AlignRight, Download, Printer,
+  Bold, Italic, Underline, List, ListOrdered, Quote, Code,
+  Zap, FileDown
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Editor from '@/components/editor/Editor'
@@ -28,6 +30,336 @@ interface ShareModalProps {
   onClose: () => void
   document: Doc | null
   onShare: (email: string, permission: string) => void
+}
+
+// Enhanced Formatting Toolbar Component
+function FormattingToolbar({ isVisible, onClose, activeDoc }: { 
+  isVisible: boolean
+  onClose: () => void 
+  activeDoc: Doc | null
+}) {
+  const [selectedColor, setSelectedColor] = useState('#000000')
+  const [selectedFontSize, setSelectedFontSize] = useState('16')
+  const [wordCount, setWordCount] = useState(0)
+  
+  const colors = [
+    '#000000', '#374151', '#6B7280', '#EF4444', '#F97316', 
+    '#EAB308', '#22C55E', '#3B82F6', '#8B5CF6', '#EC4899'
+  ]
+  
+  const fontSizes = ['12', '14', '16', '18', '20', '24', '28', '32', '36', '48']
+
+  // Count words in document
+  useEffect(() => {
+    if (activeDoc?.content) {
+      const text = activeDoc.content.replace(/<[^>]*>/g, '').trim()
+      const words = text.split(/\s+/).filter(word => word.length > 0)
+      setWordCount(words.length)
+    }
+  }, [activeDoc?.content])
+
+  const handleExport = async (format: 'pdf' | 'docx' | 'txt') => {
+    if (!activeDoc) return
+    
+    const content = activeDoc.content.replace(/<[^>]*>/g, '')
+    const blob = new Blob([content], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${activeDoc.title}.${format === 'docx' ? 'doc' : format}`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  const handlePrint = () => {
+    if (!activeDoc) return
+    const printWindow = window.open('', '_blank')
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head><title>${activeDoc.title}</title></head>
+          <body style="font-family: Arial, sans-serif; padding: 40px; line-height: 1.6;">
+            <h1>${activeDoc.title}</h1>
+            <div>${activeDoc.content}</div>
+          </body>
+        </html>
+      `)
+      printWindow.document.close()
+      printWindow.print()
+    }
+  }
+
+  if (!isVisible) return null
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className="absolute top-full left-0 right-0 z-50 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl shadow-2xl p-4 mt-2 max-w-4xl"
+    >
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-4">
+          <h4 className="font-semibold text-gray-900 dark:text-white">Format & Export</h4>
+          {activeDoc && (
+            <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-4">
+              <span>{wordCount} words</span>
+              <span>•</span>
+              <span>Last saved {formatDistanceToNow(new Date(activeDoc.updatedAt), { addSuffix: true })}</span>
+            </div>
+          )}
+        </div>
+        <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-slate-700 rounded">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Text Formatting */}
+        <div className="space-y-3">
+          <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+            <Type className="w-4 h-4" />
+            Text Style
+          </h5>
+          
+          {/* Quick Format Buttons */}
+          <div className="flex gap-1">
+            <button className="p-2.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-slate-600">
+              <Bold className="w-4 h-4" />
+            </button>
+            <button className="p-2.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-slate-600">
+              <Italic className="w-4 h-4" />
+            </button>
+            <button className="p-2.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-slate-600">
+              <Underline className="w-4 h-4" />
+            </button>
+          </div>
+          
+          {/* Font Size */}
+          <div>
+            <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Font Size</label>
+            <select 
+              value={selectedFontSize}
+              onChange={(e) => setSelectedFontSize(e.target.value)}
+              className="w-full p-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm"
+            >
+              {fontSizes.map(size => (
+                <option key={size} value={size}>{size}px</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Text Color */}
+          <div>
+            <label className="text-xs text-gray-600 dark:text-gray-400 mb-2 block">Text Color</label>
+            <div className="grid grid-cols-5 gap-1 mb-2">
+              {colors.map(color => (
+                <button
+                  key={color}
+                  onClick={() => setSelectedColor(color)}
+                  className={`w-8 h-8 rounded-lg border-2 transition-all ${
+                    selectedColor === color 
+                      ? 'border-gray-400 scale-110 shadow-lg' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  style={{ backgroundColor: color }}
+                />
+              ))}
+            </div>
+            <input
+              type="color"
+              value={selectedColor}
+              onChange={(e) => setSelectedColor(e.target.value)}
+              className="w-full h-8 rounded border border-gray-200 dark:border-slate-600"
+            />
+          </div>
+        </div>
+
+        {/* Layout & Structure */}
+        <div className="space-y-3">
+          <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+            <AlignLeft className="w-4 h-4" />
+            Layout
+          </h5>
+          
+          {/* Alignment */}
+          <div>
+            <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Text Alignment</label>
+            <div className="flex gap-1">
+              <button className="flex-1 p-2.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-slate-600">
+                <AlignLeft className="w-4 h-4 mx-auto" />
+              </button>
+              <button className="flex-1 p-2.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-slate-600">
+                <AlignCenter className="w-4 h-4 mx-auto" />
+              </button>
+              <button className="flex-1 p-2.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-slate-600">
+                <AlignRight className="w-4 h-4 mx-auto" />
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Elements */}
+          <div>
+            <label className="text-xs text-gray-600 dark:text-gray-400 mb-2 block">Quick Insert</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg text-sm hover:bg-blue-100 dark:hover:bg-blue-900/30 border border-blue-200 dark:border-blue-800">
+                <List className="w-3 h-3" />
+                List
+              </button>
+              <button className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-lg text-sm hover:bg-green-100 dark:hover:bg-green-900/30 border border-green-200 dark:border-green-800">
+                <ListOrdered className="w-3 h-3" />
+                Numbers
+              </button>
+              <button className="flex items-center gap-2 px-3 py-2 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-lg text-sm hover:bg-purple-100 dark:hover:bg-purple-900/30 border border-purple-200 dark:border-purple-800">
+                <Quote className="w-3 h-3" />
+                Quote
+              </button>
+              <button className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-900/20 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-900/30 border border-gray-200 dark:border-gray-800">
+                <Code className="w-3 h-3" />
+                Code
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Export & Actions */}
+        <div className="space-y-3">
+          <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+            <FileDown className="w-4 h-4" />
+            Export & Print
+          </h5>
+          
+          {/* Export Options */}
+          <div className="space-y-2">
+            <button 
+              onClick={() => handleExport('pdf')}
+              className="w-full flex items-center gap-3 px-4 py-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800 transition-colors"
+            >
+              <FileDown className="w-4 h-4" />
+              <div className="text-left">
+                <div className="font-medium">Export as PDF</div>
+                <div className="text-xs opacity-70">Download document as PDF</div>
+              </div>
+            </button>
+            
+            <button 
+              onClick={() => handleExport('docx')}
+              className="w-full flex items-center gap-3 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 border border-blue-200 dark:border-blue-800 transition-colors"
+            >
+              <FileText className="w-4 h-4" />
+              <div className="text-left">
+                <div className="font-medium">Export as Word</div>
+                <div className="text-xs opacity-70">Download as .doc file</div>
+              </div>
+            </button>
+            
+            <button 
+              onClick={() => handleExport('txt')}
+              className="w-full flex items-center gap-3 px-4 py-3 bg-gray-50 dark:bg-gray-900/20 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900/30 border border-gray-200 dark:border-gray-800 transition-colors"
+            >
+              <Type className="w-4 h-4" />
+              <div className="text-left">
+                <div className="font-medium">Export as Text</div>
+                <div className="text-xs opacity-70">Plain text format</div>
+              </div>
+            </button>
+            
+            <button 
+              onClick={handlePrint}
+              className="w-full flex items-center gap-3 px-4 py-3 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 border border-green-200 dark:border-green-800 transition-colors"
+            >
+              <Printer className="w-4 h-4" />
+              <div className="text-left">
+                <div className="font-medium">Print Document</div>
+                <div className="text-xs opacity-70">Print or save as PDF</div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+// Template Modal Component
+function TemplateModal({ isOpen, onClose, onCreateFromTemplate }: {
+  isOpen: boolean
+  onClose: () => void
+  onCreateFromTemplate: (template: string) => void
+}) {
+  const templates = [
+    {
+      id: 'blank',
+      name: 'Blank Document',
+      description: 'Start with an empty document',
+      icon: FileText,
+      content: ''
+    },
+    {
+      id: 'meeting',
+      name: 'Meeting Notes',
+      description: 'Template for meeting minutes',
+      icon: Users,
+      content: `
+        <h1>Meeting Notes</h1>
+        <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+        <p><strong>Attendees:</strong> </p>
+        <p><strong>Agenda:</strong></p>
+        <ul>
+          <li></li>
+          <li></li>
+        </ul>
+        <h2>Discussion</h2>
+        <h2>Action Items</h2>
+        <ul>
+          <li></li>
+        </ul>
+        <h2>Next Meeting</h2>
+      `
+    }
+  ]
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-2xl shadow-2xl"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white">Choose Template</h3>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {templates.map((template) => {
+            const IconComponent = template.icon
+            return (
+              <button
+                key={template.id}
+                onClick={() => {
+                  onCreateFromTemplate(template.content)
+                  onClose()
+                }}
+                className="p-4 border border-gray-200 dark:border-slate-600 rounded-xl hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all group"
+              >
+                <IconComponent className="w-8 h-8 text-gray-400 group-hover:text-blue-600 mx-auto mb-3" />
+                <h4 className="font-medium text-gray-900 dark:text-white mb-1">{template.name}</h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{template.description}</p>
+              </button>
+            )
+          })}
+        </div>
+      </motion.div>
+    </div>
+  )
 }
 
 // Share Modal Component
@@ -139,6 +471,7 @@ export default function CollabZonePage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [showShareModal, setShowShareModal] = useState(false)
+  const [showTemplateModal, setShowTemplateModal] = useState(false)
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [titleEditId, setTitleEditId] = useState<string | null>(null)
   const [newTitle, setNewTitle] = useState('')
@@ -149,6 +482,7 @@ export default function CollabZonePage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [commentsVisible, setCommentsVisible] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [showFormatToolbar, setShowFormatToolbar] = useState(false)
   
   // Comments state
   const [comments, setComments] = useState<Array<{
@@ -172,7 +506,6 @@ export default function CollabZonePage() {
     
     const startTime = Date.now()
     const timer = setTimeout(() => {
-      // Mark comments as read after 5 seconds
       setComments(prev => prev.map(comment => 
         comment.documentId === activeDoc.id ? { ...comment, isRead: true } : comment
       ))
@@ -181,29 +514,24 @@ export default function CollabZonePage() {
     return () => {
       clearTimeout(timer)
       const viewTime = Date.now() - startTime
-      // Remove unused variable warning by using viewTime in a meaningful way
       if (viewTime > 0) {
         // Document viewing time tracked
       }
     }
   }, [activeDoc?.id])
 
-  // Get unread comment count for a document
   const getUnreadCount = (docId: string) => {
     return comments.filter(c => c.documentId === docId && !c.isRead).length
   }
 
-  // Handle text selection with persistent highlighting
   const handleTextSelection = () => {
     const selection = window.getSelection()
     if (selection && selection.toString().trim()) {
       const selectedText = selection.toString().trim()
       const range = selection.getRangeAt(0)
       
-      // Create unique ID for this selection
       const highlightId = `highlight_${Date.now()}`
       
-      // Wrap selected text in a highlight span
       try {
         const span = document.createElement('span')
         span.className = 'comment-highlight'
@@ -222,7 +550,6 @@ export default function CollabZonePage() {
         setShowCommentForm(true)
         setCommentsVisible(true)
       } catch (error) {
-        // Fallback if surrounding fails
         setSelectedText(selectedText)
         setShowCommentForm(true)
         setCommentsVisible(true)
@@ -230,7 +557,6 @@ export default function CollabZonePage() {
     }
   }
 
-  // Add comment with persistent highlighting
   const addComment = () => {
     if (!newComment.trim() || !activeDoc) return
     
@@ -249,11 +575,10 @@ export default function CollabZonePage() {
     setSelectedText('')
     setShowCommentForm(false)
     
-    // Keep the highlight but change its color to indicate it has a comment
     if (highlightedTextId) {
       const highlightElement = document.getElementById(highlightedTextId)
       if (highlightElement) {
-        highlightElement.style.backgroundColor = '#10b981' // Green for commented
+        highlightElement.style.backgroundColor = '#10b981'
         highlightElement.style.cursor = 'pointer'
         highlightElement.title = 'This text has a comment'
       }
@@ -261,12 +586,10 @@ export default function CollabZonePage() {
     setHighlightedTextId(null)
   }
 
-  // Cancel comment and remove highlight
   const cancelComment = () => {
     if (highlightedTextId) {
       const highlightElement = document.getElementById(highlightedTextId)
       if (highlightElement) {
-        // Remove the highlight span and restore original text
         const parent = highlightElement.parentNode
         if (parent) {
           parent.replaceChild(document.createTextNode(highlightElement.textContent || ''), highlightElement)
@@ -281,7 +604,6 @@ export default function CollabZonePage() {
     setHighlightedTextId(null)
   }
 
-  // Delete comment
   const deleteComment = (commentId: string) => {
     setComments(prev => prev.filter(c => c.id !== commentId))
   }
@@ -289,7 +611,6 @@ export default function CollabZonePage() {
   const loadDocuments = async (token: string) => {
     setLoading(true)
     try {
-      // Load owned documents
       const ownedRes = await fetch(`${API_URL}/api/collab`, {
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -302,7 +623,6 @@ export default function CollabZonePage() {
         }
       }
 
-      // Load shared documents - handle 404 gracefully
       try {
         const sharedRes = await fetch(`${API_URL}/api/collab/shared`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -314,7 +634,6 @@ export default function CollabZonePage() {
             setSharedDocs(sharedDocsData.map((doc: Doc) => ({ ...doc, isShared: true })))
           }
         } else if (sharedRes.status === 404) {
-          // Endpoint doesn't exist yet, that's ok
           setSharedDocs([])
         }
       } catch (sharedError) {
@@ -356,6 +675,45 @@ export default function CollabZonePage() {
       showStatus('success', 'New document created!')
     } catch (error) {
       showStatus('error', 'Failed to create document')
+    }
+  }
+
+  const handleCreateFromTemplate = async (templateContent: string) => {
+    const token = localStorage.getItem('growfly_jwt')!
+    try {
+      const res = await fetch(`${API_URL}/api/collab`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title: 'New Document', content: templateContent }),
+      })
+      const created = await res.json()
+      setDocs(prev => [created, ...prev])
+      setActiveDoc(created)
+      showStatus('success', 'Document created from template!')
+    } catch (error) {
+      showStatus('error', 'Failed to create document')
+    }
+  }
+
+  const handleDuplicate = async (doc: Doc) => {
+    const token = localStorage.getItem('growfly_jwt')!
+    try {
+      const res = await fetch(`${API_URL}/api/collab`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title: `${doc.title} (Copy)`, content: doc.content }),
+      })
+      const created = await res.json()
+      setDocs(prev => [created, ...prev])
+      showStatus('success', 'Document duplicated!')
+    } catch (error) {
+      showStatus('error', 'Failed to duplicate document')
     }
   }
 
@@ -468,23 +826,41 @@ export default function CollabZonePage() {
   if (isFullscreen && activeDoc) {
     return (
       <div className="fixed inset-0 bg-white dark:bg-slate-900 z-50 flex flex-col">
-        {/* Fullscreen Header with ALL buttons visible */}
-        <header className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <header className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-4 lg:px-6 py-3 flex items-center justify-between relative">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setIsFullscreen(false)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-colors"
             >
               <Minimize2 className="w-5 h-5" />
             </button>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {activeDoc.title}
-            </h2>
+            <div className="hidden sm:block">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate max-w-xs lg:max-w-md">
+                {activeDoc.title}
+              </h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {formatDistanceToNow(new Date(activeDoc.updatedAt), { addSuffix: true })}
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          
+          <div className="flex items-center gap-1.5 lg:gap-2">
+            <button
+              onClick={() => setShowFormatToolbar(!showFormatToolbar)}
+              className={`hidden lg:flex items-center gap-2 px-3 py-2 rounded-xl transition-colors ${
+                showFormatToolbar 
+                  ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' 
+                  : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600'
+              }`}
+              title="Format & Export"
+            >
+              <Palette className="w-4 h-4" />
+              <span className="hidden xl:inline">Format</span>
+            </button>
+
             <button
               onClick={() => setCommentsVisible(!commentsVisible)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-colors ${
+              className={`flex items-center gap-2 px-2 lg:px-3 py-2 rounded-xl transition-colors ${
                 commentsVisible 
                   ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' 
                   : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600'
@@ -492,35 +868,42 @@ export default function CollabZonePage() {
               title="Toggle Comments"
             >
               <MessageSquare className="w-4 h-4" />
-              {commentsVisible ? 'Hide' : 'Show'} Comments
+              <span className="hidden lg:inline">{commentsVisible ? 'Hide' : 'Show'}</span>
               {comments.filter(c => c.documentId === activeDoc.id && !c.isRead).length > 0 && (
                 <span className="bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
                   {comments.filter(c => c.documentId === activeDoc.id && !c.isRead).length}
                 </span>
               )}
             </button>
+
             <button
               onClick={() => setShowShareModal(true)}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+              className="flex items-center gap-2 px-2 lg:px-3 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
             >
               <Share2 className="w-4 h-4" />
-              Share
+              <span className="hidden lg:inline">Share</span>
             </button>
+
             <button
               onClick={handleSave}
-              className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
+              className="flex items-center gap-2 px-2 lg:px-3 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors shadow-sm"
             >
               <Save className="w-4 h-4" />
-              Save
+              <span className="hidden lg:inline">Save</span>
             </button>
           </div>
+          
+          <FormattingToolbar 
+            isVisible={showFormatToolbar} 
+            onClose={() => setShowFormatToolbar(false)}
+            activeDoc={activeDoc}
+          />
         </header>
 
-        {/* Fullscreen Editor with comments support */}
         <div className="flex-1 overflow-hidden flex">
           <div className={`${commentsVisible ? 'flex-1' : 'w-full'} transition-all duration-300`}>
-            <div className="h-full p-6 overflow-hidden">
-              <div className="h-full bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+            <div className="h-full p-4 lg:p-6 overflow-hidden">
+              <div className="h-full bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden shadow-lg">
                 <div className="h-full overflow-y-auto" onMouseUp={handleTextSelection}>
                   <Editor
                     key={`fullscreen-${activeDoc.id}`}
@@ -534,7 +917,6 @@ export default function CollabZonePage() {
             </div>
           </div>
 
-          {/* Comments panel in fullscreen */}
           {commentsVisible && (
             <motion.div
               initial={{ width: 0, opacity: 0 }}
@@ -543,7 +925,6 @@ export default function CollabZonePage() {
               transition={{ duration: 0.3 }}
               className="bg-white dark:bg-slate-800 border-l border-gray-200 dark:border-slate-700 flex flex-col overflow-hidden"
             >
-              {/* Comments Header */}
               <div className="p-4 border-b border-gray-200 dark:border-slate-700">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -559,7 +940,6 @@ export default function CollabZonePage() {
                 </div>
               </div>
 
-              {/* Comments Content */}
               <div className="flex-1 overflow-y-auto p-4">
                 {comments.filter(c => c.documentId === activeDoc.id).length === 0 ? (
                   <div className="text-center py-8">
@@ -617,7 +997,6 @@ export default function CollabZonePage() {
                 )}
               </div>
 
-              {/* Add Comment Form in fullscreen */}
               <div className="p-4 border-t border-gray-200 dark:border-slate-700">
                 {showCommentForm && selectedText && (
                   <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border-l-2 border-blue-500">
@@ -660,9 +1039,7 @@ export default function CollabZonePage() {
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-slate-900 overflow-hidden">
-      {/* Sidebar */}
-      <aside className={`${sidebarCollapsed ? 'w-16' : 'w-80'} bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 flex flex-col transition-all duration-300`}>
-        {/* Sidebar Header */}
+      <aside className={`${sidebarCollapsed ? 'w-16' : 'w-80'} bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 flex flex-col transition-all duration-300 shadow-sm`}>
         <div className="p-4 border-b border-gray-200 dark:border-slate-700">
           <div className="flex items-center justify-between mb-4">
             {!sidebarCollapsed && (
@@ -670,17 +1047,26 @@ export default function CollabZonePage() {
             )}
             <div className="flex items-center gap-2">
               {!sidebarCollapsed && (
-                <button
-                  onClick={handleNew}
-                  className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  New
-                </button>
+                <div className="flex gap-1">
+                  <button
+                    onClick={handleNew}
+                    className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
+                  >
+                    <Plus className="w-4 h-4" />
+                    New
+                  </button>
+                  <button
+                    onClick={() => setShowTemplateModal(true)}
+                    className="p-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+                    title="Templates"
+                  >
+                    <Zap className="w-4 h-4" />
+                  </button>
+                </div>
               )}
               <button
                 onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-colors"
               >
                 {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
               </button>
@@ -689,7 +1075,6 @@ export default function CollabZonePage() {
 
           {!sidebarCollapsed && (
             <>
-              {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
@@ -697,16 +1082,15 @@ export default function CollabZonePage() {
                   placeholder="Search documents..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl text-sm text-gray-900 dark:text-white"
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
-              {/* View Controls */}
               <div className="flex items-center justify-between mt-3">
                 <div className="flex gap-1">
                   <button
                     onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded-xl ${viewMode === 'grid' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600' : 'text-gray-400'}`}
+                    className={`p-2 rounded-xl transition-colors ${viewMode === 'grid' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
                   >
                     <div className="grid grid-cols-2 gap-0.5 w-3 h-3">
                       <div className="bg-current rounded-sm"></div>
@@ -717,7 +1101,7 @@ export default function CollabZonePage() {
                   </button>
                   <button
                     onClick={() => setViewMode('list')}
-                    className={`p-2 rounded-xl ${viewMode === 'list' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600' : 'text-gray-400'}`}
+                    className={`p-2 rounded-xl transition-colors ${viewMode === 'list' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
                   >
                     <div className="space-y-1 w-3 h-3">
                       <div className="bg-current h-0.5 rounded-xl"></div>
@@ -729,7 +1113,7 @@ export default function CollabZonePage() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as 'updated' | 'created' | 'title')}
-                  className="text-xs bg-transparent text-gray-600 dark:text-gray-400 rounded-xl"
+                  className="text-xs bg-transparent text-gray-600 dark:text-gray-400 rounded-xl focus:outline-none"
                 >
                   <option value="updated">Last updated</option>
                   <option value="created">Date created</option>
@@ -740,7 +1124,6 @@ export default function CollabZonePage() {
           )}
         </div>
 
-        {/* Documents List */}
         {!sidebarCollapsed && (
           <div className="flex-1 overflow-y-auto p-4">
             {loading ? (
@@ -770,7 +1153,7 @@ export default function CollabZonePage() {
                   <motion.div
                     key={doc.id}
                     layout
-                    className={`group cursor-pointer rounded-xl border transition-all duration-200 ${
+                    className={`group cursor-pointer rounded-xl border transition-all duration-200 shadow-sm hover:shadow-md ${
                       activeDoc?.id === doc.id
                         ? 'border-blue-300 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-600'
                         : 'border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 hover:border-gray-300 dark:hover:border-slate-500'
@@ -787,7 +1170,7 @@ export default function CollabZonePage() {
                               if (e.key === 'Enter') handleRename(doc.id)
                               if (e.key === 'Escape') setTitleEditId(null)
                             }}
-                            className="w-full px-2 py-1 text-sm border rounded-xl"
+                            className="w-full px-2 py-1 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                             autoFocus
                           />
                         ) : (
@@ -795,7 +1178,6 @@ export default function CollabZonePage() {
                             <h3 className="font-medium text-gray-900 dark:text-white truncate text-sm pr-6">
                               {doc.title}
                             </h3>
-                            {/* Comment Badge */}
                             {getUnreadCount(doc.id) > 0 && (
                               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
                                 {getUnreadCount(doc.id)}
@@ -817,7 +1199,17 @@ export default function CollabZonePage() {
                       </div>
                       
                       {!doc.isShared && (
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDuplicate(doc)
+                            }}
+                            className="p-1 text-gray-400 hover:text-blue-600 rounded-xl"
+                            title="Duplicate"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
@@ -825,6 +1217,7 @@ export default function CollabZonePage() {
                               setNewTitle(doc.title)
                             }}
                             className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-xl"
+                            title="Rename"
                           >
                             <Edit3 className="w-3 h-3" />
                           </button>
@@ -834,6 +1227,7 @@ export default function CollabZonePage() {
                               handleDelete(doc.id)
                             }}
                             className="p-1 text-gray-400 hover:text-red-600 rounded-xl"
+                            title="Delete"
                           >
                             <Trash2 className="w-3 h-3" />
                           </button>
@@ -847,12 +1241,11 @@ export default function CollabZonePage() {
           </div>
         )}
 
-        {/* Collapsed Sidebar - New Button */}
         {sidebarCollapsed && (
           <div className="p-4">
             <button
               onClick={handleNew}
-              className="w-full p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center"
+              className="w-full p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center shadow-sm"
               title="New Document"
             >
               <Plus className="w-5 h-5" />
@@ -861,15 +1254,13 @@ export default function CollabZonePage() {
         )}
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-6 py-4">
+        <header className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-4 lg:px-6 py-4 relative">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               {activeDoc && (
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                <div className="min-w-0">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
                     {activeDoc.title}
                   </h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -880,10 +1271,23 @@ export default function CollabZonePage() {
             </div>
 
             {activeDoc && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 lg:gap-2">
+                <button
+                  onClick={() => setShowFormatToolbar(!showFormatToolbar)}
+                  className={`hidden lg:flex items-center gap-2 px-3 py-2 rounded-xl transition-colors ${
+                    showFormatToolbar 
+                      ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' 
+                      : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600'
+                  }`}
+                  title="Format & Export"
+                >
+                  <Palette className="w-4 h-4" />
+                  <span className="hidden xl:inline">Format</span>
+                </button>
+
                 <button
                   onClick={() => setCommentsVisible(!commentsVisible)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-colors ${
+                  className={`flex items-center gap-2 px-2 lg:px-3 py-2 rounded-xl transition-colors ${
                     commentsVisible 
                       ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' 
                       : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600'
@@ -891,47 +1295,57 @@ export default function CollabZonePage() {
                   title="Toggle Comments"
                 >
                   <MessageSquare className="w-4 h-4" />
-                  {commentsVisible ? 'Hide' : 'Show'} Comments
+                  <span className="hidden sm:inline lg:inline">{commentsVisible ? 'Hide' : 'Show'}</span>
+                  <span className="sm:hidden lg:hidden">Comments</span>
                   {comments.filter(c => c.documentId === activeDoc.id && !c.isRead).length > 0 && (
                     <span className="bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
                       {comments.filter(c => c.documentId === activeDoc.id && !c.isRead).length}
                     </span>
                   )}
                 </button>
+
                 <button
                   onClick={() => setIsFullscreen(true)}
-                  className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+                  className="flex items-center gap-2 px-2 lg:px-3 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
                   title="Fullscreen"
                 >
                   <Maximize2 className="w-4 h-4" />
+                  <span className="hidden lg:inline">Fullscreen</span>
                 </button>
+
                 <button
                   onClick={() => setShowShareModal(true)}
-                  className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+                  className="flex items-center gap-2 px-2 lg:px-3 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
                 >
                   <Share2 className="w-4 h-4" />
-                  Share
+                  <span className="hidden lg:inline">Share</span>
                 </button>
+
                 <button
                   onClick={handleSave}
-                  className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
+                  className="flex items-center gap-2 px-2 lg:px-3 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors shadow-sm"
                 >
                   <Save className="w-4 h-4" />
-                  Save
+                  <span className="hidden sm:inline">Save</span>
                 </button>
               </div>
             )}
           </div>
+          
+          <FormattingToolbar 
+            isVisible={showFormatToolbar} 
+            onClose={() => setShowFormatToolbar(false)}
+            activeDoc={activeDoc}
+          />
         </header>
 
-        {/* Status Messages */}
         <AnimatePresence>
           {statusMsg && (
             <motion.div
               initial={{ opacity: 0, y: -50 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -50 }}
-              className={`mx-6 mt-4 flex items-center gap-2 px-4 py-3 rounded-xl ${
+              className={`mx-4 lg:mx-6 mt-4 flex items-center gap-2 px-4 py-3 rounded-xl shadow-sm ${
                 statusMsg.type === 'success'
                   ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800'
                   : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
@@ -943,12 +1357,10 @@ export default function CollabZonePage() {
           )}
         </AnimatePresence>
 
-        {/* Editor Area */}
         <div className="flex-1 overflow-hidden flex">
-          {/* Document Editor */}
           <div className={`${commentsVisible ? 'flex-1' : 'w-full'} transition-all duration-300`}>
             {activeDoc ? (
-              <div className="h-full bg-white dark:bg-slate-800 m-6 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+              <div className="h-full bg-white dark:bg-slate-800 m-4 lg:m-6 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden shadow-lg">
                 <div className="h-full overflow-y-auto" onMouseUp={handleTextSelection}>
                   <Editor
                     key={activeDoc.id}
@@ -969,28 +1381,35 @@ export default function CollabZonePage() {
                   <p className="text-gray-500 dark:text-gray-400 mb-4">
                     Select a document from the sidebar or create a new one to get started.
                   </p>
-                  <button
-                    onClick={handleNew}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors mx-auto"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Create New Document
-                  </button>
+                  <div className="flex gap-2 justify-center">
+                    <button
+                      onClick={handleNew}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Create New Document
+                    </button>
+                    <button
+                      onClick={() => setShowTemplateModal(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+                    >
+                      <Zap className="w-4 h-4" />
+                      From Template
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Comments Panel */}
           {commentsVisible && activeDoc && (
             <motion.div
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: 320, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="bg-white dark:bg-slate-800 border-l border-gray-200 dark:border-slate-700 flex flex-col overflow-hidden"
+              className="bg-white dark:bg-slate-800 border-l border-gray-200 dark:border-slate-700 flex flex-col overflow-hidden shadow-sm"
             >
-              {/* Comments Header */}
               <div className="p-4 border-b border-gray-200 dark:border-slate-700">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -999,14 +1418,13 @@ export default function CollabZonePage() {
                   </h3>
                   <button
                     onClick={() => setCommentsVisible(false)}
-                    className="p-1 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg"
+                    className="p-1 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
-              {/* Comments Content */}
               <div className="flex-1 overflow-y-auto p-4">
                 {comments.filter(c => c.documentId === activeDoc.id).length === 0 ? (
                   <div className="text-center py-8">
@@ -1021,7 +1439,7 @@ export default function CollabZonePage() {
                 ) : (
                   <div className="space-y-4">
                     {comments.filter(c => c.documentId === activeDoc.id).map((comment) => (
-                      <div key={comment.id} className={`bg-gray-50 dark:bg-slate-700 rounded-lg p-3 border ${comment.isRead ? 'border-gray-200 dark:border-slate-600' : 'border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20'}`}>
+                      <div key={comment.id} className={`bg-gray-50 dark:bg-slate-700 rounded-lg p-3 border transition-colors ${comment.isRead ? 'border-gray-200 dark:border-slate-600' : 'border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20'}`}>
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
@@ -1041,7 +1459,7 @@ export default function CollabZonePage() {
                           </div>
                           <button
                             onClick={() => deleteComment(comment.id)}
-                            className="p-1 hover:bg-gray-200 dark:hover:bg-slate-600 rounded text-gray-400 hover:text-red-500"
+                            className="p-1 hover:bg-gray-200 dark:hover:bg-slate-600 rounded text-gray-400 hover:text-red-500 transition-colors"
                           >
                             <X className="w-3 h-3" />
                           </button>
@@ -1064,7 +1482,6 @@ export default function CollabZonePage() {
                 )}
               </div>
 
-              {/* Add Comment Form */}
               <div className="p-4 border-t border-gray-200 dark:border-slate-700">
                 {showCommentForm && selectedText && (
                   <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border-l-2 border-blue-500">
@@ -1077,14 +1494,14 @@ export default function CollabZonePage() {
                   placeholder={selectedText ? "Add a comment about the selected text..." : "Add a general comment..."}
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
-                  className="w-full p-3 border border-gray-200 dark:border-slate-600 rounded-xl bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-200 dark:border-slate-600 rounded-xl bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                   rows={3}
                 />
                 <div className="flex justify-between items-center mt-2">
                   {showCommentForm && (
                     <button 
                       onClick={cancelComment}
-                      className="px-3 py-1 text-gray-500 hover:text-gray-700 text-sm"
+                      className="px-3 py-1 text-gray-500 hover:text-gray-700 text-sm transition-colors"
                     >
                       Cancel
                     </button>
@@ -1092,7 +1509,7 @@ export default function CollabZonePage() {
                   <button 
                     onClick={addComment}
                     disabled={!newComment.trim()}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ml-auto shadow-sm"
                   >
                     {selectedText ? 'Add Comment' : 'Comment'}
                   </button>
@@ -1103,12 +1520,17 @@ export default function CollabZonePage() {
         </div>
       </main>
 
-      {/* Share Modal */}
       <ShareModal
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
         document={activeDoc}
         onShare={handleShare}
+      />
+
+      <TemplateModal
+        isOpen={showTemplateModal}
+        onClose={() => setShowTemplateModal(false)}
+        onCreateFromTemplate={handleCreateFromTemplate}
       />
     </div>
   )
