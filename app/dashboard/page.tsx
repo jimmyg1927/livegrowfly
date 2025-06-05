@@ -65,17 +65,27 @@ interface GeneratedImage {
   createdAt: string
 }
 
-// ✅ NEW: DALL-E Usage interface
+// ✅ UPDATED: Enhanced DALL-E Usage interface to match backend
 interface ImageUsage {
   subscriptionType: string
-  limits: {
-    daily: number
-    monthly: number
+  subscriptionName: string
+  totalPrompts: {
+    used: number
+    limit: number
+    remaining: number
   }
-  usage: {
-    daily: { used: number; remaining: number; limit: number }
-    monthly: { used: number; remaining: number; limit: number }
+  dailyImages: {
+    used: number
+    limit: number
+    remaining: number
   }
+  monthlyImages: {
+    used: number
+    limit: number
+    remaining: number
+  }
+  canGenerate: boolean
+  blockedReason?: string
 }
 
 const PROMPT_LIMITS: Record<string, number> = {
@@ -84,13 +94,12 @@ const PROMPT_LIMITS: Record<string, number> = {
   business: 2000,
 }
 
-// ✅ NEW: DALL-E Image Limits
+// ✅ UPDATED: Image limits to match backend
 const IMAGE_LIMITS: Record<string, { daily: number; monthly: number }> = {
-  free: { daily: 0, monthly: 5 },
-  personal: { daily: 20, monthly: 600 },
-  entrepreneur: { daily: 25, monthly: 750 },
-  business: { daily: 40, monthly: 1200 },
-  enterprise: { daily: 100, monthly: 3000 }
+  free: { daily: 2, monthly: 10 },           // Matches backend
+  pro: { daily: 20, monthly: 200 },          // Matches backend  
+  business: { daily: 50, monthly: 1000 },    // Matches backend
+  enterprise: { daily: -1, monthly: -1 }     // Unlimited
 }
 
 // File Preview Component
@@ -137,7 +146,7 @@ const FilePreview: React.FC<{ file: UploadedFile; onRemove: () => void }> = ({ f
   )
 }
 
-// ✅ NEW: DALL-E Image Generation Modal
+// ✅ ENHANCED: Image Generation Modal with better error handling and upgrade prompts
 const ImageGenerationModal: React.FC<{
   open: boolean
   onClose: () => void
@@ -151,6 +160,7 @@ const ImageGenerationModal: React.FC<{
   const [error, setError] = useState('')
   const [imageUsage, setImageUsage] = useState<ImageUsage | null>(null)
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
+  const router = useRouter()
 
   // Fetch usage stats when modal opens
   useEffect(() => {
@@ -159,7 +169,10 @@ const ImageGenerationModal: React.FC<{
         headers: { Authorization: `Bearer ${token}` }
       })
         .then(res => res.json())
-        .then(data => setImageUsage(data))
+        .then(data => {
+          console.log('📊 Image usage data:', data)
+          setImageUsage(data)
+        })
         .catch(err => console.error('Failed to fetch image usage:', err))
     }
   }, [open, token])
@@ -186,12 +199,50 @@ const ImageGenerationModal: React.FC<{
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate image')
+        // ✅ ENHANCED: Better error handling with upgrade suggestions
+        if (response.status === 429) {
+          if (data.reason === 'daily_images') {
+            setError(`Daily image limit reached (${data.current}/${data.limit}). ${data.resetInfo || 'Resets at midnight.'} Upgrade for more images!`)
+          } else if (data.reason === 'monthly_images') {
+            setError(`Monthly image limit reached (${data.current}/${data.limit}). ${data.resetInfo || 'Resets monthly.'} Upgrade for more images!`)
+          } else if (data.reason === 'total_prompts') {
+            setError(`Total prompt limit reached (${data.current}/${data.limit}). ${data.resetInfo || 'Resets monthly.'} Upgrade for more prompts!`)
+          } else {
+            setError(data.message || 'Generation limit reached. Please upgrade your plan!')
+          }
+        } else {
+          throw new Error(data.error || 'Failed to generate image')
+        }
+        return
       }
 
-      onImageGenerated(data.image)
+      // ✅ UPDATED: Handle new response structure
+      const imageData = {
+        id: data.imageId,
+        url: data.imageUrl,
+        originalPrompt: data.prompt,
+        revisedPrompt: data.prompt, // Backend doesn't provide revised prompt yet
+        size: size,
+        quality: quality,
+        style: style,
+        createdAt: new Date().toISOString()
+      }
+
+      onImageGenerated(imageData)
       setPrompt('')
       onClose()
+
+      // Refresh usage after successful generation
+      if (data.usage) {
+        setImageUsage(prev => prev ? {
+          ...prev,
+          totalPrompts: data.usage.totalPrompts,
+          dailyImages: data.usage.dailyImages,
+          monthlyImages: data.usage.monthlyImages,
+          canGenerate: data.usage.dailyImages.remaining > 0 && data.usage.monthlyImages.remaining > 0 && data.usage.totalPrompts.remaining > 0
+        } : null)
+      }
+
     } catch (err: any) {
       setError(err.message || 'Failed to generate image')
     } finally {
@@ -199,11 +250,35 @@ const ImageGenerationModal: React.FC<{
     }
   }
 
+  const handleUpgrade = () => {
+    onClose()
+    router.push('/change-plan')
+  }
+
   if (!open) return null
 
-  const dailyRemaining = imageUsage?.usage.daily.remaining || 0
-  const monthlyRemaining = imageUsage?.usage.monthly.remaining || 0
-  const canGenerate = dailyRemaining > 0 && monthlyRemaining > 0
+  // ✅ ENHANCED: Better limit checking with specific messaging
+  const canGenerate = imageUsage?.canGenerate ?? false
+  const isAtDailyLimit = imageUsage && imageUsage.dailyImages.remaining <= 0
+  const isAtMonthlyLimit = imageUsage && imageUsage.monthlyImages.remaining <= 0
+  const isAtPromptLimit = imageUsage && imageUsage.totalPrompts.remaining <= 0
+
+  // ✅ NEW: Reset time calculations
+  const getResetInfo = () => {
+    const now = new Date()
+    const tomorrow = new Date(now)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    tomorrow.setHours(0, 0, 0, 0)
+    
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+    
+    const hoursUntilMidnight = Math.ceil((tomorrow.getTime() - now.getTime()) / (1000 * 60 * 60))
+    const daysUntilNextMonth = Math.ceil((nextMonth.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    
+    return { hoursUntilMidnight, daysUntilNextMonth }
+  }
+
+  const resetInfo = getResetInfo()
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -222,30 +297,119 @@ const ImageGenerationModal: React.FC<{
             </button>
           </div>
 
-          {/* Usage Display */}
+          {/* ✅ ENHANCED: Comprehensive Usage Display */}
           {imageUsage && (
-            <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl border border-purple-200 dark:border-purple-700">
-              <h3 className="font-semibold text-purple-800 dark:text-purple-300 mb-2">Image Generation Limits</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-600 dark:text-gray-400">Daily: </span>
-                  <span className="font-bold text-purple-700 dark:text-purple-300">
-                    {imageUsage.usage.daily.remaining}/{imageUsage.usage.daily.limit}
-                  </span>
+            <div className="mb-6 space-y-4">
+              {/* Current Plan Display */}
+              <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl border border-purple-200 dark:border-purple-700">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-purple-800 dark:text-purple-300">
+                    {imageUsage.subscriptionName} Plan Limits
+                  </h3>
+                  {!canGenerate && (
+                    <button
+                      onClick={handleUpgrade}
+                      className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200"
+                    >
+                      Upgrade Plan
+                    </button>
+                  )}
                 </div>
-                <div>
-                  <span className="text-gray-600 dark:text-gray-400">Monthly: </span>
-                  <span className="font-bold text-purple-700 dark:text-purple-300">
-                    {imageUsage.usage.monthly.remaining}/{imageUsage.usage.monthly.limit}
-                  </span>
+                
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  {/* Daily Images */}
+                  <div className="text-center">
+                    <div className="text-gray-600 dark:text-gray-400 text-xs">Daily Images</div>
+                    <div className={`font-bold text-lg ${isAtDailyLimit ? 'text-red-600' : 'text-purple-700 dark:text-purple-300'}`}>
+                      {imageUsage.dailyImages.remaining}/{imageUsage.dailyImages.limit === -1 ? '∞' : imageUsage.dailyImages.limit}
+                    </div>
+                    {isAtDailyLimit && (
+                      <div className="text-xs text-red-500 mt-1">
+                        Resets in {resetInfo.hoursUntilMidnight}h
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Monthly Images */}
+                  <div className="text-center">
+                    <div className="text-gray-600 dark:text-gray-400 text-xs">Monthly Images</div>
+                    <div className={`font-bold text-lg ${isAtMonthlyLimit ? 'text-red-600' : 'text-blue-700 dark:text-blue-300'}`}>
+                      {imageUsage.monthlyImages.remaining}/{imageUsage.monthlyImages.limit === -1 ? '∞' : imageUsage.monthlyImages.limit}
+                    </div>
+                    {isAtMonthlyLimit && (
+                      <div className="text-xs text-red-500 mt-1">
+                        Resets in {resetInfo.daysUntilNextMonth}d
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Total Prompts */}
+                  <div className="text-center">
+                    <div className="text-gray-600 dark:text-gray-400 text-xs">Total Prompts</div>
+                    <div className={`font-bold text-lg ${isAtPromptLimit ? 'text-red-600' : 'text-green-700 dark:text-green-300'}`}>
+                      {imageUsage.totalPrompts.remaining}/{imageUsage.totalPrompts.limit === -1 ? '∞' : imageUsage.totalPrompts.limit}
+                    </div>
+                    {isAtPromptLimit && (
+                      <div className="text-xs text-red-500 mt-1">
+                        Resets monthly
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
+
+              {/* ✅ NEW: Limit reached warnings with upgrade prompts */}
+              {!canGenerate && (
+                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-xl">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-red-600 text-lg">🚫</span>
+                    <h4 className="font-semibold text-red-800 dark:text-red-300">Generation Limit Reached</h4>
+                  </div>
+                  <div className="text-sm text-red-700 dark:text-red-300 space-y-1">
+                    {isAtDailyLimit && (
+                      <div>• Daily limit: Resets in {resetInfo.hoursUntilMidnight} hours</div>
+                    )}
+                    {isAtMonthlyLimit && (
+                      <div>• Monthly limit: Resets in {resetInfo.daysUntilNextMonth} days</div>
+                    )}
+                    {isAtPromptLimit && (
+                      <div>• Prompt limit: Resets monthly with your subscription</div>
+                    )}
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={handleUpgrade}
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Upgrade for More Images
+                    </button>
+                    <a
+                      href="/pricing"
+                      target="_blank"
+                      className="border border-red-600 text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      View Plans
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
+          {/* Error Display */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg text-red-700 dark:text-red-300 text-sm">
-              {error}
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
+              <div className="text-red-700 dark:text-red-300 text-sm font-medium mb-2">
+                {error}
+              </div>
+              {error.includes('limit') && !error.includes('characters') && (
+                <button
+                  onClick={handleUpgrade}
+                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                >
+                  Upgrade Plan
+                </button>
+              )}
             </div>
           )}
 
@@ -264,7 +428,7 @@ const ImageGenerationModal: React.FC<{
                 disabled={isGenerating || !canGenerate}
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Be specific and detailed for best results
+                Be specific and detailed for best results ({prompt.length}/4000 characters)
               </p>
             </div>
 
@@ -353,7 +517,7 @@ const ImageGenerationModal: React.FC<{
   )
 }
 
-// ✅ NEW: Image Gallery Modal
+// ✅ UPDATED: Image Gallery Modal with correct API endpoint
 const ImageGalleryModal: React.FC<{
   open: boolean
   onClose: () => void
@@ -366,12 +530,24 @@ const ImageGalleryModal: React.FC<{
   useEffect(() => {
     if (open && token) {
       setLoading(true)
-      fetch(`${API_BASE_URL}/api/dalle/images?limit=20`, {
+      fetch(`${API_BASE_URL}/api/dalle/gallery?limit=20`, {  // ✅ FIXED: Correct endpoint
         headers: { Authorization: `Bearer ${token}` }
       })
         .then(res => res.json())
         .then(data => {
-          setImages(data.images || [])
+          console.log('📸 Gallery data:', data)
+          // ✅ UPDATED: Handle new backend response structure
+          const galleryImages = data.images?.map((img: any) => ({
+            id: img.id,
+            url: img.imageUrl,
+            originalPrompt: img.prompt,
+            revisedPrompt: img.prompt, // Backend doesn't provide revised yet
+            size: img.size,
+            quality: img.quality,
+            style: 'vivid', // Default if not provided
+            createdAt: img.createdAt
+          })) || []
+          setImages(galleryImages)
         })
         .catch(err => console.error('Failed to fetch images:', err))
         .finally(() => setLoading(false))
@@ -627,14 +803,17 @@ function DashboardContent() {
     }
   }
 
-  // ✅ NEW: Fetch image usage on load
+  // ✅ UPDATED: Enhanced image usage fetching
   useEffect(() => {
     if (token) {
       fetch(`${API_BASE_URL}/api/dalle/usage`, {
         headers: { Authorization: `Bearer ${token}` }
       })
         .then(res => res.json())
-        .then(data => setImageUsage(data))
+        .then(data => {
+          console.log('📊 Main dashboard image usage:', data)
+          setImageUsage(data)
+        })
         .catch(err => console.error('Failed to fetch image usage:', err))
     }
   }, [token])
@@ -1243,10 +1422,10 @@ function DashboardContent() {
     }
   }
 
-  // ✅ NEW: Handle image generation
+  // ✅ NEW: Refresh image usage after generation
   const handleImageGenerated = (image: GeneratedImage) => {
     setGeneratedImages(prev => [image, ...prev])
-    // Refresh usage stats
+    // Refresh usage stats immediately
     if (token) {
       fetch(`${API_BASE_URL}/api/dalle/usage`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -1306,36 +1485,66 @@ function DashboardContent() {
               </div>
             </div>
 
-            {/* ✅ NEW: Image Usage Tracker */}
+            {/* ✅ ENHANCED: Image Usage Tracker */}
             {imageUsage && (
               <div className="bg-white dark:bg-white rounded-xl px-4 py-2 shadow-lg border border-gray-200">
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-gray-700">
-                    Images
-                  </span>
+                  <span className="text-sm font-medium text-gray-700">Images</span>
                   <div className="flex items-center gap-2">
                     <div className="relative w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div 
-                        className="absolute top-0 left-0 h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full transition-all duration-300 ease-out"
+                        className={`absolute top-0 left-0 h-full rounded-full transition-all duration-300 ease-out ${
+                          imageUsage.dailyImages.remaining <= 0 
+                            ? 'bg-gradient-to-r from-red-500 to-red-600' 
+                            : imageUsage.dailyImages.remaining <= 2 
+                            ? 'bg-gradient-to-r from-orange-500 to-red-500'
+                            : 'bg-gradient-to-r from-purple-500 to-blue-500'
+                        }`}
                         style={{ 
-                          width: `${Math.min((imageUsage.usage.daily.used / imageUsage.usage.daily.limit) * 100, 100)}%` 
+                          width: `${Math.min((imageUsage.dailyImages.used / (imageUsage.dailyImages.limit || 1)) * 100, 100)}%` 
                         }}
                       />
                     </div>
                     <span className="text-sm font-bold text-gray-800 min-w-[2.5rem]">
-                      {imageUsage.usage.daily.remaining}/{imageUsage.usage.daily.limit}
+                      {imageUsage.dailyImages.remaining}/{imageUsage.dailyImages.limit === -1 ? '∞' : imageUsage.dailyImages.limit}
                     </span>
+                    {imageUsage.dailyImages.remaining <= 0 && (
+                      <span className="text-xs text-red-600 font-medium whitespace-nowrap">
+                        Resets in {Math.ceil((new Date().setHours(24,0,0,0) - Date.now()) / 3600000)}h
+                      </span>
+                    )}
                   </div>
+                </div>
+                {/* Monthly indicator */}
+                <div className="text-xs text-gray-500 mt-1">
+                  Monthly: {imageUsage.monthlyImages.remaining}/{imageUsage.monthlyImages.limit === -1 ? '∞' : imageUsage.monthlyImages.limit}
                 </div>
               </div>
             )}
 
-            {/* ✅ NEW: DALL-E & Gallery Buttons */}
+            {/* ✅ ENHANCED: DALL-E Button with limit checking */}
             <button
-              onClick={() => setShowImageModal(true)}
-              className="text-sm bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105"
+              onClick={() => {
+                if (imageUsage?.canGenerate) {
+                  setShowImageModal(true)
+                } else {
+                  // Show upgrade prompt if limits reached
+                  router.push('/change-plan')
+                }
+              }}
+              className={`text-sm px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 ${
+                imageUsage?.canGenerate 
+                  ? 'bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white'
+                  : 'bg-gradient-to-r from-gray-400 to-gray-500 text-white cursor-pointer hover:from-gray-500 hover:to-gray-600'
+              }`}
+              title={
+                imageUsage?.canGenerate 
+                  ? 'Generate a new image with DALL-E' 
+                  : 'Upgrade to generate more images'
+              }
             >
-              <FaPalette className="text-xs" /> Generate Image
+              <FaPalette className="text-xs" /> 
+              {imageUsage?.canGenerate ? 'Generate Image' : 'Upgrade for Images'}
             </button>
 
             <button
