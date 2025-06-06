@@ -23,7 +23,8 @@ import {
   FaPalette,
   FaImages,
   FaSpinner,
-  FaMagic
+  FaMagic,
+  FaPlus
 } from 'react-icons/fa'
 import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
@@ -50,22 +51,21 @@ interface UploadedFile {
   url?: string
   preview?: string
   content?: string
-  file?: File // ✅ NEW: Store the actual File object
+  file?: File
 }
 
-// ✅ NEW: DALL-E Image interface
+// ✅ UPDATED: Simplified DALL-E Image interface
 interface GeneratedImage {
   id: string
   url: string
   originalPrompt: string
   revisedPrompt: string
   size: string
-  quality: string
   style: string
   createdAt: string
 }
 
-// ✅ UPDATED: Enhanced DALL-E Usage interface to match backend
+// ✅ UPDATED: Enhanced DALL-E Usage interface
 interface ImageUsage {
   subscriptionType: string
   subscriptionName: string
@@ -86,7 +86,7 @@ interface ImageUsage {
   }
   canGenerate: boolean
   blockedReason?: string
-  _fallback?: boolean // Indicates if this is fallback data
+  _fallback?: boolean
 }
 
 const PROMPT_LIMITS: Record<string, number> = {
@@ -95,12 +95,11 @@ const PROMPT_LIMITS: Record<string, number> = {
   business: 2000,
 }
 
-// ✅ UPDATED: Image limits to match backend
 const IMAGE_LIMITS: Record<string, { daily: number; monthly: number }> = {
-  free: { daily: 2, monthly: 10 },           // Matches backend
-  pro: { daily: 20, monthly: 200 },          // Matches backend  
-  business: { daily: 50, monthly: 1000 },    // Matches backend
-  enterprise: { daily: -1, monthly: -1 }     // Unlimited
+  free: { daily: 2, monthly: 10 },
+  pro: { daily: 20, monthly: 200 },
+  business: { daily: 50, monthly: 1000 },
+  enterprise: { daily: -1, monthly: -1 }
 }
 
 // File Preview Component
@@ -147,7 +146,7 @@ const FilePreview: React.FC<{ file: UploadedFile; onRemove: () => void }> = ({ f
   )
 }
 
-// ✅ ENHANCED: Image Generation Modal with better error handling and upgrade prompts
+// ✅ IMPROVED: Simplified Image Generation Modal
 const ImageGenerationModal: React.FC<{
   open: boolean
   onClose: () => void
@@ -155,7 +154,6 @@ const ImageGenerationModal: React.FC<{
 }> = ({ open, onClose, onImageGenerated }) => {
   const [prompt, setPrompt] = useState('')
   const [size, setSize] = useState('1024x1024')
-  const [quality, setQuality] = useState('standard')
   const [style, setStyle] = useState('vivid')
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState('')
@@ -163,7 +161,7 @@ const ImageGenerationModal: React.FC<{
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
   const router = useRouter()
 
-  // ✅ SAFE: Fetch usage stats when modal opens with proper error handling
+  // Fetch usage stats when modal opens
   useEffect(() => {
     if (open && token) {
       fetch(`${API_BASE_URL}/api/dalle/usage`, {
@@ -173,18 +171,13 @@ const ImageGenerationModal: React.FC<{
         }
       })
         .then(res => {
-          if (!res.ok) {
-            throw new Error(`HTTP ${res.status}: ${res.statusText}`)
-          }
+          if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`)
           return res.json()
         })
         .then(data => {
-          console.log('📊 Modal image usage data:', data)
-          // ✅ SAFE: Only set if data is valid
           if (data && !data.error && data.dailyImages && data.monthlyImages) {
             setImageUsage(data)
           } else {
-            console.warn('⚠️ Invalid image usage data in modal, using fallback:', data)
             setImageUsage({
               subscriptionType: 'free',
               subscriptionName: 'Free',
@@ -227,13 +220,17 @@ const ImageGenerationModal: React.FC<{
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ prompt, size, quality, style })
+        body: JSON.stringify({ 
+          prompt, 
+          size, 
+          quality: 'standard', // ✅ FIXED: Always use standard quality
+          style 
+        })
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        // ✅ ENHANCED: Better error handling with upgrade suggestions
         if (response.status === 429) {
           if (data.reason === 'daily_images') {
             setError(`Daily image limit reached (${data.current}/${data.limit}). ${data.resetInfo || 'Resets at midnight.'} Upgrade for more images!`)
@@ -250,14 +247,12 @@ const ImageGenerationModal: React.FC<{
         return
       }
 
-      // ✅ UPDATED: Handle new response structure
       const imageData = {
         id: data.imageId,
         url: data.imageUrl,
         originalPrompt: data.prompt,
-        revisedPrompt: data.prompt, // Backend doesn't provide revised prompt yet
+        revisedPrompt: data.prompt,
         size: size,
-        quality: quality,
         style: style,
         createdAt: new Date().toISOString()
       }
@@ -291,13 +286,11 @@ const ImageGenerationModal: React.FC<{
 
   if (!open) return null
 
-  // ✅ ENHANCED: Better limit checking with specific messaging and null safety
   const canGenerate = imageUsage?.canGenerate ?? false
   const isAtDailyLimit = imageUsage && (imageUsage.dailyImages?.remaining || 0) <= 0
   const isAtMonthlyLimit = imageUsage && (imageUsage.monthlyImages?.remaining || 0) <= 0
   const isAtPromptLimit = imageUsage && (imageUsage.totalPrompts?.remaining || 0) <= 0
 
-  // ✅ NEW: Reset time calculations
   const getResetInfo = () => {
     const now = new Date()
     const tomorrow = new Date(now)
@@ -331,10 +324,9 @@ const ImageGenerationModal: React.FC<{
             </button>
           </div>
 
-          {/* ✅ ENHANCED: Comprehensive Usage Display with fallback indicator */}
+          {/* Usage Display */}
           {imageUsage && (
             <div className="mb-6 space-y-4">
-              {/* Show fallback warning if using fallback data */}
               {imageUsage._fallback && (
                 <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
                   <div className="text-yellow-800 dark:text-yellow-300 text-sm">
@@ -343,7 +335,6 @@ const ImageGenerationModal: React.FC<{
                 </div>
               )}
 
-              {/* Current Plan Display */}
               <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl border border-purple-200 dark:border-purple-700">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-semibold text-purple-800 dark:text-purple-300">
@@ -360,7 +351,6 @@ const ImageGenerationModal: React.FC<{
                 </div>
                 
                 <div className="grid grid-cols-3 gap-4 text-sm">
-                  {/* Daily Images */}
                   <div className="text-center">
                     <div className="text-gray-600 dark:text-gray-400 text-xs">Daily Images</div>
                     <div className={`font-bold text-lg ${isAtDailyLimit ? 'text-red-600' : 'text-purple-700 dark:text-purple-300'}`}>
@@ -373,7 +363,6 @@ const ImageGenerationModal: React.FC<{
                     )}
                   </div>
                   
-                  {/* Monthly Images */}
                   <div className="text-center">
                     <div className="text-gray-600 dark:text-gray-400 text-xs">Monthly Images</div>
                     <div className={`font-bold text-lg ${isAtMonthlyLimit ? 'text-red-600' : 'text-blue-700 dark:text-blue-300'}`}>
@@ -386,7 +375,6 @@ const ImageGenerationModal: React.FC<{
                     )}
                   </div>
                   
-                  {/* Total Prompts */}
                   <div className="text-center">
                     <div className="text-gray-600 dark:text-gray-400 text-xs">Total Prompts</div>
                     <div className={`font-bold text-lg ${isAtPromptLimit ? 'text-red-600' : 'text-green-700 dark:text-green-300'}`}>
@@ -401,7 +389,6 @@ const ImageGenerationModal: React.FC<{
                 </div>
               </div>
 
-              {/* ✅ NEW: Limit reached warnings with upgrade prompts */}
               {!canGenerate && (
                 <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-xl">
                   <div className="flex items-center gap-2 mb-2">
@@ -426,13 +413,6 @@ const ImageGenerationModal: React.FC<{
                     >
                       Upgrade for More Images
                     </button>
-                    <a
-                      href="/pricing"
-                      target="_blank"
-                      className="border border-red-600 text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                    >
-                      View Plans
-                    </a>
                   </div>
                 </div>
               )}
@@ -457,7 +437,7 @@ const ImageGenerationModal: React.FC<{
           )}
 
           <div className="space-y-4">
-            {/* Prompt Input */}
+            {/* ✅ IMPROVED: Prompt Input - same height as main prompt */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Image Description
@@ -466,8 +446,8 @@ const ImageGenerationModal: React.FC<{
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 placeholder="Describe the image you want to generate..."
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                rows={4}
+                className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[4rem] max-h-32"
+                rows={3}
                 disabled={isGenerating || !canGenerate}
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -475,8 +455,8 @@ const ImageGenerationModal: React.FC<{
               </p>
             </div>
 
-            {/* Options */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* ✅ SIMPLIFIED: Options - removed quality option */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Size
@@ -490,21 +470,6 @@ const ImageGenerationModal: React.FC<{
                   <option value="1024x1024">Square (1024×1024)</option>
                   <option value="1024x1792">Portrait (1024×1792)</option>
                   <option value="1792x1024">Landscape (1792×1024)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Quality
-                </label>
-                <select
-                  value={quality}
-                  onChange={(e) => setQuality(e.target.value)}
-                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                  disabled={isGenerating || !canGenerate}
-                >
-                  <option value="standard">Standard</option>
-                  <option value="hd">HD (Higher Cost)</option>
                 </select>
               </div>
 
@@ -560,184 +525,6 @@ const ImageGenerationModal: React.FC<{
   )
 }
 
-// ✅ UPDATED: Image Gallery Modal with correct API endpoint
-const ImageGalleryModal: React.FC<{
-  open: boolean
-  onClose: () => void
-}> = ({ open, onClose }) => {
-  const [images, setImages] = useState<GeneratedImage[]>([])
-  const [loading, setLoading] = useState(false)
-  const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null)
-  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
-
-  useEffect(() => {
-    if (open && token) {
-      setLoading(true)
-      fetch(`${API_BASE_URL}/api/dalle/gallery?limit=20`, {  // ✅ FIXED: Correct endpoint
-        headers: { Authorization: `Bearer ${token}` }
-      })
-        .then(res => res.json())
-        .then(data => {
-          console.log('📸 Gallery data:', data)
-          // ✅ UPDATED: Handle new backend response structure
-          const galleryImages = data.images?.map((img: any) => ({
-            id: img.id,
-            url: img.imageUrl,
-            originalPrompt: img.prompt,
-            revisedPrompt: img.prompt, // Backend doesn't provide revised yet
-            size: img.size,
-            quality: img.quality,
-            style: 'vivid', // Default if not provided
-            createdAt: img.createdAt
-          })) || []
-          setImages(galleryImages)
-        })
-        .catch(err => console.error('Failed to fetch images:', err))
-        .finally(() => setLoading(false))
-    }
-  }, [open, token])
-
-  const handleDownloadImage = (image: GeneratedImage) => {
-    const link = document.createElement('a')
-    link.href = image.url
-    link.download = `growfly-${image.id}.png`
-    link.click()
-  }
-
-  const handleDeleteImage = async (imageId: string) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/dalle/images/${imageId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      
-      if (response.ok) {
-        setImages(prev => prev.filter(img => img.id !== imageId))
-        setSelectedImage(null)
-      }
-    } catch (err) {
-      console.error('Failed to delete image:', err)
-    }
-  }
-
-  if (!open) return null
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <FaImages className="text-blue-500" />
-              Your Generated Images
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            >
-              <HiX className="w-6 h-6" />
-            </button>
-          </div>
-
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <FaSpinner className="animate-spin text-blue-500 text-2xl" />
-            </div>
-          ) : images.length === 0 ? (
-            <div className="text-center py-12">
-              <FaImages className="text-gray-400 text-6xl mx-auto mb-4" />
-              <p className="text-gray-600 dark:text-gray-400">No images generated yet</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {images.map((image) => (
-                <div
-                  key={image.id}
-                  className="group relative bg-gray-50 dark:bg-slate-700 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600 hover:shadow-lg transition-all duration-200"
-                >
-                  <img
-                    src={image.url}
-                    alt={image.originalPrompt}
-                    className="w-full h-48 object-cover cursor-pointer"
-                    onClick={() => setSelectedImage(image)}
-                  />
-                  <div className="p-3">
-                    <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 mb-2">
-                      {image.originalPrompt}
-                    </p>
-                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                      <span>{new Date(image.createdAt).toLocaleDateString()}</span>
-                      <span>{image.size}</span>
-                    </div>
-                    <div className="flex gap-2 mt-2">
-                      <button
-                        onClick={() => handleDownloadImage(image)}
-                        className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs"
-                      >
-                        Download
-                      </button>
-                      <button
-                        onClick={() => handleDeleteImage(image.id)}
-                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Image Detail Modal */}
-          {selectedImage && (
-            <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">Image Details</h3>
-                    <button
-                      onClick={() => setSelectedImage(null)}
-                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                    >
-                      <HiX className="w-6 h-6" />
-                    </button>
-                  </div>
-                  <img
-                    src={selectedImage.url}
-                    alt={selectedImage.originalPrompt}
-                    className="w-full max-h-96 object-contain rounded-xl mb-4"
-                  />
-                  <div className="space-y-2 text-sm">
-                    <div><strong>Original Prompt:</strong> {selectedImage.originalPrompt}</div>
-                    <div><strong>Revised Prompt:</strong> {selectedImage.revisedPrompt}</div>
-                    <div><strong>Size:</strong> {selectedImage.size} | <strong>Quality:</strong> {selectedImage.quality} | <strong>Style:</strong> {selectedImage.style}</div>
-                    <div><strong>Created:</strong> {new Date(selectedImage.createdAt).toLocaleString()}</div>
-                  </div>
-                  <div className="flex gap-3 mt-4">
-                    <button
-                      onClick={() => handleDownloadImage(selectedImage)}
-                      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
-                    >
-                      Download
-                    </button>
-                    <button
-                      onClick={() => handleDeleteImage(selectedImage.id)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 // Quick categories for collapsible bar
 const QUICK_CATEGORIES = [
   {
@@ -774,18 +561,16 @@ function DashboardContent() {
   const { user, setUser } = useUserStore()
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
 
-  // Calculate prompt limits and usage with better debugging
+  // Calculate prompt limits and usage
   const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || 'free'] || 20
   const promptsUsed = user?.promptsUsed ?? 0
   const promptsRemaining = Math.max(0, promptLimit - promptsUsed)
   const usagePercentage = Math.min(100, (promptsUsed / promptLimit) * 100)
 
-  // ✅ NEW: Image generation states
+  // States
   const [showImageModal, setShowImageModal] = useState(false)
-  const [showImageGallery, setShowImageGallery] = useState(false)
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([])
   const [imageUsage, setImageUsage] = useState<ImageUsage | null>(null)
-
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
@@ -801,13 +586,14 @@ function DashboardContent() {
   const [showCategories, setShowCategories] = useState(true)
   const [currentSaveMessageId, setCurrentSaveMessageId] = useState<string | null>(null)
 
+  // Refs
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const scrollTimeoutRef = useRef<NodeJS.Timeout>()
 
-  // ✅ Helper function for creating files from base64 previews
+  // Helper function for creating files from base64 previews
   const createFileFromPreview = (preview: string, name: string, type: string): File => {
     const arr = preview.split(',')
     const mime = arr[0].match(/:(.*?);/)?.[1] || type
@@ -840,13 +626,12 @@ function DashboardContent() {
     setUploadedFiles([])
     localStorage.removeItem('growfly_last_thread_id')
     
-    // Also clear the URL parameter to prevent reload
     if (window.history.replaceState) {
       window.history.replaceState({}, document.title, window.location.pathname)
     }
   }
 
-  // ✅ CRITICAL FIX: Enhanced image usage fetching with comprehensive error handling
+  // Enhanced image usage fetching
   useEffect(() => {
     if (token) {
       fetch(`${API_BASE_URL}/api/dalle/usage`, {
@@ -856,19 +641,13 @@ function DashboardContent() {
         }
       })
         .then(res => {
-          if (!res.ok) {
-            throw new Error(`HTTP ${res.status}: ${res.statusText}`)
-          }
+          if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`)
           return res.json()
         })
         .then(data => {
-          console.log('📊 Main dashboard image usage:', data)
-          // ✅ CRITICAL: Only set if data is valid and has required structure
           if (data && !data.error && data.dailyImages && data.monthlyImages && data.totalPrompts) {
             setImageUsage(data)
           } else {
-            console.warn('⚠️ Invalid image usage data, using fallback:', data)
-            // ✅ Set safe fallback data
             setImageUsage({
               subscriptionType: 'free',
               subscriptionName: 'Free',
@@ -882,7 +661,6 @@ function DashboardContent() {
         })
         .catch(err => {
           console.error('❌ Failed to fetch image usage:', err)
-          // ✅ Set safe fallback on error
           setImageUsage({
             subscriptionType: 'free',
             subscriptionName: 'Free',
@@ -894,9 +672,9 @@ function DashboardContent() {
           })
         })
     }
-  }, [token, promptsUsed, promptLimit])  // ✅ Add dependencies
+  }, [token, promptsUsed, promptLimit])
 
-  // Enhanced user data fetching with better error handling and CORS fix
+  // Enhanced user data fetching
   useEffect(() => {
     if (!token) {
       router.push('/onboarding')
@@ -905,8 +683,7 @@ function DashboardContent() {
     
     const fetchUserData = async () => {
       try {
-        // Use the same pattern as settings page that works
-        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {  // ← Add API_BASE_URL like settings
+        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
           method: 'GET',
           headers: { 
             'Authorization': `Bearer ${token}`,
@@ -920,7 +697,6 @@ function DashboardContent() {
         } else {
           console.error('❌ Failed to fetch user data:', response.status, response.statusText)
           
-          // If we get unauthorized, redirect to onboarding
           if (response.status === 401) {
             localStorage.removeItem('growfly_jwt')
             router.push('/onboarding')
@@ -928,14 +704,10 @@ function DashboardContent() {
         }
       } catch (error) {
         console.error('❌ Error fetching user data:', error)
-        // Don't redirect on network errors, just log them
       }
     }
     
-    // Fetch data on mount
     fetchUserData()
-    
-    // Set up periodic sync (less frequent to avoid spam)
     const syncInterval = setInterval(fetchUserData, 60000)
     
     return () => clearInterval(syncInterval)
@@ -948,7 +720,6 @@ function DashboardContent() {
     const storedThreadId = localStorage.getItem('growfly_last_thread_id')
     const id = paramThreadId || storedThreadId
 
-    // Only load thread if there's a valid ID and it's not 'undefined'
     if (id && id !== 'undefined' && id !== 'null') {
       setThreadId(id)
       
@@ -958,13 +729,11 @@ function DashboardContent() {
         .then(async (res) => {
           if (res.ok) {
             const data = await res.json()
-            // Only set messages if we actually have messages from the thread
             if (data.messages && data.messages.length > 0) {
               setMessages(data.messages)
               setThreadTitle(data.title || formatTitleFromDate(new Date()))
             }
           } else {
-            // If thread doesn't exist, clear the stored ID
             localStorage.removeItem('growfly_last_thread_id')
           }
         })
@@ -983,7 +752,7 @@ function DashboardContent() {
     }
   }, [input])
 
-  // Improved scroll handling
+  // Scroll handling
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -1012,7 +781,6 @@ function DashboardContent() {
     const container = containerRef.current
     if (!container) return
     
-    // Auto-scroll to bottom when new messages arrive or when streaming
     if (!isUserScrolling && (isStreaming || messages.length > 0)) {
       requestAnimationFrame(() => {
         chatEndRef.current?.scrollIntoView({ 
@@ -1023,10 +791,10 @@ function DashboardContent() {
     }
   }, [messages, isUserScrolling, isStreaming])
 
-  // ✅ UPDATED: Enhanced file handling to store File objects
+  // Enhanced file handling
   const handleFileSelect = (files: FileList) => {
     Array.from(files).forEach(file => {
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      if (file.size > 10 * 1024 * 1024) {
         setError(`File ${file.name} is too large. Maximum size is 10MB.`)
         return
       }
@@ -1037,10 +805,9 @@ function DashboardContent() {
         name: file.name,
         type: file.type,
         size: file.size,
-        file: file, // ✅ Store the actual File object
+        file: file,
       }
 
-      // Generate preview for images
       if (file.type.startsWith('image/')) {
         const reader = new FileReader()
         reader.onload = (e) => {
@@ -1051,7 +818,6 @@ function DashboardContent() {
         reader.readAsDataURL(file)
       }
 
-      // Extract text from PDFs (simplified)
       if (file.type === 'application/pdf') {
         newFile.content = `PDF file: ${file.name}`
       }
@@ -1086,7 +852,7 @@ function DashboardContent() {
     }
   }
 
-  // ✅ NEW: Enhanced handleStream with file support
+  // Enhanced handleStream with file support
   const handleStreamWithFiles = async (prompt: string, aId: string, files: File[] = []) => {
     let fullContent = ''
     let followUps: string[] = []
@@ -1094,7 +860,6 @@ function DashboardContent() {
     setIsStreaming(true)
     setError(null)
 
-    // Initialize empty message
     setMessages((prev) =>
       prev.map((msg) =>
         msg.id === aId ? { ...msg, content: '' } : msg
@@ -1106,14 +871,11 @@ function DashboardContent() {
         prompt,
         threadId: threadId || undefined,
         token,
-        files, // ✅ NEW: Pass files to streamChat
-        onStream: (chunk: any) => { // Use 'any' to avoid type errors
-          console.log('📡 Stream chunk received:', chunk)
-          
+        files,
+        onStream: (chunk: any) => {
           if (chunk.content) {
             fullContent += chunk.content
             
-            // Update message with streaming content
             setMessages((prev) =>
               prev.map((msg) =>
                 msg.id === aId
@@ -1127,41 +889,34 @@ function DashboardContent() {
             followUps = chunk.followUps
           }
 
-          // ✅ NEW: Handle processed files information
           if (chunk.processedFiles) {
             console.log('📁 Processed files:', chunk.processedFiles)
-            // You can show user which files were processed successfully
           }
         },
         onComplete: async () => {
           setIsLoading(false)
           setIsStreaming(false)
           
-          // Get follow-ups if not provided
           if (!followUps.length && fullContent.trim()) {
             followUps = await fetchFollowUps(fullContent)
           }
           
-          // Update final message with follow-ups
           setMessages((prev) =>
             prev.map((msg) =>
               msg.id === aId ? { ...msg, content: fullContent, followUps } : msg
             )
           )
           
-          // Update user data and sync to database immediately
           if (user) {
             const newPromptsUsed = (user.promptsUsed ?? 0) + 1
             const newXP = (user.totalXP ?? 0) + 2.5
             
-            // Update local state first
             setUser({
               ...user,
               promptsUsed: newPromptsUsed,
               totalXP: newXP,
             })
             
-            // Sync to database and fetch fresh data to ensure consistency
             try {
               const updateResponse = await fetch(`${API_BASE_URL}/api/user/update`, {
                 method: 'PATCH',
@@ -1176,7 +931,6 @@ function DashboardContent() {
               })
               
               if (updateResponse.ok) {
-                // Fetch fresh user data to ensure sync
                 const freshDataResponse = await fetch(`${API_BASE_URL}/api/auth/me`, {
                   headers: { Authorization: `Bearer ${token}` }
                 })
@@ -1185,8 +939,6 @@ function DashboardContent() {
                   const freshUserData = await freshDataResponse.json()
                   setUser(freshUserData)
                 }
-              } else {
-                console.error('❌ Failed to sync user data:', updateResponse.status)
               }
             } catch (error) {
               console.error('❌ Database sync error:', error)
@@ -1194,7 +946,6 @@ function DashboardContent() {
           }
         },
         onError: (error: any) => {
-          console.error('❌ StreamChat error:', error)
           setIsLoading(false)
           setIsStreaming(false)
           
@@ -1213,7 +964,6 @@ function DashboardContent() {
         },
       })
     } catch (error) {
-      console.error('❌ Stream setup error:', error)
       setIsLoading(false)
       setIsStreaming(false)
       setMessages((prev) =>
@@ -1226,14 +976,13 @@ function DashboardContent() {
     }
   }
 
-  // ✅ UPDATED: Enhanced handleSubmit with proper file handling
+  // Enhanced handleSubmit
   const handleSubmit = async (override?: string) => {
     const text = override || input.trim()
     if (!text && uploadedFiles.length === 0) return
 
     setError(null)
 
-    // Use the latest user data for prompt limit check
     if (promptsUsed >= promptLimit) {
       const planType = user?.subscriptionType?.toLowerCase() || 'free'
       const periodText = planType === 'free' ? 'daily' : 'monthly'
@@ -1241,7 +990,6 @@ function DashboardContent() {
       return
     }
 
-    // Create thread ID only when needed
     let currentThreadId = threadId
     if (!currentThreadId) {
       currentThreadId = `thread_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -1262,28 +1010,22 @@ function DashboardContent() {
     const aId = `a${Date.now()}`
     setMessages((prev) => [...prev, { id: aId, role: 'assistant', content: '' }])
 
-    // ✅ ENHANCED: Convert uploaded files to proper File objects
     const filesToSend: File[] = []
     
     for (const uploadedFile of uploadedFiles) {
       if (uploadedFile.file) {
-        // Use the stored File object
         filesToSend.push(uploadedFile.file)
       } else if (uploadedFile.preview && uploadedFile.type.startsWith('image/')) {
-        // Fallback: Convert base64 preview to File object
         const file = createFileFromPreview(uploadedFile.preview, uploadedFile.name, uploadedFile.type)
         filesToSend.push(file)
       }
     }
 
-    // Clear uploaded files after sending
     setUploadedFiles([])
-
-    // ✅ SIMPLIFIED: Always use the new streamChat with files
     handleStreamWithFiles(text, aId, filesToSend)
   }
 
-  // ✅ NEW: Download response as document
+  // Download and file generation functions (unchanged but kept for completeness)
   const handleDownloadResponse = async (messageId: string, format: 'txt' | 'md' | 'html' = 'md') => {
     const message = messages.find(m => m.id === messageId)
     if (!message || message.role !== 'assistant') return
@@ -1308,7 +1050,6 @@ function DashboardContent() {
 
       const data = await response.json()
       
-      // Create download link
       const blob = new Blob([data.content], { type: data.mimeType })
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
@@ -1325,7 +1066,6 @@ function DashboardContent() {
     }
   }
 
-  // ✅ NEW: Generate Excel from AI response
   const handleGenerateExcel = async (messageId: string) => {
     const message = messages.find(m => m.id === messageId)
     if (!message || message.role !== 'assistant') return
@@ -1348,7 +1088,6 @@ function DashboardContent() {
         throw new Error('Failed to generate Excel')
       }
 
-      // Handle file download
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
@@ -1365,7 +1104,6 @@ function DashboardContent() {
     }
   }
 
-  // ✅ NEW: Generate PDF from AI response
   const handleGeneratePDF = async (messageId: string, template: string = 'professional') => {
     const message = messages.find(m => m.id === messageId)
     if (!message || message.role !== 'assistant') return
@@ -1389,7 +1127,6 @@ function DashboardContent() {
         throw new Error('Failed to generate PDF')
       }
 
-      // Handle file download
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
@@ -1406,16 +1143,14 @@ function DashboardContent() {
     }
   }
 
-  // ✅ FIXED: Save to Saved Responses (personal saves)
   const handleSaveResponse = async (title: string, messageId: string) => {
     try {
-      // Get the specific message content
       const message = messages.find(m => m.id === messageId)
       if (!message || message.role !== 'assistant') {
         throw new Error('Invalid message to save')
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/saved`, {  // ✅ FIXED: Personal saved responses
+      const response = await fetch(`${API_BASE_URL}/api/saved`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1443,16 +1178,14 @@ function DashboardContent() {
     }
   }
 
-  // ✅ FIXED: Save to Collab Zone (for sharing/collaboration)
   const handleSaveToCollabZone = async (title: string, messageId: string) => {
     try {
-      // Get the specific message content
       const message = messages.find(m => m.id === messageId)
       if (!message || message.role !== 'assistant') {
         throw new Error('Invalid message to save')
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/collab`, {  // ✅ Collab Zone for sharing
+      const response = await fetch(`${API_BASE_URL}/api/collab`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1480,18 +1213,15 @@ function DashboardContent() {
     }
   }
 
-  // ✅ FIXED: Share to Collab Zone (save then redirect)
   const handleShareToCollabZone = async (messageId: string) => {
     const message = messages.find(m => m.id === messageId)
     if (!message || message.role !== 'assistant') return
 
     try {
-      // First save to Collab Zone with auto-generated title
       const autoTitle = `Shared Response - ${new Date().toLocaleDateString()}`
       const result = await handleSaveToCollabZone(autoTitle, messageId)
       
       if (result) {
-        // Then redirect to Collab Zone with the document ID
         router.push(`/collab-zone?document=${result.id}`)
       }
     } catch (error) {
@@ -1500,10 +1230,8 @@ function DashboardContent() {
     }
   }
 
-  // ✅ NEW: Refresh image usage after generation
   const handleImageGenerated = (image: GeneratedImage) => {
     setGeneratedImages(prev => [image, ...prev])
-    // Refresh usage stats immediately
     if (token) {
       fetch(`${API_BASE_URL}/api/dalle/usage`, {
         headers: { 
@@ -1535,51 +1263,40 @@ function DashboardContent() {
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-textPrimary dark:text-white transition-colors duration-300">
       
-      {/* Main Content Area with proper padding */}
-      <div className="flex-1 overflow-hidden p-6">
-        
-        {/* ✅ ENHANCED: Header with Prompts Used, Image Usage, and Action Buttons */}
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex-1" />
+      {/* ✅ IMPROVED: Header with better layout - NO BUILT-IN SIDEBAR */}
+      <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 p-4 shadow-sm">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Chat Dashboard
+          </h1>
           <div className="flex items-center gap-4">
-            {/* Enhanced Prompt Tracker */}
-            <div className="bg-white dark:bg-white rounded-xl px-4 py-2 shadow-lg border border-gray-200">
+            {/* Prompt Tracker */}
+            <div className="bg-white dark:bg-slate-700 rounded-xl px-4 py-2 shadow-lg border border-gray-200 dark:border-gray-600">
               <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Prompts Used
                 </span>
                 <div className="flex items-center gap-2">
-                  <div className="relative w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="relative w-24 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
                     <div 
                       className={`absolute top-0 left-0 h-full bg-gradient-to-r ${getPromptLimitColor()} rounded-full transition-all duration-300 ease-out`}
                       style={{ width: `${Math.min(usagePercentage, 100)}%` }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
                   </div>
-                  <span className="text-sm font-bold text-gray-800 min-w-[3rem]">
+                  <span className="text-sm font-bold text-gray-800 dark:text-gray-200 min-w-[3rem]">
                     {promptsUsed}/{promptLimit}
                   </span>
                 </div>
-                {promptsRemaining <= 5 && promptsRemaining > 0 && (
-                  <span className="text-xs text-orange-600 font-medium">
-                    {promptsRemaining} left
-                  </span>
-                )}
-                {promptsUsed >= promptLimit && (
-                  <span className="text-xs text-red-600 font-medium">
-                    Limit reached
-                  </span>
-                )}
               </div>
             </div>
 
-            {/* ✅ ENHANCED: Image Usage Tracker with null safety */}
+            {/* Image Usage Tracker */}
             {imageUsage && imageUsage.dailyImages && (
-              <div className="bg-white dark:bg-white rounded-xl px-4 py-2 shadow-lg border border-gray-200">
+              <div className="bg-white dark:bg-slate-700 rounded-xl px-4 py-2 shadow-lg border border-gray-200 dark:border-gray-600">
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-gray-700">Images</span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Images</span>
                   <div className="flex items-center gap-2">
-                    <div className="relative w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="relative w-20 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
                       <div 
                         className={`absolute top-0 left-0 h-full rounded-full transition-all duration-300 ease-out ${
                           (imageUsage.dailyImages?.remaining || 0) <= 0 
@@ -1593,61 +1310,14 @@ function DashboardContent() {
                         }}
                       />
                     </div>
-                    <span className="text-sm font-bold text-gray-800 min-w-[2.5rem]">
+                    <span className="text-sm font-bold text-gray-800 dark:text-gray-200 min-w-[2.5rem]">
                       {imageUsage.dailyImages?.remaining || 0}/{imageUsage.dailyImages?.limit === -1 ? '∞' : imageUsage.dailyImages?.limit || 0}
                     </span>
-                    {(imageUsage.dailyImages?.remaining || 0) <= 0 && (
-                      <span className="text-xs text-red-600 font-medium whitespace-nowrap">
-                        Resets in {Math.ceil((new Date().setHours(24,0,0,0) - Date.now()) / 3600000)}h
-                      </span>
-                    )}
                   </div>
                 </div>
-                {/* Monthly indicator with safe access */}
-                <div className="text-xs text-gray-500 mt-1">
-                  Monthly: {imageUsage.monthlyImages?.remaining || 0}/{imageUsage.monthlyImages?.limit === -1 ? '∞' : imageUsage.monthlyImages?.limit || 0}
-                </div>
-                {/* Show fallback indicator */}
-                {imageUsage._fallback && (
-                  <div className="text-xs text-yellow-600 mt-1">
-                    ⚠️ Default limits
-                  </div>
-                )}
               </div>
             )}
 
-            {/* ✅ ENHANCED: DALL-E Button with comprehensive safety checks */}
-            <button
-              onClick={() => {
-                if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
-                  setShowImageModal(true)
-                } else {
-                  // Show upgrade prompt if limits reached or data unavailable
-                  router.push('/change-plan')
-                }
-              }}
-              className={`text-sm px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 ${
-                (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
-                  ? 'bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white'
-                  : 'bg-gradient-to-r from-gray-400 to-gray-500 text-white cursor-pointer hover:from-gray-500 hover:to-gray-600'
-              }`}
-              title={
-                (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
-                  ? 'Generate a new image with DALL-E' 
-                  : 'Upgrade to generate more images'
-              }
-            >
-              <FaPalette className="text-xs" /> 
-              {(imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) ? 'Generate Image' : 'Upgrade for Images'}
-            </button>
-
-            <button
-              onClick={() => setShowImageGallery(true)}
-              className="text-sm bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105"
-            >
-              <FaImages className="text-xs" /> Gallery
-            </button>
-            
             <button
               onClick={createNewThread}
               className="text-sm bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105"
@@ -1656,7 +1326,11 @@ function DashboardContent() {
             </button>
           </div>
         </div>
+      </div>
 
+      {/* Content Area */}
+      <div className="flex-1 overflow-hidden p-6">
+        
         {/* Enhanced Collapsible Categories Bar */}
         <div className="mb-6">
           <div className="text-center mb-3">
@@ -1737,7 +1411,7 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* Chat Messages - now with proper spacing for fixed input */}
+        {/* Chat Messages */}
         <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pb-8">
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-64">
@@ -1769,7 +1443,7 @@ function DashboardContent() {
                     : 'bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-gray-800 dark:text-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm'
                 }`}
               >
-                {/* ✅ ENHANCED: Display uploaded files for user messages */}
+                {/* Display uploaded files for user messages */}
                 {msg.role === 'user' && msg.files && msg.files.length > 0 && (
                   <div className="mb-4 space-y-2">
                     <p className="text-xs text-blue-100 font-medium">📎 Attached Files:</p>
@@ -1832,7 +1506,7 @@ function DashboardContent() {
                       </div>
                     )}
 
-                    {/* ✅ ENHANCED: Action Buttons with new file generation options */}
+                    {/* Action Buttons */}
                     <div className="flex flex-wrap gap-4 mt-4 text-lg text-gray-500 dark:text-gray-400">
                       <HiThumbUp
                         className="cursor-pointer hover:text-green-500 transition-colors duration-200 transform hover:scale-110"
@@ -1858,13 +1532,12 @@ function DashboardContent() {
                         title="Share to Collab Zone"
                       />
                       
-                      {/* ✅ NEW: Enhanced download dropdown with Excel/PDF generation */}
+                      {/* Enhanced download dropdown */}
                       <div className="relative group">
                         <FaFileDownload 
                           className="cursor-pointer hover:text-purple-500 transition-colors duration-200 transform hover:scale-110" 
                           title="Download & Generate Files"
                         />
-                        {/* Enhanced download options dropdown */}
                         <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-10 min-w-[160px]">
                           <div className="p-2 space-y-1">
                             <div className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1 border-b border-gray-200 dark:border-gray-600">
@@ -1904,12 +1577,6 @@ function DashboardContent() {
                             >
                               📋 Business PDF
                             </button>
-                            <button
-                              onClick={() => handleGeneratePDF(msg.id, 'executive')}
-                              className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded"
-                            >
-                              💼 Executive Report
-                            </button>
                           </div>
                         </div>
                       </div>
@@ -1939,7 +1606,7 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* ✅ ENHANCED: File Upload Preview */}
+      {/* File Upload Preview */}
       {uploadedFiles.length > 0 && (
         <div className="px-6 pb-4">
           <div className="max-w-4xl mx-auto">
@@ -1969,7 +1636,7 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* ✅ ENHANCED: Fixed Input Section with multiple file support */}
+      {/* ✅ IMPROVED: Fixed Input Section with better button placement */}
       <div className="bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 p-6 shadow-2xl">
         <div className="max-w-4xl mx-auto">
           <div className="bg-gray-50 dark:bg-slate-700 rounded-2xl p-4 shadow-inner">
@@ -1989,7 +1656,8 @@ function DashboardContent() {
               disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
             />
             <div className="flex justify-between items-center mt-4">
-              <div className="flex items-center gap-4">
+              {/* ✅ IMPROVED: Left side - Upload Files and Generate Image buttons together */}
+              <div className="flex items-center gap-3">
                 <div
                   onClick={(e) => {
                     e.preventDefault()
@@ -2006,6 +1674,32 @@ function DashboardContent() {
                   <FaPaperclip className="text-sm" />
                   <span className="text-sm font-medium">Upload Files</span>
                 </div>
+
+                {/* ✅ NEW: Generate Image button next to Upload Files */}
+                <button
+                  onClick={() => {
+                    if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
+                      setShowImageModal(true)
+                    } else {
+                      router.push('/change-plan')
+                    }
+                  }}
+                  className={`border-2 px-4 py-2 rounded-xl flex items-center gap-2 transition-all duration-200 ${
+                    (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
+                      ? 'border-purple-500 text-purple-600 bg-purple-50 hover:bg-purple-100 hover:border-purple-600 shadow-sm hover:shadow-md transform hover:scale-[1.02]'
+                      : 'border-gray-300 dark:border-gray-600 text-gray-400 cursor-pointer hover:border-gray-400 bg-gray-50 dark:bg-gray-800'
+                  }`}
+                  title={
+                    (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
+                      ? 'Generate a new image with DALL-E' 
+                      : 'Upgrade to generate more images'
+                  }
+                >
+                  <FaPalette className="text-sm" />
+                  <span className="text-sm font-medium">
+                    {(imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) ? 'Generate Image' : 'Upgrade for Images'}
+                  </span>
+                </button>
               </div>
               
               <div className="flex items-center gap-3">
@@ -2049,20 +1743,14 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* ✅ NEW: DALL-E Image Generation Modal */}
+      {/* DALL-E Image Generation Modal */}
       <ImageGenerationModal
         open={showImageModal}
         onClose={() => setShowImageModal(false)}
         onImageGenerated={handleImageGenerated}
       />
 
-      {/* ✅ NEW: Image Gallery Modal */}
-      <ImageGalleryModal
-        open={showImageGallery}
-        onClose={() => setShowImageGallery(false)}
-      />
-
-      {/* ✅ FIXED: Modals with enhanced save functionality */}
+      {/* Modals */}
       <SaveModal
         open={showSaveModal}
         onClose={() => {
@@ -2071,7 +1759,7 @@ function DashboardContent() {
         }}
         onConfirm={async (title: string) => {
           if (currentSaveMessageId) {
-            await handleSaveResponse(title, currentSaveMessageId)  // ✅ FIXED: Save to personal saved responses
+            await handleSaveResponse(title, currentSaveMessageId)
           }
         }}
       />
