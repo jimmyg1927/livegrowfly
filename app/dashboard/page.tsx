@@ -86,6 +86,7 @@ interface ImageUsage {
   }
   canGenerate: boolean
   blockedReason?: string
+  _fallback?: boolean // Indicates if this is fallback data
 }
 
 const PROMPT_LIMITS: Record<string, number> = {
@@ -162,18 +163,51 @@ const ImageGenerationModal: React.FC<{
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
   const router = useRouter()
 
-  // Fetch usage stats when modal opens
+  // ✅ SAFE: Fetch usage stats when modal opens with proper error handling
   useEffect(() => {
     if (open && token) {
       fetch(`${API_BASE_URL}/api/dalle/usage`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       })
-        .then(res => res.json())
-        .then(data => {
-          console.log('📊 Image usage data:', data)
-          setImageUsage(data)
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${res.statusText}`)
+          }
+          return res.json()
         })
-        .catch(err => console.error('Failed to fetch image usage:', err))
+        .then(data => {
+          console.log('📊 Modal image usage data:', data)
+          // ✅ SAFE: Only set if data is valid
+          if (data && !data.error && data.dailyImages && data.monthlyImages) {
+            setImageUsage(data)
+          } else {
+            console.warn('⚠️ Invalid image usage data in modal, using fallback:', data)
+            setImageUsage({
+              subscriptionType: 'free',
+              subscriptionName: 'Free',
+              dailyImages: { used: 0, limit: 2, remaining: 2 },
+              monthlyImages: { used: 0, limit: 10, remaining: 10 },
+              totalPrompts: { used: 0, limit: 20, remaining: 20 },
+              canGenerate: true,
+              _fallback: true
+            })
+          }
+        })
+        .catch(err => {
+          console.error('❌ Failed to fetch image usage in modal:', err)
+          setImageUsage({
+            subscriptionType: 'free',
+            subscriptionName: 'Free',
+            dailyImages: { used: 0, limit: 2, remaining: 2 },
+            monthlyImages: { used: 0, limit: 10, remaining: 10 },
+            totalPrompts: { used: 0, limit: 20, remaining: 20 },
+            canGenerate: true,
+            _fallback: true
+          })
+        })
     }
   }, [open, token])
 
@@ -257,11 +291,11 @@ const ImageGenerationModal: React.FC<{
 
   if (!open) return null
 
-  // ✅ ENHANCED: Better limit checking with specific messaging
+  // ✅ ENHANCED: Better limit checking with specific messaging and null safety
   const canGenerate = imageUsage?.canGenerate ?? false
-  const isAtDailyLimit = imageUsage && imageUsage.dailyImages.remaining <= 0
-  const isAtMonthlyLimit = imageUsage && imageUsage.monthlyImages.remaining <= 0
-  const isAtPromptLimit = imageUsage && imageUsage.totalPrompts.remaining <= 0
+  const isAtDailyLimit = imageUsage && (imageUsage.dailyImages?.remaining || 0) <= 0
+  const isAtMonthlyLimit = imageUsage && (imageUsage.monthlyImages?.remaining || 0) <= 0
+  const isAtPromptLimit = imageUsage && (imageUsage.totalPrompts?.remaining || 0) <= 0
 
   // ✅ NEW: Reset time calculations
   const getResetInfo = () => {
@@ -297,9 +331,18 @@ const ImageGenerationModal: React.FC<{
             </button>
           </div>
 
-          {/* ✅ ENHANCED: Comprehensive Usage Display */}
+          {/* ✅ ENHANCED: Comprehensive Usage Display with fallback indicator */}
           {imageUsage && (
             <div className="mb-6 space-y-4">
+              {/* Show fallback warning if using fallback data */}
+              {imageUsage._fallback && (
+                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+                  <div className="text-yellow-800 dark:text-yellow-300 text-sm">
+                    ⚠️ Using default limits. Some features may be limited until your account data is refreshed.
+                  </div>
+                </div>
+              )}
+
               {/* Current Plan Display */}
               <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl border border-purple-200 dark:border-purple-700">
                 <div className="flex items-center justify-between mb-3">
@@ -321,7 +364,7 @@ const ImageGenerationModal: React.FC<{
                   <div className="text-center">
                     <div className="text-gray-600 dark:text-gray-400 text-xs">Daily Images</div>
                     <div className={`font-bold text-lg ${isAtDailyLimit ? 'text-red-600' : 'text-purple-700 dark:text-purple-300'}`}>
-                      {imageUsage.dailyImages.remaining}/{imageUsage.dailyImages.limit === -1 ? '∞' : imageUsage.dailyImages.limit}
+                      {imageUsage.dailyImages?.remaining || 0}/{imageUsage.dailyImages?.limit === -1 ? '∞' : imageUsage.dailyImages?.limit || 0}
                     </div>
                     {isAtDailyLimit && (
                       <div className="text-xs text-red-500 mt-1">
@@ -334,7 +377,7 @@ const ImageGenerationModal: React.FC<{
                   <div className="text-center">
                     <div className="text-gray-600 dark:text-gray-400 text-xs">Monthly Images</div>
                     <div className={`font-bold text-lg ${isAtMonthlyLimit ? 'text-red-600' : 'text-blue-700 dark:text-blue-300'}`}>
-                      {imageUsage.monthlyImages.remaining}/{imageUsage.monthlyImages.limit === -1 ? '∞' : imageUsage.monthlyImages.limit}
+                      {imageUsage.monthlyImages?.remaining || 0}/{imageUsage.monthlyImages?.limit === -1 ? '∞' : imageUsage.monthlyImages?.limit || 0}
                     </div>
                     {isAtMonthlyLimit && (
                       <div className="text-xs text-red-500 mt-1">
@@ -347,7 +390,7 @@ const ImageGenerationModal: React.FC<{
                   <div className="text-center">
                     <div className="text-gray-600 dark:text-gray-400 text-xs">Total Prompts</div>
                     <div className={`font-bold text-lg ${isAtPromptLimit ? 'text-red-600' : 'text-green-700 dark:text-green-300'}`}>
-                      {imageUsage.totalPrompts.remaining}/{imageUsage.totalPrompts.limit === -1 ? '∞' : imageUsage.totalPrompts.limit}
+                      {imageUsage.totalPrompts?.remaining || 0}/{imageUsage.totalPrompts?.limit === -1 ? '∞' : imageUsage.totalPrompts?.limit || 0}
                     </div>
                     {isAtPromptLimit && (
                       <div className="text-xs text-red-500 mt-1">
@@ -803,20 +846,55 @@ function DashboardContent() {
     }
   }
 
-  // ✅ UPDATED: Enhanced image usage fetching
+  // ✅ CRITICAL FIX: Enhanced image usage fetching with comprehensive error handling
   useEffect(() => {
     if (token) {
       fetch(`${API_BASE_URL}/api/dalle/usage`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       })
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${res.statusText}`)
+          }
+          return res.json()
+        })
         .then(data => {
           console.log('📊 Main dashboard image usage:', data)
-          setImageUsage(data)
+          // ✅ CRITICAL: Only set if data is valid and has required structure
+          if (data && !data.error && data.dailyImages && data.monthlyImages && data.totalPrompts) {
+            setImageUsage(data)
+          } else {
+            console.warn('⚠️ Invalid image usage data, using fallback:', data)
+            // ✅ Set safe fallback data
+            setImageUsage({
+              subscriptionType: 'free',
+              subscriptionName: 'Free',
+              dailyImages: { used: 0, limit: 2, remaining: 2 },
+              monthlyImages: { used: 0, limit: 10, remaining: 10 },
+              totalPrompts: { used: promptsUsed, limit: promptLimit, remaining: promptLimit - promptsUsed },
+              canGenerate: true,
+              _fallback: true
+            })
+          }
         })
-        .catch(err => console.error('Failed to fetch image usage:', err))
+        .catch(err => {
+          console.error('❌ Failed to fetch image usage:', err)
+          // ✅ Set safe fallback on error
+          setImageUsage({
+            subscriptionType: 'free',
+            subscriptionName: 'Free',
+            dailyImages: { used: 0, limit: 2, remaining: 2 },
+            monthlyImages: { used: 0, limit: 10, remaining: 10 },
+            totalPrompts: { used: promptsUsed, limit: promptLimit, remaining: promptLimit - promptsUsed },
+            canGenerate: true,
+            _fallback: true
+          })
+        })
     }
-  }, [token])
+  }, [token, promptsUsed, promptLimit])  // ✅ Add dependencies
 
   // Enhanced user data fetching with better error handling and CORS fix
   useEffect(() => {
@@ -1428,10 +1506,20 @@ function DashboardContent() {
     // Refresh usage stats immediately
     if (token) {
       fetch(`${API_BASE_URL}/api/dalle/usage`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       })
-        .then(res => res.json())
-        .then(data => setImageUsage(data))
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`)
+          return res.json()
+        })
+        .then(data => {
+          if (data && !data.error && data.dailyImages && data.monthlyImages) {
+            setImageUsage(data)
+          }
+        })
         .catch(err => console.error('Failed to refresh image usage:', err))
     }
   }
@@ -1485,8 +1573,8 @@ function DashboardContent() {
               </div>
             </div>
 
-            {/* ✅ ENHANCED: Image Usage Tracker */}
-            {imageUsage && (
+            {/* ✅ ENHANCED: Image Usage Tracker with null safety */}
+            {imageUsage && imageUsage.dailyImages && (
               <div className="bg-white dark:bg-white rounded-xl px-4 py-2 shadow-lg border border-gray-200">
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-medium text-gray-700">Images</span>
@@ -1494,57 +1582,63 @@ function DashboardContent() {
                     <div className="relative w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div 
                         className={`absolute top-0 left-0 h-full rounded-full transition-all duration-300 ease-out ${
-                          imageUsage.dailyImages.remaining <= 0 
+                          (imageUsage.dailyImages?.remaining || 0) <= 0 
                             ? 'bg-gradient-to-r from-red-500 to-red-600' 
-                            : imageUsage.dailyImages.remaining <= 2 
+                            : (imageUsage.dailyImages?.remaining || 0) <= 2 
                             ? 'bg-gradient-to-r from-orange-500 to-red-500'
                             : 'bg-gradient-to-r from-purple-500 to-blue-500'
                         }`}
                         style={{ 
-                          width: `${Math.min((imageUsage.dailyImages.used / (imageUsage.dailyImages.limit || 1)) * 100, 100)}%` 
+                          width: `${Math.min(((imageUsage.dailyImages?.used || 0) / Math.max(imageUsage.dailyImages?.limit || 1, 1)) * 100, 100)}%` 
                         }}
                       />
                     </div>
                     <span className="text-sm font-bold text-gray-800 min-w-[2.5rem]">
-                      {imageUsage.dailyImages.remaining}/{imageUsage.dailyImages.limit === -1 ? '∞' : imageUsage.dailyImages.limit}
+                      {imageUsage.dailyImages?.remaining || 0}/{imageUsage.dailyImages?.limit === -1 ? '∞' : imageUsage.dailyImages?.limit || 0}
                     </span>
-                    {imageUsage.dailyImages.remaining <= 0 && (
+                    {(imageUsage.dailyImages?.remaining || 0) <= 0 && (
                       <span className="text-xs text-red-600 font-medium whitespace-nowrap">
                         Resets in {Math.ceil((new Date().setHours(24,0,0,0) - Date.now()) / 3600000)}h
                       </span>
                     )}
                   </div>
                 </div>
-                {/* Monthly indicator */}
+                {/* Monthly indicator with safe access */}
                 <div className="text-xs text-gray-500 mt-1">
-                  Monthly: {imageUsage.monthlyImages.remaining}/{imageUsage.monthlyImages.limit === -1 ? '∞' : imageUsage.monthlyImages.limit}
+                  Monthly: {imageUsage.monthlyImages?.remaining || 0}/{imageUsage.monthlyImages?.limit === -1 ? '∞' : imageUsage.monthlyImages?.limit || 0}
                 </div>
+                {/* Show fallback indicator */}
+                {imageUsage._fallback && (
+                  <div className="text-xs text-yellow-600 mt-1">
+                    ⚠️ Default limits
+                  </div>
+                )}
               </div>
             )}
 
-            {/* ✅ ENHANCED: DALL-E Button with limit checking */}
+            {/* ✅ ENHANCED: DALL-E Button with comprehensive safety checks */}
             <button
               onClick={() => {
-                if (imageUsage?.canGenerate) {
+                if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
                   setShowImageModal(true)
                 } else {
-                  // Show upgrade prompt if limits reached
+                  // Show upgrade prompt if limits reached or data unavailable
                   router.push('/change-plan')
                 }
               }}
               className={`text-sm px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 ${
-                imageUsage?.canGenerate 
+                (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
                   ? 'bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white'
                   : 'bg-gradient-to-r from-gray-400 to-gray-500 text-white cursor-pointer hover:from-gray-500 hover:to-gray-600'
               }`}
               title={
-                imageUsage?.canGenerate 
+                (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
                   ? 'Generate a new image with DALL-E' 
                   : 'Upgrade to generate more images'
               }
             >
               <FaPalette className="text-xs" /> 
-              {imageUsage?.canGenerate ? 'Generate Image' : 'Upgrade for Images'}
+              {(imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) ? 'Generate Image' : 'Upgrade for Images'}
             </button>
 
             <button
@@ -1596,7 +1690,10 @@ function DashboardContent() {
               {QUICK_CATEGORIES.map((category, index) => (
                 <button
                   key={index}
-                  onClick={() => handleSubmit(category.prompt)}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    handleSubmit(category.prompt)
+                  }}
                   disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
                   className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/95 dark:bg-slate-800/95 border border-gray-200/70 dark:border-slate-700/70 hover:border-blue-300/70 dark:hover:border-blue-500/70 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none backdrop-blur-sm hover:bg-blue-50/30 dark:hover:bg-slate-700/95"
                 >
@@ -1722,7 +1819,10 @@ function DashboardContent() {
                         {msg.followUps.map((fu, i) => (
                           <button
                             key={i}
-                            onClick={() => handleSubmit(fu)}
+                            onClick={(e) => {
+                              e.preventDefault()
+                              handleSubmit(fu)
+                            }}
                             disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
                             className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 hover:from-indigo-100 hover:to-blue-100 dark:hover:from-indigo-800/40 dark:hover:to-blue-800/40 disabled:from-gray-100 disabled:to-gray-100 dark:disabled:from-gray-800 dark:disabled:to-gray-800 text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 disabled:text-gray-500 dark:disabled:text-gray-500 px-4 py-2 rounded-xl text-xs font-medium shadow-sm border border-indigo-200 dark:border-indigo-700 disabled:border-gray-200 dark:disabled:border-gray-600 transition-all duration-200 hover:shadow-md transform hover:scale-[1.02] disabled:transform-none disabled:cursor-not-allowed"
                           >
@@ -1891,7 +1991,12 @@ function DashboardContent() {
             <div className="flex justify-between items-center mt-4">
               <div className="flex items-center gap-4">
                 <div
-                  onClick={() => !isLoading && !isStreaming && promptsUsed < promptLimit && fileInputRef.current?.click()}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    if (!isLoading && !isStreaming && promptsUsed < promptLimit && fileInputRef.current) {
+                      fileInputRef.current.click()
+                    }
+                  }}
                   className={`cursor-pointer border-2 px-4 py-2 rounded-xl flex items-center gap-2 transition-all duration-200 ${
                     isLoading || isStreaming || promptsUsed >= promptLimit
                       ? 'border-gray-300 dark:border-gray-600 text-gray-400 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
@@ -1910,7 +2015,10 @@ function DashboardContent() {
                   </span>
                 )}
                 <button
-                  onClick={() => handleSubmit()}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    handleSubmit()
+                  }}
                   disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || promptsUsed >= promptLimit}
                   className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white font-semibold px-6 py-3 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
                 >
