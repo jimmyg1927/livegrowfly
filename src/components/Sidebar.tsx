@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -18,7 +18,140 @@ import {
   HiOutlineAdjustments,
   HiOutlineMenuAlt2,
   HiOutlineX,
+  HiChevronDown,
 } from 'react-icons/hi'
+import { FaImages, FaSpinner } from 'react-icons/fa'
+
+// Get API URL from environment
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://glowfly-api-production.up.railway.app'
+
+// ✅ NEW: Generated Image interface
+interface GeneratedImage {
+  id: string
+  url: string
+  originalPrompt: string
+  revisedPrompt: string
+  size: string
+  style: string
+  createdAt: string
+}
+
+// ✅ NEW: Image Gallery Component for Sidebar
+const SidebarImageGallery: React.FC<{
+  isCollapsed: boolean
+  onImageSelect?: (image: GeneratedImage) => void
+}> = ({ isCollapsed, onImageSelect }) => {
+  const [images, setImages] = useState<GeneratedImage[]>([])
+  const [loading, setLoading] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
+
+  useEffect(() => {
+    if (token && expanded) {
+      setLoading(true)
+      fetch(`${API_BASE_URL}/api/dalle/gallery?limit=6`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          const galleryImages = data.images?.map((img: any) => ({
+            id: img.id,
+            url: img.imageUrl,
+            originalPrompt: img.prompt,
+            revisedPrompt: img.prompt,
+            size: img.size,
+            style: 'vivid',
+            createdAt: img.createdAt
+          })) || []
+          setImages(galleryImages)
+        })
+        .catch(err => console.error('Failed to fetch images:', err))
+        .finally(() => setLoading(false))
+    }
+  }, [token, expanded])
+
+  if (isCollapsed) {
+    // Collapsed state - show icon only with tooltip
+    return (
+      <Link
+        href="/gallery"
+        className="group relative flex items-center justify-center w-full px-3 py-2.5 text-white/90 hover:text-white hover:bg-white/10 hover:shadow-md rounded-lg transition-all duration-200 text-sm font-medium"
+        title="Image Gallery"
+      >
+        <FaImages className="h-5 w-5 flex-shrink-0" />
+        
+        {/* Tooltip for collapsed state */}
+        <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+          Image Gallery
+        </div>
+      </Link>
+    )
+  }
+
+  // Expanded state
+  return (
+    <div className="mb-2">
+      <Link
+        href="/gallery"
+        className="group relative flex items-center gap-3 w-full px-3 py-2.5 text-white/90 hover:text-white hover:bg-white/10 hover:shadow-md rounded-lg transition-all duration-200 text-sm font-medium"
+      >
+        <FaImages className="h-5 w-5 flex-shrink-0" />
+        <span className="flex-1 text-left">Image Gallery</span>
+      </Link>
+
+      {/* ✅ Quick preview section - only show if expanded and have images */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="group relative flex items-center gap-3 w-full px-3 py-1.5 mt-1 text-white/70 hover:text-white/90 hover:bg-white/5 rounded-lg transition-all duration-200 text-xs"
+      >
+        <span className="ml-8 flex-1 text-left">Quick Preview</span>
+        <HiChevronDown className={`w-3 h-3 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
+      </button>
+      
+      {expanded && (
+        <div className="mt-2 ml-8 space-y-2">
+          {loading ? (
+            <div className="flex items-center justify-center py-2">
+              <FaSpinner className="animate-spin text-white/60 text-xs" />
+            </div>
+          ) : images.length === 0 ? (
+            <p className="text-white/60 text-xs py-2">No images yet</p>
+          ) : (
+            <>
+              {images.slice(0, 3).map((image) => (
+                <div
+                  key={image.id}
+                  className="group relative bg-white/5 hover:bg-white/10 rounded-lg p-2 transition-colors cursor-pointer"
+                  onClick={() => onImageSelect?.(image)}
+                >
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={image.url}
+                      alt={image.originalPrompt}
+                      className="w-6 h-6 object-cover rounded flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white text-xs truncate leading-tight">{image.originalPrompt}</p>
+                      <p className="text-white/60 text-xs">{new Date(image.createdAt).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {images.length > 3 && (
+                <Link 
+                  href="/gallery" 
+                  className="block w-full text-white/60 hover:text-white text-xs py-1 px-2 text-center hover:bg-white/5 rounded transition-colors"
+                >
+                  View all {images.length} images →
+                </Link>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
 
 // Reordered by usage frequency and logical grouping
 const navItems = [
@@ -133,6 +266,15 @@ export default function Sidebar() {
       <nav className={`flex flex-col gap-1 flex-1 transition-all duration-200 ${isCollapsed ? 'px-2' : 'px-2 sm:px-4'}`}>
         {/* Primary Navigation */}
         <NavSection items={navItems} />
+        
+        {/* ✅ NEW: Image Gallery - positioned after primary nav */}
+        <SidebarImageGallery 
+          isCollapsed={isCollapsed} 
+          onImageSelect={(image) => {
+            // Could implement image preview or other actions here
+            console.log('Selected image:', image)
+          }} 
+        />
         
         {/* Secondary Features */}
         <NavSection items={secondaryItems} showDivider={true} />
