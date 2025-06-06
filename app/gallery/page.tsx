@@ -2,21 +2,9 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import { 
-  HiOutlineDownload, 
-  HiOutlineTrash, 
-  HiOutlineShare, 
-  HiOutlineSearch,
-  HiOutlineFilter,
-  HiOutlineSortAscending,
-  HiOutlineSortDescending,
-  HiOutlineHeart,
-  HiHeart,
   HiX,
-  HiOutlineEye,
-  HiOutlineCalendar,
-  HiOutlinePhotograph
+  HiChevronDown,
 } from 'react-icons/hi'
 import { 
   FaImages, 
@@ -204,7 +192,7 @@ const DeleteConfirmModal: React.FC<{
             Are you sure you want to delete this image? This action cannot be undone.
             <br />
             <span className="font-medium text-gray-800 dark:text-gray-200">
-              "{imageName}"
+              &ldquo;{imageName}&rdquo;
             </span>
           </p>
           
@@ -266,15 +254,6 @@ export default function GalleryPage() {
   }
 
   // Fetch images from API
-  useEffect(() => {
-    if (!token) {
-      router.push('/onboarding')
-      return
-    }
-
-    fetchImages()
-  }, [token, router])
-
   const fetchImages = async () => {
     try {
       setLoading(true)
@@ -308,6 +287,15 @@ export default function GalleryPage() {
     }
   }
 
+  useEffect(() => {
+    if (!token) {
+      router.push('/onboarding')
+      return
+    }
+
+    fetchImages()
+  }, [token, router, pinnedImages])
+
   // Apply filters and sorting
   useEffect(() => {
     let filtered = [...images]
@@ -321,23 +309,28 @@ export default function GalleryPage() {
 
     // Apply category filter
     switch (filterBy) {
-      case 'pinned':
+      case 'pinned': {
         filtered = filtered.filter(img => pinnedImages.has(img.id))
         break
-      case 'recent':
+      }
+      case 'recent': {
         const oneWeekAgo = new Date()
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
         filtered = filtered.filter(img => new Date(img.createdAt) > oneWeekAgo)
         break
-      case 'square':
+      }
+      case 'square': {
         filtered = filtered.filter(img => img.size === '1024x1024')
         break
-      case 'portrait':
+      }
+      case 'portrait': {
         filtered = filtered.filter(img => img.size === '1024x1792')
         break
-      case 'landscape':
+      }
+      case 'landscape': {
         filtered = filtered.filter(img => img.size === '1792x1024')
         break
+      }
     }
 
     // Apply sorting
@@ -354,20 +347,22 @@ export default function GalleryPage() {
       case 'prompt-za':
         filtered.sort((a, b) => b.originalPrompt.localeCompare(a.originalPrompt))
         break
-      case 'size-large':
+      case 'size-large': {
         filtered.sort((a, b) => {
           const aSize = parseInt(a.size.split('x')[0]) * parseInt(a.size.split('x')[1])
           const bSize = parseInt(b.size.split('x')[0]) * parseInt(b.size.split('x')[1])
           return bSize - aSize
         })
         break
-      case 'size-small':
+      }
+      case 'size-small': {
         filtered.sort((a, b) => {
           const aSize = parseInt(a.size.split('x')[0]) * parseInt(a.size.split('x')[1])
           const bSize = parseInt(b.size.split('x')[0]) * parseInt(b.size.split('x')[1])
           return aSize - bSize
         })
         break
+      }
     }
 
     setFilteredImages(filtered)
