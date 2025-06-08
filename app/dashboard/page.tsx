@@ -223,7 +223,7 @@ const ImageGenerationModal: React.FC<{
         body: JSON.stringify({ 
           prompt, 
           size, 
-          quality: 'standard', // ✅ FIXED: Always use standard quality
+          quality: 'standard',
           style 
         })
       })
@@ -314,7 +314,7 @@ const ImageGenerationModal: React.FC<{
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <FaPalette className="text-purple-500" />
-              Generate Image with DALL-E
+              Create an image with Growfly
             </h2>
             <button
               onClick={onClose}
@@ -322,6 +322,14 @@ const ImageGenerationModal: React.FC<{
             >
               <HiX className="w-6 h-6" />
             </button>
+          </div>
+
+          {/* ✅ NEW: Explanatory text */}
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
+            <p className="text-sm text-blue-800 dark:text-blue-300">
+              <strong>🎨 Create professional images for your business</strong><br />
+              Describe what you want and our AI will generate a custom image. Perfect for social media, presentations, marketing materials, and more.
+            </p>
           </div>
 
           {/* Usage Display */}
@@ -440,12 +448,12 @@ const ImageGenerationModal: React.FC<{
             {/* ✅ IMPROVED: Prompt Input - same height as main prompt */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Image Description
+                Describe your image
               </label>
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Describe the image you want to generate..."
+                placeholder="Describe the image you want to generate... e.g., 'A professional logo for a tech startup, modern and minimalist style, blue and white colors'"
                 className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[4rem] max-h-32"
                 rows={3}
                 disabled={isGenerating || !canGenerate}
@@ -556,7 +564,6 @@ const QUICK_CATEGORIES = [
 function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const paramThreadId = searchParams?.get('threadId')
 
   const { user, setUser } = useUserStore()
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
@@ -574,8 +581,6 @@ function DashboardContent() {
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
-  const [threadId, setThreadId] = useState<string | null>(null)
-  const [threadTitle, setThreadTitle] = useState('')
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [showFeedbackModal, setShowFeedbackModal] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -617,18 +622,12 @@ function DashboardContent() {
     })}`
   }
 
-  const createNewThread = () => {
+  // ✅ NEW: Clear conversations (but don't lose persistent ones)
+  const createNewConversation = () => {
     setMessages([])
-    setThreadId(null)
-    setThreadTitle('')
     setError(null)
     setInput('')
     setUploadedFiles([])
-    localStorage.removeItem('growfly_last_thread_id')
-    
-    if (window.history.replaceState) {
-      window.history.replaceState({}, document.title, window.location.pathname)
-    }
   }
 
   // Enhanced image usage fetching
@@ -713,36 +712,29 @@ function DashboardContent() {
     return () => clearInterval(syncInterval)
   }, [token, router, setUser])
 
-  // Load existing thread if available
+  // ✅ NEW: Load persistent dashboard conversations on mount
   useEffect(() => {
     if (!token) return
     
-    const storedThreadId = localStorage.getItem('growfly_last_thread_id')
-    const id = paramThreadId || storedThreadId
-
-    if (id && id !== 'undefined' && id !== 'null') {
-      setThreadId(id)
-      
-      fetch(`${API_BASE_URL}/api/chat/history/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then(async (res) => {
-          if (res.ok) {
-            const data = await res.json()
-            if (data.messages && data.messages.length > 0) {
-              setMessages(data.messages)
-              setThreadTitle(data.title || formatTitleFromDate(new Date()))
-            }
-          } else {
-            localStorage.removeItem('growfly_last_thread_id')
+    const loadDashboardConversations = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/chat/dashboard-history`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.messages && data.messages.length > 0) {
+            setMessages(data.messages)
           }
-        })
-        .catch((err) => {
-          console.error('Failed to load chat history:', err)
-          localStorage.removeItem('growfly_last_thread_id')
-        })
+        }
+      } catch (err) {
+        console.error('Failed to load dashboard conversations:', err)
+      }
     }
-  }, [paramThreadId, token])
+    
+    loadDashboardConversations()
+  }, [token])
 
   // Auto-resize textarea
   useEffect(() => {
@@ -869,7 +861,6 @@ function DashboardContent() {
     try {
       await streamChat({
         prompt,
-        threadId: threadId || undefined,
         token,
         files,
         onStream: (chunk: any) => {
@@ -906,6 +897,23 @@ function DashboardContent() {
               msg.id === aId ? { ...msg, content: fullContent, followUps } : msg
             )
           )
+          
+          // ✅ NEW: Save to dashboard history automatically
+          try {
+            await fetch(`${API_BASE_URL}/api/chat/save-to-dashboard`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                userMessage: prompt,
+                assistantMessage: fullContent,
+              }),
+            })
+          } catch (saveError) {
+            console.error('Failed to save to dashboard history:', saveError)
+          }
           
           if (user) {
             const newPromptsUsed = (user.promptsUsed ?? 0) + 1
@@ -988,13 +996,6 @@ function DashboardContent() {
       const periodText = planType === 'free' ? 'daily' : 'monthly'
       setError(`You've reached your ${periodText} limit of ${promptLimit} prompts. Upgrade your plan to continue.`)
       return
-    }
-
-    let currentThreadId = threadId
-    if (!currentThreadId) {
-      currentThreadId = `thread_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      setThreadId(currentThreadId)
-      localStorage.setItem('growfly_last_thread_id', currentThreadId)
     }
 
     const uId = `u${Date.now()}`
@@ -1261,10 +1262,10 @@ function DashboardContent() {
   const dismissError = () => setError(null)
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-textPrimary dark:text-white transition-colors duration-300">
+    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-textPrimary dark:text-white transition-colors duration-300">
       
-      {/* ✅ IMPROVED: Header with better layout - NO BUILT-IN SIDEBAR */}
-      <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 p-4 shadow-sm">
+      {/* ✅ IMPROVED: Header with better layout */}
+      <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 p-4 shadow-sm flex-shrink-0">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Chat Dashboard
@@ -1319,426 +1320,442 @@ function DashboardContent() {
             )}
 
             <button
-              onClick={createNewThread}
+              onClick={createNewConversation}
               className="text-sm bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105"
             >
-              <FaSyncAlt className="text-xs" /> New Chat
+              <FaSyncAlt className="text-xs" /> Clear Chat
             </button>
           </div>
         </div>
       </div>
 
-      {/* Content Area */}
-      <div className="flex-1 overflow-hidden p-6">
-        
-        {/* Enhanced Collapsible Categories Bar */}
-        <div className="mb-6">
-          <div className="text-center mb-3">
-            <h3 className="text-xl font-bold text-blue-500 mb-1">
-              Quick Start
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Find out how we can help you today
-            </p>
-          </div>
+      {/* Content Area - Now with flex-1 and proper overflow */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto p-6">
           
-          <button
-            onClick={() => setShowCategories(!showCategories)}
-            className="flex items-center justify-center gap-2 w-full text-sm font-medium text-white hover:text-white transition-all duration-200 mb-4 py-3 px-4 rounded-xl bg-blue-500 hover:bg-blue-600 border border-blue-400 hover:border-blue-500 backdrop-blur-sm shadow-lg hover:shadow-xl"
-          >
-            {showCategories ? (
-              <>
-                <HiChevronUp className="w-4 h-4" />
-                <span>Hide Quick Start</span>
-              </>
-            ) : (
-              <>
-                <HiChevronDown className="w-4 h-4" />
-                <span>Show Quick Start</span>
-              </>
-            )}
-          </button>
-          
-          {showCategories && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 p-3 bg-gradient-to-br from-blue-50/80 via-indigo-50/60 to-purple-50/80 dark:from-slate-800/80 dark:via-slate-700/60 dark:to-slate-800/80 rounded-2xl border border-blue-200/40 dark:border-slate-600/40 backdrop-blur-sm shadow-lg">
-              {QUICK_CATEGORIES.map((category, index) => (
-                <button
-                  key={index}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    handleSubmit(category.prompt)
-                  }}
-                  disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                  className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/95 dark:bg-slate-800/95 border border-gray-200/70 dark:border-slate-700/70 hover:border-blue-300/70 dark:hover:border-blue-500/70 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none backdrop-blur-sm hover:bg-blue-50/30 dark:hover:bg-slate-700/95"
-                >
-                  <div className="text-xl group-hover:scale-110 transition-transform duration-300">
-                    {category.icon}
-                  </div>
-                  <div className="text-center space-y-1">
-                    <h4 className="font-semibold text-slate-800 dark:text-white text-xs leading-tight">
-                      {category.title}
-                    </h4>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                      {category.description}
-                    </p>
-                  </div>
-                </button>
-              ))}
+          {/* Enhanced Collapsible Categories Bar */}
+          <div className="mb-6">
+            <div className="text-center mb-3">
+              <h3 className="text-xl font-bold text-blue-500 mb-1">
+                Quick Start
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                Find out how we can help you today
+              </p>
             </div>
-          )}
-        </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
-            <button 
-              onClick={dismissError}
-              className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+            
+            <button
+              onClick={() => setShowCategories(!showCategories)}
+              className="flex items-center justify-center gap-2 w-full text-sm font-medium text-white hover:text-white transition-all duration-200 mb-4 py-3 px-4 rounded-xl bg-blue-500 hover:bg-blue-600 border border-blue-400 hover:border-blue-500 backdrop-blur-sm shadow-lg hover:shadow-xl"
             >
-              <HiX className="w-4 h-4" />
+              {showCategories ? (
+                <>
+                  <HiChevronUp className="w-4 h-4" />
+                  <span>Hide Quick Start</span>
+                </>
+              ) : (
+                <>
+                  <HiChevronDown className="w-4 h-4" />
+                  <span>Show Quick Start</span>
+                </>
+              )}
             </button>
-            <strong>⚠️ {error}</strong>
-            {error.includes('limit') && (
-              <div className="mt-2">
-                <button
-                  onClick={() => router.push('/change-plan')}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors"
-                >
-                  Upgrade Plan
-                </button>
+            
+            {showCategories && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 p-3 bg-gradient-to-br from-blue-50/80 via-indigo-50/60 to-purple-50/80 dark:from-slate-800/80 dark:via-slate-700/60 dark:to-slate-800/80 rounded-2xl border border-blue-200/40 dark:border-slate-600/40 backdrop-blur-sm shadow-lg">
+                {QUICK_CATEGORIES.map((category, index) => (
+                  <button
+                    key={index}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      handleSubmit(category.prompt)
+                    }}
+                    disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+                    className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/95 dark:bg-slate-800/95 border border-gray-200/70 dark:border-slate-700/70 hover:border-blue-300/70 dark:hover:border-blue-500/70 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none backdrop-blur-sm hover:bg-blue-50/30 dark:hover:bg-slate-700/95"
+                  >
+                    <div className="text-xl group-hover:scale-110 transition-transform duration-300">
+                      {category.icon}
+                    </div>
+                    <div className="text-center space-y-1">
+                      <h4 className="font-semibold text-slate-800 dark:text-white text-xs leading-tight">
+                        {category.title}
+                      </h4>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                        {category.description}
+                      </p>
+                    </div>
+                  </button>
+                ))}
               </div>
             )}
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
+              <button 
+                onClick={dismissError}
+                className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+              >
+                <HiX className="w-4 h-4" />
+              </button>
+              <strong>⚠️ {error}</strong>
+              {error.includes('limit') && (
+                <div className="mt-2">
+                  <button
+                    onClick={() => router.push('/change-plan')}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors"
+                  >
+                    Upgrade Plan
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ✅ NEW: Info about persistent conversations */}
+          {messages.length > 0 && (
+            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl">
+              <p className="text-blue-800 dark:text-blue-300 text-sm">
+                💡 <strong>Your conversations are automatically saved here!</strong> Your last 10 exchanges stay on this dashboard so you can always pick up where you left off.
+              </p>
+            </div>
+          )}
+
+          {/* Chat Messages */}
+          <div ref={containerRef} className="space-y-6 pb-8">
+            {messages.length === 0 ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="text-center max-w-md">
+                  <div className="text-6xl mb-4">👋</div>
+                  <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
+                    Welcome to Growfly!
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    Ready to get started? Click one of the Quick Start buttons above or type your question in the box below to begin your first conversation.
+                  </p>
+                  <div className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                    ✨ Choose a Quick Start option or ask anything you&apos;d like!
+                  </div>
+                </div>
+              </div>
+            ) : (
+              messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                onMouseEnter={() => setHoveredMessageId(msg.id)}
+                onMouseLeave={() => setHoveredMessageId(null)}
+              >
+                <div
+                  className={`max-w-4xl p-5 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl relative ${
+                    msg.role === 'user'
+                      ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white ml-auto'
+                      : 'bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-gray-800 dark:text-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm'
+                  }`}
+                >
+                  {/* Display uploaded files for user messages */}
+                  {msg.role === 'user' && msg.files && msg.files.length > 0 && (
+                    <div className="mb-4 space-y-2">
+                      <p className="text-xs text-blue-100 font-medium">📎 Attached Files:</p>
+                      <div className="grid grid-cols-1 gap-2">
+                        {msg.files.map((file) => (
+                          <div key={file.id} className="bg-blue-500/20 rounded-lg p-2 flex items-center gap-2">
+                            {file.type.startsWith('image/') && file.preview ? (
+                              <img src={file.preview} alt={file.name} className="w-8 h-8 object-cover rounded" />
+                            ) : file.type === 'application/pdf' ? (
+                              <FaFilePdf className="w-6 h-6 text-red-300" />
+                            ) : (
+                              <FaFileAlt className="w-6 h-6 text-gray-300" />
+                            )}
+                            <span className="text-xs text-blue-100">{file.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {msg.imageUrl && (
+                    <Image
+                      src={msg.imageUrl}
+                      alt="Uploaded"
+                      width={280}
+                      height={280}
+                      className="mb-4 rounded-xl shadow-md"
+                    />
+                  )}
+                  
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                    {msg.content ? (
+                      msg.content
+                    ) : msg.role === 'assistant' && (isLoading || isStreaming) ? (
+                      <span className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                        <span className="animate-pulse">Working on your response...</span>
+                      </span>
+                    ) : ''}
+                  </p>
+
+                  {msg.role === 'assistant' && msg.content && (
+                    <>
+                      {/* Follow-up Questions */}
+                      {msg.followUps && msg.followUps.length > 0 && (
+                        <div className="flex gap-3 mt-5 flex-wrap">
+                          {msg.followUps.map((fu, i) => (
+                            <button
+                              key={i}
+                              onClick={(e) => {
+                                e.preventDefault()
+                                handleSubmit(fu)
+                              }}
+                              disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+                              className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 hover:from-indigo-100 hover:to-blue-100 dark:hover:from-indigo-800/40 dark:hover:to-blue-800/40 disabled:from-gray-100 disabled:to-gray-100 dark:disabled:from-gray-800 dark:disabled:to-gray-800 text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 disabled:text-gray-500 dark:disabled:text-gray-500 px-4 py-2 rounded-xl text-xs font-medium shadow-sm border border-indigo-200 dark:border-indigo-700 disabled:border-gray-200 dark:disabled:border-gray-600 transition-all duration-200 hover:shadow-md transform hover:scale-[1.02] disabled:transform-none disabled:cursor-not-allowed"
+                            >
+                              💡 {fu}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-wrap gap-4 mt-4 text-lg text-gray-500 dark:text-gray-400">
+                        <HiThumbUp
+                          className="cursor-pointer hover:text-green-500 transition-colors duration-200 transform hover:scale-110"
+                          onClick={() => setShowFeedbackModal(true)}
+                          title="Like this response"
+                        />
+                        <HiThumbDown
+                          className="cursor-pointer hover:text-red-500 transition-colors duration-200 transform hover:scale-110"
+                          onClick={() => setShowFeedbackModal(true)}
+                          title="Dislike this response"
+                        />
+                        <FaRegBookmark
+                          className="cursor-pointer hover:text-yellow-500 transition-colors duration-200 transform hover:scale-110"
+                          onClick={() => {
+                            setCurrentSaveMessageId(msg.id)
+                            setShowSaveModal(true)
+                          }}
+                          title="Save to Saved Responses"
+                        />
+                        <FaShareSquare
+                          className="cursor-pointer hover:text-blue-500 transition-colors duration-200 transform hover:scale-110"
+                          onClick={() => handleShareToCollabZone(msg.id)}
+                          title="Share to Collab Zone"
+                        />
+                        
+                        {/* Enhanced download dropdown */}
+                        <div className="relative group">
+                          <FaFileDownload 
+                            className="cursor-pointer hover:text-purple-500 transition-colors duration-200 transform hover:scale-110" 
+                            title="Download & Generate Files"
+                          />
+                          <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-10 min-w-[160px]">
+                            <div className="p-2 space-y-1">
+                              <div className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1 border-b border-gray-200 dark:border-gray-600">
+                                Documents
+                              </div>
+                              <button
+                                onClick={() => handleDownloadResponse(msg.id, 'md')}
+                                className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded"
+                              >
+                                📄 Markdown
+                              </button>
+                              <button
+                                onClick={() => handleDownloadResponse(msg.id, 'txt')}
+                                className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded"
+                              >
+                                📝 Text File
+                              </button>
+                              <button
+                                onClick={() => handleDownloadResponse(msg.id, 'html')}
+                                className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded"
+                              >
+                                🌐 HTML
+                              </button>
+                              
+                              <div className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1 border-b border-gray-200 dark:border-gray-600 border-t mt-2 pt-2">
+                                Smart Generation
+                              </div>
+                              <button
+                                onClick={() => handleGenerateExcel(msg.id)}
+                                className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded"
+                              >
+                                📊 Smart Excel
+                              </button>
+                              <button
+                                onClick={() => handleGeneratePDF(msg.id, 'professional')}
+                                className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded"
+                              >
+                                📋 Business PDF
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {msg.imageUrl && (
+                          <button
+                            onClick={() => {
+                              const link = document.createElement('a')
+                              link.href = msg.imageUrl!
+                              link.download = `growfly-image-${new Date().toISOString().split('T')[0]}.jpg`
+                              link.click()
+                            }}
+                            className="cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 transform hover:scale-110"
+                            title="Download image"
+                          >
+                            🖼️
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+              ))
+            )}
+            <div ref={chatEndRef} />
+          </div>
+        </div>
+
+        {/* File Upload Preview */}
+        {uploadedFiles.length > 0 && (
+          <div className="px-6 pb-4 flex-shrink-0">
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    📎 Attached Files ({uploadedFiles.length})
+                  </h4>
+                  <button
+                    onClick={() => setUploadedFiles([])}
+                    className="text-xs text-red-600 hover:text-red-800 font-medium"
+                  >
+                    Clear All
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {uploadedFiles.map((file) => (
+                    <FilePreview
+                      key={file.id}
+                      file={file}
+                      onRemove={() => removeFile(file.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Chat Messages */}
-        <div ref={containerRef} className="flex-1 overflow-y-auto space-y-6 pb-8">
-          {messages.length === 0 ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center max-w-md">
-                <div className="text-6xl mb-4">👋</div>
-                <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
-                  Welcome to Growfly!
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Ready to get started? Click one of the Quick Start buttons above or type your question in the box below to begin your first conversation.
-                </p>
-                <div className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                  ✨ Choose a Quick Start option or ask anything you&apos;d like!
-                </div>
-              </div>
-            </div>
-          ) : (
-            messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              onMouseEnter={() => setHoveredMessageId(msg.id)}
-              onMouseLeave={() => setHoveredMessageId(null)}
-            >
-              <div
-                className={`max-w-4xl p-5 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl relative ${
-                  msg.role === 'user'
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white ml-auto'
-                    : 'bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-gray-800 dark:text-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm'
-                }`}
-              >
-                {/* Display uploaded files for user messages */}
-                {msg.role === 'user' && msg.files && msg.files.length > 0 && (
-                  <div className="mb-4 space-y-2">
-                    <p className="text-xs text-blue-100 font-medium">📎 Attached Files:</p>
-                    <div className="grid grid-cols-1 gap-2">
-                      {msg.files.map((file) => (
-                        <div key={file.id} className="bg-blue-500/20 rounded-lg p-2 flex items-center gap-2">
-                          {file.type.startsWith('image/') && file.preview ? (
-                            <img src={file.preview} alt={file.name} className="w-8 h-8 object-cover rounded" />
-                          ) : file.type === 'application/pdf' ? (
-                            <FaFilePdf className="w-6 h-6 text-red-300" />
-                          ) : (
-                            <FaFileAlt className="w-6 h-6 text-gray-300" />
-                          )}
-                          <span className="text-xs text-blue-100">{file.name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {msg.imageUrl && (
-                  <Image
-                    src={msg.imageUrl}
-                    alt="Uploaded"
-                    width={280}
-                    height={280}
-                    className="mb-4 rounded-xl shadow-md"
-                  />
-                )}
-                
-                <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                  {msg.content ? (
-                    msg.content
-                  ) : msg.role === 'assistant' && (isLoading || isStreaming) ? (
-                    <span className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
-                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                      <span className="animate-pulse">Working on your response...</span>
-                    </span>
-                  ) : ''}
-                </p>
-
-                {msg.role === 'assistant' && msg.content && (
-                  <>
-                    {/* Follow-up Questions */}
-                    {msg.followUps && msg.followUps.length > 0 && (
-                      <div className="flex gap-3 mt-5 flex-wrap">
-                        {msg.followUps.map((fu, i) => (
-                          <button
-                            key={i}
-                            onClick={(e) => {
-                              e.preventDefault()
-                              handleSubmit(fu)
-                            }}
-                            disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                            className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 hover:from-indigo-100 hover:to-blue-100 dark:hover:from-indigo-800/40 dark:hover:to-blue-800/40 disabled:from-gray-100 disabled:to-gray-100 dark:disabled:from-gray-800 dark:disabled:to-gray-800 text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 disabled:text-gray-500 dark:disabled:text-gray-500 px-4 py-2 rounded-xl text-xs font-medium shadow-sm border border-indigo-200 dark:border-indigo-700 disabled:border-gray-200 dark:disabled:border-gray-600 transition-all duration-200 hover:shadow-md transform hover:scale-[1.02] disabled:transform-none disabled:cursor-not-allowed"
-                          >
-                            💡 {fu}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Action Buttons */}
-                    <div className="flex flex-wrap gap-4 mt-4 text-lg text-gray-500 dark:text-gray-400">
-                      <HiThumbUp
-                        className="cursor-pointer hover:text-green-500 transition-colors duration-200 transform hover:scale-110"
-                        onClick={() => setShowFeedbackModal(true)}
-                        title="Like this response"
-                      />
-                      <HiThumbDown
-                        className="cursor-pointer hover:text-red-500 transition-colors duration-200 transform hover:scale-110"
-                        onClick={() => setShowFeedbackModal(true)}
-                        title="Dislike this response"
-                      />
-                      <FaRegBookmark
-                        className="cursor-pointer hover:text-yellow-500 transition-colors duration-200 transform hover:scale-110"
-                        onClick={() => {
-                          setCurrentSaveMessageId(msg.id)
-                          setShowSaveModal(true)
-                        }}
-                        title="Save to Saved Responses"
-                      />
-                      <FaShareSquare
-                        className="cursor-pointer hover:text-blue-500 transition-colors duration-200 transform hover:scale-110"
-                        onClick={() => handleShareToCollabZone(msg.id)}
-                        title="Share to Collab Zone"
-                      />
-                      
-                      {/* Enhanced download dropdown */}
-                      <div className="relative group">
-                        <FaFileDownload 
-                          className="cursor-pointer hover:text-purple-500 transition-colors duration-200 transform hover:scale-110" 
-                          title="Download & Generate Files"
-                        />
-                        <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-10 min-w-[160px]">
-                          <div className="p-2 space-y-1">
-                            <div className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1 border-b border-gray-200 dark:border-gray-600">
-                              Documents
-                            </div>
-                            <button
-                              onClick={() => handleDownloadResponse(msg.id, 'md')}
-                              className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded"
-                            >
-                              📄 Markdown
-                            </button>
-                            <button
-                              onClick={() => handleDownloadResponse(msg.id, 'txt')}
-                              className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded"
-                            >
-                              📝 Text File
-                            </button>
-                            <button
-                              onClick={() => handleDownloadResponse(msg.id, 'html')}
-                              className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded"
-                            >
-                              🌐 HTML
-                            </button>
-                            
-                            <div className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1 border-b border-gray-200 dark:border-gray-600 border-t mt-2 pt-2">
-                              Smart Generation
-                            </div>
-                            <button
-                              onClick={() => handleGenerateExcel(msg.id)}
-                              className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded"
-                            >
-                              📊 Smart Excel
-                            </button>
-                            <button
-                              onClick={() => handleGeneratePDF(msg.id, 'professional')}
-                              className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded"
-                            >
-                              📋 Business PDF
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      {msg.imageUrl && (
-                        <button
-                          onClick={() => {
-                            const link = document.createElement('a')
-                            link.href = msg.imageUrl!
-                            link.download = `growfly-image-${new Date().toISOString().split('T')[0]}.jpg`
-                            link.click()
-                          }}
-                          className="cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 transform hover:scale-110"
-                          title="Download image"
-                        >
-                          🖼️
-                        </button>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-            ))
-          )}
-          <div ref={chatEndRef} />
-        </div>
-      </div>
-
-      {/* File Upload Preview */}
-      {uploadedFiles.length > 0 && (
-        <div className="px-6 pb-4">
+        {/* ✅ FIXED: Input Section - Now fixed at bottom with proper layout */}
+        <div className="bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 p-6 shadow-2xl flex-shrink-0">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  📎 Attached Files ({uploadedFiles.length})
-                </h4>
-                <button
-                  onClick={() => setUploadedFiles([])}
-                  className="text-xs text-red-600 hover:text-red-800 font-medium"
-                >
-                  Clear All
-                </button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {uploadedFiles.map((file) => (
-                  <FilePreview
-                    key={file.id}
-                    file={file}
-                    onRemove={() => removeFile(file.id)}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ✅ IMPROVED: Fixed Input Section with better button placement */}
-      <div className="bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 p-6 shadow-2xl">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-gray-50 dark:bg-slate-700 rounded-2xl p-4 shadow-inner">
-            <textarea
-              ref={textareaRef}
-              rows={3}
-              className="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-textPrimary dark:text-white resize-none text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 min-h-[4rem] max-h-32"
-              placeholder="Type out your prompt here..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  handleSubmit()
-                }
-              }}
-              disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-            />
-            <div className="flex justify-between items-center mt-4">
-              {/* ✅ IMPROVED: Left side - Upload Files and Generate Image buttons together */}
-              <div className="flex items-center gap-3">
-                <div
-                  onClick={(e) => {
-                    e.preventDefault()
-                    if (!isLoading && !isStreaming && promptsUsed < promptLimit && fileInputRef.current) {
-                      fileInputRef.current.click()
-                    }
-                  }}
-                  className={`cursor-pointer border-2 px-4 py-2 rounded-xl flex items-center gap-2 transition-all duration-200 ${
-                    isLoading || isStreaming || promptsUsed >= promptLimit
-                      ? 'border-gray-300 dark:border-gray-600 text-gray-400 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
-                      : 'border-blue-500 text-blue-600 bg-blue-50 hover:bg-blue-100 hover:border-blue-600 shadow-sm hover:shadow-md transform hover:scale-[1.02]'
-                  }`}
-                >
-                  <FaPaperclip className="text-sm" />
-                  <span className="text-sm font-medium">Upload Files</span>
-                </div>
-
-                {/* ✅ NEW: Generate Image button next to Upload Files */}
-                <button
-                  onClick={() => {
-                    if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
-                      setShowImageModal(true)
-                    } else {
-                      router.push('/change-plan')
-                    }
-                  }}
-                  className={`border-2 px-4 py-2 rounded-xl flex items-center gap-2 transition-all duration-200 ${
-                    (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
-                      ? 'border-purple-500 text-purple-600 bg-purple-50 hover:bg-purple-100 hover:border-purple-600 shadow-sm hover:shadow-md transform hover:scale-[1.02]'
-                      : 'border-gray-300 dark:border-gray-600 text-gray-400 cursor-pointer hover:border-gray-400 bg-gray-50 dark:bg-gray-800'
-                  }`}
-                  title={
-                    (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
-                      ? 'Generate a new image with DALL-E' 
-                      : 'Upgrade to generate more images'
-                  }
-                >
-                  <FaPalette className="text-sm" />
-                  <span className="text-sm font-medium">
-                    {(imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) ? 'Generate Image' : 'Upgrade for Images'}
-                  </span>
-                </button>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                {input.length > 0 && (
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {input.length} characters
-                  </span>
-                )}
-                <button
-                  onClick={(e) => {
+            <div className="bg-gray-50 dark:bg-slate-700 rounded-2xl p-4 shadow-inner">
+              <textarea
+                ref={textareaRef}
+                rows={3}
+                className="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-textPrimary dark:text-white resize-none text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 min-h-[4rem] max-h-32"
+                placeholder="Type out your prompt here..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault()
                     handleSubmit()
-                  }}
-                  disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || promptsUsed >= promptLimit}
-                  className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white font-semibold px-6 py-3 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
-                >
-                  {isLoading || isStreaming ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                    </svg>
+                  }
+                }}
+                disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+              />
+              <div className="flex justify-between items-center mt-4">
+                {/* ✅ IMPROVED: Left side - Upload Files and Generate Image buttons together */}
+                <div className="flex items-center gap-3">
+                  <div
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (!isLoading && !isStreaming && promptsUsed < promptLimit && fileInputRef.current) {
+                        fileInputRef.current.click()
+                      }
+                    }}
+                    className={`cursor-pointer border-2 px-4 py-2 rounded-xl flex items-center gap-2 transition-all duration-200 ${
+                      isLoading || isStreaming || promptsUsed >= promptLimit
+                        ? 'border-gray-300 dark:border-gray-600 text-gray-400 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
+                        : 'border-blue-500 text-blue-600 bg-blue-50 hover:bg-blue-100 hover:border-blue-600 shadow-sm hover:shadow-md transform hover:scale-[1.02]'
+                    }`}
+                  >
+                    <FaPaperclip className="text-sm" />
+                    <span className="text-sm font-medium">Upload Files</span>
+                  </div>
+
+                  {/* ✅ UPDATED: Better image generation button text */}
+                  <button
+                    onClick={() => {
+                      if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
+                        setShowImageModal(true)
+                      } else {
+                        router.push('/change-plan')
+                      }
+                    }}
+                    className={`border-2 px-4 py-2 rounded-xl flex items-center gap-2 transition-all duration-200 ${
+                      (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
+                        ? 'border-purple-500 text-purple-600 bg-purple-50 hover:bg-purple-100 hover:border-purple-600 shadow-sm hover:shadow-md transform hover:scale-[1.02]'
+                        : 'border-gray-300 dark:border-gray-600 text-gray-400 cursor-pointer hover:border-gray-400 bg-gray-50 dark:bg-gray-800'
+                    }`}
+                    title={
+                      (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
+                        ? 'Create professional images for your business' 
+                        : 'Upgrade to generate more images'
+                    }
+                  >
+                    <FaPalette className="text-sm" />
+                    <span className="text-sm font-medium">
+                      {(imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) ? 'Create an image with Growfly' : 'Upgrade for Images'}
+                    </span>
+                  </button>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  {input.length > 0 && (
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {input.length} characters
+                    </span>
                   )}
-                </button>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      handleSubmit()
+                    }}
+                    disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || promptsUsed >= promptLimit}
+                    className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white font-semibold px-6 py-3 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
+                  >
+                    {isLoading || isStreaming ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
+              
+              {/* ✅ NEW: Explanatory text under image button */}
+              <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                💡 <strong>Create an image with Growfly:</strong> Generate professional images for social media, presentations, and marketing materials.
+              </div>
+              
+              <input
+                type="file"
+                accept="image/*,application/pdf,.txt,.doc,.docx"
+                onChange={(e) => {
+                  const files = e.target.files
+                  if (files) handleFileSelect(files)
+                }}
+                className="hidden"
+                ref={fileInputRef}
+                disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+                multiple
+              />
             </div>
-            
-            <input
-              type="file"
-              accept="image/*,application/pdf,.txt,.doc,.docx"
-              onChange={(e) => {
-                const files = e.target.files
-                if (files) handleFileSelect(files)
-              }}
-              className="hidden"
-              ref={fileInputRef}
-              disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-              multiple
-            />
           </div>
         </div>
       </div>
@@ -1767,7 +1784,7 @@ function DashboardContent() {
       <FeedbackModal
         open={showFeedbackModal}
         onClose={() => setShowFeedbackModal(false)}
-        responseId={threadId || 'unknown'}
+        responseId={'dashboard'}
       />
     </div>
   )
