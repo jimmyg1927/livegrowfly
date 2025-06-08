@@ -63,9 +63,10 @@ export default function LoginPage() {
       } else {
         router.push('/dashboard')
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('❌ Login error:', err)
-      setError(err.message)
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred'
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -237,7 +238,7 @@ export default function LoginPage() {
             {/* ✅ Sign Up Button */}
             <div className="text-center">
               <p className="text-gray-400 text-sm mb-4">
-                Don't have an account yet?
+                Don&apos;t have an account yet?
               </p>
               <Link
                 href="/register"
