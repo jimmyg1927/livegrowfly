@@ -100,8 +100,8 @@ export default function NotFoundPage() {
               Looks like this page decided to take a coffee break.
             </p>
             <p className="text-gray-400 max-w-2xl mx-auto">
-              Don't worry - our brilliant team of nerds are working around the clock to fix any issues. 
-              While they're debugging, help us help you by sending details about what happened!
+              Don&apos;t worry - our brilliant team of nerds are working around the clock to fix any issues. 
+              While they&apos;re debugging, help us help you by sending details about what happened!
             </p>
           </div>
 
@@ -165,7 +165,7 @@ export default function NotFoundPage() {
                   </h3>
                   <p className="text-gray-400">
                     Our nerds received your report and are investigating. 
-                    We'll get this fixed ASAP!
+                    We&apos;ll get this fixed ASAP!
                   </p>
                 </div>
               ) : (

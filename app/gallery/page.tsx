@@ -10,8 +10,6 @@ import {
   FaEye, 
   FaCalendarAlt,
   FaSearch,
-  FaFilter,
-  FaSortAmountDown,
   FaHeart,
   FaRegHeart,
   FaBookmark,
@@ -166,7 +164,7 @@ const DeleteConfirmModal: React.FC<{
             Delete Image
           </h3>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Are you sure you want to delete "{imageName}"? This action cannot be undone.
+            Are you sure you want to delete &ldquo;{imageName}&rdquo;? This action cannot be undone.
           </p>
           <div className="flex gap-3">
             <button
@@ -270,42 +268,57 @@ export default function GalleryPage() {
 
     // Apply category filter
     switch (filterBy) {
-      case 'favorites':
+      case 'favorites': {
         filtered = filtered.filter(img => img.isFavorite)
         break
-      case 'pinned':
+      }
+      case 'pinned': {
         filtered = filtered.filter(img => img.isPinned)
         break
-      case 'recent':
+      }
+      case 'recent': {
         const oneWeekAgo = new Date()
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
         filtered = filtered.filter(img => new Date(img.createdAt) > oneWeekAgo)
+        break
+      }
+      default:
         break
     }
 
     // Apply size filter
     switch (sizeFilter) {
-      case 'square':
+      case 'square': {
         filtered = filtered.filter(img => img.size.includes('1024x1024'))
         break
-      case 'portrait':
+      }
+      case 'portrait': {
         filtered = filtered.filter(img => img.size.includes('1024x1792'))
         break
-      case 'landscape':
+      }
+      case 'landscape': {
         filtered = filtered.filter(img => img.size.includes('1792x1024'))
+        break
+      }
+      default:
         break
     }
 
     // Apply sorting
     switch (sortBy) {
-      case 'date':
+      case 'date': {
         filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         break
-      case 'prompt':
+      }
+      case 'prompt': {
         filtered.sort((a, b) => a.originalPrompt.localeCompare(b.originalPrompt))
         break
-      case 'size':
+      }
+      case 'size': {
         filtered.sort((a, b) => a.size.localeCompare(b.size))
+        break
+      }
+      default:
         break
     }
 
