@@ -632,107 +632,87 @@ const ImageGenerationModal: React.FC<{
   )
 }
 
-// ✅ NEW: Floating Quick Start categories - appears as small button in corner
-const QUICK_CATEGORIES = [
-  {
-    icon: <FaChartLine className="text-emerald-500" />,
-    title: "Marketing Ideas",
-    description: "Boost your brand and reach customers",
-    prompt: "What are some effective marketing strategies for my business? Please consider my brand settings and target market.",
-  },
-  {
-    icon: <FaBrain className="text-blue-500" />,
-    title: "Business Improvement",
-    description: "Streamline operations efficiently",
-    prompt: "Help me identify areas for business improvement and process optimisation in my company.",
-  },
-  {
-    icon: <FaUsers className="text-purple-500" />,
-    title: "Document Creation",
-    description: "Professional content creation",
-    prompt: "I need help creating or editing business documents. What type of document would you like assistance with?",
-  },
-  {
-    icon: <FaRocket className="text-amber-500" />,
-    title: "Improve My Output Today",
-    description: "Get personalized productivity tips!",
-    prompt: "I'm looking for ways to improve my productivity and output today. Can you give me some personalized suggestions based on my business needs?",
-  }
-]
-
-// ✅ NEW: Floating Quick Start Component
-const FloatingQuickStart: React.FC<{
-  onPromptSelect: (prompt: string) => void
-  disabled: boolean
-}> = ({ onPromptSelect, disabled }) => {
-  const [isExpanded, setIsExpanded] = useState(false)
+// ✅ FIXED: Simple working help button
+const FloatingQuickStart = ({ onPromptSelect, disabled }: { onPromptSelect: (prompt: string) => void; disabled: boolean }) => {
+  const [show, setShow] = useState(false)
 
   return (
     <>
-      {/* Floating Button */}
-      <button
-        onClick={() => setIsExpanded(true)}
-        disabled={disabled}
-        className="fixed bottom-6 right-6 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white p-4 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 disabled:transform-none disabled:cursor-not-allowed z-40 group"
-      >
-        <FaQuestionCircle className="w-6 h-6" />
-        <div className="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-sm px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-          Need Assistance?
-        </div>
-      </button>
-
-      {/* Expanded Overlay */}
-      {isExpanded && (
+      {show && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-4xl mx-4 w-full max-h-[90vh] overflow-y-auto">
             <div className="p-8">
               <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                    Quick Start
-                  </h2>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Choose from these popular prompts to get started quickly
-                  </p>
-                </div>
-                <button
-                  onClick={() => setIsExpanded(false)}
-                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-all duration-200"
-                >
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Quick Start</h2>
+                <button onClick={() => setShow(false)} className="p-2 text-gray-500 hover:text-gray-700">
                   <HiX className="w-6 h-6" />
                 </button>
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {QUICK_CATEGORIES.map((category, index) => (
-                  <button
-                    key={index}
-                    onClick={(e) => {
-                      e.preventDefault()
-                      onPromptSelect(category.prompt)
-                      setIsExpanded(false)
-                    }}
-                    disabled={disabled}
-                    className="group flex flex-col items-start gap-3 p-6 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-700 dark:to-slate-800 border border-gray-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-left"
-                  >
-                    <div className="text-2xl group-hover:scale-110 transition-transform duration-300">
-                      {category.icon}
-                    </div>
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-gray-900 dark:text-white text-base">
-                        {category.title}
-                      </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                        {category.description}
-                      </p>
-                    </div>
-                  </button>
-                ))}
+                <button
+                  onClick={() => {
+                    onPromptSelect("What are some effective marketing strategies for my business?")
+                    setShow(false)
+                  }}
+                  disabled={disabled}
+                  className="p-6 text-left bg-gray-50 dark:bg-slate-700 rounded-2xl hover:bg-gray-100 dark:hover:bg-slate-600 disabled:opacity-50"
+                >
+                  <div className="text-2xl mb-2">📈</div>
+                  <h4 className="font-semibold text-gray-900 dark:text-white">Marketing Ideas</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Boost your brand and reach customers</p>
+                </button>
+                <button
+                  onClick={() => {
+                    onPromptSelect("Help me identify areas for business improvement in my company.")
+                    setShow(false)
+                  }}
+                  disabled={disabled}
+                  className="p-6 text-left bg-gray-50 dark:bg-slate-700 rounded-2xl hover:bg-gray-100 dark:hover:bg-slate-600 disabled:opacity-50"
+                >
+                  <div className="text-2xl mb-2">🧠</div>
+                  <h4 className="font-semibold text-gray-900 dark:text-white">Business Improvement</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Streamline operations efficiently</p>
+                </button>
+                <button
+                  onClick={() => {
+                    onPromptSelect("I need help creating business documents. What type would you like to help with?")
+                    setShow(false)
+                  }}
+                  disabled={disabled}
+                  className="p-6 text-left bg-gray-50 dark:bg-slate-700 rounded-2xl hover:bg-gray-100 dark:hover:bg-slate-600 disabled:opacity-50"
+                >
+                  <div className="text-2xl mb-2">👥</div>
+                  <h4 className="font-semibold text-gray-900 dark:text-white">Document Creation</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Professional content creation</p>
+                </button>
+                <button
+                  onClick={() => {
+                    onPromptSelect("Give me personalized suggestions to improve my productivity today.")
+                    setShow(false)
+                  }}
+                  disabled={disabled}
+                  className="p-6 text-left bg-gray-50 dark:bg-slate-700 rounded-2xl hover:bg-gray-100 dark:hover:bg-slate-600 disabled:opacity-50"
+                >
+                  <div className="text-2xl mb-2">🚀</div>
+                  <h4 className="font-semibold text-gray-900 dark:text-white">Improve Output</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Get productivity tips</p>
+                </button>
               </div>
             </div>
           </div>
         </div>
       )}
+      
+      <button
+        onClick={() => setShow(true)}
+        disabled={disabled}
+        className="fixed left-0 top-1/2 transform -translate-y-1/2 z-40 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-r-2xl shadow-lg disabled:opacity-50"
+      >
+        <div className="flex items-center gap-2">
+          <FaQuestionCircle className="w-5 h-5" />
+          <span className="text-sm font-medium">Need Help?</span>
+        </div>
+      </button>
     </>
   )
 }
@@ -751,6 +731,7 @@ function DashboardContent() {
 
   // States
   const [showImageModal, setShowImageModal] = useState(false)
+  const [showHelpModal, setShowHelpModal] = useState(false)
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([])
   const [imageUsage, setImageUsage] = useState<ImageUsage | null>(null)
   const [input, setInput] = useState('')
@@ -1460,8 +1441,8 @@ function DashboardContent() {
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-textPrimary dark:text-white transition-colors duration-300 flex flex-col">
       
-      {/* Content Area */}
-      <div className="flex-1 overflow-y-auto p-4">
+      {/* Content Area - with bottom padding for fixed input */}
+      <div className="flex-1 overflow-y-auto p-4 pb-32">
 
         {/* Error Message */}
         {error && (
@@ -1668,10 +1649,10 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* File Upload Preview */}
+      {/* File Upload Preview - Fixed positioning above input */}
       {uploadedFiles.length > 0 && (
-        <div className="px-4 pb-3 flex-shrink-0">
-          <div className="max-w-4xl mx-auto">
+        <div className="fixed bottom-24 left-0 right-0 px-4 z-30 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm border-t border-gray-200 dark:border-slate-700">
+          <div className="max-w-4xl mx-auto py-3">
             <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3 border border-gray-200 dark:border-gray-600">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -1698,8 +1679,8 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* ✅ FIXED: Input Section - Pinned to bottom with no gaps */}
-      <div className="bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 p-3 shadow-2xl">
+      {/* ✅ FIXED: Input Section - Fixed at bottom, always visible */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 p-4 shadow-2xl z-20">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-2 bg-gray-50 dark:bg-slate-700 rounded-2xl p-2">
             
@@ -1794,10 +1775,10 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* ✅ NEW: Floating Quick Start - Bottom Right Corner */}
+      {/* ✅ INLINE: Help Button */}
       <FloatingQuickStart 
         onPromptSelect={handleSubmit} 
-        disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+        disabled={isLoading || isStreaming || promptsUsed >= promptLimit} 
       />
 
       {/* DALL-E Image Generation Modal */}
