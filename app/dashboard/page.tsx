@@ -24,6 +24,7 @@ import {
   FaMagic,
   FaCheck,
   FaImages,
+  FaQuestionCircle,
 } from 'react-icons/fa'
 import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
@@ -631,7 +632,7 @@ const ImageGenerationModal: React.FC<{
   )
 }
 
-// ✅ IMPROVED: Compact Quick Start categories
+// ✅ NEW: Floating Quick Start categories - appears as small button in corner
 const QUICK_CATEGORIES = [
   {
     icon: <FaChartLine className="text-emerald-500" />,
@@ -659,6 +660,83 @@ const QUICK_CATEGORIES = [
   }
 ]
 
+// ✅ NEW: Floating Quick Start Component
+const FloatingQuickStart: React.FC<{
+  onPromptSelect: (prompt: string) => void
+  disabled: boolean
+}> = ({ onPromptSelect, disabled }) => {
+  const [isExpanded, setIsExpanded] = useState(false)
+
+  return (
+    <>
+      {/* Floating Button */}
+      <button
+        onClick={() => setIsExpanded(true)}
+        disabled={disabled}
+        className="fixed bottom-6 right-6 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white p-4 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 disabled:transform-none disabled:cursor-not-allowed z-40 group"
+      >
+        <FaQuestionCircle className="w-6 h-6" />
+        <div className="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-sm px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+          Need Assistance?
+        </div>
+      </button>
+
+      {/* Expanded Overlay */}
+      {isExpanded && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-4xl mx-4 w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                    Quick Start
+                  </h2>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Choose from these popular prompts to get started quickly
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsExpanded(false)}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-all duration-200"
+                >
+                  <HiX className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {QUICK_CATEGORIES.map((category, index) => (
+                  <button
+                    key={index}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      onPromptSelect(category.prompt)
+                      setIsExpanded(false)
+                    }}
+                    disabled={disabled}
+                    className="group flex flex-col items-start gap-3 p-6 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-700 dark:to-slate-800 border border-gray-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-left"
+                  >
+                    <div className="text-2xl group-hover:scale-110 transition-transform duration-300">
+                      {category.icon}
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-gray-900 dark:text-white text-base">
+                        {category.title}
+                      </h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                        {category.description}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
 function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -685,7 +763,6 @@ function DashboardContent() {
   const [error, setError] = useState<string | null>(null)
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null)
   const [isUserScrolling, setIsUserScrolling] = useState(false)
-  const [showCategories, setShowCategories] = useState(true)
   const [currentSaveMessageId, setCurrentSaveMessageId] = useState<string | null>(null)
 
   // Refs
@@ -695,51 +772,61 @@ function DashboardContent() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const scrollTimeoutRef = useRef<NodeJS.Timeout>()
 
-  // ✅ NEW: Save generated images to persistent storage
+  // ✅ ENHANCED: Stronger image persistence with better error handling
   const saveImageToPersistentStorage = (image: GeneratedImage) => {
     try {
       const existingImages = JSON.parse(localStorage.getItem(STORAGE_KEYS.DASHBOARD_IMAGES) || '[]')
-      const updatedImages = [image, ...existingImages].slice(0, 50) // Keep only latest 50 images
+      const updatedImages = [image, ...existingImages.filter((img: GeneratedImage) => img.id !== image.id)].slice(0, 50)
       localStorage.setItem(STORAGE_KEYS.DASHBOARD_IMAGES, JSON.stringify(updatedImages))
+      console.log('✅ Image saved to persistent storage:', image.id)
     } catch (error) {
       console.error('Failed to save image to storage:', error)
     }
   }
 
-  // ✅ NEW: Load generated images from persistent storage
+  // ✅ ENHANCED: Better image loading from storage
   const loadImagesFromPersistentStorage = () => {
     try {
       const savedImages = JSON.parse(localStorage.getItem(STORAGE_KEYS.DASHBOARD_IMAGES) || '[]')
-      setGeneratedImages(savedImages)
+      if (savedImages.length > 0) {
+        setGeneratedImages(savedImages)
+        console.log('✅ Loaded', savedImages.length, 'images from storage')
+      }
     } catch (error) {
       console.error('Failed to load images from storage:', error)
     }
   }
 
-  // ✅ NEW: Save messages with generated images to restore them
+  // ✅ ENHANCED: Better message persistence with stronger image handling
   const saveMessagesToPersistentStorage = (messages: Message[]) => {
     try {
-      // Only save messages with generated images
-      const imagesToRestore = messages.filter(m => m.generatedImage).slice(0, 10)
+      // Save ALL messages with generated images, not just filtered ones
+      const imagesToRestore = messages.filter(m => m.generatedImage && m.generatedImage.url).slice(0, 20)
       localStorage.setItem(STORAGE_KEYS.DASHBOARD_MESSAGES, JSON.stringify(imagesToRestore))
+      console.log('✅ Saved', imagesToRestore.length, 'image messages to storage')
     } catch (error) {
       console.error('Failed to save messages to storage:', error)
     }
   }
 
-  // ✅ NEW: Load persistent messages on mount
+  // ✅ ENHANCED: Load persistent messages on mount with better restoration
   useEffect(() => {
     loadImagesFromPersistentStorage()
     
     try {
       const savedMessages = JSON.parse(localStorage.getItem(STORAGE_KEYS.DASHBOARD_MESSAGES) || '[]')
       if (savedMessages.length > 0) {
-        // Add saved image messages to the beginning if we don't have messages yet
+        console.log('✅ Restoring', savedMessages.length, 'persistent image messages')
         setMessages(prev => {
           if (prev.length === 0) {
             return savedMessages
           }
-          return prev
+          // Merge and deduplicate
+          const combined = [...savedMessages, ...prev]
+          const unique = combined.filter((msg, index, arr) => 
+            arr.findIndex(m => m.id === msg.id) === index
+          )
+          return unique.slice(0, 20)
         })
       }
     } catch (error) {
@@ -747,7 +834,7 @@ function DashboardContent() {
     }
   }, [])
 
-  // ✅ NEW: Save messages whenever they change and include generated images
+  // ✅ ENHANCED: Save messages whenever they change, especially image messages
   useEffect(() => {
     if (messages.length > 0) {
       saveMessagesToPersistentStorage(messages)
@@ -990,7 +1077,7 @@ function DashboardContent() {
     setUploadedFiles(prev => prev.filter(f => f.id !== fileId))
   }
 
-  // Fetch only 1 follow-up instead of 2
+  // ✅ FIXED: Only return 1 follow-up instead of 2
   const fetchFollowUps = async (text: string): Promise<string[]> => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/ai/followups`, {
@@ -1004,7 +1091,7 @@ function DashboardContent() {
       if (!res.ok) throw new Error('Follow-ups fetch failed')
       const data = await res.json()
       const rawFollowUps = (data.followUps as string[]) || []
-      const unique = Array.from(new Set(rawFollowUps)).slice(0, 1) // Only take 1 follow-up
+      const unique = Array.from(new Set(rawFollowUps)).slice(0, 1) // ✅ CHANGED: Only take 1 follow-up
       return unique.length > 0
         ? unique
         : ['Tell me more about this'] // Single fallback
@@ -1195,124 +1282,6 @@ function DashboardContent() {
     handleStreamWithFiles(text, aId, filesToSend)
   }
 
-  // Download and file generation functions
-  const handleDownloadResponse = async (messageId: string, format: 'txt' | 'md' | 'html' = 'md') => {
-    const message = messages.find(m => m.id === messageId)
-    if (!message || message.role !== 'assistant') return
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/ai/generate-document`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          content: message.content,
-          format,
-          title: `Growfly Response - ${new Date().toLocaleDateString()}`
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to generate document')
-      }
-
-      const data = await response.json()
-      
-      const blob = new Blob([data.content], { type: data.mimeType })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = data.filename
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-
-    } catch (error) {
-      console.error('Download failed:', error)
-      setError('Failed to download document. Please try again.')
-    }
-  }
-
-  const handleGenerateExcel = async (messageId: string) => {
-    const message = messages.find(m => m.id === messageId)
-    if (!message || message.role !== 'assistant') return
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/file-generation/excel/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          prompt: message.content,
-          template: 'business',
-          includeCharts: false
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to generate Excel')
-      }
-
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `growfly-analysis-${Date.now()}.xlsx`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-
-    } catch (error) {
-      console.error('Excel generation failed:', error)
-      setError('Failed to generate Excel file. Please try again.')
-    }
-  }
-
-  const handleGeneratePDF = async (messageId: string, template: string = 'professional') => {
-    const message = messages.find(m => m.id === messageId)
-    if (!message || message.role !== 'assistant') return
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/file-generation/pdf/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          content: message.content,
-          title: `Growfly Document - ${new Date().toLocaleDateString()}`,
-          template,
-          documentType: 'report'
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to generate PDF')
-      }
-
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `growfly-document-${Date.now()}.pdf`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-
-    } catch (error) {
-      console.error('PDF generation failed:', error)
-      setError('Failed to generate PDF. Please try again.')
-    }
-  }
-
   const handleSaveResponse = async (title: string, messageId: string) => {
     try {
       const message = messages.find(m => m.id === messageId)
@@ -1400,9 +1369,14 @@ function DashboardContent() {
     }
   }
 
-  // ✅ UPDATED: Handle image generation and add to chat with persistence
+  // ✅ ENHANCED: Better image generation with stronger persistence
   const handleImageGenerated = (image: GeneratedImage) => {
+    console.log('🎨 Image generated:', image.id)
+    
+    // Update generated images array
     setGeneratedImages(prev => [image, ...prev])
+    
+    // Save to persistent storage immediately
     saveImageToPersistentStorage(image)
     
     // Create a new assistant message with the generated image
@@ -1417,7 +1391,13 @@ function DashboardContent() {
       ]
     }
     
-    setMessages(prev => [...prev, imageMessage])
+    // Add message and save immediately
+    setMessages(prev => {
+      const updated = [...prev, imageMessage]
+      // Save to persistent storage immediately
+      setTimeout(() => saveMessagesToPersistentStorage(updated), 100)
+      return updated
+    })
     
     // Refresh image usage
     if (token) {
@@ -1474,66 +1454,9 @@ function DashboardContent() {
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-textPrimary dark:text-white transition-colors duration-300">
       
-      {/* Content Area - Now with flex-1 and proper overflow */}
+      {/* Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="flex-1 overflow-y-auto p-4">
-          
-          {/* ✅ IMPROVED: Compact Collapsible Categories Bar */}
-          <div className="mb-3">
-            <div className="text-center mb-2">
-              <h3 className="text-lg font-bold text-blue-500 mb-1">
-                Quick Start
-              </h3>
-              <p className="text-xs text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-                Find out how we can help you today
-              </p>
-            </div>
-            
-            <button
-              onClick={() => setShowCategories(!showCategories)}
-              className="flex items-center justify-center gap-2 w-full text-sm font-medium text-white hover:text-white transition-all duration-200 mb-2 py-2 px-3 rounded-lg bg-blue-500 hover:bg-blue-600 border border-blue-400 hover:border-blue-500 backdrop-blur-sm shadow-md hover:shadow-lg"
-            >
-              {showCategories ? (
-                <>
-                  <HiChevronUp className="w-4 h-4" />
-                  <span>Hide Quick Start</span>
-                </>
-              ) : (
-                <>
-                  <HiChevronDown className="w-4 h-4" />
-                  <span>Show Quick Start</span>
-                </>
-              )}
-            </button>
-            
-            {showCategories && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 p-3 bg-gradient-to-br from-blue-50/80 via-indigo-50/60 to-purple-50/80 dark:from-slate-800/80 dark:via-slate-700/60 dark:to-slate-800/80 rounded-xl border border-blue-200/40 dark:border-slate-600/40 backdrop-blur-sm shadow-md">
-                {QUICK_CATEGORIES.map((category, index) => (
-                  <button
-                    key={index}
-                    onClick={(e) => {
-                      e.preventDefault()
-                      handleSubmit(category.prompt)
-                    }}
-                    disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                    className="group flex flex-col items-center gap-1 p-2 rounded-xl bg-white/95 dark:bg-slate-800/95 border border-gray-200/70 dark:border-slate-700/70 hover:border-blue-300/70 dark:hover:border-blue-500/70 hover:shadow-md transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none backdrop-blur-sm hover:bg-blue-50/30 dark:hover:bg-slate-700/95"
-                  >
-                    <div className="text-lg group-hover:scale-110 transition-transform duration-300">
-                      {category.icon}
-                    </div>
-                    <div className="text-center space-y-1">
-                      <h4 className="font-semibold text-slate-800 dark:text-white text-xs leading-tight">
-                        {category.title}
-                      </h4>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                        {category.description}
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
 
           {/* Error Message */}
           {error && (
@@ -1577,10 +1500,10 @@ function DashboardContent() {
                     Welcome to Growfly!
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    Ready to get started? Click one of the Quick Start buttons above or type your question in the box below to begin your first conversation.
+                    Ready to get started? Click the assistance button in the corner or type your question below to begin your first conversation.
                   </p>
                   <div className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                    ✨ Choose a Quick Start option or ask anything you&apos;d like!
+                    ✨ Need help getting started? Look for the help button in the bottom-right corner!
                   </div>
                 </div>
               </div>
@@ -1685,7 +1608,7 @@ function DashboardContent() {
 
                   {msg.role === 'assistant' && msg.content && (
                     <>
-                      {/* Follow-up Questions - now only shows 1 */}
+                      {/* ✅ CHANGED: Follow-up Questions - now only shows 1 */}
                       {msg.followUps && msg.followUps.length > 0 && (
                         <div className="flex gap-3 mt-4 flex-wrap">
                           {msg.followUps.map((fu, i) => (
@@ -1704,7 +1627,7 @@ function DashboardContent() {
                         </div>
                       )}
 
-                      {/* Action Buttons */}
+                      {/* ✅ CHANGED: Action Buttons - REMOVED download button */}
                       <div className="flex flex-wrap gap-4 mt-4 text-lg text-gray-500 dark:text-gray-400">
                         <HiThumbUp
                           className="cursor-pointer hover:text-green-500 transition-colors duration-200 transform hover:scale-110"
@@ -1729,55 +1652,6 @@ function DashboardContent() {
                           onClick={() => handleShareToCollabZone(msg.id)}
                           title="Share to Collab Zone"
                         />
-                        
-                        {/* Enhanced download dropdown */}
-                        <div className="relative group">
-                          <FaFileDownload 
-                            className="cursor-pointer hover:text-purple-500 transition-colors duration-200 transform hover:scale-110" 
-                            title="Download & Generate Files"
-                          />
-                          <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-10 min-w-[160px]">
-                            <div className="p-2 space-y-1">
-                              <div className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1 border-b border-gray-200 dark:border-gray-600">
-                                Documents
-                              </div>
-                              <button
-                                onClick={() => handleDownloadResponse(msg.id, 'md')}
-                                className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded"
-                              >
-                                📄 Markdown
-                              </button>
-                              <button
-                                onClick={() => handleDownloadResponse(msg.id, 'txt')}
-                                className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded"
-                              >
-                                📝 Text File
-                              </button>
-                              <button
-                                onClick={() => handleDownloadResponse(msg.id, 'html')}
-                                className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded"
-                              >
-                                🌐 HTML
-                              </button>
-                              
-                              <div className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1 border-b border-gray-200 dark:border-gray-600 border-t mt-2 pt-2">
-                                Smart Generation
-                              </div>
-                              <button
-                                onClick={() => handleGenerateExcel(msg.id)}
-                                className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded"
-                              >
-                                📊 Smart Excel
-                              </button>
-                              <button
-                                onClick={() => handleGeneratePDF(msg.id, 'professional')}
-                                className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded"
-                              >
-                                📋 Business PDF
-                              </button>
-                            </div>
-                          </div>
-                        </div>
                       </div>
                     </>
                   )}
@@ -1819,61 +1693,56 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* ✅ IMPROVED: Always Visible Input Section - Enhanced design with always visible buttons */}
-        <div className="bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 p-4 shadow-2xl flex-shrink-0">
+        {/* ✅ REDESIGNED: Ultra Compact Input Section - Everything in one line */}
+        <div className="bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 p-3 shadow-2xl flex-shrink-0">
           <div className="max-w-4xl mx-auto">
-            {/* ✅ NEW: Always visible action buttons row */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div
-                  onClick={(e) => {
-                    e.preventDefault()
-                    if (!isLoading && !isStreaming && promptsUsed < promptLimit && fileInputRef.current) {
-                      fileInputRef.current.click()
-                    }
-                  }}
-                  className={`cursor-pointer border-2 px-4 py-2 rounded-2xl flex items-center gap-2 transition-all duration-200 ${
-                    isLoading || isStreaming || promptsUsed >= promptLimit
-                      ? 'border-gray-300 dark:border-gray-600 text-gray-400 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
-                      : 'border-blue-500 text-blue-600 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 hover:border-blue-600 shadow-lg hover:shadow-xl transform hover:scale-[1.02]'
-                  }`}
-                >
-                  <FaPaperclip className="text-sm" />
-                  <span className="text-sm font-medium">Upload Files</span>
-                </div>
-
-                <button
-                  onClick={() => {
-                    if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
-                      setShowImageModal(true)
-                    } else {
-                      router.push('/change-plan')
-                    }
-                  }}
-                  className={`border-2 px-4 py-2 rounded-2xl flex items-center gap-2 transition-all duration-200 ${
-                    (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
-                      ? 'border-purple-500 text-purple-600 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 hover:border-purple-600 shadow-lg hover:shadow-xl transform hover:scale-[1.02]'
-                      : 'border-gray-300 dark:border-gray-600 text-gray-400 cursor-pointer hover:border-gray-400 bg-gray-50 dark:bg-gray-800'
-                  }`}
-                >
-                  <FaPalette className="text-sm" />
-                  <span className="text-sm font-medium">
-                    {(imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) ? 'Create Image' : 'Upgrade for Images'}
-                  </span>
-                </button>
-              </div>
+            <div className="flex items-center gap-2 bg-gray-50 dark:bg-slate-700 rounded-2xl p-2">
               
-              <div className="text-xs text-gray-500 dark:text-gray-400">
-                {promptsUsed}/{promptLimit} prompts used
-              </div>
-            </div>
+              {/* ✅ TINY: Upload Files Button */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  if (!isLoading && !isStreaming && promptsUsed < promptLimit && fileInputRef.current) {
+                    fileInputRef.current.click()
+                  }
+                }}
+                disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+                className={`p-2 rounded-xl flex items-center gap-1 text-xs font-medium transition-all duration-200 whitespace-nowrap ${
+                  isLoading || isStreaming || promptsUsed >= promptLimit
+                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                    : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 shadow-sm hover:shadow-md transform hover:scale-[1.05]'
+                }`}
+              >
+                <FaPaperclip className="w-3 h-3" />
+                <span className="hidden sm:inline">Upload</span>
+              </button>
 
-            {/* Main input area */}
-            <div className="bg-gray-50 dark:bg-slate-700 rounded-2xl p-3 shadow-inner">
+              {/* ✅ TINY: Create Image Button */}
+              <button
+                onClick={() => {
+                  if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
+                    setShowImageModal(true)
+                  } else {
+                    router.push('/change-plan')
+                  }
+                }}
+                className={`p-2 rounded-xl flex items-center gap-1 text-xs font-medium transition-all duration-200 whitespace-nowrap ${
+                  (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
+                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 shadow-sm hover:shadow-md transform hover:scale-[1.05]'
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'
+                }`}
+              >
+                <FaPalette className="w-3 h-3" />
+                <span className="hidden sm:inline">
+                  {(imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) ? 'Image' : 'Upgrade'}
+                </span>
+              </button>
+
+              {/* ✅ MAIN: Input Field - Takes up most space */}
               <textarea
                 ref={textareaRef}
                 rows={1}
-                className="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-textPrimary dark:text-white resize-none text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 overflow-hidden"
+                className="flex-1 px-3 py-2 border-0 bg-white dark:bg-slate-800 text-textPrimary dark:text-white resize-none text-sm focus:outline-none rounded-xl min-h-[40px] max-h-[120px] transition-all duration-200"
                 placeholder="Message Growfly..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -1884,36 +1753,25 @@ function DashboardContent() {
                   }
                 }}
                 disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                style={{ 
-                  minHeight: '24px', 
-                  maxHeight: '96px'
-                }}
               />
-              <div className="flex justify-end items-center mt-3">
-                <div className="flex items-center gap-2">
-                  {input.length > 0 && (
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {input.length}
-                    </span>
-                  )}
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault()
-                      handleSubmit()
-                    }}
-                    disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || promptsUsed >= promptLimit}
-                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold px-4 py-2 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
-                  >
-                    {isLoading || isStreaming ? (
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    ) : (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                      </svg>
-                    )}
-                  </button>
-                </div>
-              </div>
+
+              {/* ✅ ALWAYS VISIBLE: Send Button */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleSubmit()
+                }}
+                disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || promptsUsed >= promptLimit}
+                className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white p-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none flex-shrink-0"
+              >
+                {isLoading || isStreaming ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                  </svg>
+                )}
+              </button>
               
               <input
                 type="file"
@@ -1928,9 +1786,22 @@ function DashboardContent() {
                 multiple
               />
             </div>
+
+            {/* ✅ COMPACT: Usage Info - Small text below input */}
+            <div className="text-center mt-1">
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {promptsUsed}/{promptLimit} prompts used
+              </span>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* ✅ NEW: Floating Quick Start - Bottom Right Corner */}
+      <FloatingQuickStart 
+        onPromptSelect={handleSubmit} 
+        disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+      />
 
       {/* DALL-E Image Generation Modal */}
       <ImageGenerationModal
