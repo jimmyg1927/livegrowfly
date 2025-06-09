@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Save, ExternalLink, CreditCard, ArrowUpRight } from 'lucide-react'
+import { Loader2, Save, ExternalLink, CreditCard, ArrowUpRight, BarChart3, Palette } from 'lucide-react'
 import Link from 'next/link'
 
 // Mock constants for artifact
@@ -18,12 +18,37 @@ interface UserProfile {
   subscriptionType?: string
   stripeCustomerId?: string
   goals?: string
+  promptsUsed?: number
+}
+
+// ✅ NEW: Usage interface for tracking
+interface UsageData {
+  promptsUsed: number
+  promptLimit: number
+  dailyImages: {
+    used: number
+    limit: number
+    remaining: number
+  }
+  monthlyImages: {
+    used: number
+    limit: number
+    remaining: number
+  }
+  subscriptionName: string
+}
+
+const PROMPT_LIMITS: Record<string, number> = {
+  free: 20,
+  personal: 400,
+  business: 2000,
 }
 
 export default function SettingsPage() {
   const router = useRouter()
   const [token, setToken] = useState<string | null>(null)
   const [user, setUser] = useState<UserProfile | null>(null)
+  const [usageData, setUsageData] = useState<UsageData | null>(null) // ✅ NEW: Usage state
   const [form, setForm] = useState({
     name: '',
     linkedIn: '',
@@ -87,6 +112,66 @@ export default function SettingsPage() {
 
     fetchUserData()
   }, [token, router])
+
+  // ✅ NEW: Fetch usage data
+  useEffect(() => {
+    if (!token || !user) return
+
+    const fetchUsageData = async () => {
+      try {
+        // Fetch prompt usage from user data
+        const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || 'free'] || 20
+        const promptsUsed = user?.promptsUsed ?? 0
+
+        // Fetch image usage
+        const imageRes = await fetch(`${API_BASE_URL}/api/dalle/usage`, {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+
+        let imageUsage = {
+          dailyImages: { used: 0, limit: 2, remaining: 2 },
+          monthlyImages: { used: 0, limit: 10, remaining: 10 }
+        }
+
+        if (imageRes.ok) {
+          const imageData = await imageRes.json()
+          if (imageData && imageData.dailyImages && imageData.monthlyImages) {
+            imageUsage = {
+              dailyImages: imageData.dailyImages,
+              monthlyImages: imageData.monthlyImages
+            }
+          }
+        }
+
+        setUsageData({
+          promptsUsed,
+          promptLimit,
+          dailyImages: imageUsage.dailyImages,
+          monthlyImages: imageUsage.monthlyImages,
+          subscriptionName: user?.subscriptionType || 'Free'
+        })
+
+      } catch (error) {
+        console.error('Error fetching usage data:', error)
+        // Set fallback data
+        const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || 'free'] || 20
+        const promptsUsed = user?.promptsUsed ?? 0
+        
+        setUsageData({
+          promptsUsed,
+          promptLimit,
+          dailyImages: { used: 0, limit: 2, remaining: 2 },
+          monthlyImages: { used: 0, limit: 10, remaining: 10 },
+          subscriptionName: user?.subscriptionType || 'Free'
+        })
+      }
+    }
+
+    fetchUsageData()
+  }, [token, user])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -177,6 +262,46 @@ export default function SettingsPage() {
     }
   }
 
+  // ✅ NEW: Helper functions for usage display
+  const getPromptUsagePercentage = () => {
+    if (!usageData) return 0
+    return Math.min(100, (usageData.promptsUsed / usageData.promptLimit) * 100)
+  }
+
+  const getPromptUsageColor = () => {
+    const percentage = getPromptUsagePercentage()
+    if (percentage >= 90) return 'from-red-500 to-red-600'
+    if (percentage >= 70) return 'from-yellow-500 to-orange-500'
+    return 'from-blue-500 to-purple-600'
+  }
+
+  const getImageUsagePercentage = () => {
+    if (!usageData || !usageData.dailyImages.limit) return 0
+    return Math.min(100, (usageData.dailyImages.used / usageData.dailyImages.limit) * 100)
+  }
+
+  const getImageUsageColor = () => {
+    if (!usageData) return 'from-purple-500 to-blue-500'
+    const remaining = usageData.dailyImages.remaining
+    if (remaining <= 0) return 'from-red-500 to-red-600'
+    if (remaining <= 2) return 'from-orange-500 to-red-500'
+    return 'from-purple-500 to-blue-500'
+  }
+
+  const getResetInfo = () => {
+    const now = new Date()
+    const tomorrow = new Date(now)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    tomorrow.setHours(0, 0, 0, 0)
+    
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+    
+    const hoursUntilMidnight = Math.ceil((tomorrow.getTime() - now.getTime()) / (1000 * 60 * 60))
+    const daysUntilNextMonth = Math.ceil((nextMonth.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    
+    return { hoursUntilMidnight, daysUntilNextMonth }
+  }
+
   if (loading || !user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-50 dark:from-slate-900 dark:via-blue-900 dark:to-slate-900 flex items-center justify-center">
@@ -187,6 +312,8 @@ export default function SettingsPage() {
       </div>
     )
   }
+
+  const resetInfo = getResetInfo()
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-50 dark:from-slate-900 dark:via-blue-900 dark:to-slate-900 px-4 py-8">
@@ -206,7 +333,152 @@ export default function SettingsPage() {
           </Link>
         </div>
 
-        <div className="space-y-8">{/* Replaced form tag */}
+        <div className="space-y-8">
+          
+          {/* ✅ NEW: Usage & Limits Section */}
+          {usageData && (
+            <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-xl border border-gray-200 dark:border-slate-700">
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center mr-4">
+                  <BarChart3 className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Usage & Limits</h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Track your current plan usage and limits</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Prompt Usage */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                      💬 Chat Prompts
+                    </h3>
+                    <Link 
+                      href="/change-plan"
+                      className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                    >
+                      Upgrade Plan
+                    </Link>
+                  </div>
+                  
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-700">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {usageData.subscriptionName} Plan
+                      </span>
+                      <span className="text-lg font-bold text-gray-900 dark:text-white">
+                        {usageData.promptsUsed}/{usageData.promptLimit === -1 ? '∞' : usageData.promptLimit}
+                      </span>
+                    </div>
+                    
+                    <div className="relative w-full h-3 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden mb-2">
+                      <div 
+                        className={`absolute top-0 left-0 h-full bg-gradient-to-r ${getPromptUsageColor()} rounded-full transition-all duration-300 ease-out`}
+                        style={{ width: `${Math.min(getPromptUsagePercentage(), 100)}%` }}
+                      />
+                    </div>
+                    
+                    <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
+                      <span>{usageData.promptLimit - usageData.promptsUsed} remaining</span>
+                      <span>{getPromptUsagePercentage().toFixed(1)}% used</span>
+                    </div>
+                    
+                    {usageData.promptsUsed >= usageData.promptLimit * 0.9 && (
+                      <div className="mt-2 text-xs text-orange-600 dark:text-orange-400">
+                        ⚠️ You're approaching your limit. Consider upgrading for unlimited prompts.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Image Usage */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                      <Palette className="w-5 h-5 text-purple-500" />
+                      Image Generation
+                    </h3>
+                    <Link 
+                      href="/change-plan"
+                      className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-1 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
+                    >
+                      Upgrade Plan
+                    </Link>
+                  </div>
+                  
+                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-700">
+                    <div className="space-y-3">
+                      {/* Daily Images */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Daily Images</span>
+                          <span className="text-sm font-bold text-gray-900 dark:text-white">
+                            {usageData.dailyImages.remaining}/{usageData.dailyImages.limit === -1 ? '∞' : usageData.dailyImages.limit}
+                          </span>
+                        </div>
+                        
+                        <div className="relative w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                          <div 
+                            className={`absolute top-0 left-0 h-full bg-gradient-to-r ${getImageUsageColor()} rounded-full transition-all duration-300 ease-out`}
+                            style={{ width: `${Math.min(getImageUsagePercentage(), 100)}%` }}
+                          />
+                        </div>
+                        
+                        {usageData.dailyImages.remaining <= 0 && (
+                          <div className="text-xs text-red-500 mt-1">
+                            Resets in {resetInfo.hoursUntilMidnight} hours
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Monthly Images */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Monthly Images</span>
+                          <span className="text-sm font-bold text-gray-900 dark:text-white">
+                            {usageData.monthlyImages.remaining}/{usageData.monthlyImages.limit === -1 ? '∞' : usageData.monthlyImages.limit}
+                          </span>
+                        </div>
+                        
+                        <div className="relative w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                          <div 
+                            className={`absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-300 ease-out`}
+                            style={{ 
+                              width: `${usageData.monthlyImages.limit === -1 ? 20 : Math.min((usageData.monthlyImages.used / usageData.monthlyImages.limit) * 100, 100)}%` 
+                            }}
+                          />
+                        </div>
+                        
+                        {usageData.monthlyImages.remaining <= 2 && usageData.monthlyImages.limit !== -1 && (
+                          <div className="text-xs text-orange-500 mt-1">
+                            Resets in {resetInfo.daysUntilNextMonth} days
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Upgrade Prompt */}
+              <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-semibold text-blue-800 dark:text-blue-300">Need more capacity?</h4>
+                    <p className="text-sm text-blue-600 dark:text-blue-400">Upgrade your plan for higher limits and unlimited access.</p>
+                  </div>
+                  <Link 
+                    href="/change-plan"
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
+                  >
+                    View Plans
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
           
           {/* Account Information */}
           <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-xl border border-gray-200 dark:border-slate-700">
@@ -453,7 +725,7 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
-        </div>{/* End of replaced form */}
+        </div>
       </div>
     </div>
   )

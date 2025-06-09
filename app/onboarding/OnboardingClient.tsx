@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'react-hot-toast'
+import { Eye, EyeOff, CheckCircle, XCircle, ArrowRight, ArrowLeft, Sparkles } from 'lucide-react'
 import { API_BASE_URL } from '@lib/constants'
 
 type FormState = {
@@ -46,8 +47,10 @@ export default function OnboardingClient() {
   const [form, setForm] = useState(INITIAL_FORM)
   const [xp, setXp] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({})
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const submittingRef = useRef(false)
-  const [touchedFields, setTouchedFields] = useState<Partial<Record<keyof FormState, boolean>>>({})
 
   useEffect(() => {
     const totalChars = Object.values(form).reduce((acc, val) => acc + val.trim().length, 0)
@@ -57,7 +60,11 @@ export default function OnboardingClient() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
-    setTouchedFields(prev => ({ ...prev, [name]: true }))
+    
+    // Clear error when user starts typing
+    if (errors[name as keyof FormState]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }))
+    }
   }
 
   const requiredFields: Record<number, (keyof FormState)[]> = {
@@ -68,15 +75,33 @@ export default function OnboardingClient() {
   }
 
   const validateStep = () => {
-    const missing = requiredFields[step].filter(field => form[field].trim() === '')
-    if (missing.length) {
-      toast.error('❌ Please complete all fields.')
+    const newErrors: Partial<Record<keyof FormState, string>> = {}
+    const fields = requiredFields[step]
+    
+    // Check required fields
+    fields.forEach(field => {
+      if (!form[field].trim()) {
+        newErrors[field] = 'This field is required'
+      }
+    })
+    
+    // Password validation for step 1
+    if (step === 1) {
+      if (form.password && form.password.length < 8) {
+        newErrors.password = 'Password must be at least 8 characters'
+      }
+      if (form.password !== form.confirmPassword) {
+        newErrors.confirmPassword = 'Passwords do not match'
+      }
+    }
+    
+    setErrors(newErrors)
+    
+    if (Object.keys(newErrors).length > 0) {
+      toast.error('❌ Please fix the errors below.')
       return false
     }
-    if (step === 1 && form.password !== form.confirmPassword) {
-      toast.error('❌ Passwords do not match.')
-      return false
-    }
+    
     return true
   }
 
@@ -100,10 +125,12 @@ export default function OnboardingClient() {
           password: form.password,
           jobTitle: form.jobTitle,
           industry: form.industry,
-          plan,
+          plan, // This is now just for tracking intended plan
         }),
       })
+      
       const signupData = await signupRes.json()
+      
       if (signupRes.status === 409) {
         toast.error('❌ That email is already registered.')
         return
@@ -114,6 +141,7 @@ export default function OnboardingClient() {
       localStorage.setItem('growfly_jwt', token)
       document.cookie = `growfly_jwt=${token}; path=/; max-age=604800`
 
+      // Save brand settings
       const totalXP = xp
       const settingsRes = await fetch(`${API_BASE_URL}/api/user/settings`, {
         method: 'PUT',
@@ -131,21 +159,31 @@ export default function OnboardingClient() {
           industry: form.industry,
           goals: form.goals,
           totalXP,
+          hasCompletedOnboarding: true,
         }),
       })
       if (!settingsRes.ok) throw new Error('Failed to save settings.')
 
+      // Handle plan routing
       if (plan === 'free') {
+        toast.success('🎉 Welcome to Growfly!')
         router.push('/dashboard')
       } else {
+        // For paid plans, redirect to Stripe
         const stripeRes = await fetch(`${API_BASE_URL}/api/checkout/create-checkout-session`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify({ planId: plan }),
         })
         const { url } = await stripeRes.json()
-        if (url) window.location.href = url
-        else throw new Error('Stripe session failed.')
+        if (url) {
+          window.location.href = url
+        } else {
+          throw new Error('Stripe session failed.')
+        }
       }
     } catch (err: any) {
       toast.error(`❌ ${err.message || 'Error during onboarding.'}`)
@@ -155,6 +193,16 @@ export default function OnboardingClient() {
     }
   }
 
+  const getPasswordStrength = (password: string) => {
+    if (!password) return { strength: '', color: '' }
+    if (password.length < 8) return { strength: 'Too short', color: 'text-red-400' }
+    if (password.length < 12) return { strength: 'Good', color: 'text-yellow-400' }
+    if (/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(password)) {
+      return { strength: 'Very strong', color: 'text-green-400' }
+    }
+    return { strength: 'Strong', color: 'text-blue-400' }
+  }
+
   const renderField = (
     label: string,
     name: keyof FormState,
@@ -162,156 +210,248 @@ export default function OnboardingClient() {
     textarea = false,
     type = 'text'
   ) => {
-    const isError =
-      touchedFields[name] &&
-      requiredFields[step].includes(name) &&
-      form[name].trim() === ''
+    const hasError = !!errors[name]
+    const isPassword = type === 'password'
+    const showPasswordToggle = isPassword && (name === 'password' || name === 'confirmPassword')
+    const shouldShowPassword = (name === 'password' && showPassword) || (name === 'confirmPassword' && showConfirmPassword)
+    const passwordStrength = name === 'password' ? getPasswordStrength(form[name]) : null
+
     return (
-      <div>
-        <label className="block text-sm font-medium text-white mb-1">{label}</label>
-        {textarea ? (
-          <textarea
-            name={name}
-            rows={3}
-            placeholder={placeholder}
-            value={form[name]}
-            onChange={handleChange}
-            className={`w-full bg-white/10 text-white border p-3 rounded-lg ${
-              isError ? 'border-red-500' : 'border-white/30'
-            }`}
-          />
-        ) : (
-          <input
-            name={name}
-            type={type}
-            placeholder={placeholder}
-            value={form[name]}
-            onChange={handleChange}
-            className={`w-full bg-white/10 text-white border p-3 rounded-lg ${
-              isError ? 'border-red-500' : 'border-white/30'
-            }`}
-          />
+      <div className="space-y-2">
+        <label className="block text-sm font-semibold text-white">{label}</label>
+        <div className="relative">
+          {textarea ? (
+            <textarea
+              name={name}
+              rows={3}
+              placeholder={placeholder}
+              value={form[name]}
+              onChange={handleChange}
+              className={`w-full bg-white/10 backdrop-blur-sm text-white border p-4 rounded-xl placeholder-white/60 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none ${
+                hasError 
+                  ? 'border-red-400 focus:ring-red-400' 
+                  : 'border-white/30 hover:border-white/50'
+              }`}
+            />
+          ) : (
+            <input
+              name={name}
+              type={shouldShowPassword ? 'text' : type}
+              placeholder={placeholder}
+              value={form[name]}
+              onChange={handleChange}
+              className={`w-full bg-white/10 backdrop-blur-sm text-white border p-4 rounded-xl placeholder-white/60 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent ${
+                hasError 
+                  ? 'border-red-400 focus:ring-red-400' 
+                  : 'border-white/30 hover:border-white/50'
+              } ${showPasswordToggle ? 'pr-12' : ''}`}
+            />
+          )}
+          
+          {showPasswordToggle && (
+            <button
+              type="button"
+              onClick={() => {
+                if (name === 'password') setShowPassword(!showPassword)
+                if (name === 'confirmPassword') setShowConfirmPassword(!showConfirmPassword)
+              }}
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white transition-colors"
+            >
+              {shouldShowPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          )}
+        </div>
+        
+        {passwordStrength && form[name] && (
+          <p className={`text-xs font-medium ${passwordStrength.color}`}>
+            Password strength: {passwordStrength.strength}
+          </p>
         )}
-        {isError && (
-          <p className="text-red-400 text-xs mt-1">This field is required.</p>
+        
+        {hasError && (
+          <div className="flex items-center gap-2 text-red-400 text-sm">
+            <XCircle size={16} />
+            <span>{errors[name]}</span>
+          </div>
         )}
       </div>
     )
   }
 
+  const stepTitles = [
+    { title: 'Create Your Account', subtitle: 'Let\'s get you started with Growfly', icon: '🚀' },
+    { title: 'Tell Us About Your Brand', subtitle: 'Help us understand your company\'s personality', icon: '🏢' },
+    { title: 'What Inspires You?', subtitle: 'Share brands or companies you admire', icon: '✨' },
+    { title: 'About You', subtitle: 'Finally, tell us about your role and goals', icon: '👤' },
+  ]
+
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#0a0a23] to-[#1e3a8a] px-4 pt-4 pb-6 text-white">
-      <div className="flex justify-center mb-2 mt-2">
-        <Image src="/growfly-logo.png" alt="Growfly" width={140} height={40} />
+    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 px-4 py-6 text-white relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-purple-600/20 to-indigo-600/20" />
+      <div className="absolute top-0 left-0 w-full h-full opacity-30">
+        <div className="w-full h-full bg-gradient-to-br from-white/5 to-transparent" />
       </div>
-
-      <h1 className="text-2xl font-bold text-center mb-1">Let’s make Growfly personal ✨</h1>
-      <p className="text-center text-white/80 mb-4">
-        Answer a few quick things so our nerds can tailor your AI to your brand.
-      </p>
-
-      <div className="mb-6 max-w-xl mx-auto space-y-2">
-        <div className="flex items-center justify-center gap-2">
-          <span className="text-sm font-semibold">⭐ XP Earned: {xp} XP</span>
-          <span className="text-xs underline cursor-help" title="The more detail you give, the more XP you earn toward perks!">
-            ?
-          </span>
+      
+      <div className="relative z-10">
+        {/* Header */}
+        <div className="flex justify-center mb-8">
+          <div className="flex items-center gap-3">
+            <Image src="/growfly-logo.png" alt="Growfly" width={160} height={45} />
+            {plan !== 'free' && (
+              <div className="px-3 py-1 bg-gradient-to-r from-amber-400 to-orange-500 text-black text-sm font-bold rounded-full">
+                {plan.toUpperCase()} PLAN
+              </div>
+            )}
+          </div>
         </div>
-        <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-[#72C8F6] transition-all"
-            style={{ width: `${Math.min(xp, 100)}%` }}
-          />
+
+        {/* Progress and XP */}
+        <div className="max-w-2xl mx-auto mb-8">
+          <div className="text-center mb-6">
+            <h1 className="text-3xl font-bold mb-2">{stepTitles[step - 1].title}</h1>
+            <p className="text-white/80 text-lg">{stepTitles[step - 1].subtitle}</p>
+          </div>
+
+          {/* XP Progress */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="text-yellow-400" size={20} />
+                <span className="text-sm font-semibold">XP Progress: {xp} XP</span>
+              </div>
+              <span className="text-xs text-white/60">More details = More XP!</span>
+            </div>
+            <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-blue-400 to-purple-500 transition-all duration-500 ease-out"
+                style={{ width: `${Math.min(xp, 100)}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Step Navigation */}
+          <div className="flex justify-center gap-4 mb-8">
+            {stepTitles.map((stepInfo, i) => (
+              <button
+                key={i}
+                onClick={() => setStep(i + 1)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  step === i + 1
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg scale-105'
+                    : step > i + 1
+                    ? 'bg-green-500/20 text-green-300 border border-green-400/30'
+                    : 'bg-white/10 text-white/70 hover:bg-white/20'
+                }`}
+              >
+                <span className="text-lg">{stepInfo.icon}</span>
+                <span className="hidden sm:inline">Step {i + 1}</span>
+                {step > i + 1 && <CheckCircle size={16} />}
+              </button>
+            ))}
+          </div>
         </div>
-        <p className="text-xs italic text-center text-[#72C8F6]">
-          The more detail you give, the more XP you earn toward perks!
-        </p>
-      </div>
 
-      <div className="flex justify-center gap-3 mb-6">
-        {['Account', 'Company', 'Inspired By...', 'About You'].map((label, i) => (
-          <button
-            key={i}
-            onClick={() => setStep(i + 1)}
-            className={`px-4 py-1 rounded-full text-xs font-semibold ${
-              step === i + 1
-                ? 'bg-[#72C8F6] text-white'
-                : 'bg-white/20 text-white hover:bg-white/30'
-            }`}
-          >
-            {i + 1}. {label}
-          </button>
-        ))}
-      </div>
+        {/* Form Content */}
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 border border-white/20 shadow-2xl">
+            <div className="space-y-6">
+              {step === 1 && (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {renderField('Full Name', 'name', 'Enter your full name')}
+                    {renderField('Email Address', 'email', 'your@email.com', false, 'email')}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {renderField('Password', 'password', 'Create a strong password', false, 'password')}
+                    {renderField('Confirm Password', 'confirmPassword', 'Confirm your password', false, 'password')}
+                  </div>
+                </>
+              )}
+              
+              {step === 2 && (
+                <>
+                  {renderField('Brand/Company Name', 'companyName', 'Acme Corp')}
+                  {renderField('Elevator Pitch', 'brandDescription', 'Describe what your company does in 1-2 sentences...', true)}
+                  {renderField('Brand Personality', 'brandVoice', 'How would you describe your brand\'s voice? (e.g., Professional, Friendly, Bold)', true)}
+                  {renderField('Mission Statement', 'brandMission', 'What\'s your company\'s mission or core purpose?', true)}
+                </>
+              )}
+              
+              {step === 3 && (
+                <>
+                  {renderField('Brands That Inspire You', 'inspiredBy', 'Which brands, companies, or competitors do you admire and why? This helps us understand your style preferences...', true)}
+                </>
+              )}
+              
+              {step === 4 && (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {renderField('Your Job Title', 'jobTitle', 'Marketing Director')}
+                    {renderField('Industry', 'industry', 'Technology, Healthcare, Finance...')}
+                  </div>
+                  {renderField('Goals with Growfly', 'goals', 'What do you hope to achieve? (e.g., increase sales, improve content, save time...)', true)}
+                </>
+              )}
+            </div>
+          </div>
 
-      <div className="space-y-4 max-w-xl mx-auto">
-        {step === 1 && (
-          <>
-            {renderField('Name', 'name', 'John Doe')}
-            {renderField('Email', 'email', 'john@example.com', false, 'email')}
-            {renderField('Password', 'password', '••••••••', false, 'password')}
-            {renderField('Confirm Password', 'confirmPassword', '••••••••', false, 'password')}
-          </>
-        )}
-        {step === 2 && (
-          <>
-            {renderField('Brand Name', 'companyName', 'Acme Corp')}
-            {renderField('Elevator Pitch', 'brandDescription', 'We help brands grow using AI.', true)}
-            {renderField('Brand Personality', 'brandVoice', 'Witty and expert', true)}
-            {renderField('Mission', 'brandMission', 'Make marketing easier for all', true)}
-          </>
-        )}
-        {step === 3 && (
-          <>
-            {renderField('Inspired By', 'inspiredBy', 'Competitors you admire?', true)}
-          </>
-        )}
-        {step === 4 && (
-          <>
-            {renderField('Your Job Title', 'jobTitle', 'Marketing Director')}
-            {renderField('Your Industry', 'industry', 'E-commerce')}
-            {renderField('Goals with Growfly', 'goals', 'More sales, increase productivity…', true)}
-          </>
-        )}
-      </div>
+          {/* Navigation Buttons */}
+          <div className="flex justify-between items-center mt-8">
+            {step > 1 ? (
+              <button
+                onClick={() => setStep(s => s - 1)}
+                className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all duration-200 font-semibold"
+              >
+                <ArrowLeft size={20} />
+                Back
+              </button>
+            ) : (
+              <div />
+            )}
+            
+            {step < 4 ? (
+              <button
+                onClick={() => validateStep() && setStep(s => s + 1)}
+                className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                Continue
+                <ArrowRight size={20} />
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className={`flex items-center gap-3 px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 ${
+                  loading ? 'opacity-50 cursor-not-allowed transform-none' : ''
+                }`}
+              >
+                {loading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Creating Account...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={20} />
+                    Complete Setup
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        </div>
 
-      <div className="flex justify-between mt-8 max-w-xl mx-auto">
-        {step > 1 ? (
-          <button
-            onClick={() => setStep(s => s - 1)}
-            className="px-4 py-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition"
-          >
-            Back
-          </button>
-        ) : (
-          <div />
-        )}
-        {step < 4 ? (
-          <button
-            onClick={() => validateStep() && setStep(s => s + 1)}
-            className="px-4 py-2 bg-[#72C8F6] text-white rounded-full hover:brightness-110 transition"
-          >
-            Next
-          </button>
-        ) : (
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className={`px-4 py-2 bg-[#72C8F6] text-white rounded-full hover:brightness-110 transition ${
-              loading ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            {loading ? 'Submitting…' : 'Finish & Start Journey'}
-          </button>
-        )}
+        {/* Footer */}
+        <div className="text-center mt-12">
+          <p className="text-white/60 text-sm">
+            Already have an account?{' '}
+            <Link href="/login" className="text-blue-400 hover:text-blue-300 underline font-medium">
+              Log in here
+            </Link>
+          </p>
+        </div>
       </div>
-
-      <p className="text-center text-white/70 text-sm mt-6">
-        Already have an account?{' '}
-        <Link href="/login" className="underline hover:text-[#72C8F6]">
-          Log in here
-        </Link>
-      </p>
     </main>
   )
 }

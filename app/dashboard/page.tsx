@@ -9,7 +9,6 @@ import {
   FaRegBookmark,
   FaShareSquare,
   FaFileDownload,
-  FaSyncAlt,
   FaRocket,
   FaChartLine,
   FaBrain,
@@ -21,10 +20,10 @@ import {
   FaPaperclip,
   FaFileExcel,
   FaPalette,
-  FaImages,
   FaSpinner,
   FaMagic,
-  FaPlus
+  FaCheck,
+  FaImages,
 } from 'react-icons/fa'
 import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
@@ -41,6 +40,7 @@ type Message = {
   imageUrl?: string
   followUps?: string[]
   files?: UploadedFile[]
+  generatedImage?: GeneratedImage // ✅ NEW: For generated images
 }
 
 interface UploadedFile {
@@ -95,13 +95,6 @@ const PROMPT_LIMITS: Record<string, number> = {
   business: 2000,
 }
 
-const IMAGE_LIMITS: Record<string, { daily: number; monthly: number }> = {
-  free: { daily: 2, monthly: 10 },
-  pro: { daily: 20, monthly: 200 },
-  business: { daily: 50, monthly: 1000 },
-  enterprise: { daily: -1, monthly: -1 }
-}
-
 // File Preview Component
 const FilePreview: React.FC<{ file: UploadedFile; onRemove: () => void }> = ({ file, onRemove }) => {
   const getFileIcon = () => {
@@ -146,7 +139,7 @@ const FilePreview: React.FC<{ file: UploadedFile; onRemove: () => void }> = ({ f
   )
 }
 
-// ✅ IMPROVED: Simplified Image Generation Modal
+// ✅ IMPROVED: Enhanced Image Generation Modal with better UX
 const ImageGenerationModal: React.FC<{
   open: boolean
   onClose: () => void
@@ -156,6 +149,8 @@ const ImageGenerationModal: React.FC<{
   const [size, setSize] = useState('1024x1024')
   const [style, setStyle] = useState('vivid')
   const [isGenerating, setIsGenerating] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false) // ✅ NEW: Success state
+  const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null) // ✅ NEW: Store generated image
   const [error, setError] = useState('')
   const [imageUsage, setImageUsage] = useState<ImageUsage | null>(null)
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
@@ -204,6 +199,15 @@ const ImageGenerationModal: React.FC<{
     }
   }, [open, token])
 
+  // ✅ NEW: Reset states when modal opens
+  useEffect(() => {
+    if (open) {
+      setShowSuccess(false)
+      setGeneratedImage(null)
+      setError('')
+    }
+  }, [open])
+
   const handleGenerate = async () => {
     if (!prompt.trim() || prompt.length < 3) {
       setError('Prompt must be at least 3 characters long')
@@ -212,6 +216,7 @@ const ImageGenerationModal: React.FC<{
 
     setIsGenerating(true)
     setError('')
+    setShowSuccess(false)
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/dalle/generate`, {
@@ -257,9 +262,15 @@ const ImageGenerationModal: React.FC<{
         createdAt: new Date().toISOString()
       }
 
-      onImageGenerated(imageData)
-      setPrompt('')
-      onClose()
+      setGeneratedImage(imageData)
+      setShowSuccess(true)
+
+      // ✅ NEW: Wait a moment to show success, then add to chat and close
+      setTimeout(() => {
+        onImageGenerated(imageData)
+        setPrompt('')
+        onClose()
+      }, 2000)
 
       // Refresh usage after successful generation
       if (data.usage) {
@@ -319,214 +330,246 @@ const ImageGenerationModal: React.FC<{
             <button
               onClick={onClose}
               className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              disabled={isGenerating}
             >
               <HiX className="w-6 h-6" />
             </button>
           </div>
 
-          {/* ✅ NEW: Explanatory text */}
-          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
-            <p className="text-sm text-blue-800 dark:text-blue-300">
-              <strong>🎨 Create professional images for your business</strong><br />
-              Describe what you want and our AI will generate a custom image. Perfect for social media, presentations, marketing materials, and more.
-            </p>
-          </div>
+          {/* ✅ NEW: Success State */}
+          {showSuccess && generatedImage ? (
+            <div className="text-center py-8">
+              <div className="mb-6">
+                <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FaCheck className="text-white text-2xl" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  Image Created Successfully!
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Your image has been generated and saved to your gallery.
+                </p>
+              </div>
+              
+              <div className="mb-6">
+                <img
+                  src={generatedImage.url}
+                  alt={generatedImage.originalPrompt}
+                  className="w-full max-w-sm mx-auto rounded-xl shadow-lg"
+                />
+              </div>
+              
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                Adding to your chat conversation...
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Explanatory text */}
+              <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
+                <p className="text-sm text-blue-800 dark:text-blue-300">
+                  <strong>🎨 Create professional images for your business</strong><br />
+                  Describe what you want and our AI will generate a custom image. Perfect for social media, presentations, marketing materials, and more.
+                </p>
+              </div>
 
-          {/* Usage Display */}
-          {imageUsage && (
-            <div className="mb-6 space-y-4">
-              {imageUsage._fallback && (
-                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
-                  <div className="text-yellow-800 dark:text-yellow-300 text-sm">
-                    ⚠️ Using default limits. Some features may be limited until your account data is refreshed.
+              {/* Usage Display */}
+              {imageUsage && (
+                <div className="mb-6 space-y-4">
+                  {imageUsage._fallback && (
+                    <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+                      <div className="text-yellow-800 dark:text-yellow-300 text-sm">
+                        ⚠️ Using default limits. Some features may be limited until your account data is refreshed.
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl border border-purple-200 dark:border-purple-700">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold text-purple-800 dark:text-purple-300">
+                        {imageUsage.subscriptionName} Plan Limits
+                      </h3>
+                      {!canGenerate && (
+                        <button
+                          onClick={handleUpgrade}
+                          className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200"
+                        >
+                          Upgrade Plan
+                        </button>
+                      )}
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div className="text-center">
+                        <div className="text-gray-600 dark:text-gray-400 text-xs">Daily Images</div>
+                        <div className={`font-bold text-lg ${isAtDailyLimit ? 'text-red-600' : 'text-purple-700 dark:text-purple-300'}`}>
+                          {imageUsage.dailyImages?.remaining || 0}/{imageUsage.dailyImages?.limit === -1 ? '∞' : imageUsage.dailyImages?.limit || 0}
+                        </div>
+                        {isAtDailyLimit && (
+                          <div className="text-xs text-red-500 mt-1">
+                            Resets in {resetInfo.hoursUntilMidnight}h
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="text-center">
+                        <div className="text-gray-600 dark:text-gray-400 text-xs">Monthly Images</div>
+                        <div className={`font-bold text-lg ${isAtMonthlyLimit ? 'text-red-600' : 'text-blue-700 dark:text-blue-300'}`}>
+                          {imageUsage.monthlyImages?.remaining || 0}/{imageUsage.monthlyImages?.limit === -1 ? '∞' : imageUsage.monthlyImages?.limit || 0}
+                        </div>
+                        {isAtMonthlyLimit && (
+                          <div className="text-xs text-red-500 mt-1">
+                            Resets in {resetInfo.daysUntilNextMonth}d
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="text-center">
+                        <div className="text-gray-600 dark:text-gray-400 text-xs">Total Prompts</div>
+                        <div className={`font-bold text-lg ${isAtPromptLimit ? 'text-red-600' : 'text-green-700 dark:text-green-300'}`}>
+                          {imageUsage.totalPrompts?.remaining || 0}/{imageUsage.totalPrompts?.limit === -1 ? '∞' : imageUsage.totalPrompts?.limit || 0}
+                        </div>
+                        {isAtPromptLimit && (
+                          <div className="text-xs text-red-500 mt-1">
+                            Resets monthly
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
+
+                  {!canGenerate && (
+                    <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-xl">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-red-600 text-lg">🚫</span>
+                        <h4 className="font-semibold text-red-800 dark:text-red-300">Generation Limit Reached</h4>
+                      </div>
+                      <div className="text-sm text-red-700 dark:text-red-300 space-y-1">
+                        {isAtDailyLimit && (
+                          <div>• Daily limit: Resets in {resetInfo.hoursUntilMidnight} hours</div>
+                        )}
+                        {isAtMonthlyLimit && (
+                          <div>• Monthly limit: Resets in {resetInfo.daysUntilNextMonth} days</div>
+                        )}
+                        {isAtPromptLimit && (
+                          <div>• Prompt limit: Resets monthly with your subscription</div>
+                        )}
+                      </div>
+                      <div className="mt-3 flex gap-2">
+                        <button
+                          onClick={handleUpgrade}
+                          className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                        >
+                          Upgrade for More Images
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
-              <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl border border-purple-200 dark:border-purple-700">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-purple-800 dark:text-purple-300">
-                    {imageUsage.subscriptionName} Plan Limits
-                  </h3>
-                  {!canGenerate && (
+              {/* Error Display */}
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
+                  <div className="text-red-700 dark:text-red-300 text-sm font-medium mb-2">
+                    {error}
+                  </div>
+                  {error.includes('limit') && !error.includes('characters') && (
                     <button
                       onClick={handleUpgrade}
-                      className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200"
+                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
                     >
                       Upgrade Plan
                     </button>
                   )}
                 </div>
-                
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div className="text-center">
-                    <div className="text-gray-600 dark:text-gray-400 text-xs">Daily Images</div>
-                    <div className={`font-bold text-lg ${isAtDailyLimit ? 'text-red-600' : 'text-purple-700 dark:text-purple-300'}`}>
-                      {imageUsage.dailyImages?.remaining || 0}/{imageUsage.dailyImages?.limit === -1 ? '∞' : imageUsage.dailyImages?.limit || 0}
-                    </div>
-                    {isAtDailyLimit && (
-                      <div className="text-xs text-red-500 mt-1">
-                        Resets in {resetInfo.hoursUntilMidnight}h
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="text-center">
-                    <div className="text-gray-600 dark:text-gray-400 text-xs">Monthly Images</div>
-                    <div className={`font-bold text-lg ${isAtMonthlyLimit ? 'text-red-600' : 'text-blue-700 dark:text-blue-300'}`}>
-                      {imageUsage.monthlyImages?.remaining || 0}/{imageUsage.monthlyImages?.limit === -1 ? '∞' : imageUsage.monthlyImages?.limit || 0}
-                    </div>
-                    {isAtMonthlyLimit && (
-                      <div className="text-xs text-red-500 mt-1">
-                        Resets in {resetInfo.daysUntilNextMonth}d
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="text-center">
-                    <div className="text-gray-600 dark:text-gray-400 text-xs">Total Prompts</div>
-                    <div className={`font-bold text-lg ${isAtPromptLimit ? 'text-red-600' : 'text-green-700 dark:text-green-300'}`}>
-                      {imageUsage.totalPrompts?.remaining || 0}/{imageUsage.totalPrompts?.limit === -1 ? '∞' : imageUsage.totalPrompts?.limit || 0}
-                    </div>
-                    {isAtPromptLimit && (
-                      <div className="text-xs text-red-500 mt-1">
-                        Resets monthly
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              )}
 
-              {!canGenerate && (
-                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-xl">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-red-600 text-lg">🚫</span>
-                    <h4 className="font-semibold text-red-800 dark:text-red-300">Generation Limit Reached</h4>
-                  </div>
-                  <div className="text-sm text-red-700 dark:text-red-300 space-y-1">
-                    {isAtDailyLimit && (
-                      <div>• Daily limit: Resets in {resetInfo.hoursUntilMidnight} hours</div>
-                    )}
-                    {isAtMonthlyLimit && (
-                      <div>• Monthly limit: Resets in {resetInfo.daysUntilNextMonth} days</div>
-                    )}
-                    {isAtPromptLimit && (
-                      <div>• Prompt limit: Resets monthly with your subscription</div>
-                    )}
-                  </div>
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      onClick={handleUpgrade}
-                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              <div className="space-y-4">
+                {/* Prompt Input */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Describe your image
+                  </label>
+                  <textarea
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder="Describe the image you want to generate... e.g., 'A professional logo for a tech startup, modern and minimalist style, blue and white colors'"
+                    className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[4rem] max-h-32"
+                    rows={3}
+                    disabled={isGenerating || !canGenerate}
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Be specific and detailed for best results ({prompt.length}/4000 characters)
+                  </p>
+                </div>
+
+                {/* Options */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Size
+                    </label>
+                    <select
+                      value={size}
+                      onChange={(e) => setSize(e.target.value)}
+                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+                      disabled={isGenerating || !canGenerate}
                     >
-                      Upgrade for More Images
-                    </button>
+                      <option value="1024x1024">Square (1024×1024)</option>
+                      <option value="1024x1792">Portrait (1024×1792)</option>
+                      <option value="1792x1024">Landscape (1792×1024)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Style
+                    </label>
+                    <select
+                      value={style}
+                      onChange={(e) => setStyle(e.target.value)}
+                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+                      disabled={isGenerating || !canGenerate}
+                    >
+                      <option value="vivid">Vivid (More Creative)</option>
+                      <option value="natural">Natural (More Realistic)</option>
+                    </select>
                   </div>
                 </div>
-              )}
-            </div>
+
+                {/* Generate Button */}
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={onClose}
+                    className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                    disabled={isGenerating}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleGenerate}
+                    disabled={isGenerating || !prompt.trim() || !canGenerate}
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <FaSpinner className="animate-spin" />
+                        Generating...
+                      </>
+                    ) : !canGenerate ? (
+                      'Limit Reached'
+                    ) : (
+                      <>
+                        <FaMagic />
+                        Generate Image
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </>
           )}
-
-          {/* Error Display */}
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
-              <div className="text-red-700 dark:text-red-300 text-sm font-medium mb-2">
-                {error}
-              </div>
-              {error.includes('limit') && !error.includes('characters') && (
-                <button
-                  onClick={handleUpgrade}
-                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
-                >
-                  Upgrade Plan
-                </button>
-              )}
-            </div>
-          )}
-
-          <div className="space-y-4">
-            {/* ✅ IMPROVED: Prompt Input - same height as main prompt */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Describe your image
-              </label>
-              <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Describe the image you want to generate... e.g., 'A professional logo for a tech startup, modern and minimalist style, blue and white colors'"
-                className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[4rem] max-h-32"
-                rows={3}
-                disabled={isGenerating || !canGenerate}
-              />
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Be specific and detailed for best results ({prompt.length}/4000 characters)
-              </p>
-            </div>
-
-            {/* ✅ SIMPLIFIED: Options - removed quality option */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Size
-                </label>
-                <select
-                  value={size}
-                  onChange={(e) => setSize(e.target.value)}
-                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                  disabled={isGenerating || !canGenerate}
-                >
-                  <option value="1024x1024">Square (1024×1024)</option>
-                  <option value="1024x1792">Portrait (1024×1792)</option>
-                  <option value="1792x1024">Landscape (1792×1024)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Style
-                </label>
-                <select
-                  value={style}
-                  onChange={(e) => setStyle(e.target.value)}
-                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                  disabled={isGenerating || !canGenerate}
-                >
-                  <option value="vivid">Vivid (More Creative)</option>
-                  <option value="natural">Natural (More Realistic)</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Generate Button */}
-            <div className="flex gap-3 pt-4">
-              <button
-                onClick={onClose}
-                className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
-                disabled={isGenerating}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleGenerate}
-                disabled={isGenerating || !prompt.trim() || !canGenerate}
-                className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2"
-              >
-                {isGenerating ? (
-                  <>
-                    <FaSpinner className="animate-spin" />
-                    Generating...
-                  </>
-                ) : !canGenerate ? (
-                  'Limit Reached'
-                ) : (
-                  <>
-                    <FaMagic />
-                    Generate Image
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -572,7 +615,6 @@ function DashboardContent() {
   const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || 'free'] || 20
   const promptsUsed = user?.promptsUsed ?? 0
   const promptsRemaining = Math.max(0, promptLimit - promptsUsed)
-  const usagePercentage = Math.min(100, (promptsUsed / promptLimit) * 100)
 
   // States
   const [showImageModal, setShowImageModal] = useState(false)
@@ -611,15 +653,6 @@ function DashboardContent() {
     }
     
     return new File([u8arr], name, { type: mime })
-  }
-
-  const formatTitleFromDate = (date: Date) => {
-    return `${date.toLocaleDateString(undefined, {
-      weekday: 'long',
-    })} Chat — ${date.toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-    })}`
   }
 
   // ✅ NEW: Clear conversations (but don't lose persistent ones)
@@ -712,7 +745,7 @@ function DashboardContent() {
     return () => clearInterval(syncInterval)
   }, [token, router, setUser])
 
-  // ✅ NEW: Load persistent dashboard conversations on mount
+  // Load persistent dashboard conversations on mount
   useEffect(() => {
     if (!token) return
     
@@ -736,11 +769,20 @@ function DashboardContent() {
     loadDashboardConversations()
   }, [token])
 
-  // Auto-resize textarea
+  // ✅ UPDATED: Auto-resize textarea with ChatGPT-style behavior
   useEffect(() => {
     if (textareaRef.current) {
+      // Reset height to get accurate scrollHeight
       textareaRef.current.style.height = 'auto'
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'
+      
+      const scrollHeight = textareaRef.current.scrollHeight
+      const lineHeight = 24 // Approximate line height in pixels
+      const maxLines = 4
+      const maxHeight = lineHeight * maxLines
+      
+      // Set height based on content, but cap at max lines
+      const newHeight = Math.min(scrollHeight, maxHeight)
+      textareaRef.current.style.height = newHeight + 'px'
     }
   }, [input])
 
@@ -822,6 +864,7 @@ function DashboardContent() {
     setUploadedFiles(prev => prev.filter(f => f.id !== fileId))
   }
 
+  // ✅ UPDATED: Fetch only 1 follow-up instead of 2
   const fetchFollowUps = async (text: string): Promise<string[]> => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/ai/followups`, {
@@ -835,12 +878,12 @@ function DashboardContent() {
       if (!res.ok) throw new Error('Follow-ups fetch failed')
       const data = await res.json()
       const rawFollowUps = (data.followUps as string[]) || []
-      const unique = Array.from(new Set(rawFollowUps)).slice(0, 2)
+      const unique = Array.from(new Set(rawFollowUps)).slice(0, 1) // ✅ CHANGED: Only take 1 follow-up
       return unique.length > 0
         ? unique
-        : ['Can you explain that further?', 'What would you recommend next?']
+        : ['Tell me more about this'] // ✅ CHANGED: Single fallback
     } catch {
-      return ['Tell me more about this', 'How can I implement this?']
+      return ['How can I implement this?'] // ✅ CHANGED: Single fallback
     }
   }
 
@@ -898,7 +941,7 @@ function DashboardContent() {
             )
           )
           
-          // ✅ NEW: Save to dashboard history automatically
+          // Save to dashboard history automatically
           try {
             await fetch(`${API_BASE_URL}/api/chat/save-to-dashboard`, {
               method: 'POST',
@@ -1026,7 +1069,7 @@ function DashboardContent() {
     handleStreamWithFiles(text, aId, filesToSend)
   }
 
-  // Download and file generation functions (unchanged but kept for completeness)
+  // Download and file generation functions
   const handleDownloadResponse = async (messageId: string, format: 'txt' | 'md' | 'html' = 'md') => {
     const message = messages.find(m => m.id === messageId)
     if (!message || message.role !== 'assistant') return
@@ -1231,8 +1274,25 @@ function DashboardContent() {
     }
   }
 
+  // ✅ NEW: Handle image generation and add to chat
   const handleImageGenerated = (image: GeneratedImage) => {
     setGeneratedImages(prev => [image, ...prev])
+    
+    // ✅ ADD: Create a new assistant message with the generated image
+    const imageMessageId = `img_${Date.now()}`
+    const imageMessage: Message = {
+      id: imageMessageId,
+      role: 'assistant',
+      content: `I've created an image for you: "${image.originalPrompt}"`,
+      generatedImage: image,
+      followUps: [
+        'Can you create a variation of this image?'
+      ]
+    }
+    
+    setMessages(prev => [...prev, imageMessage])
+    
+    // Refresh image usage
     if (token) {
       fetch(`${API_BASE_URL}/api/dalle/usage`, {
         headers: { 
@@ -1253,10 +1313,26 @@ function DashboardContent() {
     }
   }
 
-  const getPromptLimitColor = () => {
-    if (usagePercentage >= 90) return 'from-red-500 to-red-600'
-    if (usagePercentage >= 70) return 'from-yellow-500 to-orange-500'
-    return 'from-blue-500 to-purple-600'
+  // ✅ NEW: Handle image download from chat
+  const handleDownloadImage = (image: GeneratedImage) => {
+    const link = document.createElement('a')
+    link.href = image.url
+    link.download = `growfly-${image.id}.png`
+    link.click()
+  }
+
+  // ✅ NEW: Handle image sharing
+  const handleShareImage = (image: GeneratedImage) => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Check out this AI-generated image!',
+        text: image.originalPrompt,
+        url: image.url
+      })
+    } else {
+      navigator.clipboard.writeText(image.url)
+      alert('Image URL copied to clipboard!')
+    }
   }
 
   const dismissError = () => setError(null)
@@ -1264,77 +1340,12 @@ function DashboardContent() {
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-textPrimary dark:text-white transition-colors duration-300">
       
-      {/* ✅ IMPROVED: Header with better layout */}
-      <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 p-4 shadow-sm flex-shrink-0">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Chat Dashboard
-          </h1>
-          <div className="flex items-center gap-4">
-            {/* Prompt Tracker */}
-            <div className="bg-white dark:bg-slate-700 rounded-xl px-4 py-2 shadow-lg border border-gray-200 dark:border-gray-600">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Prompts Used
-                </span>
-                <div className="flex items-center gap-2">
-                  <div className="relative w-24 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-                    <div 
-                      className={`absolute top-0 left-0 h-full bg-gradient-to-r ${getPromptLimitColor()} rounded-full transition-all duration-300 ease-out`}
-                      style={{ width: `${Math.min(usagePercentage, 100)}%` }}
-                    />
-                  </div>
-                  <span className="text-sm font-bold text-gray-800 dark:text-gray-200 min-w-[3rem]">
-                    {promptsUsed}/{promptLimit}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Image Usage Tracker */}
-            {imageUsage && imageUsage.dailyImages && (
-              <div className="bg-white dark:bg-slate-700 rounded-xl px-4 py-2 shadow-lg border border-gray-200 dark:border-gray-600">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Images</span>
-                  <div className="flex items-center gap-2">
-                    <div className="relative w-20 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-                      <div 
-                        className={`absolute top-0 left-0 h-full rounded-full transition-all duration-300 ease-out ${
-                          (imageUsage.dailyImages?.remaining || 0) <= 0 
-                            ? 'bg-gradient-to-r from-red-500 to-red-600' 
-                            : (imageUsage.dailyImages?.remaining || 0) <= 2 
-                            ? 'bg-gradient-to-r from-orange-500 to-red-500'
-                            : 'bg-gradient-to-r from-purple-500 to-blue-500'
-                        }`}
-                        style={{ 
-                          width: `${Math.min(((imageUsage.dailyImages?.used || 0) / Math.max(imageUsage.dailyImages?.limit || 1, 1)) * 100, 100)}%` 
-                        }}
-                      />
-                    </div>
-                    <span className="text-sm font-bold text-gray-800 dark:text-gray-200 min-w-[2.5rem]">
-                      {imageUsage.dailyImages?.remaining || 0}/{imageUsage.dailyImages?.limit === -1 ? '∞' : imageUsage.dailyImages?.limit || 0}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <button
-              onClick={createNewConversation}
-              className="text-sm bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105"
-            >
-              <FaSyncAlt className="text-xs" /> Clear Chat
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Content Area - Now with flex-1 and proper overflow */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4">
           
           {/* Enhanced Collapsible Categories Bar */}
-          <div className="mb-6">
+          <div className="mb-4">
             <div className="text-center mb-3">
               <h3 className="text-xl font-bold text-blue-500 mb-1">
                 Quick Start
@@ -1413,7 +1424,7 @@ function DashboardContent() {
             </div>
           )}
 
-          {/* ✅ NEW: Info about persistent conversations */}
+          {/* Info about persistent conversations */}
           {messages.length > 0 && (
             <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl">
               <p className="text-blue-800 dark:text-blue-300 text-sm">
@@ -1423,7 +1434,7 @@ function DashboardContent() {
           )}
 
           {/* Chat Messages */}
-          <div ref={containerRef} className="space-y-6 pb-8">
+          <div ref={containerRef} className="space-y-4 pb-4">
             {messages.length === 0 ? (
               <div className="flex items-center justify-center h-64">
                 <div className="text-center max-w-md">
@@ -1448,7 +1459,7 @@ function DashboardContent() {
                 onMouseLeave={() => setHoveredMessageId(null)}
               >
                 <div
-                  className={`max-w-4xl p-5 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl relative ${
+                  className={`max-w-4xl p-4 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl relative ${
                     msg.role === 'user'
                       ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white ml-auto'
                       : 'bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-gray-800 dark:text-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm'
@@ -1484,6 +1495,44 @@ function DashboardContent() {
                       className="mb-4 rounded-xl shadow-md"
                     />
                   )}
+
+                  {/* ✅ NEW: Display generated images */}
+                  {msg.generatedImage && (
+                    <div className="mb-4">
+                      <img
+                        src={msg.generatedImage.url}
+                        alt={msg.generatedImage.originalPrompt}
+                        className="w-full max-w-lg rounded-xl shadow-lg"
+                      />
+                      <div className="mt-3 flex gap-2">
+                        <button
+                          onClick={() => handleDownloadImage(msg.generatedImage!)}
+                          className="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                        >
+                          <FaFileDownload />
+                          Download
+                        </button>
+                        <button
+                          onClick={() => router.push('/gallery')}
+                          className="flex-1 bg-purple-500 hover:bg-purple-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                        >
+                          <FaImages />
+                          Gallery
+                        </button>
+                        <button
+                          onClick={() => handleShareImage(msg.generatedImage!)}
+                          className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                        >
+                          <FaShareSquare />
+                          Share
+                        </button>
+                      </div>
+                      <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        <p><strong>Size:</strong> {msg.generatedImage.size} • <strong>Style:</strong> {msg.generatedImage.style}</p>
+                        <p><strong>Created:</strong> {new Date(msg.generatedImage.createdAt).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                  )}
                   
                   <p className="whitespace-pre-wrap text-sm leading-relaxed">
                     {msg.content ? (
@@ -1498,9 +1547,9 @@ function DashboardContent() {
 
                   {msg.role === 'assistant' && msg.content && (
                     <>
-                      {/* Follow-up Questions */}
+                      {/* Follow-up Questions - now only shows 1 */}
                       {msg.followUps && msg.followUps.length > 0 && (
-                        <div className="flex gap-3 mt-5 flex-wrap">
+                        <div className="flex gap-3 mt-4 flex-wrap">
                           {msg.followUps.map((fu, i) => (
                             <button
                               key={i}
@@ -1591,21 +1640,6 @@ function DashboardContent() {
                             </div>
                           </div>
                         </div>
-
-                        {msg.imageUrl && (
-                          <button
-                            onClick={() => {
-                              const link = document.createElement('a')
-                              link.href = msg.imageUrl!
-                              link.download = `growfly-image-${new Date().toISOString().split('T')[0]}.jpg`
-                              link.click()
-                            }}
-                            className="cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 transform hover:scale-110"
-                            title="Download image"
-                          >
-                            🖼️
-                          </button>
-                        )}
                       </div>
                     </>
                   )}
@@ -1619,10 +1653,10 @@ function DashboardContent() {
 
         {/* File Upload Preview */}
         {uploadedFiles.length > 0 && (
-          <div className="px-6 pb-4 flex-shrink-0">
+          <div className="px-4 pb-3 flex-shrink-0">
             <div className="max-w-4xl mx-auto">
-              <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
-                <div className="flex items-center justify-between mb-3">
+              <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3 border border-gray-200 dark:border-gray-600">
+                <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     📎 Attached Files ({uploadedFiles.length})
                   </h4>
@@ -1647,15 +1681,15 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* ✅ FIXED: Input Section - Now fixed at bottom with proper layout */}
-        <div className="bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 p-6 shadow-2xl flex-shrink-0">
+        {/* Input Section - ChatGPT style with single line that expands */}
+        <div className="bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 p-4 shadow-2xl flex-shrink-0">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-gray-50 dark:bg-slate-700 rounded-2xl p-4 shadow-inner">
+            <div className="bg-gray-50 dark:bg-slate-700 rounded-2xl p-3 shadow-inner">
               <textarea
                 ref={textareaRef}
-                rows={3}
-                className="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-textPrimary dark:text-white resize-none text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 min-h-[4rem] max-h-32"
-                placeholder="Type out your prompt here..."
+                rows={1}
+                className="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-textPrimary dark:text-white resize-none text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 overflow-hidden"
+                placeholder="Message Growfly..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -1665,10 +1699,13 @@ function DashboardContent() {
                   }
                 }}
                 disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+                style={{ 
+                  minHeight: '24px', 
+                  maxHeight: '96px'
+                }}
               />
-              <div className="flex justify-between items-center mt-4">
-                {/* ✅ IMPROVED: Left side - Upload Files and Generate Image buttons together */}
-                <div className="flex items-center gap-3">
+              <div className="flex justify-between items-center mt-3">
+                <div className="flex items-center gap-2">
                   <div
                     onClick={(e) => {
                       e.preventDefault()
@@ -1676,17 +1713,16 @@ function DashboardContent() {
                         fileInputRef.current.click()
                       }
                     }}
-                    className={`cursor-pointer border-2 px-4 py-2 rounded-xl flex items-center gap-2 transition-all duration-200 ${
+                    className={`cursor-pointer border-2 px-3 py-2 rounded-xl flex items-center gap-2 transition-all duration-200 ${
                       isLoading || isStreaming || promptsUsed >= promptLimit
                         ? 'border-gray-300 dark:border-gray-600 text-gray-400 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
                         : 'border-blue-500 text-blue-600 bg-blue-50 hover:bg-blue-100 hover:border-blue-600 shadow-sm hover:shadow-md transform hover:scale-[1.02]'
                     }`}
                   >
                     <FaPaperclip className="text-sm" />
-                    <span className="text-sm font-medium">Upload Files</span>
+                    <span className="text-sm font-medium">Upload</span>
                   </div>
 
-                  {/* ✅ UPDATED: Better image generation button text */}
                   <button
                     onClick={() => {
                       if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
@@ -1695,28 +1731,23 @@ function DashboardContent() {
                         router.push('/change-plan')
                       }
                     }}
-                    className={`border-2 px-4 py-2 rounded-xl flex items-center gap-2 transition-all duration-200 ${
+                    className={`border-2 px-3 py-2 rounded-xl flex items-center gap-2 transition-all duration-200 ${
                       (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
                         ? 'border-purple-500 text-purple-600 bg-purple-50 hover:bg-purple-100 hover:border-purple-600 shadow-sm hover:shadow-md transform hover:scale-[1.02]'
                         : 'border-gray-300 dark:border-gray-600 text-gray-400 cursor-pointer hover:border-gray-400 bg-gray-50 dark:bg-gray-800'
                     }`}
-                    title={
-                      (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
-                        ? 'Create professional images for your business' 
-                        : 'Upgrade to generate more images'
-                    }
                   >
                     <FaPalette className="text-sm" />
                     <span className="text-sm font-medium">
-                      {(imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) ? 'Create an image with Growfly' : 'Upgrade for Images'}
+                      {(imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) ? 'Create Image' : 'Upgrade'}
                     </span>
                   </button>
                 </div>
                 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   {input.length > 0 && (
                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {input.length} characters
+                      {input.length}
                     </span>
                   )}
                   <button
@@ -1725,22 +1756,17 @@ function DashboardContent() {
                       handleSubmit()
                     }}
                     disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || promptsUsed >= promptLimit}
-                    className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white font-semibold px-6 py-3 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
+                    className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white font-semibold px-4 py-2 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
                   >
                     {isLoading || isStreaming ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                     ) : (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
                       </svg>
                     )}
                   </button>
                 </div>
-              </div>
-              
-              {/* ✅ NEW: Explanatory text under image button */}
-              <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                💡 <strong>Create an image with Growfly:</strong> Generate professional images for social media, presentations, and marketing materials.
               </div>
               
               <input

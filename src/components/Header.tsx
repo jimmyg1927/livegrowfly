@@ -8,7 +8,7 @@ import { useUserStore } from '@lib/store'
 import { 
   Sun, 
   Moon, 
-  User, 
+  User as UserIcon, 
   Gift, 
   Crown, 
   ChevronDown,
@@ -17,7 +17,30 @@ import {
   CreditCard
 } from 'lucide-react'
 
-function getXPLabel(xp: number) {
+// ✅ Helper functions for subscription validation
+function hasValidSubscription(user) {
+  if (!user) return false
+  if (user.subscriptionType === 'free') return true
+  return !!(user.stripeCustomerId || user.billingStartDate)
+}
+
+function getEffectiveSubscription(user) {
+  if (!user) return 'free'
+  return hasValidSubscription(user) ? user.subscriptionType : 'free'
+}
+
+function getPromptLimit(user) {
+  if (!user) return 20
+  const effectivePlan = getEffectiveSubscription(user)
+  switch (effectivePlan?.toLowerCase()) {
+    case 'personal': return 400
+    case 'business': return 2000  
+    case 'enterprise': return 999999
+    default: return 20
+  }
+}
+
+function getXPLabel(xp) {
   if (xp < 25) return { label: 'Curious Cat', icon: '🐱', color: '#94A3B8' }
   if (xp < 150) return { label: 'Nerdlet', icon: '🧪', color: '#60A5FA' }
   if (xp < 500) return { label: 'Prompt Prober', icon: '📈', color: '#34D399' }
@@ -25,7 +48,7 @@ function getXPLabel(xp: number) {
   return { label: 'Prompt Commander', icon: '🚀', color: '#EF4444' }
 }
 
-function getXPProgress(xp: number) {
+function getXPProgress(xp) {
   const levelCaps = [25, 150, 500, 850, 1000]
   for (let i = 0; i < levelCaps.length; i++) {
     if (xp < levelCaps[i]) {
@@ -41,13 +64,18 @@ function getXPProgress(xp: number) {
   return { progress: 100, current: xp, needed: 0, nextLevel: 1000 }
 }
 
-function getSubscriptionBadge(type: string) {
-  switch (type?.toLowerCase()) {
-    case 'pro':
-    case 'premium':
-      return { label: 'Pro', color: 'bg-gradient-to-r from-amber-400 to-orange-500', icon: Crown }
-    case 'team':
-      return { label: 'Team', color: 'bg-gradient-to-r from-purple-500 to-pink-500', icon: Crown }
+function getSubscriptionBadge(user) {
+  if (!user) return { label: 'Free', color: 'bg-gradient-to-r from-gray-400 to-gray-500', icon: null }
+  
+  const effectivePlan = getEffectiveSubscription(user)
+  
+  switch (effectivePlan?.toLowerCase()) {
+    case 'personal':
+      return { label: 'Personal', color: 'bg-gradient-to-r from-blue-500 to-indigo-500', icon: Crown }
+    case 'business':
+      return { label: 'Business', color: 'bg-gradient-to-r from-purple-500 to-pink-500', icon: Crown }
+    case 'enterprise':
+      return { label: 'Enterprise', color: 'bg-gradient-to-r from-amber-400 to-orange-500', icon: Crown }
     default:
       return { label: 'Free', color: 'bg-gradient-to-r from-gray-400 to-gray-500', icon: null }
   }
@@ -74,9 +102,51 @@ export default function Header() {
     return null
   }
 
-  const xpInfo = getXPLabel(user?.totalXP || 0)
-  const progressInfo = getXPProgress(user?.totalXP || 0)
-  const subscriptionBadge = getSubscriptionBadge(user?.subscriptionType || 'free')
+  // ✅ Early return if user is not loaded yet
+  if (!user) {
+    return (
+      <header className="w-full bg-gradient-to-r from-[#0f172a] via-[#1e3a8a] to-[#1e40af] text-white flex items-center justify-between px-4 sm:px-8 py-4 shadow-lg border-b border-white/10">
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-white/60">Loading...</div>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all duration-200 hover:scale-105"
+          >
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+        </div>
+      </header>
+    )
+  }
+
+  // ✅ Calculate all values outside JSX
+  const effectiveSubscription = getEffectiveSubscription(user)
+  const effectivePromptLimit = getPromptLimit(user)
+  const xpInfo = getXPLabel(user.totalXP || 0)
+  const progressInfo = getXPProgress(user.totalXP || 0)
+  const subscriptionBadge = getSubscriptionBadge(user)
+
+  // ✅ Pre-calculate all percentages and styles
+  const promptsUsed = user.promptsUsed || 0
+  const imagesUsed = user.imagesGeneratedToday || 0
+  const totalXP = Math.floor(user.totalXP || 0)
+  
+  const promptPercentage = Math.min((promptsUsed / effectivePromptLimit) * 100, 100)
+  const imagePercentage = Math.min((imagesUsed / 2) * 100, 100)
+  const xpPercentage = progressInfo.progress
+  
+  const promptProgressStyle = { width: promptPercentage + '%' }
+  const imageProgressStyle = { width: imagePercentage + '%' }
+  const xpProgressStyle = {
+    width: xpPercentage + '%',
+    background: 'linear-gradient(90deg, ' + xpInfo.color + ', ' + xpInfo.color + 'CC)',
+    boxShadow: '0 0 8px ' + xpInfo.color + '40'
+  }
+
+  const neededText = progressInfo.needed > 0 ? progressInfo.needed + ' to next' : 'Max level!'
 
   return (
     <header className="w-full bg-gradient-to-r from-[#0f172a] via-[#1e3a8a] to-[#1e40af] text-white flex items-center justify-between px-4 sm:px-8 py-4 shadow-lg border-b border-white/10">
@@ -90,7 +160,7 @@ export default function Header() {
               {xpInfo.label}
             </span>
             <span className="text-xs font-medium text-white/70 hidden sm:inline">
-              {Math.floor(user?.totalXP || 0)} XP
+              {totalXP} XP
             </span>
           </div>
           
@@ -98,15 +168,44 @@ export default function Header() {
             <div className="w-32 sm:w-40 h-2 bg-white/20 rounded-full overflow-hidden">
               <div
                 className="h-full transition-all duration-500 ease-out rounded-full"
-                style={{
-                  width: `${progressInfo.progress}%`,
-                  background: `linear-gradient(90deg, ${xpInfo.color}, ${xpInfo.color}CC)`,
-                  boxShadow: `0 0 8px ${xpInfo.color}40`
-                }}
+                style={xpProgressStyle}
               />
             </div>
             <span className="text-xs text-white/60 hidden sm:inline whitespace-nowrap">
-              {progressInfo.needed > 0 ? `${progressInfo.needed} to next` : 'Max level!'}
+              {neededText}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Center Section - Usage Stats */}
+      <div className="hidden md:flex items-center gap-6">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-white/80">Prompts Used</span>
+          <div className="flex items-center gap-1">
+            <div className="w-16 h-2 bg-white/20 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-blue-400 transition-all duration-300"
+                style={promptProgressStyle}
+              />
+            </div>
+            <span className="text-sm font-medium text-white">
+              {promptsUsed}/{effectivePromptLimit}
+            </span>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-white/80">Images</span>
+          <div className="flex items-center gap-1">
+            <div className="w-16 h-2 bg-white/20 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-red-400 transition-all duration-300"
+                style={imageProgressStyle}
+              />
+            </div>
+            <span className="text-sm font-medium text-white">
+              {imagesUsed}/2
             </span>
           </div>
         </div>
@@ -125,8 +224,8 @@ export default function Header() {
         </Link>
 
         {/* Subscription Badge */}
-        <div className={`hidden sm:flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-full text-white shadow-md ${subscriptionBadge.color}`}>
-          {subscriptionBadge.icon && <subscriptionBadge.icon size={14} />}
+        <div className={'hidden sm:flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-full text-white shadow-md ' + subscriptionBadge.color}>
+          {subscriptionBadge.icon && React.createElement(subscriptionBadge.icon, { size: 14 })}
           <span>{subscriptionBadge.label}</span>
         </div>
 
@@ -146,10 +245,10 @@ export default function Header() {
             className="flex items-center gap-2 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-all duration-200 hover:scale-105"
             aria-label="Profile menu"
           >
-            <User size={18} />
+            <UserIcon size={18} />
             <ChevronDown 
               size={14} 
-              className={`transition-transform duration-200 ${showProfileMenu ? 'rotate-180' : ''}`}
+              className={'transition-transform duration-200 ' + (showProfileMenu ? 'rotate-180' : '')}
             />
           </button>
 
@@ -163,14 +262,31 @@ export default function Header() {
               />
               
               {/* Menu */}
-              <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-20">
-                <div className="px-4 py-2 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900">
-                    {user?.email || 'User'}
+              <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-20">
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {user.email || 'User'}
                   </p>
-                  <p className="text-xs text-gray-500 capitalize">
-                    {user?.subscriptionType || 'Free'} Plan
-                  </p>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-xs text-gray-500 capitalize">
+                      {effectiveSubscription} Plan
+                    </p>
+                    {effectiveSubscription !== 'free' && hasValidSubscription(user) && (
+                      <div className="flex items-center gap-1 text-green-600">
+                        <div className="w-2 h-2 bg-green-500 rounded-full" />
+                        <span className="text-xs">Active</span>
+                      </div>
+                    )}
+                    {effectiveSubscription !== 'free' && !hasValidSubscription(user) && (
+                      <div className="flex items-center gap-1 text-red-600">
+                        <div className="w-2 h-2 bg-red-500 rounded-full" />
+                        <span className="text-xs">Payment Required</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-2 text-xs text-gray-400">
+                    {promptsUsed} / {effectivePromptLimit} prompts used
+                  </div>
                 </div>
                 
                 <Link
@@ -188,7 +304,7 @@ export default function Header() {
                   onClick={() => setShowProfileMenu(false)}
                 >
                   <CreditCard size={16} />
-                  Manage Plan
+                  {effectiveSubscription === 'free' ? 'Upgrade Plan' : 'Manage Plan'}
                 </Link>
                 
                 <Link

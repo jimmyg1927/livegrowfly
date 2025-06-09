@@ -25,6 +25,12 @@ export type User = {
   // XP
   totalXP: number
 
+  // ✅ IMAGE PROPERTIES - Added from Prisma schema
+  imagesGeneratedToday?: number
+  imagesGeneratedThisMonth?: number
+  lastImageGeneratedDate?: string
+  lastImageResetDate?: string
+
   // Onboarding fields
   jobTitle?: string
   industry?: string
@@ -47,7 +53,7 @@ interface UserState {
 }
 
 export const useUserStore = create<UserState>((set) => ({
-  // Initial defaults (before /api/auth/me)
+  // ✅ UPDATED: Initial defaults (before /api/auth/me) - This is Fix 3
   user: {
     id: '',
     name: undefined,
@@ -62,6 +68,13 @@ export const useUserStore = create<UserState>((set) => ({
     referralCode: undefined,
     referredById: undefined,
     totalXP: 0,
+    
+    // ✅ NEW: Image generation defaults
+    imagesGeneratedToday: 0,
+    imagesGeneratedThisMonth: 0,
+    lastImageGeneratedDate: undefined,
+    lastImageResetDate: undefined,
+    
     jobTitle: undefined,
     industry: undefined,
     brandName: undefined,
