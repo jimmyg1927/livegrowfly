@@ -1094,9 +1094,9 @@ function DashboardContent() {
       const unique = Array.from(new Set(rawFollowUps)).slice(0, 1) // ✅ CHANGED: Only take 1 follow-up
       return unique.length > 0
         ? unique
-        : ['Tell me more about this'] // Single fallback
+        : ['Tell me more about this'] // ✅ ENSURE: Always return 1 follow-up
     } catch {
-      return ['How can I implement this?'] // Single fallback
+      return ['How can I implement this?'] // ✅ ENSURE: Always return 1 follow-up
     }
   }
 
@@ -1144,8 +1144,14 @@ function DashboardContent() {
           setIsLoading(false)
           setIsStreaming(false)
           
+          // ✅ FIXED: Always fetch follow-ups to ensure we get 1
           if (!followUps.length && fullContent.trim()) {
             followUps = await fetchFollowUps(fullContent)
+          }
+          
+          // ✅ ENSURE: If still no follow-ups, add a default one
+          if (!followUps.length) {
+            followUps = ['Tell me more about this']
           }
           
           setMessages((prev) =>
@@ -1452,347 +1458,338 @@ function DashboardContent() {
   const dismissError = () => setError(null)
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-textPrimary dark:text-white transition-colors duration-300">
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-textPrimary dark:text-white transition-colors duration-300 flex flex-col">
       
       {/* Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-4">
 
-          {/* Error Message */}
-          {error && (
-            <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
-              <button 
-                onClick={dismissError}
-                className="absolute top-2 right-2 text-red-500 hover:text-red-700"
-              >
-                <HiX className="w-4 h-4" />
-              </button>
-              <strong>⚠️ {error}</strong>
-              {error.includes('limit') && (
-                <div className="mt-2">
-                  <button
-                    onClick={() => router.push('/change-plan')}
-                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors"
-                  >
-                    Upgrade Plan
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Info about persistent conversations */}
-          {messages.length > 0 && (
-            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl">
-              <p className="text-blue-800 dark:text-blue-300 text-sm">
-                💡 <strong>Your conversations are automatically saved here!</strong> Your last 10 exchanges stay on this dashboard so you can always pick up where you left off.
-              </p>
-            </div>
-          )}
-
-          {/* Chat Messages */}
-          <div ref={containerRef} className="space-y-4 pb-4">
-            {messages.length === 0 ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="text-center max-w-md">
-                  <div className="text-6xl mb-4">👋</div>
-                  <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
-                    Welcome to Growfly!
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    Ready to get started? Click the assistance button in the corner or type your question below to begin your first conversation.
-                  </p>
-                  <div className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                    ✨ Need help getting started? Look for the help button in the bottom-right corner!
-                  </div>
-                </div>
-              </div>
-            ) : (
-              messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                onMouseEnter={() => setHoveredMessageId(msg.id)}
-                onMouseLeave={() => setHoveredMessageId(null)}
-              >
-                <div
-                  className={`max-w-4xl p-4 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl relative ${
-                    msg.role === 'user'
-                      ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white ml-auto'
-                      : 'bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-gray-800 dark:text-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm'
-                  }`}
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
+            <button 
+              onClick={dismissError}
+              className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+            >
+              <HiX className="w-4 h-4" />
+            </button>
+            <strong>⚠️ {error}</strong>
+            {error.includes('limit') && (
+              <div className="mt-2">
+                <button
+                  onClick={() => router.push('/change-plan')}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors"
                 >
-                  {/* Display uploaded files for user messages */}
-                  {msg.role === 'user' && msg.files && msg.files.length > 0 && (
-                    <div className="mb-4 space-y-2">
-                      <p className="text-xs text-blue-100 font-medium">📎 Attached Files:</p>
-                      <div className="grid grid-cols-1 gap-2">
-                        {msg.files.map((file) => (
-                          <div key={file.id} className="bg-blue-500/20 rounded-lg p-2 flex items-center gap-2">
-                            {file.type.startsWith('image/') && file.preview ? (
-                              <img src={file.preview} alt={file.name} className="w-8 h-8 object-cover rounded" />
-                            ) : file.type === 'application/pdf' ? (
-                              <FaFilePdf className="w-6 h-6 text-red-300" />
-                            ) : (
-                              <FaFileAlt className="w-6 h-6 text-gray-300" />
-                            )}
-                            <span className="text-xs text-blue-100">{file.name}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {msg.imageUrl && (
-                    <Image
-                      src={msg.imageUrl}
-                      alt="Uploaded"
-                      width={280}
-                      height={280}
-                      className="mb-4 rounded-xl shadow-md"
-                    />
-                  )}
-
-                  {/* ✅ IMPROVED: Display generated images with better error handling */}
-                  {msg.generatedImage && (
-                    <div className="mb-4">
-                      <SafeImage
-                        src={msg.generatedImage.url}
-                        alt={msg.generatedImage.originalPrompt}
-                        className="w-full max-w-lg rounded-xl shadow-lg"
-                        onError={() => {
-                          console.error('Failed to load generated image:', msg.generatedImage?.url)
-                        }}
-                      />
-                      {/* ✅ IMPROVED: Enhanced image action buttons with Growfly branding */}
-                      <div className="mt-3 flex gap-2">
-                        <button
-                          onClick={() => handleDownloadImage(msg.generatedImage!)}
-                          className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
-                        >
-                          <FaFileDownload />
-                          Download
-                        </button>
-                        <button
-                          onClick={() => router.push('/gallery')}
-                          className="flex-1 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
-                        >
-                          <FaImages />
-                          Gallery
-                        </button>
-                        <button
-                          onClick={() => handleShareImage(msg.generatedImage!)}
-                          className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
-                        >
-                          <FaShareSquare />
-                          Share
-                        </button>
-                      </div>
-                      <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                        <p><strong>Size:</strong> {msg.generatedImage.size} • <strong>Style:</strong> {msg.generatedImage.style}</p>
-                        <p><strong>Created:</strong> {new Date(msg.generatedImage.createdAt).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                    {msg.content ? (
-                      msg.content
-                    ) : msg.role === 'assistant' && (isLoading || isStreaming) ? (
-                      <span className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
-                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                        <span className="animate-pulse">Working on your response...</span>
-                      </span>
-                    ) : ''}
-                  </p>
-
-                  {msg.role === 'assistant' && msg.content && (
-                    <>
-                      {/* ✅ CHANGED: Follow-up Questions - now only shows 1 */}
-                      {msg.followUps && msg.followUps.length > 0 && (
-                        <div className="flex gap-3 mt-4 flex-wrap">
-                          {msg.followUps.map((fu, i) => (
-                            <button
-                              key={i}
-                              onClick={(e) => {
-                                e.preventDefault()
-                                handleSubmit(fu)
-                              }}
-                              disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                              className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 hover:from-indigo-100 hover:to-blue-100 dark:hover:from-indigo-800/40 dark:hover:to-blue-800/40 disabled:from-gray-100 disabled:to-gray-100 dark:disabled:from-gray-800 dark:disabled:to-gray-800 text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 disabled:text-gray-500 dark:disabled:text-gray-500 px-4 py-2 rounded-xl text-xs font-medium shadow-sm border border-indigo-200 dark:border-indigo-700 disabled:border-gray-200 dark:disabled:border-gray-600 transition-all duration-200 hover:shadow-md transform hover:scale-[1.02] disabled:transform-none disabled:cursor-not-allowed"
-                            >
-                              💡 {fu}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* ✅ CHANGED: Action Buttons - REMOVED download button */}
-                      <div className="flex flex-wrap gap-4 mt-4 text-lg text-gray-500 dark:text-gray-400">
-                        <HiThumbUp
-                          className="cursor-pointer hover:text-green-500 transition-colors duration-200 transform hover:scale-110"
-                          onClick={() => setShowFeedbackModal(true)}
-                          title="Like this response"
-                        />
-                        <HiThumbDown
-                          className="cursor-pointer hover:text-red-500 transition-colors duration-200 transform hover:scale-110"
-                          onClick={() => setShowFeedbackModal(true)}
-                          title="Dislike this response"
-                        />
-                        <FaRegBookmark
-                          className="cursor-pointer hover:text-yellow-500 transition-colors duration-200 transform hover:scale-110"
-                          onClick={() => {
-                            setCurrentSaveMessageId(msg.id)
-                            setShowSaveModal(true)
-                          }}
-                          title="Save to Saved Responses"
-                        />
-                        <FaShareSquare
-                          className="cursor-pointer hover:text-blue-500 transition-colors duration-200 transform hover:scale-110"
-                          onClick={() => handleShareToCollabZone(msg.id)}
-                          title="Share to Collab Zone"
-                        />
-                      </div>
-                    </>
-                  )}
-                </div>
+                  Upgrade Plan
+                </button>
               </div>
-              ))
             )}
-            <div ref={chatEndRef} />
-          </div>
-        </div>
-
-        {/* File Upload Preview */}
-        {uploadedFiles.length > 0 && (
-          <div className="px-4 pb-3 flex-shrink-0">
-            <div className="max-w-4xl mx-auto">
-              <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3 border border-gray-200 dark:border-gray-600">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    📎 Attached Files ({uploadedFiles.length})
-                  </h4>
-                  <button
-                    onClick={() => setUploadedFiles([])}
-                    className="text-xs text-red-600 hover:text-red-800 font-medium"
-                  >
-                    Clear All
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {uploadedFiles.map((file) => (
-                    <FilePreview
-                      key={file.id}
-                      file={file}
-                      onRemove={() => removeFile(file.id)}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
           </div>
         )}
 
-        {/* ✅ REDESIGNED: Ultra Compact Input Section - Everything in one line */}
-        <div className="bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 p-3 shadow-2xl flex-shrink-0">
+        {/* Info about persistent conversations */}
+        {messages.length > 0 && (
+          <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl">
+            <p className="text-blue-800 dark:text-blue-300 text-sm">
+              💡 <strong>Your conversations are automatically saved here!</strong> Your last 10 exchanges stay on this dashboard so you can always pick up where you left off.
+            </p>
+          </div>
+        )}
+
+        {/* Chat Messages */}
+        <div ref={containerRef} className="space-y-4 pb-4">
+          {messages.length === 0 ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center max-w-md">
+                <div className="text-6xl mb-4">👋</div>
+                <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
+                  Welcome to Growfly!
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Ready to get started? Click the assistance button in the corner or type your question below to begin your first conversation.
+                </p>
+                <div className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                  ✨ Need help getting started? Look for the help button in the bottom-right corner!
+                </div>
+              </div>
+            </div>
+          ) : (
+            messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              onMouseEnter={() => setHoveredMessageId(msg.id)}
+              onMouseLeave={() => setHoveredMessageId(null)}
+            >
+              <div
+                className={`max-w-4xl p-4 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl relative ${
+                  msg.role === 'user'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white ml-auto'
+                    : 'bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-gray-800 dark:text-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm'
+                }`}
+              >
+                {/* Display uploaded files for user messages */}
+                {msg.role === 'user' && msg.files && msg.files.length > 0 && (
+                  <div className="mb-4 space-y-2">
+                    <p className="text-xs text-blue-100 font-medium">📎 Attached Files:</p>
+                    <div className="grid grid-cols-1 gap-2">
+                      {msg.files.map((file) => (
+                        <div key={file.id} className="bg-blue-500/20 rounded-lg p-2 flex items-center gap-2">
+                          {file.type.startsWith('image/') && file.preview ? (
+                            <img src={file.preview} alt={file.name} className="w-8 h-8 object-cover rounded" />
+                          ) : file.type === 'application/pdf' ? (
+                            <FaFilePdf className="w-6 h-6 text-red-300" />
+                          ) : (
+                            <FaFileAlt className="w-6 h-6 text-gray-300" />
+                          )}
+                          <span className="text-xs text-blue-100">{file.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {msg.imageUrl && (
+                  <Image
+                    src={msg.imageUrl}
+                    alt="Uploaded"
+                    width={280}
+                    height={280}
+                    className="mb-4 rounded-xl shadow-md"
+                  />
+                )}
+
+                {/* ✅ IMPROVED: Display generated images with better error handling */}
+                {msg.generatedImage && (
+                  <div className="mb-4">
+                    <SafeImage
+                      src={msg.generatedImage.url}
+                      alt={msg.generatedImage.originalPrompt}
+                      className="w-full max-w-lg rounded-xl shadow-lg"
+                      onError={() => {
+                        console.error('Failed to load generated image:', msg.generatedImage?.url)
+                      }}
+                    />
+                    {/* ✅ IMPROVED: Enhanced image action buttons with Growfly branding */}
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        onClick={() => handleDownloadImage(msg.generatedImage!)}
+                        className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                      >
+                        <FaFileDownload />
+                        Download
+                      </button>
+                      <button
+                        onClick={() => router.push('/gallery')}
+                        className="flex-1 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                      >
+                        <FaImages />
+                        Gallery
+                      </button>
+                      <button
+                        onClick={() => handleShareImage(msg.generatedImage!)}
+                        className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                      >
+                        <FaShareSquare />
+                        Share
+                      </button>
+                    </div>
+                    <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                      <p><strong>Size:</strong> {msg.generatedImage.size} • <strong>Style:</strong> {msg.generatedImage.style}</p>
+                      <p><strong>Created:</strong> {new Date(msg.generatedImage.createdAt).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                )}
+                
+                <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                  {msg.content ? (
+                    msg.content
+                  ) : msg.role === 'assistant' && (isLoading || isStreaming) ? (
+                    <span className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                      <span className="animate-pulse">Working on your response...</span>
+                    </span>
+                  ) : ''}
+                </p>
+
+                {msg.role === 'assistant' && msg.content && (
+                  <>
+                    {/* ✅ CHANGED: Follow-up Questions - now only shows 1 */}
+                    {msg.followUps && msg.followUps.length > 0 && (
+                      <div className="flex gap-3 mt-4 flex-wrap">
+                        {msg.followUps.map((fu, i) => (
+                          <button
+                            key={i}
+                            onClick={(e) => {
+                              e.preventDefault()
+                              handleSubmit(fu)
+                            }}
+                            disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+                            className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 hover:from-indigo-100 hover:to-blue-100 dark:hover:from-indigo-800/40 dark:hover:to-blue-800/40 disabled:from-gray-100 disabled:to-gray-100 dark:disabled:from-gray-800 dark:disabled:to-gray-800 text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 disabled:text-gray-500 dark:disabled:text-gray-500 px-4 py-2 rounded-xl text-xs font-medium shadow-sm border border-indigo-200 dark:border-indigo-700 disabled:border-gray-200 dark:disabled:border-gray-600 transition-all duration-200 hover:shadow-md transform hover:scale-[1.02] disabled:transform-none disabled:cursor-not-allowed"
+                          >
+                            💡 {fu}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* ✅ CHANGED: Action Buttons - REMOVED download button */}
+                    <div className="flex flex-wrap gap-4 mt-4 text-lg text-gray-500 dark:text-gray-400">
+                      <HiThumbUp
+                        className="cursor-pointer hover:text-green-500 transition-colors duration-200 transform hover:scale-110"
+                        onClick={() => setShowFeedbackModal(true)}
+                        title="Like this response"
+                      />
+                      <HiThumbDown
+                        className="cursor-pointer hover:text-red-500 transition-colors duration-200 transform hover:scale-110"
+                        onClick={() => setShowFeedbackModal(true)}
+                        title="Dislike this response"
+                      />
+                      <FaRegBookmark
+                        className="cursor-pointer hover:text-yellow-500 transition-colors duration-200 transform hover:scale-110"
+                        onClick={() => {
+                          setCurrentSaveMessageId(msg.id)
+                          setShowSaveModal(true)
+                        }}
+                        title="Save to Saved Responses"
+                      />
+                      <FaShareSquare
+                        className="cursor-pointer hover:text-blue-500 transition-colors duration-200 transform hover:scale-110"
+                        onClick={() => handleShareToCollabZone(msg.id)}
+                        title="Share to Collab Zone"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+            ))
+          )}
+          <div ref={chatEndRef} />
+        </div>
+      </div>
+
+      {/* File Upload Preview */}
+      {uploadedFiles.length > 0 && (
+        <div className="px-4 pb-3 flex-shrink-0">
           <div className="max-w-4xl mx-auto">
-            <div className="flex items-center gap-2 bg-gray-50 dark:bg-slate-700 rounded-2xl p-2">
-              
-              {/* ✅ TINY: Upload Files Button */}
-              <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  if (!isLoading && !isStreaming && promptsUsed < promptLimit && fileInputRef.current) {
-                    fileInputRef.current.click()
-                  }
-                }}
-                disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                className={`p-2 rounded-xl flex items-center gap-1 text-xs font-medium transition-all duration-200 whitespace-nowrap ${
-                  isLoading || isStreaming || promptsUsed >= promptLimit
-                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-                    : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 shadow-sm hover:shadow-md transform hover:scale-[1.05]'
-                }`}
-              >
-                <FaPaperclip className="w-3 h-3" />
-                <span className="hidden sm:inline">Upload</span>
-              </button>
+            <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3 border border-gray-200 dark:border-gray-600">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  📎 Attached Files ({uploadedFiles.length})
+                </h4>
+                <button
+                  onClick={() => setUploadedFiles([])}
+                  className="text-xs text-red-600 hover:text-red-800 font-medium"
+                >
+                  Clear All
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {uploadedFiles.map((file) => (
+                  <FilePreview
+                    key={file.id}
+                    file={file}
+                    onRemove={() => removeFile(file.id)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-              {/* ✅ TINY: Create Image Button */}
-              <button
-                onClick={() => {
-                  if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
-                    setShowImageModal(true)
-                  } else {
-                    router.push('/change-plan')
-                  }
-                }}
-                className={`p-2 rounded-xl flex items-center gap-1 text-xs font-medium transition-all duration-200 whitespace-nowrap ${
-                  (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
-                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 shadow-sm hover:shadow-md transform hover:scale-[1.05]'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'
-                }`}
-              >
-                <FaPalette className="w-3 h-3" />
-                <span className="hidden sm:inline">
-                  {(imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) ? 'Image' : 'Upgrade'}
-                </span>
-              </button>
+      {/* ✅ FIXED: Input Section - Pinned to bottom with no gaps */}
+      <div className="bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 p-3 shadow-2xl">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-2 bg-gray-50 dark:bg-slate-700 rounded-2xl p-2">
+            
+            {/* ✅ TINY: Upload Files Button */}
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                if (!isLoading && !isStreaming && promptsUsed < promptLimit && fileInputRef.current) {
+                  fileInputRef.current.click()
+                }
+              }}
+              disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+              className={`p-2 rounded-xl flex items-center gap-1 text-xs font-medium transition-all duration-200 whitespace-nowrap ${
+                isLoading || isStreaming || promptsUsed >= promptLimit
+                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                  : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 shadow-sm hover:shadow-md transform hover:scale-[1.05]'
+              }`}
+            >
+              <FaPaperclip className="w-3 h-3" />
+              <span className="hidden sm:inline">Upload</span>
+            </button>
 
-              {/* ✅ MAIN: Input Field - Takes up most space */}
-              <textarea
-                ref={textareaRef}
-                rows={1}
-                className="flex-1 px-3 py-2 border-0 bg-white dark:bg-slate-800 text-textPrimary dark:text-white resize-none text-sm focus:outline-none rounded-xl min-h-[40px] max-h-[120px] transition-all duration-200"
-                placeholder="Message Growfly..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    handleSubmit()
-                  }
-                }}
-                disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-              />
+            {/* ✅ TINY: Create Image Button */}
+            <button
+              onClick={() => {
+                if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
+                  setShowImageModal(true)
+                } else {
+                  router.push('/change-plan')
+                }
+              }}
+              className={`p-2 rounded-xl flex items-center gap-1 text-xs font-medium transition-all duration-200 whitespace-nowrap ${
+                (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
+                  ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 shadow-sm hover:shadow-md transform hover:scale-[1.05]'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              <FaPalette className="w-3 h-3" />
+              <span className="hidden sm:inline">
+                {(imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) ? 'Image' : 'Upgrade'}
+              </span>
+            </button>
 
-              {/* ✅ ALWAYS VISIBLE: Send Button */}
-              <button
-                onClick={(e) => {
+            {/* ✅ MAIN: Input Field - Takes up most space */}
+            <textarea
+              ref={textareaRef}
+              rows={1}
+              className="flex-1 px-3 py-2 border-0 bg-white dark:bg-slate-800 text-textPrimary dark:text-white resize-none text-sm focus:outline-none rounded-xl min-h-[40px] max-h-[120px] transition-all duration-200"
+              placeholder="Message Growfly..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault()
                   handleSubmit()
-                }}
-                disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || promptsUsed >= promptLimit}
-                className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white p-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none flex-shrink-0"
-              >
-                {isLoading || isStreaming ? (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                  </svg>
-                )}
-              </button>
-              
-              <input
-                type="file"
-                accept="image/*,application/pdf,.txt,.doc,.docx"
-                onChange={(e) => {
-                  const files = e.target.files
-                  if (files) handleFileSelect(files)
-                }}
-                className="hidden"
-                ref={fileInputRef}
-                disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                multiple
-              />
-            </div>
+                }
+              }}
+              disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+            />
 
-            {/* ✅ COMPACT: Usage Info - Small text below input */}
-            <div className="text-center mt-1">
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                {promptsUsed}/{promptLimit} prompts used
-              </span>
-            </div>
+            {/* ✅ ALWAYS VISIBLE: Send Button */}
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                handleSubmit()
+              }}
+              disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || promptsUsed >= promptLimit}
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white p-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none flex-shrink-0"
+            >
+              {isLoading || isStreaming ? (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                </svg>
+              )}
+            </button>
+            
+            <input
+              type="file"
+              accept="image/*,application/pdf,.txt,.doc,.docx"
+              onChange={(e) => {
+                const files = e.target.files
+                if (files) handleFileSelect(files)
+              }}
+              className="hidden"
+              ref={fileInputRef}
+              disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+              multiple
+            />
           </div>
         </div>
       </div>
