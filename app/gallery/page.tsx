@@ -14,7 +14,8 @@ import {
   FaRegHeart,
   FaBookmark,
   FaRegBookmark,
-  FaShare
+  FaShare,
+  FaExclamationTriangle
 } from 'react-icons/fa'
 
 // Get API URL from environment
@@ -29,6 +30,83 @@ interface GeneratedImage {
   createdAt: string
   isPinned?: boolean
   isFavorite?: boolean
+}
+
+// ✅ FIXED: Safe Image component with better error handling and Set fix
+const SafeImage: React.FC<{ 
+  src: string; 
+  alt: string; 
+  className?: string;
+  onError?: () => void;
+  onLoad?: () => void;
+}> = ({ src, alt, className, onError, onLoad }) => {
+  const [error, setError] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [retryCount, setRetryCount] = useState(0)
+  const maxRetries = 2
+
+  const handleError = () => {
+    if (retryCount < maxRetries) {
+      setRetryCount(prev => prev + 1)
+      setLoading(true)
+      setError(false)
+      // Retry with cache busting
+      const img = new Image()
+      img.onload = handleLoad
+      img.onerror = () => setError(true)
+      img.src = `${src}?retry=${retryCount + 1}&t=${Date.now()}`
+    } else {
+      setError(true)
+      setLoading(false)
+      onError?.()
+    }
+  }
+
+  const handleLoad = () => {
+    setLoading(false)
+    setError(false)
+    onLoad?.()
+  }
+
+  if (error) {
+    return (
+      <div className={`${className} bg-gradient-to-br from-gray-100 to-gray-200 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 dark:border-slate-600`}>
+        <div className="text-center p-6">
+          <FaExclamationTriangle className="text-red-400 text-3xl mx-auto mb-3" />
+          <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Image unavailable</p>
+          <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">URL may have expired</p>
+          <button
+            onClick={() => {
+              setRetryCount(0)
+              setError(false)
+              setLoading(true)
+            }}
+            className="mt-2 text-xs text-blue-600 hover:text-blue-800 underline"
+          >
+            Retry loading
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="relative">
+      {loading && (
+        <div className={`${className} bg-gradient-to-br from-gray-100 to-gray-200 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center rounded-2xl animate-pulse`}>
+          <FaSpinner className="text-gray-400 text-2xl animate-spin" />
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={`${className} ${loading ? 'opacity-0 absolute' : 'opacity-100'} transition-opacity duration-300`}
+        onError={handleError}
+        onLoad={handleLoad}
+        loading="lazy"
+      />
+    </div>
+  )
 }
 
 // ✅ Enhanced Image Detail Modal with rounded corners
@@ -60,7 +138,7 @@ const ImageDetailModal: React.FC<{
 
           {/* Image */}
           <div className="mb-6">
-            <img
+            <SafeImage
               src={image.url}
               alt={image.originalPrompt}
               className="w-full rounded-2xl shadow-lg"
@@ -197,6 +275,8 @@ export default function GalleryPage() {
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [imageToDelete, setImageToDelete] = useState<string | null>(null)
+  // ✅ FIXED: Using Array instead of Set to avoid TypeScript iteration error
+  const [imageLoadErrors, setImageLoadErrors] = useState<string[]>([])
   
   // ✅ Search and filter states
   const [searchQuery, setSearchQuery] = useState('')
@@ -207,7 +287,7 @@ export default function GalleryPage() {
   const router = useRouter()
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
 
-  // ✅ Enhanced image loading
+  // ✅ Enhanced image loading with better error handling and retry logic
   useEffect(() => {
     if (!token) {
       router.push('/onboarding')
@@ -217,6 +297,7 @@ export default function GalleryPage() {
     const fetchImages = async () => {
       try {
         setLoading(true)
+        setError(null)
         
         const response = await fetch(`${API_BASE_URL}/api/dalle/gallery`, {
           headers: { 
@@ -231,22 +312,46 @@ export default function GalleryPage() {
 
         const data = await response.json()
         
-        // Transform the data to match our interface
+        // ✅ IMPROVED: Better data transformation with fallbacks
         const transformedImages = (data.images || []).map((img: any) => ({
-          id: img.id,
+          id: img.id || `img_${Date.now()}_${Math.random()}`,
           url: img.imageUrl || img.url,
-          originalPrompt: img.prompt || img.originalPrompt || 'No description',
+          originalPrompt: img.prompt || img.originalPrompt || 'No description available',
           size: img.size || '1024x1024',
-          createdAt: img.createdAt,
+          createdAt: img.createdAt || new Date().toISOString(),
           isPinned: false, // You can add this to your backend later
           isFavorite: false // You can add this to your backend later
         }))
 
-        setImages(transformedImages)
+        // ✅ NEW: Validate image URLs before setting state
+        const validImages = transformedImages.filter((img: GeneratedImage) => {
+          if (!img.url || img.url === 'undefined' || img.url === 'null') {
+            console.warn('Invalid image URL found:', img)
+            return false
+          }
+          return true
+        })
+
+        setImages(validImages)
         setError(null)
+        
+        // ✅ NEW: Pre-load a few images to check for URL validity
+        validImages.slice(0, 5).forEach((img: GeneratedImage) => {
+          const testImg = new Image()
+          testImg.onload = () => {
+            console.log('✅ Image loaded successfully:', img.id)
+          }
+          testImg.onerror = () => {
+            console.warn('❌ Image failed to load:', img.id, img.url)
+            // ✅ FIXED: Using Array instead of Set
+            setImageLoadErrors(prev => prev.includes(img.id) ? prev : [...prev, img.id])
+          }
+          testImg.src = img.url
+        })
+
       } catch (err) {
         console.error('❌ Failed to fetch images:', err)
-        setError(err instanceof Error ? err.message : 'Failed to load images')
+        setError(err instanceof Error ? err.message : 'Failed to load images. Please check your connection and try again.')
       } finally {
         setLoading(false)
       }
@@ -384,6 +489,11 @@ export default function GalleryPage() {
     }
   }
 
+  // ✅ FIXED: Handle image load errors using Array
+  const handleImageError = (imageId: string) => {
+    setImageLoadErrors(prev => prev.includes(imageId) ? prev : [...prev, imageId])
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-gray-900 dark:text-white transition-colors duration-300">
       <div className="p-6 space-y-6">
@@ -401,6 +511,11 @@ export default function GalleryPage() {
           </div>
           <div className="text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-slate-800 px-6 py-3 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-lg">
             {filteredAndSortedImages.length} of {images.length} {images.length === 1 ? 'image' : 'images'}
+            {imageLoadErrors.length > 0 && (
+              <div className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                {imageLoadErrors.length} image{imageLoadErrors.length === 1 ? '' : 's'} failed to load
+              </div>
+            )}
           </div>
         </div>
 
@@ -470,7 +585,7 @@ export default function GalleryPage() {
           </div>
         </div>
 
-        {/* Error Message */}
+        {/* ✅ IMPROVED: Error Message with retry option */}
         {error && (
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl text-red-700 dark:text-red-300 text-sm relative">
             <button 
@@ -479,7 +594,20 @@ export default function GalleryPage() {
             >
               ✕
             </button>
-            <strong>⚠️ {error}</strong>
+            <div className="flex items-start gap-3">
+              <FaExclamationTriangle className="text-red-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <strong>⚠️ {error}</strong>
+                <div className="mt-2">
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                  >
+                    Retry Loading
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -489,6 +617,7 @@ export default function GalleryPage() {
             <div className="text-center">
               <FaSpinner className="animate-spin text-purple-500 text-4xl mb-4 mx-auto" />
               <p className="text-gray-600 dark:text-gray-400">Loading your images...</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">This may take a moment if you have many images</p>
             </div>
           </div>
         ) : filteredAndSortedImages.length === 0 ? (
@@ -516,7 +645,7 @@ export default function GalleryPage() {
             </button>
           </div>
         ) : (
-          /* ✅ Enhanced Image Grid with rounded corners */
+          /* ✅ Enhanced Image Grid with improved error handling */
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredAndSortedImages.map((image) => (
               <div
@@ -528,10 +657,11 @@ export default function GalleryPage() {
                   className="relative aspect-square cursor-pointer overflow-hidden"
                   onClick={() => handleImageClick(image)}
                 >
-                  <img
+                  <SafeImage
                     src={image.url}
                     alt={image.originalPrompt}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    onError={() => handleImageError(image.id)}
                   />
                   
                   {/* Overlay on hover */}
@@ -549,6 +679,12 @@ export default function GalleryPage() {
                     {image.isFavorite && (
                       <div className="bg-red-500 text-white p-2 rounded-full shadow-lg">
                         <FaHeart className="w-3 h-3" />
+                      </div>
+                    )}
+                    {/* ✅ FIXED: Using Array.includes instead of Set.has */}
+                    {imageLoadErrors.includes(image.id) && (
+                      <div className="bg-orange-500 text-white p-2 rounded-full shadow-lg" title="Image failed to load">
+                        <FaExclamationTriangle className="w-3 h-3" />
                       </div>
                     )}
                   </div>

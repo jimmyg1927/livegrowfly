@@ -40,7 +40,7 @@ type Message = {
   imageUrl?: string
   followUps?: string[]
   files?: UploadedFile[]
-  generatedImage?: GeneratedImage // ✅ NEW: For generated images
+  generatedImage?: GeneratedImage
 }
 
 interface UploadedFile {
@@ -93,6 +93,61 @@ const PROMPT_LIMITS: Record<string, number> = {
   free: 20,
   personal: 400,
   business: 2000,
+}
+
+// ✅ IMPROVED: Persistent storage keys
+const STORAGE_KEYS = {
+  DASHBOARD_IMAGES: 'growfly_dashboard_images',
+  DASHBOARD_MESSAGES: 'growfly_dashboard_messages'
+}
+
+// ✅ NEW: Image error handling component
+const SafeImage: React.FC<{ 
+  src: string; 
+  alt: string; 
+  className?: string;
+  onError?: () => void;
+}> = ({ src, alt, className, onError }) => {
+  const [error, setError] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  const handleError = () => {
+    setError(true)
+    setLoading(false)
+    onError?.()
+  }
+
+  const handleLoad = () => {
+    setLoading(false)
+  }
+
+  if (error) {
+    return (
+      <div className={`${className} bg-gray-200 dark:bg-slate-700 flex items-center justify-center rounded-xl border-2 border-dashed border-gray-300 dark:border-slate-600`}>
+        <div className="text-center p-4">
+          <FaImages className="text-gray-400 text-2xl mx-auto mb-2" />
+          <p className="text-xs text-gray-500">Image unavailable</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="relative">
+      {loading && (
+        <div className={`${className} bg-gray-200 dark:bg-slate-700 flex items-center justify-center rounded-xl animate-pulse`}>
+          <FaSpinner className="text-gray-400 text-xl animate-spin" />
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={`${className} ${loading ? 'opacity-0 absolute' : 'opacity-100'} transition-opacity duration-300`}
+        onError={handleError}
+        onLoad={handleLoad}
+      />
+    </div>
+  )
 }
 
 // File Preview Component
@@ -149,8 +204,8 @@ const ImageGenerationModal: React.FC<{
   const [size, setSize] = useState('1024x1024')
   const [style, setStyle] = useState('vivid')
   const [isGenerating, setIsGenerating] = useState(false)
-  const [showSuccess, setShowSuccess] = useState(false) // ✅ NEW: Success state
-  const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null) // ✅ NEW: Store generated image
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null)
   const [error, setError] = useState('')
   const [imageUsage, setImageUsage] = useState<ImageUsage | null>(null)
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
@@ -199,7 +254,7 @@ const ImageGenerationModal: React.FC<{
     }
   }, [open, token])
 
-  // ✅ NEW: Reset states when modal opens
+  // Reset states when modal opens
   useEffect(() => {
     if (open) {
       setShowSuccess(false)
@@ -265,7 +320,7 @@ const ImageGenerationModal: React.FC<{
       setGeneratedImage(imageData)
       setShowSuccess(true)
 
-      // ✅ NEW: Wait a moment to show success, then add to chat and close
+      // Wait a moment to show success, then add to chat and close
       setTimeout(() => {
         onImageGenerated(imageData)
         setPrompt('')
@@ -336,7 +391,7 @@ const ImageGenerationModal: React.FC<{
             </button>
           </div>
 
-          {/* ✅ NEW: Success State */}
+          {/* Success State */}
           {showSuccess && generatedImage ? (
             <div className="text-center py-8">
               <div className="mb-6">
@@ -352,7 +407,7 @@ const ImageGenerationModal: React.FC<{
               </div>
               
               <div className="mb-6">
-                <img
+                <SafeImage
                   src={generatedImage.url}
                   alt={generatedImage.originalPrompt}
                   className="w-full max-w-sm mx-auto rounded-xl shadow-lg"
@@ -365,7 +420,7 @@ const ImageGenerationModal: React.FC<{
             </div>
           ) : (
             <>
-              {/* Explanatory text */}
+              {/* Main content when not showing success */}
               <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
                 <p className="text-sm text-blue-800 dark:text-blue-300">
                   <strong>🎨 Create professional images for your business</strong><br />
@@ -576,30 +631,30 @@ const ImageGenerationModal: React.FC<{
   )
 }
 
-// Quick categories for collapsible bar
+// ✅ IMPROVED: Compact Quick Start categories
 const QUICK_CATEGORIES = [
   {
     icon: <FaChartLine className="text-emerald-500" />,
     title: "Marketing Ideas",
-    description: "Boost your brand and reach new customers",
+    description: "Boost your brand and reach customers",
     prompt: "What are some effective marketing strategies for my business? Please consider my brand settings and target market.",
   },
   {
     icon: <FaBrain className="text-blue-500" />,
-    title: "Business & Process Improvement",
-    description: "Streamline operations and increase efficiency",
+    title: "Business Improvement",
+    description: "Streamline operations efficiently",
     prompt: "Help me identify areas for business improvement and process optimisation in my company.",
   },
   {
     icon: <FaUsers className="text-purple-500" />,
-    title: "Document Creation & Editing",
-    description: "Professional documents and content creation",
+    title: "Document Creation",
+    description: "Professional content creation",
     prompt: "I need help creating or editing business documents. What type of document would you like assistance with?",
   },
   {
     icon: <FaRocket className="text-amber-500" />,
-    title: "How can Growfly improve my output today?",
-    description: "Don't know where to start today? Ask Growfly for some ideas!",
+    title: "Improve My Output Today",
+    description: "Get personalized productivity tips!",
     prompt: "I'm looking for ways to improve my productivity and output today. Can you give me some personalized suggestions based on my business needs?",
   }
 ]
@@ -640,6 +695,65 @@ function DashboardContent() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const scrollTimeoutRef = useRef<NodeJS.Timeout>()
 
+  // ✅ NEW: Save generated images to persistent storage
+  const saveImageToPersistentStorage = (image: GeneratedImage) => {
+    try {
+      const existingImages = JSON.parse(localStorage.getItem(STORAGE_KEYS.DASHBOARD_IMAGES) || '[]')
+      const updatedImages = [image, ...existingImages].slice(0, 50) // Keep only latest 50 images
+      localStorage.setItem(STORAGE_KEYS.DASHBOARD_IMAGES, JSON.stringify(updatedImages))
+    } catch (error) {
+      console.error('Failed to save image to storage:', error)
+    }
+  }
+
+  // ✅ NEW: Load generated images from persistent storage
+  const loadImagesFromPersistentStorage = () => {
+    try {
+      const savedImages = JSON.parse(localStorage.getItem(STORAGE_KEYS.DASHBOARD_IMAGES) || '[]')
+      setGeneratedImages(savedImages)
+    } catch (error) {
+      console.error('Failed to load images from storage:', error)
+    }
+  }
+
+  // ✅ NEW: Save messages with generated images to restore them
+  const saveMessagesToPersistentStorage = (messages: Message[]) => {
+    try {
+      // Only save messages with generated images
+      const imagesToRestore = messages.filter(m => m.generatedImage).slice(0, 10)
+      localStorage.setItem(STORAGE_KEYS.DASHBOARD_MESSAGES, JSON.stringify(imagesToRestore))
+    } catch (error) {
+      console.error('Failed to save messages to storage:', error)
+    }
+  }
+
+  // ✅ NEW: Load persistent messages on mount
+  useEffect(() => {
+    loadImagesFromPersistentStorage()
+    
+    try {
+      const savedMessages = JSON.parse(localStorage.getItem(STORAGE_KEYS.DASHBOARD_MESSAGES) || '[]')
+      if (savedMessages.length > 0) {
+        // Add saved image messages to the beginning if we don't have messages yet
+        setMessages(prev => {
+          if (prev.length === 0) {
+            return savedMessages
+          }
+          return prev
+        })
+      }
+    } catch (error) {
+      console.error('Failed to load persistent messages:', error)
+    }
+  }, [])
+
+  // ✅ NEW: Save messages whenever they change and include generated images
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveMessagesToPersistentStorage(messages)
+    }
+  }, [messages])
+
   // Helper function for creating files from base64 previews
   const createFileFromPreview = (preview: string, name: string, type: string): File => {
     const arr = preview.split(',')
@@ -655,7 +769,7 @@ function DashboardContent() {
     return new File([u8arr], name, { type: mime })
   }
 
-  // ✅ NEW: Clear conversations (but don't lose persistent ones)
+  // Clear conversations (but don't lose persistent ones)
   const createNewConversation = () => {
     setMessages([])
     setError(null)
@@ -758,7 +872,19 @@ function DashboardContent() {
         if (response.ok) {
           const data = await response.json()
           if (data.messages && data.messages.length > 0) {
-            setMessages(data.messages)
+            setMessages(prev => {
+              // Merge with any persistent image messages, but prioritize server messages
+              const persistentImages = prev.filter(m => m.generatedImage)
+              const serverMessages = data.messages
+              
+              // Combine and deduplicate by ID
+              const combined = [...persistentImages, ...serverMessages]
+              const unique = combined.filter((msg, index, arr) => 
+                arr.findIndex(m => m.id === msg.id) === index
+              )
+              
+              return unique.slice(0, 10) // Keep only latest 10
+            })
           }
         }
       } catch (err) {
@@ -769,7 +895,7 @@ function DashboardContent() {
     loadDashboardConversations()
   }, [token])
 
-  // ✅ UPDATED: Auto-resize textarea with ChatGPT-style behavior
+  // Auto-resize textarea with ChatGPT-style behavior
   useEffect(() => {
     if (textareaRef.current) {
       // Reset height to get accurate scrollHeight
@@ -864,7 +990,7 @@ function DashboardContent() {
     setUploadedFiles(prev => prev.filter(f => f.id !== fileId))
   }
 
-  // ✅ UPDATED: Fetch only 1 follow-up instead of 2
+  // Fetch only 1 follow-up instead of 2
   const fetchFollowUps = async (text: string): Promise<string[]> => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/ai/followups`, {
@@ -878,12 +1004,12 @@ function DashboardContent() {
       if (!res.ok) throw new Error('Follow-ups fetch failed')
       const data = await res.json()
       const rawFollowUps = (data.followUps as string[]) || []
-      const unique = Array.from(new Set(rawFollowUps)).slice(0, 1) // ✅ CHANGED: Only take 1 follow-up
+      const unique = Array.from(new Set(rawFollowUps)).slice(0, 1) // Only take 1 follow-up
       return unique.length > 0
         ? unique
-        : ['Tell me more about this'] // ✅ CHANGED: Single fallback
+        : ['Tell me more about this'] // Single fallback
     } catch {
-      return ['How can I implement this?'] // ✅ CHANGED: Single fallback
+      return ['How can I implement this?'] // Single fallback
     }
   }
 
@@ -1274,11 +1400,12 @@ function DashboardContent() {
     }
   }
 
-  // ✅ NEW: Handle image generation and add to chat
+  // ✅ UPDATED: Handle image generation and add to chat with persistence
   const handleImageGenerated = (image: GeneratedImage) => {
     setGeneratedImages(prev => [image, ...prev])
+    saveImageToPersistentStorage(image)
     
-    // ✅ ADD: Create a new assistant message with the generated image
+    // Create a new assistant message with the generated image
     const imageMessageId = `img_${Date.now()}`
     const imageMessage: Message = {
       id: imageMessageId,
@@ -1313,15 +1440,22 @@ function DashboardContent() {
     }
   }
 
-  // ✅ NEW: Handle image download from chat
+  // ✅ IMPROVED: Handle image download from chat with error handling
   const handleDownloadImage = (image: GeneratedImage) => {
-    const link = document.createElement('a')
-    link.href = image.url
-    link.download = `growfly-${image.id}.png`
-    link.click()
+    try {
+      const link = document.createElement('a')
+      link.href = image.url
+      link.download = `growfly-${image.id}.png`
+      link.target = '_blank' // Open in new tab as fallback
+      link.click()
+    } catch (error) {
+      console.error('Failed to download image:', error)
+      // Fallback - open in new tab
+      window.open(image.url, '_blank')
+    }
   }
 
-  // ✅ NEW: Handle image sharing
+  // Handle image sharing
   const handleShareImage = (image: GeneratedImage) => {
     if (navigator.share) {
       navigator.share({
@@ -1344,20 +1478,20 @@ function DashboardContent() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="flex-1 overflow-y-auto p-4">
           
-          {/* Enhanced Collapsible Categories Bar */}
-          <div className="mb-4">
-            <div className="text-center mb-3">
-              <h3 className="text-xl font-bold text-blue-500 mb-1">
+          {/* ✅ IMPROVED: Compact Collapsible Categories Bar */}
+          <div className="mb-3">
+            <div className="text-center mb-2">
+              <h3 className="text-lg font-bold text-blue-500 mb-1">
                 Quick Start
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              <p className="text-xs text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
                 Find out how we can help you today
               </p>
             </div>
             
             <button
               onClick={() => setShowCategories(!showCategories)}
-              className="flex items-center justify-center gap-2 w-full text-sm font-medium text-white hover:text-white transition-all duration-200 mb-4 py-3 px-4 rounded-xl bg-blue-500 hover:bg-blue-600 border border-blue-400 hover:border-blue-500 backdrop-blur-sm shadow-lg hover:shadow-xl"
+              className="flex items-center justify-center gap-2 w-full text-sm font-medium text-white hover:text-white transition-all duration-200 mb-2 py-2 px-3 rounded-lg bg-blue-500 hover:bg-blue-600 border border-blue-400 hover:border-blue-500 backdrop-blur-sm shadow-md hover:shadow-lg"
             >
               {showCategories ? (
                 <>
@@ -1373,7 +1507,7 @@ function DashboardContent() {
             </button>
             
             {showCategories && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 p-3 bg-gradient-to-br from-blue-50/80 via-indigo-50/60 to-purple-50/80 dark:from-slate-800/80 dark:via-slate-700/60 dark:to-slate-800/80 rounded-2xl border border-blue-200/40 dark:border-slate-600/40 backdrop-blur-sm shadow-lg">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 p-3 bg-gradient-to-br from-blue-50/80 via-indigo-50/60 to-purple-50/80 dark:from-slate-800/80 dark:via-slate-700/60 dark:to-slate-800/80 rounded-xl border border-blue-200/40 dark:border-slate-600/40 backdrop-blur-sm shadow-md">
                 {QUICK_CATEGORIES.map((category, index) => (
                   <button
                     key={index}
@@ -1382,9 +1516,9 @@ function DashboardContent() {
                       handleSubmit(category.prompt)
                     }}
                     disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                    className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/95 dark:bg-slate-800/95 border border-gray-200/70 dark:border-slate-700/70 hover:border-blue-300/70 dark:hover:border-blue-500/70 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none backdrop-blur-sm hover:bg-blue-50/30 dark:hover:bg-slate-700/95"
+                    className="group flex flex-col items-center gap-1 p-2 rounded-xl bg-white/95 dark:bg-slate-800/95 border border-gray-200/70 dark:border-slate-700/70 hover:border-blue-300/70 dark:hover:border-blue-500/70 hover:shadow-md transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none backdrop-blur-sm hover:bg-blue-50/30 dark:hover:bg-slate-700/95"
                   >
-                    <div className="text-xl group-hover:scale-110 transition-transform duration-300">
+                    <div className="text-lg group-hover:scale-110 transition-transform duration-300">
                       {category.icon}
                     </div>
                     <div className="text-center space-y-1">
@@ -1496,32 +1630,36 @@ function DashboardContent() {
                     />
                   )}
 
-                  {/* ✅ NEW: Display generated images */}
+                  {/* ✅ IMPROVED: Display generated images with better error handling */}
                   {msg.generatedImage && (
                     <div className="mb-4">
-                      <img
+                      <SafeImage
                         src={msg.generatedImage.url}
                         alt={msg.generatedImage.originalPrompt}
                         className="w-full max-w-lg rounded-xl shadow-lg"
+                        onError={() => {
+                          console.error('Failed to load generated image:', msg.generatedImage?.url)
+                        }}
                       />
+                      {/* ✅ IMPROVED: Enhanced image action buttons with Growfly branding */}
                       <div className="mt-3 flex gap-2">
                         <button
                           onClick={() => handleDownloadImage(msg.generatedImage!)}
-                          className="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                          className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                         >
                           <FaFileDownload />
                           Download
                         </button>
                         <button
                           onClick={() => router.push('/gallery')}
-                          className="flex-1 bg-purple-500 hover:bg-purple-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                          className="flex-1 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                         >
                           <FaImages />
                           Gallery
                         </button>
                         <button
                           onClick={() => handleShareImage(msg.generatedImage!)}
-                          className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                          className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                         >
                           <FaShareSquare />
                           Share
@@ -1681,9 +1819,56 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* Input Section - ChatGPT style with single line that expands */}
+        {/* ✅ IMPROVED: Always Visible Input Section - Enhanced design with always visible buttons */}
         <div className="bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 p-4 shadow-2xl flex-shrink-0">
           <div className="max-w-4xl mx-auto">
+            {/* ✅ NEW: Always visible action buttons row */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div
+                  onClick={(e) => {
+                    e.preventDefault()
+                    if (!isLoading && !isStreaming && promptsUsed < promptLimit && fileInputRef.current) {
+                      fileInputRef.current.click()
+                    }
+                  }}
+                  className={`cursor-pointer border-2 px-4 py-2 rounded-2xl flex items-center gap-2 transition-all duration-200 ${
+                    isLoading || isStreaming || promptsUsed >= promptLimit
+                      ? 'border-gray-300 dark:border-gray-600 text-gray-400 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
+                      : 'border-blue-500 text-blue-600 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 hover:border-blue-600 shadow-lg hover:shadow-xl transform hover:scale-[1.02]'
+                  }`}
+                >
+                  <FaPaperclip className="text-sm" />
+                  <span className="text-sm font-medium">Upload Files</span>
+                </div>
+
+                <button
+                  onClick={() => {
+                    if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
+                      setShowImageModal(true)
+                    } else {
+                      router.push('/change-plan')
+                    }
+                  }}
+                  className={`border-2 px-4 py-2 rounded-2xl flex items-center gap-2 transition-all duration-200 ${
+                    (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
+                      ? 'border-purple-500 text-purple-600 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 hover:border-purple-600 shadow-lg hover:shadow-xl transform hover:scale-[1.02]'
+                      : 'border-gray-300 dark:border-gray-600 text-gray-400 cursor-pointer hover:border-gray-400 bg-gray-50 dark:bg-gray-800'
+                  }`}
+                >
+                  <FaPalette className="text-sm" />
+                  <span className="text-sm font-medium">
+                    {(imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) ? 'Create Image' : 'Upgrade for Images'}
+                  </span>
+                </button>
+              </div>
+              
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                {promptsUsed}/{promptLimit} prompts used
+              </div>
+            </div>
+
+            {/* Main input area */}
             <div className="bg-gray-50 dark:bg-slate-700 rounded-2xl p-3 shadow-inner">
               <textarea
                 ref={textareaRef}
@@ -1704,46 +1889,7 @@ function DashboardContent() {
                   maxHeight: '96px'
                 }}
               />
-              <div className="flex justify-between items-center mt-3">
-                <div className="flex items-center gap-2">
-                  <div
-                    onClick={(e) => {
-                      e.preventDefault()
-                      if (!isLoading && !isStreaming && promptsUsed < promptLimit && fileInputRef.current) {
-                        fileInputRef.current.click()
-                      }
-                    }}
-                    className={`cursor-pointer border-2 px-3 py-2 rounded-xl flex items-center gap-2 transition-all duration-200 ${
-                      isLoading || isStreaming || promptsUsed >= promptLimit
-                        ? 'border-gray-300 dark:border-gray-600 text-gray-400 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
-                        : 'border-blue-500 text-blue-600 bg-blue-50 hover:bg-blue-100 hover:border-blue-600 shadow-sm hover:shadow-md transform hover:scale-[1.02]'
-                    }`}
-                  >
-                    <FaPaperclip className="text-sm" />
-                    <span className="text-sm font-medium">Upload</span>
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
-                        setShowImageModal(true)
-                      } else {
-                        router.push('/change-plan')
-                      }
-                    }}
-                    className={`border-2 px-3 py-2 rounded-xl flex items-center gap-2 transition-all duration-200 ${
-                      (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
-                        ? 'border-purple-500 text-purple-600 bg-purple-50 hover:bg-purple-100 hover:border-purple-600 shadow-sm hover:shadow-md transform hover:scale-[1.02]'
-                        : 'border-gray-300 dark:border-gray-600 text-gray-400 cursor-pointer hover:border-gray-400 bg-gray-50 dark:bg-gray-800'
-                    }`}
-                  >
-                    <FaPalette className="text-sm" />
-                    <span className="text-sm font-medium">
-                      {(imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) ? 'Create Image' : 'Upgrade'}
-                    </span>
-                  </button>
-                </div>
-                
+              <div className="flex justify-end items-center mt-3">
                 <div className="flex items-center gap-2">
                   {input.length > 0 && (
                     <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -1756,7 +1902,7 @@ function DashboardContent() {
                       handleSubmit()
                     }}
                     disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || promptsUsed >= promptLimit}
-                    className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white font-semibold px-4 py-2 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
+                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold px-4 py-2 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
                   >
                     {isLoading || isStreaming ? (
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>

@@ -29,17 +29,6 @@ function getEffectiveSubscription(user) {
   return hasValidSubscription(user) ? user.subscriptionType : 'free'
 }
 
-function getPromptLimit(user) {
-  if (!user) return 20
-  const effectivePlan = getEffectiveSubscription(user)
-  switch (effectivePlan?.toLowerCase()) {
-    case 'personal': return 400
-    case 'business': return 2000  
-    case 'enterprise': return 999999
-    default: return 20
-  }
-}
-
 function getXPLabel(xp) {
   if (xp < 25) return { label: 'Curious Cat', icon: '🐱', color: '#94A3B8' }
   if (xp < 150) return { label: 'Nerdlet', icon: '🧪', color: '#60A5FA' }
@@ -124,22 +113,14 @@ export default function Header() {
 
   // ✅ Calculate all values outside JSX
   const effectiveSubscription = getEffectiveSubscription(user)
-  const effectivePromptLimit = getPromptLimit(user)
   const xpInfo = getXPLabel(user.totalXP || 0)
   const progressInfo = getXPProgress(user.totalXP || 0)
   const subscriptionBadge = getSubscriptionBadge(user)
 
-  // ✅ Pre-calculate all percentages and styles
-  const promptsUsed = user.promptsUsed || 0
-  const imagesUsed = user.imagesGeneratedToday || 0
+  // ✅ Pre-calculate XP display values
   const totalXP = Math.floor(user.totalXP || 0)
-  
-  const promptPercentage = Math.min((promptsUsed / effectivePromptLimit) * 100, 100)
-  const imagePercentage = Math.min((imagesUsed / 2) * 100, 100)
   const xpPercentage = progressInfo.progress
   
-  const promptProgressStyle = { width: promptPercentage + '%' }
-  const imageProgressStyle = { width: imagePercentage + '%' }
   const xpProgressStyle = {
     width: xpPercentage + '%',
     background: 'linear-gradient(90deg, ' + xpInfo.color + ', ' + xpInfo.color + 'CC)',
@@ -151,7 +132,7 @@ export default function Header() {
   return (
     <header className="w-full bg-gradient-to-r from-[#0f172a] via-[#1e3a8a] to-[#1e40af] text-white flex items-center justify-between px-4 sm:px-8 py-4 shadow-lg border-b border-white/10">
       
-      {/* Left Section - XP Progress */}
+      {/* Left Section - XP Progress Only */}
       <div className="flex items-center gap-4">
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -178,39 +159,8 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Center Section - Usage Stats */}
-      <div className="hidden md:flex items-center gap-6">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-white/80">Prompts Used</span>
-          <div className="flex items-center gap-1">
-            <div className="w-16 h-2 bg-white/20 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-400 transition-all duration-300"
-                style={promptProgressStyle}
-              />
-            </div>
-            <span className="text-sm font-medium text-white">
-              {promptsUsed}/{effectivePromptLimit}
-            </span>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-white/80">Images</span>
-          <div className="flex items-center gap-1">
-            <div className="w-16 h-2 bg-white/20 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-red-400 transition-all duration-300"
-                style={imageProgressStyle}
-              />
-            </div>
-            <span className="text-sm font-medium text-white">
-              {imagesUsed}/2
-            </span>
-          </div>
-        </div>
-      </div>
-
+      {/* ✅ REMOVED: Center Section - Usage Stats (Prompts Used & Images) */}
+      
       {/* Right Section - Actions & Profile */}
       <div className="flex items-center gap-3">
         
@@ -285,7 +235,7 @@ export default function Header() {
                     )}
                   </div>
                   <div className="mt-2 text-xs text-gray-400">
-                    {promptsUsed} / {effectivePromptLimit} prompts used
+                    🎨 View usage details in Settings
                   </div>
                 </div>
                 
