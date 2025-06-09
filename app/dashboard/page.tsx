@@ -632,19 +632,21 @@ const ImageGenerationModal: React.FC<{
   )
 }
 
-// ✅ FIXED: Simple working help button
-const FloatingQuickStart = ({ onPromptSelect, disabled }: { onPromptSelect: (prompt: string) => void; disabled: boolean }) => {
-  const [show, setShow] = useState(false)
+// ✅ NEW: Collapsible Help Button on the right side
+const CollapsibleHelpButton = ({ onPromptSelect, disabled }: { onPromptSelect: (prompt: string) => void; disabled: boolean }) => {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [showModal, setShowModal] = useState(false)
 
   return (
     <>
-      {show && (
+      {/* Modal */}
+      {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-4xl mx-4 w-full max-h-[90vh] overflow-y-auto">
             <div className="p-8">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Quick Start</h2>
-                <button onClick={() => setShow(false)} className="p-2 text-gray-500 hover:text-gray-700">
+                <button onClick={() => setShowModal(false)} className="p-2 text-gray-500 hover:text-gray-700">
                   <HiX className="w-6 h-6" />
                 </button>
               </div>
@@ -652,7 +654,7 @@ const FloatingQuickStart = ({ onPromptSelect, disabled }: { onPromptSelect: (pro
                 <button
                   onClick={() => {
                     onPromptSelect("What are some effective marketing strategies for my business?")
-                    setShow(false)
+                    setShowModal(false)
                   }}
                   disabled={disabled}
                   className="p-6 text-left bg-gray-50 dark:bg-slate-700 rounded-2xl hover:bg-gray-100 dark:hover:bg-slate-600 disabled:opacity-50"
@@ -664,7 +666,7 @@ const FloatingQuickStart = ({ onPromptSelect, disabled }: { onPromptSelect: (pro
                 <button
                   onClick={() => {
                     onPromptSelect("Help me identify areas for business improvement in my company.")
-                    setShow(false)
+                    setShowModal(false)
                   }}
                   disabled={disabled}
                   className="p-6 text-left bg-gray-50 dark:bg-slate-700 rounded-2xl hover:bg-gray-100 dark:hover:bg-slate-600 disabled:opacity-50"
@@ -676,7 +678,7 @@ const FloatingQuickStart = ({ onPromptSelect, disabled }: { onPromptSelect: (pro
                 <button
                   onClick={() => {
                     onPromptSelect("I need help creating business documents. What type would you like to help with?")
-                    setShow(false)
+                    setShowModal(false)
                   }}
                   disabled={disabled}
                   className="p-6 text-left bg-gray-50 dark:bg-slate-700 rounded-2xl hover:bg-gray-100 dark:hover:bg-slate-600 disabled:opacity-50"
@@ -688,7 +690,7 @@ const FloatingQuickStart = ({ onPromptSelect, disabled }: { onPromptSelect: (pro
                 <button
                   onClick={() => {
                     onPromptSelect("Give me personalized suggestions to improve my productivity today.")
-                    setShow(false)
+                    setShowModal(false)
                   }}
                   disabled={disabled}
                   className="p-6 text-left bg-gray-50 dark:bg-slate-700 rounded-2xl hover:bg-gray-100 dark:hover:bg-slate-600 disabled:opacity-50"
@@ -702,17 +704,69 @@ const FloatingQuickStart = ({ onPromptSelect, disabled }: { onPromptSelect: (pro
           </div>
         </div>
       )}
-      
-      <button
-        onClick={() => setShow(true)}
-        disabled={disabled}
-        className="fixed left-0 top-1/2 transform -translate-y-1/2 z-40 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-r-2xl shadow-lg disabled:opacity-50"
-      >
-        <div className="flex items-center gap-2">
-          <FaQuestionCircle className="w-5 h-5" />
-          <span className="text-sm font-medium">Need Help?</span>
+
+      {/* Floating Button - Mobile Optimized */}
+      <div className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-40">
+        <div className="relative">
+          {/* Expanded State - Mobile Responsive */}
+          {isExpanded && (
+            <div className="absolute bottom-16 right-0 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700 p-4 w-72 sm:w-80 max-w-[calc(100vw-2rem)]">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-center text-sm sm:text-base">Need Help Getting Started?</h3>
+              <div className="space-y-2">
+                <button
+                  onClick={() => {
+                    onPromptSelect("What are some effective marketing strategies for my business?")
+                    setIsExpanded(false)
+                  }}
+                  disabled={disabled}
+                  className="w-full p-3 text-left bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-900/30 dark:hover:to-indigo-900/30 disabled:opacity-50 transition-all"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">📈</span>
+                    <span className="text-sm font-medium text-gray-800 dark:text-gray-200">Marketing Ideas</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => {
+                    onPromptSelect("Help me identify areas for business improvement in my company.")
+                    setIsExpanded(false)
+                  }}
+                  disabled={disabled}
+                  className="w-full p-3 text-left bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl hover:from-green-100 hover:to-emerald-100 dark:hover:from-green-900/30 dark:hover:to-emerald-900/30 disabled:opacity-50 transition-all"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🧠</span>
+                    <span className="text-sm font-medium text-gray-800 dark:text-gray-200">Business Improvement</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setShowModal(true)}
+                  disabled={disabled}
+                  className="w-full p-3 text-center bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl hover:from-purple-100 hover:to-blue-100 dark:hover:from-purple-900/30 dark:hover:to-blue-900/30 disabled:opacity-50 transition-all"
+                >
+                  <span className="text-sm font-medium text-purple-700 dark:text-purple-300">See All Options</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Main Button - Mobile Optimized Touch Target */}
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            disabled={disabled}
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white p-3 sm:p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:transform-none min-w-[48px] min-h-[48px]"
+          >
+            <div className="flex items-center gap-1 sm:gap-2">
+              <FaQuestionCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+              {isExpanded ? (
+                <HiChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
+              ) : (
+                <HiChevronUp className="w-3 h-3 sm:w-4 sm:h-4" />
+              )}
+            </div>
+          </button>
         </div>
-      </button>
+      </div>
     </>
   )
 }
@@ -1441,8 +1495,8 @@ function DashboardContent() {
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-textPrimary dark:text-white transition-colors duration-300 flex flex-col">
       
-      {/* Content Area - with bottom padding for fixed input */}
-      <div className="flex-1 overflow-y-auto p-4 pb-32">
+      {/* ✅ MOBILE OPTIMIZED: Content Area - responsive left margin for sidebar */}
+      <div className="flex-1 overflow-y-auto p-4 pb-32 ml-0 md:ml-60">
 
         {/* Error Message */}
         {error && (
@@ -1486,7 +1540,7 @@ function DashboardContent() {
                   Welcome to Growfly!
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Ready to get started? Click the assistance button in the corner or type your question below to begin your first conversation.
+                  Ready to get started? Use the help button in the bottom-right corner or type your question below to begin your first conversation.
                 </p>
                 <div className="text-sm text-blue-600 dark:text-blue-400 font-medium">
                   ✨ Need help getting started? Look for the help button in the bottom-right corner!
@@ -1649,9 +1703,9 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* File Upload Preview - Fixed positioning above input */}
+      {/* ✅ MOBILE OPTIMIZED: File Upload Preview - responsive positioning */}
       {uploadedFiles.length > 0 && (
-        <div className="fixed bottom-24 left-0 right-0 px-4 z-30 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm border-t border-gray-200 dark:border-slate-700">
+        <div className="fixed bottom-24 left-0 right-0 md:left-60 px-4 z-30 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm border-t border-gray-200 dark:border-slate-700">
           <div className="max-w-4xl mx-auto py-3">
             <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3 border border-gray-200 dark:border-gray-600">
               <div className="flex items-center justify-between mb-2">
@@ -1665,7 +1719,7 @@ function DashboardContent() {
                   Clear All
                 </button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {uploadedFiles.map((file) => (
                   <FilePreview
                     key={file.id}
@@ -1679,12 +1733,12 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* ✅ FIXED: Input Section - Fixed at bottom, always visible */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 p-4 shadow-2xl z-20">
+      {/* ✅ MOBILE OPTIMIZED: Input Section - responsive positioning */}
+      <div className="fixed bottom-0 left-0 right-0 md:left-60 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 p-4 shadow-2xl z-20">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-2 bg-gray-50 dark:bg-slate-700 rounded-2xl p-2">
             
-            {/* ✅ TINY: Upload Files Button */}
+            {/* ✅ MOBILE OPTIMIZED: Upload Files Button */}
             <button
               onClick={(e) => {
                 e.preventDefault()
@@ -1693,7 +1747,7 @@ function DashboardContent() {
                 }
               }}
               disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-              className={`p-2 rounded-xl flex items-center gap-1 text-xs font-medium transition-all duration-200 whitespace-nowrap ${
+              className={`p-2 sm:p-2 rounded-xl flex items-center gap-1 text-xs font-medium transition-all duration-200 whitespace-nowrap min-w-[44px] min-h-[44px] ${
                 isLoading || isStreaming || promptsUsed >= promptLimit
                   ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
                   : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 shadow-sm hover:shadow-md transform hover:scale-[1.05]'
@@ -1703,7 +1757,7 @@ function DashboardContent() {
               <span className="hidden sm:inline">Upload</span>
             </button>
 
-            {/* ✅ TINY: Create Image Button */}
+            {/* ✅ MOBILE OPTIMIZED: Create Image Button */}
             <button
               onClick={() => {
                 if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
@@ -1712,7 +1766,7 @@ function DashboardContent() {
                   router.push('/change-plan')
                 }
               }}
-              className={`p-2 rounded-xl flex items-center gap-1 text-xs font-medium transition-all duration-200 whitespace-nowrap ${
+              className={`p-2 sm:p-2 rounded-xl flex items-center gap-1 text-xs font-medium transition-all duration-200 whitespace-nowrap min-w-[44px] min-h-[44px] ${
                 (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
                   ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 shadow-sm hover:shadow-md transform hover:scale-[1.05]'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -1741,14 +1795,14 @@ function DashboardContent() {
               disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
             />
 
-            {/* ✅ ALWAYS VISIBLE: Send Button */}
+            {/* ✅ MOBILE OPTIMIZED: Send Button */}
             <button
               onClick={(e) => {
                 e.preventDefault()
                 handleSubmit()
               }}
               disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || promptsUsed >= promptLimit}
-              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white p-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none flex-shrink-0"
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white p-2.5 sm:p-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none flex-shrink-0 min-w-[44px] min-h-[44px]"
             >
               {isLoading || isStreaming ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -1775,8 +1829,8 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* ✅ INLINE: Help Button */}
-      <FloatingQuickStart 
+      {/* ✅ NEW: Collapsible Help Button on the right side */}
+      <CollapsibleHelpButton 
         onPromptSelect={handleSubmit} 
         disabled={isLoading || isStreaming || promptsUsed >= promptLimit} 
       />
