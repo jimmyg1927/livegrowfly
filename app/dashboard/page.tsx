@@ -25,6 +25,7 @@ import {
   FaCheck,
   FaImages,
   FaQuestionCircle,
+  FaCopy,
 } from 'react-icons/fa'
 import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
@@ -100,6 +101,29 @@ const PROMPT_LIMITS: Record<string, number> = {
 const STORAGE_KEYS = {
   DASHBOARD_IMAGES: 'growfly_dashboard_images',
   DASHBOARD_MESSAGES: 'growfly_dashboard_messages'
+}
+
+// ✅ NEW: Copy functionality
+const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch (err) {
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea')
+    textArea.value = text
+    document.body.appendChild(textArea)
+    textArea.focus()
+    textArea.select()
+    try {
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+      return true
+    } catch (fallbackErr) {
+      document.body.removeChild(textArea)
+      return false
+    }
+  }
 }
 
 // ✅ NEW: Image error handling component
@@ -632,202 +656,6 @@ const ImageGenerationModal: React.FC<{
   )
 }
 
-// ✅ FIXED: Collapsible Help Button with proper props interface
-const CollapsibleHelpButton = ({ 
-  onPromptSelect, 
-  disabled 
-}: { 
-  onPromptSelect: (prompt: string) => void; 
-  disabled: boolean;
-}) => {
-  const [isExpanded, setIsExpanded] = useState(false)
-  const [showModal, setShowModal] = useState(false)
-
-  return (
-    <>
-      {/* Modal - Modern Design */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-5xl mx-4 w-full max-h-[90vh] overflow-y-auto border border-gray-200/50 dark:border-slate-700/50">
-            <div className="p-8">
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
-                    🚀 Quick Start Hub
-                  </h2>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Choose from these proven business prompts to get immediate value from Growfly
-                  </p>
-                </div>
-                <button 
-                  onClick={() => setShowModal(false)} 
-                  className="p-3 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-all duration-200"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <button
-                  onClick={() => {
-                    onPromptSelect("What are some effective marketing strategies for my business that I can implement this month?")
-                    setShowModal(false)
-                  }}
-                  disabled={disabled}
-                  className="group p-6 text-left bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/30 rounded-3xl hover:from-blue-100 hover:to-indigo-200 dark:hover:from-blue-900/30 dark:hover:to-indigo-900/40 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-blue-200/30 dark:border-blue-700/30"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="text-4xl group-hover:scale-110 transition-transform duration-300">📈</div>
-                    <div className="flex-1">
-                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Marketing Strategies</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Get actionable marketing ideas, campaign strategies, and customer acquisition tactics you can implement immediately to grow your business.</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs rounded-full">Social Media</span>
-                        <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs rounded-full">Content Strategy</span>
-                      </div>
-                    </div>
-                  </div>
-                </button>
-                <button
-                  onClick={() => {
-                    onPromptSelect("Analyze my business operations and suggest 3 specific improvements I can make this week.")
-                    setShowModal(false)
-                  }}
-                  disabled={disabled}
-                  className="group p-6 text-left bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/30 rounded-3xl hover:from-green-100 hover:to-emerald-200 dark:hover:from-green-900/30 dark:hover:to-emerald-900/40 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-green-200/30 dark:border-green-700/30"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="text-4xl group-hover:scale-110 transition-transform duration-300">⚡</div>
-                    <div className="flex-1">
-                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Business Optimization</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Identify bottlenecks, streamline processes, and find quick wins to improve efficiency, reduce costs, and boost productivity.</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs rounded-full">Process Improvement</span>
-                        <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs rounded-full">Cost Reduction</span>
-                      </div>
-                    </div>
-                  </div>
-                </button>
-                <button
-                  onClick={() => {
-                    onPromptSelect("I need help creating business documents. Create a professional [specify type: business plan, proposal, contract, handbook, etc.] for my company.")
-                    setShowModal(false)
-                  }}
-                  disabled={disabled}
-                  className="group p-6 text-left bg-gradient-to-br from-purple-50 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/30 rounded-3xl hover:from-purple-100 hover:to-pink-200 dark:hover:from-purple-900/30 dark:hover:to-pink-900/40 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-purple-200/30 dark:border-purple-700/30"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="text-4xl group-hover:scale-110 transition-transform duration-300">📄</div>
-                    <div className="flex-1">
-                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Document Creation</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Generate professional business documents, proposals, contracts, policies, and reports tailored to your industry and needs.</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs rounded-full">Business Plans</span>
-                        <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs rounded-full">Contracts</span>
-                      </div>
-                    </div>
-                  </div>
-                </button>
-                <button
-                  onClick={() => {
-                    onPromptSelect("Give me personalized suggestions to improve my productivity today. Focus on time management, prioritization, and getting more done in less time.")
-                    setShowModal(false)
-                  }}
-                  disabled={disabled}
-                  className="group p-6 text-left bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/30 rounded-3xl hover:from-amber-100 hover:to-orange-200 dark:hover:from-amber-900/30 dark:hover:to-orange-900/40 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-amber-200/30 dark:border-amber-700/30"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="text-4xl group-hover:scale-110 transition-transform duration-300">🚀</div>
-                    <div className="flex-1">
-                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Productivity Boost</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Get personalized productivity tips, time management strategies, and workflow optimizations to maximize your daily output.</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs rounded-full">Time Management</span>
-                        <span className="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs rounded-full">Focus Tips</span>
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Floating Button - Better positioning to avoid overlap */}
-      <div className="fixed bottom-28 md:bottom-6 right-4 md:right-6 z-30">
-        <div className="relative">
-          {/* Expanded State - Modern Design */}
-          {isExpanded && (
-            <div className="absolute bottom-16 right-0 bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-700 p-6 w-80 sm:w-96 max-w-[calc(100vw-2rem)] backdrop-blur-sm bg-white/95 dark:bg-slate-800/95">
-              <div className="mb-4">
-                <h3 className="font-bold text-xl text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                  🚀 Quick Start Guide
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Get started quickly with these proven business prompts
-                </p>
-              </div>
-              <div className="space-y-3">
-                <button
-                  onClick={() => {
-                    onPromptSelect("What are some effective marketing strategies for my business?")
-                    setIsExpanded(false)
-                  }}
-                  disabled={disabled}
-                  className="w-full p-3 text-left bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-900/30 dark:hover:to-indigo-900/30 disabled:opacity-50 transition-all"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">📈</span>
-                    <span className="text-sm font-medium text-gray-800 dark:text-gray-200">Marketing Ideas</span>
-                  </div>
-                </button>
-                <button
-                  onClick={() => {
-                    onPromptSelect("Help me identify areas for business improvement in my company.")
-                    setIsExpanded(false)
-                  }}
-                  disabled={disabled}
-                  className="w-full p-3 text-left bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl hover:from-green-100 hover:to-emerald-100 dark:hover:from-green-900/30 dark:hover:to-emerald-900/30 disabled:opacity-50 transition-all"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">🧠</span>
-                    <span className="text-sm font-medium text-gray-800 dark:text-gray-200">Business Improvement</span>
-                  </div>
-                </button>
-                <button
-                  onClick={() => setShowModal(true)}
-                  disabled={disabled}
-                  className="w-full p-3 text-center bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl hover:from-purple-100 hover:to-blue-100 dark:hover:from-purple-900/30 dark:hover:to-blue-900/30 disabled:opacity-50 transition-all"
-                >
-                  <span className="text-sm font-medium text-purple-700 dark:text-purple-300">See All Options</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Main Button - Mobile Optimized Touch Target */}
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            disabled={disabled}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white p-3 sm:p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:transform-none min-w-[48px] min-h-[48px]"
-          >
-            <div className="flex items-center gap-1 sm:gap-2">
-              <FaQuestionCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-              {isExpanded ? (
-                <HiChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
-              ) : (
-                <HiChevronUp className="w-3 h-3 sm:w-4 sm:h-4" />
-              )}
-            </div>
-          </button>
-        </div>
-      </div>
-    </>
-  )
-}
-
 function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -840,7 +668,7 @@ function DashboardContent() {
   const promptsUsed = user?.promptsUsed ?? 0
   const promptsRemaining = Math.max(0, promptLimit - promptsUsed)
 
-  // ✅ FIXED: Added the missing showHelpModal state
+  // ✅ States
   const [showHelpModal, setShowHelpModal] = useState(false)
   const [showImageModal, setShowImageModal] = useState(false)
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([])
@@ -856,6 +684,7 @@ function DashboardContent() {
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null)
   const [isUserScrolling, setIsUserScrolling] = useState(false)
   const [currentSaveMessageId, setCurrentSaveMessageId] = useState<string | null>(null)
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
 
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -863,6 +692,15 @@ function DashboardContent() {
   const containerRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const scrollTimeoutRef = useRef<NodeJS.Timeout>()
+
+  // ✅ NEW: Copy message handler
+  const handleCopyMessage = async (messageId: string, content: string) => {
+    const success = await copyToClipboard(content)
+    if (success) {
+      setCopiedMessageId(messageId)
+      setTimeout(() => setCopiedMessageId(null), 2000)
+    }
+  }
 
   // ✅ ENHANCED: Stronger image persistence with better error handling
   const saveImageToPersistentStorage = (image: GeneratedImage) => {
@@ -1487,6 +1325,10 @@ function DashboardContent() {
       const result = await response.json()
       setError(null)
       
+      // Close the save modal after successful save
+      setShowSaveModal(false)
+      setCurrentSaveMessageId(null)
+      
       return result
     } catch (error) {
       console.error('Error saving to Collab Zone:', error)
@@ -1597,8 +1439,8 @@ function DashboardContent() {
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-textPrimary dark:text-white transition-colors duration-300 flex flex-col">
       
-      {/* ✅ FIXED: Content Area - better responsive margins */}
-      <div className="flex-1 overflow-y-auto p-4 pb-32 ml-0 md:ml-52">
+      {/* ✅ IMPROVED: Content Area - Better spacing, closed gap from sidebar */}
+      <div className="flex-1 overflow-y-auto p-4 pb-32 ml-0 md:ml-64 lg:ml-72">
 
         {/* Error Message */}
         {error && (
@@ -1625,15 +1467,16 @@ function DashboardContent() {
 
         {/* Info about persistent conversations */}
         {messages.length > 0 && (
-          <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl">
-            <p className="text-blue-800 dark:text-blue-300 text-sm">
-              💡 <strong>Your conversations are automatically saved here!</strong> Your last 10 exchanges stay on this dashboard so you can always pick up where you left off.
+          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-700 rounded-2xl">
+            <p className="text-blue-800 dark:text-blue-300 text-sm flex items-center gap-2">
+              <span className="text-lg">💡</span>
+              <strong>Your conversations are automatically saved here!</strong> Your last 10 exchanges stay on this dashboard so you can always pick up where you left off.
             </p>
           </div>
         )}
 
-        {/* Chat Messages */}
-        <div ref={containerRef} className="space-y-4 pb-4">
+        {/* ✅ IMPROVED: Chat Messages with better spacing and copy functionality */}
+        <div ref={containerRef} className="space-y-6 pb-4">
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-96">
               <div className="text-center max-w-2xl px-4">
@@ -1679,15 +1522,15 @@ function DashboardContent() {
             messages.map((msg) => (
             <div
               key={msg.id}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} mb-6`}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} mb-8`}
               onMouseEnter={() => setHoveredMessageId(msg.id)}
               onMouseLeave={() => setHoveredMessageId(null)}
             >
               <div
-                className={`p-4 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl relative ${
+                className={`p-5 rounded-3xl shadow-lg transition-all duration-300 hover:shadow-xl relative ${
                   msg.role === 'user'
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white max-w-[85%] md:max-w-[70%] lg:max-w-[60%]'
-                    : 'bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-gray-800 dark:text-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm max-w-[90%] md:max-w-[80%] lg:max-w-[75%]'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white max-w-[85%] md:max-w-[70%] lg:max-w-[60%] ml-auto'
+                    : 'bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-gray-800 dark:text-white shadow-[0_8px_40px_rgb(0,0,0,0.12)] backdrop-blur-sm max-w-[90%] md:max-w-[85%] lg:max-w-[80%] mr-auto'
                 }`}
               >
                 {/* Display uploaded files for user messages */}
@@ -1721,7 +1564,7 @@ function DashboardContent() {
                   />
                 )}
 
-                {/* ✅ IMPROVED: Display generated images with better error handling */}
+                {/* Generated images */}
                 {msg.generatedImage && (
                   <div className="mb-4">
                     <SafeImage
@@ -1732,7 +1575,6 @@ function DashboardContent() {
                         console.error('Failed to load generated image:', msg.generatedImage?.url)
                       }}
                     />
-                    {/* ✅ IMPROVED: Enhanced image action buttons with Growfly branding */}
                     <div className="mt-3 flex gap-2">
                       <button
                         onClick={() => handleDownloadImage(msg.generatedImage!)}
@@ -1763,7 +1605,7 @@ function DashboardContent() {
                   </div>
                 )}
                 
-                <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                <div className="whitespace-pre-wrap text-sm leading-relaxed">
                   {msg.content ? (
                     <div className="prose prose-sm dark:prose-invert max-w-none">
                       {msg.content}
@@ -1778,11 +1620,11 @@ function DashboardContent() {
                       <span className="animate-pulse text-sm font-medium">Thinking...</span>
                     </div>
                   ) : ''}
-                </p>
+                </div>
 
                 {msg.role === 'assistant' && msg.content && (
                   <>
-                    {/* ✅ IMPROVED: Follow-up Questions with better styling */}
+                    {/* Follow-up Questions */}
                     {msg.followUps && msg.followUps.length > 0 && (
                       <div className="mt-6 p-4 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-2xl border border-indigo-200/50 dark:border-indigo-700/50">
                         <div className="flex items-center gap-2 mb-3">
@@ -1808,8 +1650,8 @@ function DashboardContent() {
                       </div>
                     )}
 
-                    {/* ✅ CHANGED: Action Buttons - REMOVED download button */}
-                    <div className="flex flex-wrap gap-4 mt-4 text-lg text-gray-500 dark:text-gray-400">
+                    {/* ✅ IMPROVED: Action Buttons with Copy functionality */}
+                    <div className="flex flex-wrap gap-4 mt-6 text-lg text-gray-500 dark:text-gray-400">
                       <HiThumbUp
                         className="cursor-pointer hover:text-green-500 transition-colors duration-200 transform hover:scale-110"
                         onClick={() => setShowFeedbackModal(true)}
@@ -1820,6 +1662,21 @@ function DashboardContent() {
                         onClick={() => setShowFeedbackModal(true)}
                         title="Dislike this response"
                       />
+                      {/* ✅ NEW: Copy Button */}
+                      <button
+                        onClick={() => handleCopyMessage(msg.id, msg.content)}
+                        className="relative"
+                        title="Copy message"
+                      >
+                        <FaCopy className={`cursor-pointer transition-all duration-200 transform hover:scale-110 ${
+                          copiedMessageId === msg.id ? 'text-green-500' : 'hover:text-blue-500'
+                        }`} />
+                        {copiedMessageId === msg.id && (
+                          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg">
+                            Copied!
+                          </div>
+                        )}
+                      </button>
                       <FaRegBookmark
                         className="cursor-pointer hover:text-yellow-500 transition-colors duration-200 transform hover:scale-110"
                         onClick={() => {
@@ -1844,12 +1701,12 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* ✅ FIXED: File Upload Preview - better responsive positioning */}
+      {/* File Upload Preview - Better positioning */}
       {uploadedFiles.length > 0 && (
-        <div className="fixed bottom-24 left-0 right-0 md:left-52 px-4 z-30 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm border-t border-gray-200 dark:border-slate-700">
-          <div className="max-w-4xl mx-auto py-3">
-            <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3 border border-gray-200 dark:border-gray-600">
-              <div className="flex items-center justify-between mb-2">
+        <div className="fixed bottom-32 left-0 right-0 md:left-64 lg:left-72 px-4 z-30">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-2xl p-4 border border-gray-200 dark:border-slate-700 shadow-xl">
+              <div className="flex items-center justify-between mb-3">
                 <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   📎 Attached Files ({uploadedFiles.length})
                 </h4>
@@ -1874,10 +1731,10 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* ✅ IMPROVED: Input Section - better padding and spacing */}
-      <div className="fixed bottom-0 left-0 right-0 md:left-52 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 shadow-2xl z-20">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          {/* ✅ NEW: Helpful hints bar */}
+      {/* ✅ IMPROVED: Floating Input Section - No background box, truly floating */}
+      <div className="fixed bottom-0 left-0 right-0 md:left-64 lg:left-72 z-20 p-4">
+        <div className="max-w-4xl mx-auto">
+          {/* Helpful hints bar */}
           {messages.length === 0 && (
             <div className="mb-4 flex items-center justify-center gap-4 text-xs text-gray-500 dark:text-gray-400">
               <div className="flex items-center gap-1">
@@ -1895,9 +1752,10 @@ function DashboardContent() {
             </div>
           )}
           
-          <div className="flex items-center gap-3 bg-gray-50 dark:bg-slate-700 rounded-2xl p-3 shadow-lg border border-gray-200/50 dark:border-slate-600/50">
+          {/* ✅ IMPROVED: Truly floating input without background box */}
+          <div className="flex items-end gap-3 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md rounded-2xl p-4 shadow-2xl border border-gray-200/50 dark:border-slate-600/50">
             
-            {/* ✅ MOBILE OPTIMIZED: Upload Files Button */}
+            {/* Upload Files Button */}
             <button
               onClick={(e) => {
                 e.preventDefault()
@@ -1916,7 +1774,7 @@ function DashboardContent() {
               <span className="hidden sm:inline">Upload</span>
             </button>
 
-            {/* ✅ MOBILE OPTIMIZED: Create Image Button */}
+            {/* Create Image Button */}
             <button
               onClick={() => {
                 if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
@@ -1937,27 +1795,29 @@ function DashboardContent() {
               </span>
             </button>
 
-            {/* ✅ IMPROVED: Input Field with better padding */}
-            <textarea
-              ref={textareaRef}
-              rows={1}
-              className="flex-1 px-4 py-3 border-0 bg-white dark:bg-slate-800 text-textPrimary dark:text-white resize-none text-sm focus:outline-none rounded-xl min-h-[44px] max-h-[120px] transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"
-              placeholder={messages.length === 0 
-                ? "Ask me anything about your business... (⌘K to focus)" 
-                : "Continue the conversation..."
-              }
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  handleSubmit()
+            {/* Input Field */}
+            <div className="flex-1 relative">
+              <textarea
+                ref={textareaRef}
+                rows={1}
+                className="w-full px-4 py-3 border-0 bg-transparent text-textPrimary dark:text-white resize-none text-sm focus:outline-none min-h-[44px] max-h-[120px] transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"
+                placeholder={messages.length === 0 
+                  ? "Ask me anything about your business... (⌘K to focus)" 
+                  : "Continue the conversation..."
                 }
-              }}
-              disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-            />
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSubmit()
+                  }
+                }}
+                disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+              />
+            </div>
 
-            {/* ✅ IMPROVED: Send Button with better padding */}
+            {/* Send Button */}
             <button
               onClick={(e) => {
                 e.preventDefault()
@@ -1991,7 +1851,7 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* ✅ REPOSITIONED: Help Button - Right side, halfway up, smaller */}
+      {/* Help Button - Repositioned */}
       <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-30">
         <button
           onClick={() => setShowHelpModal(true)}
@@ -2089,66 +1949,103 @@ function DashboardContent() {
                 </button>
                 <button
                   onClick={() => {
-                    handleSubmit("Give me personalized suggestions to improve my productivity today. Focus on time management, prioritization, and getting more done in less time.")
+                    handleSubmit("Give me personalized suggestions to improve my productivity today. Focus on time management, workflow optimization, and goal setting for my business.")
                     setShowHelpModal(false)
                   }}
                   disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                  className="group p-6 text-left bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/30 rounded-3xl hover:from-amber-100 hover:to-orange-200 dark:hover:from-amber-900/30 dark:hover:to-orange-900/40 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-amber-200/30 dark:border-amber-700/30"
+                  className="group p-6 text-left bg-gradient-to-br from-orange-50 to-red-100 dark:from-orange-900/20 dark:to-red-900/30 rounded-3xl hover:from-orange-100 hover:to-red-200 dark:hover:from-orange-900/30 dark:hover:to-red-900/40 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-orange-200/30 dark:border-orange-700/30"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="text-4xl group-hover:scale-110 transition-transform duration-300">🚀</div>
+                    <div className="text-4xl group-hover:scale-110 transition-transform duration-300">🎯</div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Productivity Boost</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Get personalized productivity tips, time management strategies, and workflow optimizations to maximize your daily output.</p>
+                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Productivity Enhancement</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Get personalized productivity tips, time management strategies, and workflow improvements to maximize your business efficiency.</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs rounded-full">Time Management</span>
-                        <span className="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs rounded-full">Focus Tips</span>
+                        <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-xs rounded-full">Time Management</span>
+                        <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-xs rounded-full">Goal Setting</span>
                       </div>
                     </div>
                   </div>
                 </button>
+              </div>
+              
+              <div className="mt-8 p-6 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800/50 dark:to-blue-900/20 rounded-2xl border border-gray-200/50 dark:border-gray-700/50">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                  ⚡ Pro Tips
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-500 mt-0.5">💡</span>
+                    <div>
+                      <strong className="text-gray-900 dark:text-white">Be Specific:</strong> The more details you provide about your business, industry, and goals, the better tailored advice you'll receive.
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-green-500 mt-0.5">📎</span>
+                    <div>
+                      <strong className="text-gray-900 dark:text-white">Upload Files:</strong> Share documents, spreadsheets, or images for personalized analysis and recommendations.
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-purple-500 mt-0.5">🎨</span>
+                    <div>
+                      <strong className="text-gray-900 dark:text-white">Create Images:</strong> Generate professional visuals for presentations, social media, and marketing materials.
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-orange-500 mt-0.5">🔄</span>
+                    <div>
+                      <strong className="text-gray-900 dark:text-white">Follow Up:</strong> Use the suggested follow-up questions to dive deeper and get more actionable insights.
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* DALL-E Image Generation Modal */}
-      <ImageGenerationModal
-        open={showImageModal}
-        onClose={() => setShowImageModal(false)}
-        onImageGenerated={handleImageGenerated}
-      />
+      {/* Image Generation Modal */}
+      {showImageModal && (
+        <ImageGenerationModal
+          open={showImageModal}
+          onClose={() => setShowImageModal(false)}
+          onImageGenerated={handleImageGenerated}
+        />
+      )}
 
-      {/* Modals */}
-      <SaveModal
-        open={showSaveModal}
-        onClose={() => {
-          setShowSaveModal(false)
-          setCurrentSaveMessageId(null)
-        }}
-        onConfirm={async (title: string) => {
-          if (currentSaveMessageId) {
-            await handleSaveResponse(title, currentSaveMessageId)
-          }
-        }}
-      />
+      {/* Save Modal */}
+      {showSaveModal && currentSaveMessageId && (
+        <SaveModal
+          open={showSaveModal}
+          onClose={() => {
+            setShowSaveModal(false)
+            setCurrentSaveMessageId(null)
+          }}
+          onConfirm={async (title: string) => {
+            await handleSaveToCollabZone(title, currentSaveMessageId)
+          }}
+        />
+      )}
 
-      <FeedbackModal
-        open={showFeedbackModal}
-        onClose={() => setShowFeedbackModal(false)}
-        responseId={'dashboard'}
-      />
+      {/* Feedback Modal */}
+      {showFeedbackModal && (
+        <FeedbackModal
+          open={showFeedbackModal}
+          onClose={() => setShowFeedbackModal(false)}
+          responseId={currentSaveMessageId || "default-response"}
+        />
+      )}
     </div>
   )
 }
 
-export default function DashboardPage() {
+export default function Dashboard() {
   return (
     <Suspense fallback={
-      <div className="flex items-center justify-center h-full">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+      <div className="h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">Loading your dashboard...</p>
         </div>
       </div>
