@@ -227,7 +227,7 @@ export default function OnboardingClient() {
               placeholder={placeholder}
               value={form[name]}
               onChange={handleChange}
-              className={`w-full bg-white/10 backdrop-blur-sm text-white border p-3 rounded-lg placeholder-white/60 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none text-sm ${
+              className={`w-full bg-white/10 backdrop-blur-sm text-white border p-3 rounded-xl placeholder-white/60 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent resize-none text-sm ${
                 hasError 
                   ? 'border-red-400 focus:ring-red-400' 
                   : 'border-white/30 hover:border-white/50'
@@ -240,7 +240,7 @@ export default function OnboardingClient() {
               placeholder={placeholder}
               value={form[name]}
               onChange={handleChange}
-              className={`w-full bg-white/10 backdrop-blur-sm text-white border p-3 rounded-lg placeholder-white/60 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm ${
+              className={`w-full bg-white/10 backdrop-blur-sm text-white border p-3 rounded-xl placeholder-white/60 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-sm ${
                 hasError 
                   ? 'border-red-400 focus:ring-red-400' 
                   : 'border-white/30 hover:border-white/50'
@@ -255,7 +255,7 @@ export default function OnboardingClient() {
                 if (name === 'password') setShowPassword(!showPassword)
                 if (name === 'confirmPassword') setShowConfirmPassword(!showConfirmPassword)
               }}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white transition-colors"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10 focus:outline-none focus:bg-white/10"
             >
               {shouldShowPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>

@@ -1679,15 +1679,15 @@ function DashboardContent() {
             messages.map((msg) => (
             <div
               key={msg.id}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} mb-6`}
               onMouseEnter={() => setHoveredMessageId(msg.id)}
               onMouseLeave={() => setHoveredMessageId(null)}
             >
               <div
-                className={`max-w-4xl p-4 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl relative ${
+                className={`p-4 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl relative ${
                   msg.role === 'user'
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white ml-auto'
-                    : 'bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-gray-800 dark:text-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white max-w-[85%] md:max-w-[70%] lg:max-w-[60%]'
+                    : 'bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-gray-800 dark:text-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm max-w-[90%] md:max-w-[80%] lg:max-w-[75%]'
                 }`}
               >
                 {/* Display uploaded files for user messages */}
@@ -1874,12 +1874,12 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* ✅ FIXED: Input Section - better responsive positioning */}
-      <div className="fixed bottom-0 left-0 right-0 md:left-52 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 p-4 shadow-2xl z-20">
-        <div className="max-w-4xl mx-auto">
+      {/* ✅ IMPROVED: Input Section - better padding and spacing */}
+      <div className="fixed bottom-0 left-0 right-0 md:left-52 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 shadow-2xl z-20">
+        <div className="max-w-4xl mx-auto px-4 py-6">
           {/* ✅ NEW: Helpful hints bar */}
           {messages.length === 0 && (
-            <div className="mb-3 flex items-center justify-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+            <div className="mb-4 flex items-center justify-center gap-4 text-xs text-gray-500 dark:text-gray-400">
               <div className="flex items-center gap-1">
                 <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-slate-700 rounded text-xs">⌘/</kbd>
                 <span>Quick help</span>
@@ -1895,7 +1895,7 @@ function DashboardContent() {
             </div>
           )}
           
-          <div className="flex items-center gap-2 bg-gray-50 dark:bg-slate-700 rounded-2xl p-2 shadow-lg border border-gray-200/50 dark:border-slate-600/50">
+          <div className="flex items-center gap-3 bg-gray-50 dark:bg-slate-700 rounded-2xl p-3 shadow-lg border border-gray-200/50 dark:border-slate-600/50">
             
             {/* ✅ MOBILE OPTIMIZED: Upload Files Button */}
             <button
@@ -1906,13 +1906,13 @@ function DashboardContent() {
                 }
               }}
               disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-              className={`p-2 sm:p-2 rounded-xl flex items-center gap-1 text-xs font-medium transition-all duration-200 whitespace-nowrap min-w-[44px] min-h-[44px] ${
+              className={`p-3 rounded-xl flex items-center gap-2 text-sm font-medium transition-all duration-200 whitespace-nowrap ${
                 isLoading || isStreaming || promptsUsed >= promptLimit
                   ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-                  : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 shadow-sm hover:shadow-md transform hover:scale-[1.05]'
+                  : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 shadow-sm hover:shadow-md transform hover:scale-[1.02]'
               }`}
             >
-              <FaPaperclip className="w-3 h-3" />
+              <FaPaperclip className="w-4 h-4" />
               <span className="hidden sm:inline">Upload</span>
             </button>
 
@@ -1925,23 +1925,23 @@ function DashboardContent() {
                   router.push('/change-plan')
                 }
               }}
-              className={`p-2 sm:p-2 rounded-xl flex items-center gap-1 text-xs font-medium transition-all duration-200 whitespace-nowrap min-w-[44px] min-h-[44px] ${
+              className={`p-3 rounded-xl flex items-center gap-2 text-sm font-medium transition-all duration-200 whitespace-nowrap ${
                 (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
-                  ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 shadow-sm hover:shadow-md transform hover:scale-[1.05]'
+                  ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 shadow-sm hover:shadow-md transform hover:scale-[1.02]'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'
               }`}
             >
-              <FaPalette className="w-3 h-3" />
+              <FaPalette className="w-4 h-4" />
               <span className="hidden sm:inline">
                 {(imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) ? 'Image' : 'Upgrade'}
               </span>
             </button>
 
-            {/* ✅ IMPROVED: Input Field with dynamic placeholder */}
+            {/* ✅ IMPROVED: Input Field with better padding */}
             <textarea
               ref={textareaRef}
               rows={1}
-              className="flex-1 px-3 py-2 border-0 bg-white dark:bg-slate-800 text-textPrimary dark:text-white resize-none text-sm focus:outline-none rounded-xl min-h-[40px] max-h-[120px] transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"
+              className="flex-1 px-4 py-3 border-0 bg-white dark:bg-slate-800 text-textPrimary dark:text-white resize-none text-sm focus:outline-none rounded-xl min-h-[44px] max-h-[120px] transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"
               placeholder={messages.length === 0 
                 ? "Ask me anything about your business... (⌘K to focus)" 
                 : "Continue the conversation..."
@@ -1957,19 +1957,19 @@ function DashboardContent() {
               disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
             />
 
-            {/* ✅ MOBILE OPTIMIZED: Send Button */}
+            {/* ✅ IMPROVED: Send Button with better padding */}
             <button
               onClick={(e) => {
                 e.preventDefault()
                 handleSubmit()
               }}
               disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || promptsUsed >= promptLimit}
-              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white p-2.5 sm:p-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none flex-shrink-0 min-w-[44px] min-h-[44px]"
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white p-3 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none flex-shrink-0 w-11 h-11 flex items-center justify-center"
             >
               {isLoading || isStreaming ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
                 </svg>
               )}
@@ -1991,11 +1991,17 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* ✅ FIXED: Collapsible Help Button with proper prop passing */}
-      <CollapsibleHelpButton 
-        onPromptSelect={handleSubmit} 
-        disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-      />
+      {/* ✅ REPOSITIONED: Help Button - Right side, halfway up, smaller */}
+      <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-30">
+        <button
+          onClick={() => setShowHelpModal(true)}
+          disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white p-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:transform-none w-10 h-10 flex items-center justify-center"
+          title="Quick Start Guide"
+        >
+          <FaQuestionCircle className="w-4 h-4" />
+        </button>
+      </div>
 
       {/* Help Modal */}
       {showHelpModal && (
