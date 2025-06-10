@@ -217,17 +217,17 @@ export default function OnboardingClient() {
     const passwordStrength = name === 'password' ? getPasswordStrength(form[name]) : null
 
     return (
-      <div className="space-y-2">
-        <label className="block text-sm font-semibold text-white">{label}</label>
+      <div className="space-y-1">
+        <label className="block text-xs font-semibold text-white">{label}</label>
         <div className="relative">
           {textarea ? (
             <textarea
               name={name}
-              rows={3}
+              rows={2}
               placeholder={placeholder}
               value={form[name]}
               onChange={handleChange}
-              className={`w-full bg-white/10 backdrop-blur-sm text-white border p-4 rounded-xl placeholder-white/60 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none ${
+              className={`w-full bg-white/10 backdrop-blur-sm text-white border p-3 rounded-lg placeholder-white/60 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none text-sm ${
                 hasError 
                   ? 'border-red-400 focus:ring-red-400' 
                   : 'border-white/30 hover:border-white/50'
@@ -240,11 +240,11 @@ export default function OnboardingClient() {
               placeholder={placeholder}
               value={form[name]}
               onChange={handleChange}
-              className={`w-full bg-white/10 backdrop-blur-sm text-white border p-4 rounded-xl placeholder-white/60 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent ${
+              className={`w-full bg-white/10 backdrop-blur-sm text-white border p-3 rounded-lg placeholder-white/60 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm ${
                 hasError 
                   ? 'border-red-400 focus:ring-red-400' 
                   : 'border-white/30 hover:border-white/50'
-              } ${showPasswordToggle ? 'pr-12' : ''}`}
+              } ${showPasswordToggle ? 'pr-10' : ''}`}
             />
           )}
           
@@ -255,22 +255,22 @@ export default function OnboardingClient() {
                 if (name === 'password') setShowPassword(!showPassword)
                 if (name === 'confirmPassword') setShowConfirmPassword(!showConfirmPassword)
               }}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white transition-colors"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white transition-colors"
             >
-              {shouldShowPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              {shouldShowPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           )}
         </div>
         
         {passwordStrength && form[name] && (
           <p className={`text-xs font-medium ${passwordStrength.color}`}>
-            Password strength: {passwordStrength.strength}
+            {passwordStrength.strength}
           </p>
         )}
         
         {hasError && (
-          <div className="flex items-center gap-2 text-red-400 text-sm">
-            <XCircle size={16} />
+          <div className="flex items-center gap-1 text-red-400 text-xs">
+            <XCircle size={12} />
             <span>{errors[name]}</span>
           </div>
         )}
@@ -279,14 +279,14 @@ export default function OnboardingClient() {
   }
 
   const stepTitles = [
-    { title: 'Create Your Account', subtitle: 'Let\'s get you started with Growfly', icon: '🚀' },
-    { title: 'Tell Us About Your Brand', subtitle: 'Help us understand your company\'s personality', icon: '🏢' },
-    { title: 'What Inspires You?', subtitle: 'Share brands or companies you admire', icon: '✨' },
-    { title: 'About You', subtitle: 'Finally, tell us about your role and goals', icon: '👤' },
+    { title: 'Create Account', subtitle: 'Get started with Growfly', icon: '🚀' },
+    { title: 'About Your Brand', subtitle: 'Tell us about your company', icon: '🏢' },
+    { title: 'Inspiration', subtitle: 'Brands you admire', icon: '✨' },
+    { title: 'About You', subtitle: 'Your role and goals', icon: '👤' },
   ]
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 px-4 py-6 text-white relative overflow-hidden">
+    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 px-4 py-3 text-white relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-purple-600/20 to-indigo-600/20" />
       <div className="absolute top-0 left-0 w-full h-full opacity-30">
@@ -295,34 +295,34 @@ export default function OnboardingClient() {
       
       <div className="relative z-10">
         {/* Header */}
-        <div className="flex justify-center mb-8">
-          <div className="flex items-center gap-3">
-            <Image src="/growfly-logo.png" alt="Growfly" width={160} height={45} />
+        <div className="flex justify-center mb-4">
+          <div className="flex items-center gap-2">
+            <Image src="/growfly-logo.png" alt="Growfly" width={120} height={32} />
             {plan !== 'free' && (
-              <div className="px-3 py-1 bg-gradient-to-r from-amber-400 to-orange-500 text-black text-sm font-bold rounded-full">
-                {plan.toUpperCase()} PLAN
+              <div className="px-2 py-1 bg-gradient-to-r from-amber-400 to-orange-500 text-black text-xs font-bold rounded-full">
+                {plan.toUpperCase()}
               </div>
             )}
           </div>
         </div>
 
         {/* Progress and XP */}
-        <div className="max-w-2xl mx-auto mb-8">
-          <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold mb-2">{stepTitles[step - 1].title}</h1>
-            <p className="text-white/80 text-lg">{stepTitles[step - 1].subtitle}</p>
+        <div className="max-w-2xl mx-auto mb-4">
+          <div className="text-center mb-3">
+            <h1 className="text-2xl font-bold mb-1">{stepTitles[step - 1].title}</h1>
+            <p className="text-white/80 text-sm">{stepTitles[step - 1].subtitle}</p>
           </div>
 
           {/* XP Progress */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Sparkles className="text-yellow-400" size={20} />
-                <span className="text-sm font-semibold">XP Progress: {xp} XP</span>
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 mb-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1">
+                <Sparkles className="text-yellow-400" size={16} />
+                <span className="text-xs font-semibold">{xp} XP</span>
               </div>
               <span className="text-xs text-white/60">More details = More XP!</span>
             </div>
-            <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-blue-400 to-purple-500 transition-all duration-500 ease-out"
                 style={{ width: `${Math.min(xp, 100)}%` }}
@@ -331,12 +331,12 @@ export default function OnboardingClient() {
           </div>
 
           {/* Step Navigation */}
-          <div className="flex justify-center gap-4 mb-8">
+          <div className="flex justify-center gap-2 mb-4">
             {stepTitles.map((stepInfo, i) => (
               <button
                 key={i}
                 onClick={() => setStep(i + 1)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
                   step === i + 1
                     ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg scale-105'
                     : step > i + 1
@@ -344,9 +344,9 @@ export default function OnboardingClient() {
                     : 'bg-white/10 text-white/70 hover:bg-white/20'
                 }`}
               >
-                <span className="text-lg">{stepInfo.icon}</span>
-                <span className="hidden sm:inline">Step {i + 1}</span>
-                {step > i + 1 && <CheckCircle size={16} />}
+                <span>{stepInfo.icon}</span>
+                <span className="hidden sm:inline">{i + 1}</span>
+                {step > i + 1 && <CheckCircle size={12} />}
               </button>
             ))}
           </div>
@@ -354,15 +354,15 @@ export default function OnboardingClient() {
 
         {/* Form Content */}
         <div className="max-w-2xl mx-auto">
-          <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 border border-white/20 shadow-2xl">
-            <div className="space-y-6">
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 shadow-2xl">
+            <div className="space-y-3">
               {step === 1 && (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {renderField('Full Name', 'name', 'Enter your full name')}
                     {renderField('Email Address', 'email', 'your@email.com', false, 'email')}
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {renderField('Password', 'password', 'Create a strong password', false, 'password')}
                     {renderField('Confirm Password', 'confirmPassword', 'Confirm your password', false, 'password')}
                   </div>
@@ -386,7 +386,7 @@ export default function OnboardingClient() {
               
               {step === 4 && (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {renderField('Your Job Title', 'jobTitle', 'Marketing Director')}
                     {renderField('Industry', 'industry', 'Technology, Healthcare, Finance...')}
                   </div>
@@ -397,13 +397,13 @@ export default function OnboardingClient() {
           </div>
 
           {/* Navigation Buttons */}
-          <div className="flex justify-between items-center mt-8">
+          <div className="flex justify-between items-center mt-4">
             {step > 1 ? (
               <button
                 onClick={() => setStep(s => s - 1)}
-                className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all duration-200 font-semibold"
+                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all duration-200 font-semibold text-sm"
               >
-                <ArrowLeft size={20} />
+                <ArrowLeft size={16} />
                 Back
               </button>
             ) : (
@@ -413,27 +413,27 @@ export default function OnboardingClient() {
             {step < 4 ? (
               <button
                 onClick={() => validateStep() && setStep(s => s + 1)}
-                className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 text-sm"
               >
                 Continue
-                <ArrowRight size={20} />
+                <ArrowRight size={16} />
               </button>
             ) : (
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className={`flex items-center gap-3 px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 ${
+                className={`flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 text-sm ${
                   loading ? 'opacity-50 cursor-not-allowed transform-none' : ''
                 }`}
               >
                 {loading ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Creating Account...
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Creating...
                   </>
                 ) : (
                   <>
-                    <Sparkles size={20} />
+                    <Sparkles size={16} />
                     Complete Setup
                   </>
                 )}
@@ -443,8 +443,8 @@ export default function OnboardingClient() {
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-12">
-          <p className="text-white/60 text-sm">
+        <div className="text-center mt-4">
+          <p className="text-white/60 text-xs">
             Already have an account?{' '}
             <Link href="/login" className="text-blue-400 hover:text-blue-300 underline font-medium">
               Log in here

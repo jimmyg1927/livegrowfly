@@ -76,6 +76,7 @@ export default function Header() {
   const user = useUserStore(state => state.user)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
 
+  // ✅ UPDATED: Added 404 routes to hidden routes
   const hiddenRoutes = [
     '/login',
     '/signup',
@@ -85,9 +86,15 @@ export default function Header() {
     '/confirm-payment',
     '/forgot-password',
     '/contact',
+    '/404',
+    '/not-found',
   ]
 
-  if (!pathname || hiddenRoutes.some(route => pathname.startsWith(route))) {
+  // ✅ Also check if current pathname is a 404 page
+  const is404Page = pathname === '/404' || pathname === '/not-found' || 
+                   (typeof document !== 'undefined' && (document?.title?.includes('404') || document?.title?.includes('Not Found')))
+
+  if (!pathname || hiddenRoutes.some(route => pathname.startsWith(route)) || is404Page) {
     return null
   }
 

@@ -248,20 +248,6 @@ export default function LoginPage() {
                 Create Your Account
               </Link>
             </div>
-
-            {/* ✅ Footer */}
-            <div className="mt-8 text-center">
-              <p className="text-gray-500 text-xs">
-                By signing in, you agree to our{' '}
-                <Link href="/terms" className="text-purple-400 hover:underline">
-                  Terms of Service
-                </Link>{' '}
-                and{' '}
-                <Link href="/privacy" className="text-purple-400 hover:underline">
-                  Privacy Policy
-                </Link>
-              </p>
-            </div>
           </div>
         </div>
       </div>

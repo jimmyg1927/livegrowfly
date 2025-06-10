@@ -79,6 +79,7 @@ export default function Sidebar() {
   const pathname = usePathname() || ''
   const [isCollapsed, setIsCollapsed] = useState(false)
 
+  // ✅ UPDATED: Added 404 routes to hidden routes
   const hiddenRoutes = [
     '/onboarding',
     '/signup',
@@ -88,9 +89,15 @@ export default function Sidebar() {
     '/payment-success',
     '/forgot-password',
     '/contact',
+    '/404',
+    '/not-found',
   ]
   
-  if (hiddenRoutes.some(route => pathname.startsWith(route))) {
+  // ✅ Also check if current pathname is a 404 page (Next.js sometimes uses different patterns)
+  const is404Page = pathname === '/404' || pathname === '/not-found' || 
+                   document?.title?.includes('404') || document?.title?.includes('Not Found')
+  
+  if (hiddenRoutes.some(route => pathname.startsWith(route)) || is404Page) {
     return null
   }
 
@@ -145,16 +152,16 @@ export default function Sidebar() {
           />
         </Link>
         
-        {/* Subtle Collapse Toggle - Only visible on larger screens */}
+        {/* ✅ UPDATED: More Obvious Collapse Toggle - Only visible on larger screens */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="hidden sm:block absolute -right-2 top-1/2 transform -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-md p-1 opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-sm"
+          className="hidden sm:block absolute -right-2 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white rounded-md p-2 opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-sm shadow-lg hover:shadow-xl"
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {isCollapsed ? (
-            <HiOutlineMenuAlt2 className="w-3 h-3" />
+            <HiOutlineMenuAlt2 className="w-4 h-4" />
           ) : (
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           )}

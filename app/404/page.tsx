@@ -16,6 +16,7 @@ import {
   FaBug,
   FaGlobe
 } from 'react-icons/fa'
+import { API_BASE_URL } from '@lib/constants'
 
 export default function NotFoundPage() {
   const router = useRouter()
@@ -31,14 +32,15 @@ export default function NotFoundPage() {
     setError(null)
 
     try {
-      const response = await fetch('/api/contact', {
+      const response = await fetch(`${API_BASE_URL}/api/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: 'Anonymous User',
+          name: 'Anonymous User (404 Report)',
           email,
           company: 'N/A',
-          message: `404 Error Report: ${message}\n\nPage: ${window.location.href}\nUser Agent: ${navigator.userAgent}`
+          subject: '404 Error Report',
+          message: `404 Error Report: ${message}\n\nPage: ${window.location.href}\nUser Agent: ${navigator.userAgent}\nTimestamp: ${new Date().toISOString()}`
         }),
       })
 
@@ -115,7 +117,7 @@ export default function NotFoundPage() {
               </h2>
               
               <div className="space-y-4">
-                {/* ✅ NEW: Take Me Home link to www.growfly.io */}
+                {/* ✅ Take Me Home link to www.growfly.io */}
                 <a
                   href="https://www.growfly.io"
                   className="w-full flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-2xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
@@ -124,6 +126,15 @@ export default function NotFoundPage() {
                   Take Me Home
                 </a>
                 
+                {/* ✅ NEW: Back Button */}
+                <button
+                  onClick={() => router.back()}
+                  className="w-full flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-2xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                >
+                  <FaArrowLeft />
+                  Go Back
+                </button>
+                
                 <Link
                   href="/dashboard"
                   className="w-full flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold rounded-2xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
@@ -131,14 +142,6 @@ export default function NotFoundPage() {
                   <FaHome />
                   Go to Dashboard
                 </Link>
-                
-                <button
-                  onClick={() => router.back()}
-                  className="w-full flex items-center justify-center gap-3 py-4 bg-white/5 hover:bg-white/10 text-white font-semibold rounded-2xl border border-white/10 hover:border-white/20 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
-                >
-                  <FaArrowLeft />
-                  Go Back
-                </button>
                 
                 <Link
                   href="/contact"
