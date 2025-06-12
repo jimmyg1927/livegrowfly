@@ -53,12 +53,12 @@ export default function RegisterPage() {
         { text: '10 AI images daily (50 monthly)', included: true },
         { text: 'Advanced AI model access', included: true },
         { text: 'AI brand strategy generator', included: true },
-        { text: 'Export responses to PDF', included: true },
+        { text: 'Use all features of the site', included: true },
         { text: 'Basic analytics', included: true },
         { text: 'Priority support', included: false },
         { text: 'Custom integrations', included: false }
       ],
-      buttonText: 'Start 7-Day Free Trial',
+      buttonText: 'Get Started',
       highlight: true,
       color: 'from-blue-500 to-indigo-600'
     },
@@ -73,14 +73,14 @@ export default function RegisterPage() {
       features: [
         { text: '2000 AI text prompts per month', included: true },
         { text: '30 AI images daily (150 monthly)', included: true },
-        { text: 'Premium AI models (GPT-4, Claude)', included: true },
         { text: 'Multi-user team collaboration', included: true },
         { text: 'Advanced analytics dashboard', included: true },
         { text: 'Team prompt library', included: true },
         { text: 'Priority chat support', included: true },
-        { text: 'API access', included: true }
+        { text: 'API access', included: true },
+        { text: 'Custom integrations', included: false }
       ],
-      buttonText: 'Start 14-Day Free Trial',
+      buttonText: 'Get Started',
       highlight: false,
       color: 'from-purple-500 to-pink-600'
     }
@@ -118,7 +118,7 @@ export default function RegisterPage() {
             return (
               <div
                 key={plan.id}
-                className={`relative rounded-xl p-5 transition-all duration-300 backdrop-blur-sm ${
+                className={`relative rounded-2xl p-6 transition-all duration-300 backdrop-blur-sm flex flex-col min-h-[600px] ${
                   plan.highlight
                     ? 'bg-gradient-to-b from-white/15 to-white/10 border-2 border-cyan-400/80 shadow-xl shadow-cyan-500/20'
                     : 'bg-white/10 border-2 border-cyan-400/50 hover:border-cyan-400/80 hover:bg-white/15'
@@ -135,35 +135,35 @@ export default function RegisterPage() {
                 )}
 
                 {/* Plan Header */}
-                <div className="text-center mb-4">
-                  <div className={`inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-r ${plan.color} text-white mb-2`}>
-                    <PlanIcon size={20} />
+                <div className="text-center mb-6">
+                  <div className={`inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-r ${plan.color} text-white mb-3`}>
+                    <PlanIcon size={24} />
                   </div>
-                  <h2 className="text-lg font-bold text-white mb-1">
+                  <h2 className="text-xl font-bold text-white mb-2">
                     {plan.name}
                   </h2>
-                  <p className="text-white/60 text-xs mb-2">{plan.subtitle}</p>
+                  <p className="text-white/60 text-sm mb-3">{plan.subtitle}</p>
                   <div className="flex items-baseline justify-center">
-                    <span className="text-2xl font-bold text-white">{plan.price}</span>
-                    <span className="text-white/60 text-xs ml-1">{plan.period}</span>
+                    <span className="text-3xl font-bold text-white">{plan.price}</span>
+                    <span className="text-white/60 text-sm ml-1">{plan.period}</span>
                   </div>
                 </div>
 
                 {/* Features List */}
-                <div className="flex-1 mb-4">
-                  <ul className="space-y-2">
+                <div className="flex-1 mb-6">
+                  <ul className="space-y-3">
                     {plan.features.map((feature, index) => (
                       <li key={index} className="flex items-start">
                         {feature.included ? (
-                          <div className="flex-shrink-0 w-4 h-4 rounded-full bg-green-500 flex items-center justify-center mr-2 mt-0.5">
-                            <Check size={10} className="text-white" />
+                          <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center mr-3 mt-0.5">
+                            <Check size={12} className="text-white" />
                           </div>
                         ) : (
-                          <div className="flex-shrink-0 w-4 h-4 rounded-full bg-gray-500 flex items-center justify-center mr-2 mt-0.5">
-                            <X size={10} className="text-white" />
+                          <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gray-500 flex items-center justify-center mr-3 mt-0.5">
+                            <X size={12} className="text-white" />
                           </div>
                         )}
-                        <span className={`text-xs leading-relaxed ${feature.included ? 'text-white/90' : 'text-white/40'}`}>
+                        <span className={`text-sm leading-relaxed ${feature.included ? 'text-white/90' : 'text-white/40'}`}>
                           {feature.text}
                         </span>
                       </li>
@@ -171,34 +171,36 @@ export default function RegisterPage() {
                   </ul>
                 </div>
 
-                {/* CTA Button */}
-                <button
-                  onClick={() => handleSelect(plan.id)}
-                  className={`w-full py-2.5 px-3 rounded-lg font-semibold text-xs transition-all duration-200 ${
-                    plan.highlight
-                      ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black hover:from-yellow-300 hover:to-orange-400 shadow-md hover:shadow-lg transform hover:scale-105'
-                      : plan.id === 'free'
-                      ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-400 hover:to-emerald-500 shadow-md hover:shadow-lg transform hover:scale-105'
-                      : 'bg-gradient-to-r from-cyan-400 to-blue-500 text-white hover:from-cyan-300 hover:to-blue-400 shadow-md hover:shadow-lg transform hover:scale-105'
-                  }`}
-                >
-                  {plan.buttonText}
-                </button>
+                {/* CTA Button - Fixed positioning and styling */}
+                <div className="mt-auto">
+                  <button
+                    onClick={() => handleSelect(plan.id)}
+                    className={`w-full py-4 px-4 rounded-2xl font-bold text-sm transition-all duration-200 shadow-lg border-2 ${
+                      plan.highlight
+                        ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black hover:from-yellow-300 hover:to-orange-400 border-yellow-400/50 hover:border-yellow-300 transform hover:scale-105 hover:shadow-xl'
+                        : plan.id === 'free'
+                        ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-400 hover:to-emerald-500 border-green-400/50 hover:border-green-300 transform hover:scale-105 hover:shadow-xl'
+                        : 'bg-gradient-to-r from-cyan-400 to-blue-500 text-white hover:from-cyan-300 hover:to-blue-400 border-cyan-400/50 hover:border-cyan-300 transform hover:scale-105 hover:shadow-xl'
+                    }`}
+                  >
+                    {plan.buttonText}
+                  </button>
+                </div>
               </div>
             )
           })}
         </div>
 
         {/* Enterprise CTA */}
-        <div className="text-center mb-4">
-          <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 max-w-2xl mx-auto border border-cyan-400/30">
-            <h3 className="text-lg font-semibold mb-1 text-white">Need something custom?</h3>
-            <p className="text-white/70 text-xs mb-3">
+        <div className="text-center mb-6">
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 max-w-2xl mx-auto border border-cyan-400/30">
+            <h3 className="text-xl font-semibold mb-2 text-white">Need something custom?</h3>
+            <p className="text-white/70 text-sm mb-4">
               Enterprise plans with custom integrations, dedicated support, and unlimited usage.
             </p>
             <Link 
               href="/contact?plan=enterprise" 
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 text-xs"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold rounded-2xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 text-sm border-2 border-amber-400/50 hover:border-amber-300"
             >
               Contact Sales
             </Link>
@@ -207,7 +209,7 @@ export default function RegisterPage() {
 
         {/* Login Link */}
         <div className="text-center">
-          <p className="text-white/60 text-xs">
+          <p className="text-white/60 text-sm">
             Already have an account?{' '}
             <Link href="/login" className="text-cyan-400 hover:text-cyan-300 underline font-medium">
               Sign in here
