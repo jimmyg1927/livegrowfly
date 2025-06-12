@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'react-hot-toast'
-import { Eye, EyeOff, CheckCircle, XCircle, ArrowRight, ArrowLeft, Sparkles } from 'lucide-react'
+import { Eye, EyeOff, CheckCircle, XCircle, ArrowRight, ArrowLeft, Sparkles, Gift } from 'lucide-react'
 import { API_BASE_URL } from '@lib/constants'
 
 type FormState = {
@@ -21,6 +21,7 @@ type FormState = {
   jobTitle: string
   industry: string
   goals: string
+  referralCode: string
 }
 
 const INITIAL_FORM: FormState = {
@@ -36,6 +37,7 @@ const INITIAL_FORM: FormState = {
   jobTitle: '',
   industry: '',
   goals: '',
+  referralCode: '',
 }
 
 export default function OnboardingClient() {
@@ -50,7 +52,21 @@ export default function OnboardingClient() {
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({})
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [hasReferralCode, setHasReferralCode] = useState(false)
   const submittingRef = useRef(false)
+
+  // ✅ NEW: Capture referral code from URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const referralCode = urlParams.get('ref')
+    if (referralCode) {
+      setForm(prev => ({ ...prev, referralCode: referralCode.toUpperCase() }))
+      setHasReferralCode(true)
+      toast.success(`🎁 Referral code applied! You'll get 40 prompts to start with.`, {
+        duration: 4000,
+      })
+    }
+  }, [])
 
   useEffect(() => {
     const totalChars = Object.values(form).reduce((acc, val) => acc + val.trim().length, 0)
@@ -116,6 +132,7 @@ export default function OnboardingClient() {
     setLoading(true)
 
     try {
+      // ✅ UPDATED: Include referral code in signup request
       const signupRes = await fetch(`${API_BASE_URL}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -125,6 +142,7 @@ export default function OnboardingClient() {
           password: form.password,
           jobTitle: form.jobTitle,
           industry: form.industry,
+          ref: form.referralCode || undefined, // Include referral code if present
           plan, // This is now just for tracking intended plan
         }),
       })
@@ -166,7 +184,10 @@ export default function OnboardingClient() {
 
       // Handle plan routing
       if (plan === 'free') {
-        toast.success('🎉 Welcome to Growfly!')
+        const welcomeMessage = hasReferralCode 
+          ? '🎉 Welcome to Growfly! You have 40 prompts to get started!' 
+          : '🎉 Welcome to Growfly!'
+        toast.success(welcomeMessage)
         router.push('/dashboard')
       } else {
         // For paid plans, redirect to Stripe
@@ -255,7 +276,7 @@ export default function OnboardingClient() {
                 if (name === 'password') setShowPassword(!showPassword)
                 if (name === 'confirmPassword') setShowConfirmPassword(!showConfirmPassword)
               }}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10 focus:outline-none focus:bg-white/10"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white transition-colors p-1 rounded-xl hover:bg-white/10 focus:outline-none focus:bg-white/10"
             >
               {shouldShowPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -306,6 +327,21 @@ export default function OnboardingClient() {
           </div>
         </div>
 
+        {/* ✅ NEW: Referral bonus banner */}
+        {hasReferralCode && (
+          <div className="max-w-2xl mx-auto mb-4">
+            <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/30 rounded-xl p-3 text-center">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <Gift className="text-green-400" size={16} />
+                <span className="text-green-300 font-semibold text-sm">Referral Bonus Applied!</span>
+              </div>
+              <p className="text-green-200 text-xs">
+                You'll start with <span className="font-bold">40 prompts</span> (20 free + 20 referral bonus)
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Progress and XP */}
         <div className="max-w-2xl mx-auto mb-4">
           <div className="text-center mb-3">
@@ -330,13 +366,13 @@ export default function OnboardingClient() {
             </div>
           </div>
 
-          {/* Step Navigation */}
+          {/* ✅ UPDATED: Step Navigation with Rounded Corners */}
           <div className="flex justify-center gap-2 mb-4">
             {stepTitles.map((stepInfo, i) => (
               <button
                 key={i}
                 onClick={() => setStep(i + 1)}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
                   step === i + 1
                     ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg scale-105'
                     : step > i + 1
@@ -366,6 +402,19 @@ export default function OnboardingClient() {
                     {renderField('Password', 'password', 'Create a strong password', false, 'password')}
                     {renderField('Confirm Password', 'confirmPassword', 'Confirm your password', false, 'password')}
                   </div>
+
+                  {/* ✅ NEW: Show referral code if applied */}
+                  {hasReferralCode && (
+                    <div className="mt-4 p-3 bg-green-500/10 border border-green-400/30 rounded-xl">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-green-300 text-xs font-semibold">Referral Code Applied</p>
+                          <p className="text-green-200 text-xs">Code: {form.referralCode}</p>
+                        </div>
+                        <Gift className="text-green-400" size={20} />
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
               
@@ -396,12 +445,12 @@ export default function OnboardingClient() {
             </div>
           </div>
 
-          {/* Navigation Buttons */}
+          {/* ✅ UPDATED: Navigation Buttons with Rounded Corners */}
           <div className="flex justify-between items-center mt-4">
             {step > 1 ? (
               <button
                 onClick={() => setStep(s => s - 1)}
-                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all duration-200 font-semibold text-sm"
+                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all duration-200 font-semibold text-sm"
               >
                 <ArrowLeft size={16} />
                 Back
@@ -413,7 +462,7 @@ export default function OnboardingClient() {
             {step < 4 ? (
               <button
                 onClick={() => validateStep() && setStep(s => s + 1)}
-                className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 text-sm"
+                className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 text-sm"
               >
                 Continue
                 <ArrowRight size={16} />
@@ -422,7 +471,7 @@ export default function OnboardingClient() {
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className={`flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 text-sm ${
+                className={`flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 text-sm ${
                   loading ? 'opacity-50 cursor-not-allowed transform-none' : ''
                 }`}
               >

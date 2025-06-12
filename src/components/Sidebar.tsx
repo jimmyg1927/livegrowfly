@@ -28,13 +28,13 @@ const SimpleImageGallery: React.FC<{
     return (
       <Link
         href="/gallery"
-        className="group relative flex items-center justify-center w-full px-3 py-2.5 text-white/90 hover:text-white hover:bg-white/10 hover:shadow-md rounded-lg transition-all duration-200 text-sm font-medium"
+        className="group relative flex items-center justify-center w-full px-3 py-2.5 text-white/90 hover:text-white hover:bg-white/10 hover:shadow-md rounded-xl transition-all duration-200 text-sm font-medium"
         title="Image Gallery"
       >
         <FaImages className="h-5 w-5 flex-shrink-0" />
         
         {/* Tooltip for collapsed state */}
-        <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+        <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
           Image Gallery
         </div>
       </Link>
@@ -45,7 +45,7 @@ const SimpleImageGallery: React.FC<{
   return (
     <Link
       href="/gallery"
-      className="group relative flex items-center gap-3 w-full px-3 py-2.5 text-white/90 hover:text-white hover:bg-white/10 hover:shadow-md rounded-lg transition-all duration-200 text-sm font-medium"
+      className="group relative flex items-center gap-3 w-full px-3 py-2.5 text-white/90 hover:text-white hover:bg-white/10 hover:shadow-md rounded-xl transition-all duration-200 text-sm font-medium"
     >
       <FaImages className="h-5 w-5 flex-shrink-0" />
       <span className="flex-1 text-left">Gallery</span>
@@ -111,7 +111,7 @@ export default function Sidebar() {
           <Link
             key={item.name}
             href={item.href}
-            className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium ${
+            className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium ${
               isActive
                 ? 'bg-white text-[#0f172a] shadow-lg font-semibold'
                 : 'text-white/90 hover:text-white hover:bg-white/10 hover:shadow-md'
@@ -125,7 +125,7 @@ export default function Sidebar() {
             
             {/* Tooltip for collapsed state */}
             {isCollapsed && (
-              <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+              <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
                 {item.name}
               </div>
             )}
@@ -152,17 +152,19 @@ export default function Sidebar() {
           />
         </Link>
         
-        {/* ✅ UPDATED: More Obvious Collapse Toggle - Only visible on larger screens */}
+        {/* ✅ UPDATED: Much More Obvious Collapse Toggle */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="hidden sm:block absolute -right-2 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white rounded-md p-2 opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-sm shadow-lg hover:shadow-xl"
+          className={`hidden sm:block absolute -right-3 top-1/2 transform -translate-y-1/2 bg-white/30 hover:bg-white/40 text-white rounded-xl p-3 transition-all duration-300 backdrop-blur-sm shadow-xl hover:shadow-2xl border border-white/20 hover:border-white/30 hover:scale-110 ${
+            isCollapsed ? 'opacity-80 hover:opacity-100' : 'opacity-60 group-hover:opacity-100'
+          }`}
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {isCollapsed ? (
-            <HiOutlineMenuAlt2 className="w-4 h-4" />
+            <HiOutlineMenuAlt2 className="w-5 h-5" />
           ) : (
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
             </svg>
           )}
         </button>
@@ -183,14 +185,14 @@ export default function Sidebar() {
         <NavSection items={settingsItems} showDivider={true} />
       </nav>
 
-      {/* Logout Button */}
+      {/* ✅ UPDATED: Logout Button with Better Rounded Corners */}
       <div className={`w-full pt-4 border-t border-white/10 transition-all duration-200 ${isCollapsed ? 'px-2' : 'px-2 sm:px-4'}`}>
         <button
           onClick={() => {
             localStorage.removeItem('growfly_jwt')
             window.location.href = '/login'
           }}
-          className={`group relative flex items-center gap-3 w-full px-3 py-2.5 text-white/90 hover:text-white hover:bg-red-500/20 hover:shadow-md rounded-lg transition-all duration-200 text-sm font-medium ${
+          className={`group relative flex items-center gap-3 w-full px-3 py-2.5 text-white/90 hover:text-white hover:bg-red-500/20 hover:shadow-lg rounded-xl transition-all duration-200 text-sm font-medium border border-transparent hover:border-red-500/20 ${
             isCollapsed ? 'justify-center' : ''
           }`}
           title={isCollapsed ? 'Logout' : ''}
@@ -202,7 +204,7 @@ export default function Sidebar() {
           
           {/* Tooltip for collapsed state */}
           {isCollapsed && (
-            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
               Logout
             </div>
           )}

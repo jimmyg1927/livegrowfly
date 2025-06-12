@@ -56,7 +56,6 @@ interface UploadedFile {
   file?: File
 }
 
-// ✅ UPDATED: Simplified DALL-E Image interface
 interface GeneratedImage {
   id: string
   url: string
@@ -67,7 +66,6 @@ interface GeneratedImage {
   createdAt: string
 }
 
-// ✅ UPDATED: Enhanced DALL-E Usage interface with new limits
 interface ImageUsage {
   subscriptionType: string
   subscriptionName: string
@@ -91,36 +89,26 @@ interface ImageUsage {
   _fallback?: boolean
 }
 
-// ✅ UPDATED: New subscription limits as requested
 const PROMPT_LIMITS: Record<string, number> = {
   free: 20,
   personal: 400,
   business: 2000,
 }
 
-// ✅ NEW: Image generation limits
 const IMAGE_LIMITS: Record<string, { daily: number; monthly: number }> = {
   free: { daily: 2, monthly: 10 },
   personal: { daily: 10, monthly: 50 },
   business: { daily: 30, monthly: 150 },
 }
 
-// ✅ IMPROVED: Persistent storage keys
-const STORAGE_KEYS = {
-  DASHBOARD_IMAGES: 'growfly_dashboard_images',
-  DASHBOARD_MESSAGES: 'growfly_dashboard_messages'
-}
-
-// ✅ IMPROVED: Max messages to keep persistent
 const MAX_PERSISTENT_MESSAGES = 10
 
-// ✅ NEW: Copy functionality
+// ✅ FIXED: Copy functionality
 const copyToClipboard = async (text: string) => {
   try {
     await navigator.clipboard.writeText(text)
     return true
   } catch (err) {
-    // Fallback for older browsers
     const textArea = document.createElement('textarea')
     textArea.value = text
     document.body.appendChild(textArea)
@@ -137,7 +125,7 @@ const copyToClipboard = async (text: string) => {
   }
 }
 
-// ✅ NEW: Image error handling component
+// ✅ FIXED: Image error handling component
 const SafeImage: React.FC<{ 
   src: string; 
   alt: string; 
@@ -230,7 +218,6 @@ const FilePreview: React.FC<{ file: UploadedFile; onRemove: () => void }> = ({ f
   )
 }
 
-// ✅ IMPROVED: Enhanced Image Generation Modal with updated limits
 const ImageGenerationModal: React.FC<{
   open: boolean
   onClose: () => void
@@ -247,7 +234,6 @@ const ImageGenerationModal: React.FC<{
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
   const router = useRouter()
 
-  // Fetch usage stats when modal opens
   useEffect(() => {
     if (open && token) {
       fetch(`${API_BASE_URL}/api/dalle/usage`, {
@@ -264,7 +250,6 @@ const ImageGenerationModal: React.FC<{
           if (data && !data.error && data.dailyImages && data.monthlyImages) {
             setImageUsage(data)
           } else {
-            // ✅ UPDATED: Use new image limits for fallback
             const subType = data.subscriptionType || 'free'
             const limits = IMAGE_LIMITS[subType] || IMAGE_LIMITS.free
             setImageUsage({
@@ -294,7 +279,6 @@ const ImageGenerationModal: React.FC<{
     }
   }, [open, token])
 
-  // Reset states when modal opens
   useEffect(() => {
     if (open) {
       setShowSuccess(false)
@@ -360,14 +344,12 @@ const ImageGenerationModal: React.FC<{
       setGeneratedImage(imageData)
       setShowSuccess(true)
 
-      // Wait a moment to show success, then add to chat and close
       setTimeout(() => {
         onImageGenerated(imageData)
         setPrompt('')
         onClose()
       }, 2000)
 
-      // Refresh usage after successful generation
       if (data.usage) {
         setImageUsage(prev => prev ? {
           ...prev,
@@ -431,7 +413,6 @@ const ImageGenerationModal: React.FC<{
             </button>
           </div>
 
-          {/* Success State */}
           {showSuccess && generatedImage ? (
             <div className="text-center py-8">
               <div className="mb-6">
@@ -460,7 +441,6 @@ const ImageGenerationModal: React.FC<{
             </div>
           ) : (
             <>
-              {/* Main content when not showing success */}
               <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
                 <p className="text-sm text-blue-800 dark:text-blue-300">
                   <strong>🎨 Create professional images for your business</strong><br />
@@ -468,7 +448,6 @@ const ImageGenerationModal: React.FC<{
                 </p>
               </div>
 
-              {/* Usage Display */}
               {imageUsage && (
                 <div className="mb-6 space-y-4">
                   {imageUsage._fallback && (
@@ -563,7 +542,6 @@ const ImageGenerationModal: React.FC<{
                 </div>
               )}
 
-              {/* Error Display */}
               {error && (
                 <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
                   <div className="text-red-700 dark:text-red-300 text-sm font-medium mb-2">
@@ -581,7 +559,6 @@ const ImageGenerationModal: React.FC<{
               )}
 
               <div className="space-y-4">
-                {/* Prompt Input */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Describe your image
@@ -599,7 +576,6 @@ const ImageGenerationModal: React.FC<{
                   </p>
                 </div>
 
-                {/* Options */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -633,7 +609,6 @@ const ImageGenerationModal: React.FC<{
                   </div>
                 </div>
 
-                {/* Generate Button */}
                 <div className="flex gap-3 pt-4">
                   <button
                     onClick={onClose}
@@ -678,7 +653,6 @@ function DashboardContent() {
   const { user, setUser } = useUserStore()
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
 
-  // Calculate prompt limits and usage
   const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || 'free'] || 20
   const promptsUsed = user?.promptsUsed ?? 0
   const promptsRemaining = Math.max(0, promptLimit - promptsUsed)
@@ -699,7 +673,9 @@ function DashboardContent() {
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null)
   const [isUserScrolling, setIsUserScrolling] = useState(false)
   const [currentSaveMessageId, setCurrentSaveMessageId] = useState<string | null>(null)
+  const [currentFeedbackMessageId, setCurrentFeedbackMessageId] = useState<string | null>(null)
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
+  const [disableAutoScroll, setDisableAutoScroll] = useState(false)
 
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -707,8 +683,9 @@ function DashboardContent() {
   const containerRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const scrollTimeoutRef = useRef<NodeJS.Timeout>()
+  const lastScrollTop = useRef<number>(0)
 
-  // ✅ NEW: Copy message handler
+  // ✅ FIXED: Copy message handler
   const handleCopyMessage = async (messageId: string, content: string) => {
     const success = await copyToClipboard(content)
     if (success) {
@@ -717,64 +694,43 @@ function DashboardContent() {
     }
   }
 
-  // ✅ ENHANCED: Stronger image persistence with better error handling
-  const saveImageToPersistentStorage = (image: GeneratedImage) => {
-    try {
-      const existingImages = JSON.parse(localStorage.getItem(STORAGE_KEYS.DASHBOARD_IMAGES) || '[]')
-      const updatedImages = [image, ...existingImages.filter((img: GeneratedImage) => img.id !== image.id)].slice(0, 50)
-      localStorage.setItem(STORAGE_KEYS.DASHBOARD_IMAGES, JSON.stringify(updatedImages))
-      console.log('✅ Image saved to persistent storage:', image.id)
-    } catch (error) {
-      console.error('Failed to save image to storage:', error)
-    }
-  }
-
-  // ✅ ENHANCED: Better image loading from storage
-  const loadImagesFromPersistentStorage = () => {
-    try {
-      const savedImages = JSON.parse(localStorage.getItem(STORAGE_KEYS.DASHBOARD_IMAGES) || '[]')
-      if (savedImages.length > 0) {
-        setGeneratedImages(savedImages)
-        console.log('✅ Loaded', savedImages.length, 'images from storage')
-      }
-    } catch (error) {
-      console.error('Failed to load images from storage:', error)
-    }
-  }
-
-  // ✅ ENHANCED: Better message persistence with stronger image handling
-  const saveMessagesToPersistentStorage = (messages: Message[]) => {
-    try {
-      // Save ALL messages with generated images, not just filtered ones
-      const messagesToSave = messages.slice(-MAX_PERSISTENT_MESSAGES) // Keep last 10
-      localStorage.setItem(STORAGE_KEYS.DASHBOARD_MESSAGES, JSON.stringify(messagesToSave))
-      console.log('✅ Saved', messagesToSave.length, 'messages to storage')
-    } catch (error) {
-      console.error('Failed to save messages to storage:', error)
-    }
-  }
-
-  // ✅ ENHANCED: Load persistent messages on mount with better restoration
-  useEffect(() => {
-    loadImagesFromPersistentStorage()
+  // ✅ CRITICAL FIX: Remove localStorage usage and only load from database
+  const loadDashboardConversationsFromDB = async () => {
+    if (!token) return
     
     try {
-      const savedMessages = JSON.parse(localStorage.getItem(STORAGE_KEYS.DASHBOARD_MESSAGES) || '[]')
-      if (savedMessages.length > 0) {
-        console.log('✅ Restoring', savedMessages.length, 'persistent messages')
-        setMessages(savedMessages)
+      const response = await fetch(`${API_BASE_URL}/api/chat/dashboard-history`, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.messages && data.messages.length > 0) {
+          console.log('✅ Loaded user-specific messages from database:', data.messages.length)
+          setMessages(data.messages.slice(-MAX_PERSISTENT_MESSAGES))
+        } else {
+          console.log('✅ No previous messages for this user')
+          setMessages([])
+        }
+      } else {
+        console.log('No dashboard history found or error loading')
+        setMessages([])
       }
-    } catch (error) {
-      console.error('Failed to load persistent messages:', error)
+    } catch (err) {
+      console.error('Failed to load dashboard conversations from DB:', err)
+      setMessages([])
     }
-  }, [])
+  }
 
-  // ✅ ENHANCED: Save messages whenever they change, especially image messages
+  // ✅ CRITICAL FIX: Load user's private messages on mount
   useEffect(() => {
-    if (messages.length > 0) {
-      saveMessagesToPersistentStorage(messages)
+    if (token) {
+      loadDashboardConversationsFromDB()
     }
-  }, [messages])
+  }, [token])
 
   // Helper function for creating files from base64 previews
   const createFileFromPreview = (preview: string, name: string, type: string): File => {
@@ -791,7 +747,7 @@ function DashboardContent() {
     return new File([u8arr], name, { type: mime })
   }
 
-  // Clear conversations (but don't lose persistent ones)
+  // Clear conversations
   const createNewConversation = () => {
     setMessages([])
     setError(null)
@@ -816,7 +772,6 @@ function DashboardContent() {
           if (data && !data.error && data.dailyImages && data.monthlyImages && data.totalPrompts) {
             setImageUsage(data)
           } else {
-            // ✅ UPDATED: Use new image limits for fallback
             const subType = user?.subscriptionType?.toLowerCase() || 'free'
             const limits = IMAGE_LIMITS[subType] || IMAGE_LIMITS.free
             setImageUsage({
@@ -885,15 +840,12 @@ function DashboardContent() {
     return () => clearInterval(syncInterval)
   }, [token, router, setUser])
 
-  // ✅ NEW: Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd/Ctrl + K to focus input
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
         textareaRef.current?.focus()
       }
-      // Cmd/Ctrl + / to show help
       if ((e.metaKey || e.ctrlKey) && e.key === '/') {
         e.preventDefault()
         setShowHelpModal(true)
@@ -904,66 +856,44 @@ function DashboardContent() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  // Load persistent dashboard conversations on mount
-  useEffect(() => {
-    if (!token) return
-    
-    const loadDashboardConversations = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/chat/dashboard-history`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        
-        if (response.ok) {
-          const data = await response.json()
-          if (data.messages && data.messages.length > 0) {
-            setMessages(prev => {
-              // Merge with any persistent image messages, but prioritize server messages
-              const persistentImages = prev.filter(m => m.generatedImage)
-              const serverMessages = data.messages
-              
-              // Combine and deduplicate by ID
-              const combined = [...persistentImages, ...serverMessages]
-              const unique = combined.filter((msg, index, arr) => 
-                arr.findIndex(m => m.id === msg.id) === index
-              )
-              
-              return unique.slice(-MAX_PERSISTENT_MESSAGES) // Keep only latest 10, recent at bottom
-            })
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load dashboard conversations:', err)
-      }
-    }
-    
-    loadDashboardConversations()
-  }, [token])
-
-  // Auto-resize textarea with ChatGPT-style behavior
+  // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
-      // Reset height to get accurate scrollHeight
       textareaRef.current.style.height = 'auto'
       
       const scrollHeight = textareaRef.current.scrollHeight
-      const lineHeight = 24 // Approximate line height in pixels
+      const lineHeight = 24
       const maxLines = 4
       const maxHeight = lineHeight * maxLines
       
-      // Set height based on content, but cap at max lines
       const newHeight = Math.min(scrollHeight, maxHeight)
       textareaRef.current.style.height = newHeight + 'px'
     }
   }, [input])
 
-  // Scroll handling - Fixed for single scroll container
+  // ✅ FIXED: Improved scroll handling - detect manual scrolling
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
 
     const handleScroll = () => {
-      setIsUserScrolling(true)
+      const currentScrollTop = container.scrollTop
+      const maxScroll = container.scrollHeight - container.clientHeight
+      
+      // If user scrolled up manually, disable auto-scroll
+      if (currentScrollTop < lastScrollTop.current && currentScrollTop < maxScroll - 100) {
+        setDisableAutoScroll(true)
+        setIsUserScrolling(true)
+      }
+      
+      // If user scrolled to bottom, re-enable auto-scroll
+      if (currentScrollTop >= maxScroll - 50) {
+        setDisableAutoScroll(false)
+        setIsUserScrolling(false)
+      }
+      
+      lastScrollTop.current = currentScrollTop
+
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current)
       }
@@ -982,9 +912,9 @@ function DashboardContent() {
     }
   }, [])
 
-  // Auto-scroll to bottom - Fixed for better UX
+  // ✅ FIXED: Better auto-scroll logic
   useEffect(() => {
-    if (!isUserScrolling && (isStreaming || messages.length > 0)) {
+    if (!disableAutoScroll && !isUserScrolling && (isStreaming || messages.length > 0)) {
       setTimeout(() => {
         chatEndRef.current?.scrollIntoView({ 
           behavior: isStreaming ? 'auto' : 'smooth',
@@ -992,7 +922,7 @@ function DashboardContent() {
         })
       }, 100)
     }
-  }, [messages, isUserScrolling, isStreaming])
+  }, [messages, disableAutoScroll, isUserScrolling, isStreaming])
 
   // Enhanced file handling
   const handleFileSelect = (files: FileList) => {
@@ -1033,7 +963,6 @@ function DashboardContent() {
     setUploadedFiles(prev => prev.filter(f => f.id !== fileId))
   }
 
-  // ✅ FIXED: Ensure follow-ups always return exactly 1 follow-up
   const fetchFollowUps = async (text: string): Promise<string[]> => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/ai/followups`, {
@@ -1048,12 +977,10 @@ function DashboardContent() {
       const data = await res.json()
       const rawFollowUps = (data.followUps as string[]) || []
       
-      // ✅ FIXED: Always ensure exactly 1 follow-up
       if (rawFollowUps.length > 0) {
-        return [rawFollowUps[0]] // Take only the first one
+        return [rawFollowUps[0]]
       }
       
-      // Generate exactly 1 contextual follow-up based on content
       if (text.toLowerCase().includes('marketing')) {
         return ['How can I measure the success of these marketing strategies?']
       } else if (text.toLowerCase().includes('business') || text.toLowerCase().includes('improve')) {
@@ -1064,7 +991,6 @@ function DashboardContent() {
         return ['Can you provide more specific examples for my situation?']
       }
     } catch {
-      // Always return exactly 1 fallback follow-up
       return ['Tell me more about how to implement this']
     }
   }
@@ -1113,35 +1039,26 @@ function DashboardContent() {
           setIsLoading(false)
           setIsStreaming(false)
           
-          // ✅ FIXED: Always fetch follow-ups to ensure we get exactly 1
           if (!followUps.length && fullContent.trim()) {
             followUps = await fetchFollowUps(fullContent)
-            console.log('🔄 Generated follow-ups:', followUps)
           }
           
-          // ✅ ENSURE: If still no follow-ups, add exactly 1 default
           if (!followUps.length) {
             followUps = ['Tell me more about this']
-            console.log('🔄 Using default follow-up:', followUps)
           }
           
-          // ✅ ENSURE: Take only the first follow-up to guarantee exactly 1
           if (followUps.length > 1) {
             followUps = [followUps[0]]
           }
-          
-          console.log('✅ Final follow-up to display:', followUps)
           
           setMessages((prev) => {
             const updated = prev.map((msg) =>
               msg.id === aId ? { ...msg, content: fullContent, followUps } : msg
             )
-            // ✅ Keep only last 10 messages, recent at bottom
             const trimmed = updated.slice(-MAX_PERSISTENT_MESSAGES)
             return trimmed
           })
           
-          // Save to dashboard history automatically
           try {
             await fetch(`${API_BASE_URL}/api/chat/save-to-dashboard`, {
               method: 'POST',
@@ -1251,7 +1168,6 @@ function DashboardContent() {
     
     setMessages((prev) => {
       const updated = [...prev, userMessage]
-      // ✅ Keep only last 10 messages, recent at bottom
       return updated.slice(-MAX_PERSISTENT_MESSAGES)
     })
     setInput('')
@@ -1259,7 +1175,6 @@ function DashboardContent() {
     const aId = `a${Date.now()}`
     setMessages((prev) => {
       const updated = [...prev, { id: aId, role: 'assistant', content: '' } as Message]
-      // ✅ Keep only last 10 messages, recent at bottom
       return updated.slice(-MAX_PERSISTENT_MESSAGES)
     })
 
@@ -1340,7 +1255,6 @@ function DashboardContent() {
       const result = await response.json()
       setError(null)
       
-      // Close the save modal after successful save
       setShowSaveModal(false)
       setCurrentSaveMessageId(null)
       
@@ -1369,17 +1283,11 @@ function DashboardContent() {
     }
   }
 
-  // ✅ ENHANCED: Better image generation with stronger persistence
   const handleImageGenerated = (image: GeneratedImage) => {
     console.log('🎨 Image generated:', image.id)
     
-    // Update generated images array
     setGeneratedImages(prev => [image, ...prev])
     
-    // Save to persistent storage immediately
-    saveImageToPersistentStorage(image)
-    
-    // Create a new assistant message with the generated image
     const imageMessageId = `img_${Date.now()}`
     const imageMessage: Message = {
       id: imageMessageId,
@@ -1391,17 +1299,12 @@ function DashboardContent() {
       ]
     }
     
-    // Add message and save immediately
     setMessages(prev => {
       const updated = [...prev, imageMessage]
-      // ✅ Keep only last 10 messages, recent at bottom
       const trimmed = updated.slice(-MAX_PERSISTENT_MESSAGES)
-      // Save to persistent storage immediately
-      setTimeout(() => saveMessagesToPersistentStorage(trimmed), 100)
       return trimmed
     })
     
-    // Refresh image usage
     if (token) {
       fetch(`${API_BASE_URL}/api/dalle/usage`, {
         headers: { 
@@ -1422,22 +1325,19 @@ function DashboardContent() {
     }
   }
 
-  // ✅ IMPROVED: Handle image download from chat with error handling
   const handleDownloadImage = (image: GeneratedImage) => {
     try {
       const link = document.createElement('a')
       link.href = image.url
       link.download = `growfly-${image.id}.png`
-      link.target = '_blank' // Open in new tab as fallback
+      link.target = '_blank'
       link.click()
     } catch (error) {
       console.error('Failed to download image:', error)
-      // Fallback - open in new tab
       window.open(image.url, '_blank')
     }
   }
 
-  // Handle image sharing
   const handleShareImage = (image: GeneratedImage) => {
     if (navigator.share) {
       navigator.share({
@@ -1456,9 +1356,9 @@ function DashboardContent() {
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-textPrimary dark:text-white transition-colors duration-300 flex flex-col">
       
-      {/* ✅ FIXED: Content Area - Reduced left padding and better spacing */}
+      {/* ✅ FIXED: Content Area - Better left margin and increased bottom padding */}
       <div className="flex-1 overflow-hidden ml-0 md:ml-60 lg:ml-64">
-        <div ref={containerRef} className="h-full overflow-y-auto p-3 md:p-6 pb-40">
+        <div ref={containerRef} className="h-full overflow-y-auto p-3 md:p-4 pb-48">
 
         {/* Error Message */}
         {error && (
@@ -1488,12 +1388,12 @@ function DashboardContent() {
           <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-700 rounded-2xl">
             <p className="text-blue-800 dark:text-blue-300 text-sm flex items-center gap-2">
               <span className="text-lg">💡</span>
-              <strong>Your conversations are automatically saved here!</strong> Your last 10 exchanges stay on this dashboard so you can always pick up where you left off.
+              <strong>Your conversations are securely saved!</strong> Your last 10 exchanges stay private to your account on this dashboard.
             </p>
           </div>
         )}
 
-        {/* ✅ FIXED: Chat Messages - Better layout with newest at bottom */}
+        {/* ✅ FIXED: Chat Messages - Left-aligned assistant responses */}
         <div className="space-y-4 min-h-0 flex-1">
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full min-h-[60vh]">
@@ -1538,7 +1438,6 @@ function DashboardContent() {
             </div>
           ) : (
             <>
-              {/* Messages container with proper scroll */}
               {messages.map((msg, index) => (
             <div
               key={msg.id}
@@ -1546,11 +1445,12 @@ function DashboardContent() {
               onMouseEnter={() => setHoveredMessageId(msg.id)}
               onMouseLeave={() => setHoveredMessageId(null)}
             >
+              {/* ✅ FIXED: Assistant messages now properly left-aligned with better width */}
               <div
                 className={`relative p-4 rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md ${
                   msg.role === 'user'
                     ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white max-w-[80%] sm:max-w-[70%]'
-                    : 'bg-white dark:bg-slate-800 border border-gray-100/50 dark:border-slate-700 text-gray-800 dark:text-white max-w-[95%] sm:max-w-[80%] shadow-sm'
+                    : 'bg-white dark:bg-slate-800 border border-gray-100/50 dark:border-slate-700 text-gray-800 dark:text-white max-w-[95%] sm:max-w-[85%] shadow-sm mr-auto'
                 }`}
               >
                 {/* Display uploaded files for user messages */}
@@ -1584,7 +1484,7 @@ function DashboardContent() {
                   />
                 )}
 
-                {/* Generated images with updated button colors */}
+                {/* Generated images */}
                 {msg.generatedImage && (
                   <div className="mb-4">
                     <SafeImage
@@ -1595,7 +1495,6 @@ function DashboardContent() {
                         console.error('Failed to load generated image:', msg.generatedImage?.url)
                       }}
                     />
-                    {/* ✅ FIXED: All buttons now use Growfly blue color */}
                     <div className="mt-3 flex gap-2">
                       <button
                         onClick={() => handleDownloadImage(msg.generatedImage!)}
@@ -1645,14 +1544,13 @@ function DashboardContent() {
 
                 {msg.role === 'assistant' && msg.content && (
                   <>
-                    {/* ✅ FIXED: Follow-up Questions - Now guaranteed to show exactly 1 and centered */}
+                    {/* ✅ FIXED: Follow-up Questions - Centered */}
                     {msg.followUps && msg.followUps.length > 0 && (
                       <div className="mt-6 p-4 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-2xl border border-indigo-200/50 dark:border-indigo-700/50">
                         <div className="flex items-center justify-center gap-2 mb-3">
                           <span className="text-lg">💡</span>
                           <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">Continue the conversation:</span>
                         </div>
-                        {/* Since we now guarantee exactly 1 follow-up, single button */}
                         <div className="flex justify-center">
                           <button
                             onClick={(e) => {
@@ -1669,7 +1567,7 @@ function DashboardContent() {
                       </div>
                     )}
 
-                    {/* ✅ IMPROVED: Action Buttons with copy button included */}
+                    {/* Action Buttons with copy button included */}
                     <div className="flex flex-wrap gap-4 mt-6 text-lg text-gray-500 dark:text-gray-400 relative">
                       <div className="relative">
                         <FaCopy
@@ -1689,12 +1587,18 @@ function DashboardContent() {
                       </div>
                       <HiThumbUp
                         className="cursor-pointer hover:text-green-500 transition-colors duration-200 transform hover:scale-110"
-                        onClick={() => setShowFeedbackModal(true)}
+                        onClick={() => {
+                          setCurrentFeedbackMessageId(msg.id)
+                          setShowFeedbackModal(true)
+                        }}
                         title="Like this response"
                       />
                       <HiThumbDown
                         className="cursor-pointer hover:text-red-500 transition-colors duration-200 transform hover:scale-110"
-                        onClick={() => setShowFeedbackModal(true)}
+                        onClick={() => {
+                          setCurrentFeedbackMessageId(msg.id)
+                          setShowFeedbackModal(true)
+                        }}
                         title="Dislike this response"
                       />
                       <FaRegBookmark
@@ -1716,16 +1620,16 @@ function DashboardContent() {
               </div>
             </div>
             ))}
-            <div ref={chatEndRef} className="h-4" />
+            <div ref={chatEndRef} className="h-8" />
             </>
           )}
         </div>
         </div>
       </div>
 
-      {/* File Upload Preview - Fixed positioning */}
+      {/* File Upload Preview */}
       {uploadedFiles.length > 0 && (
-        <div className="fixed bottom-32 left-4 right-4 md:left-60 lg:left-64 px-2 z-30">
+        <div className="fixed bottom-36 left-4 right-4 md:left-60 lg:left-64 px-2 z-30">
           <div className="max-w-4xl mx-auto">
             <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-xl p-3 border border-gray-200 dark:border-slate-700 shadow-lg">
               <div className="flex items-center justify-between mb-2">
@@ -1753,10 +1657,9 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* ✅ FIXED: Better floating input section */}
+      {/* ✅ FIXED: Floating Input Section - Properly centered and aligned */}
       <div className="fixed bottom-0 left-4 right-4 md:left-60 lg:left-64 z-20 p-3">
         <div className="max-w-4xl mx-auto">
-          {/* Helpful hints bar - Simplified */}
           {messages.length === 0 && (
             <div className="mb-3 flex items-center justify-center gap-3 text-xs text-gray-500 dark:text-gray-400">
               <div className="flex items-center gap-1">
@@ -1770,10 +1673,9 @@ function DashboardContent() {
             </div>
           )}
           
-          {/* Input container - More compact and modern */}
+          {/* ✅ FIXED: Input container properly aligned */}
           <div className="flex items-end gap-2 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md rounded-xl p-3 shadow-xl border border-gray-200/50 dark:border-slate-600/50">
             
-            {/* Upload Files Button - More compact with rounded corners */}
             <button
               onClick={(e) => {
                 e.preventDefault()
@@ -1792,7 +1694,6 @@ function DashboardContent() {
               <span className="hidden sm:inline text-xs">Upload</span>
             </button>
 
-            {/* Create Image Button - More compact with rounded corners */}
             <button
               onClick={() => {
                 if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
@@ -1813,8 +1714,8 @@ function DashboardContent() {
               </span>
             </button>
 
-            {/* Input Field - Better styling */}
-            <div className="flex-1 relative">
+            {/* ✅ FIXED: Input field properly centered */}
+            <div className="flex-1 relative flex items-center">
               <textarea
                 ref={textareaRef}
                 rows={1}
@@ -1835,7 +1736,6 @@ function DashboardContent() {
               />
             </div>
 
-            {/* Send Button - More compact with rounded corners */}
             <button
               onClick={(e) => {
                 e.preventDefault()
@@ -1869,7 +1769,7 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* Help Button - Better positioning */}
+      {/* Help Button */}
       <div className="fixed right-4 bottom-20 z-30">
         <button
           onClick={() => setShowHelpModal(true)}
@@ -1977,7 +1877,7 @@ function DashboardContent() {
                     <div className="text-4xl group-hover:scale-110 transition-transform duration-300">🎯</div>
                     <div className="flex-1">
                       <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Productivity Enhancement</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Get personalized productivity tips, time management strategies, and workflow improvements to maximize your business efficiency.</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Get personalized productivity tips, time management strategies, and workflow optimizations to maximize your business efficiency.</p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-xs rounded-full">Time Management</span>
                         <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-xs rounded-full">Goal Setting</span>
@@ -1987,33 +1887,35 @@ function DashboardContent() {
                 </button>
               </div>
               
-              <div className="mt-8 p-6 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800/50 dark:to-blue-900/20 rounded-2xl border border-gray-200/50 dark:border-gray-700/50">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                  ⚡ Pro Tips
+              <div className="mt-8 p-6 bg-gradient-to-r from-gray-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 rounded-2xl border border-gray-200/50 dark:border-slate-700/50">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <span className="text-2xl">⌨️</span>
+                  Keyboard Shortcuts
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                  <div className="flex items-start gap-2">
-                    <span className="text-blue-500 mt-0.5">💡</span>
-                    <div>
-                      <strong className="text-gray-900 dark:text-white">Be Specific:</strong> The more details you provide about your business, industry, and goals, the better tailored advice you'll receive.
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Focus input</span>
+                    <div className="flex gap-1">
+                      <kbd className="px-2 py-1 bg-white dark:bg-slate-700 rounded text-xs font-mono border">⌘</kbd>
+                      <kbd className="px-2 py-1 bg-white dark:bg-slate-700 rounded text-xs font-mono border">K</kbd>
                     </div>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-green-500 mt-0.5">📎</span>
-                    <div>
-                      <strong className="text-gray-900 dark:text-white">Upload Files:</strong> Share documents, spreadsheets, or images for personalized analysis and recommendations.
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Open help</span>
+                    <div className="flex gap-1">
+                      <kbd className="px-2 py-1 bg-white dark:bg-slate-700 rounded text-xs font-mono border">⌘</kbd>
+                      <kbd className="px-2 py-1 bg-white dark:bg-slate-700 rounded text-xs font-mono border">/</kbd>
                     </div>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-purple-500 mt-0.5">🎨</span>
-                    <div>
-                      <strong className="text-gray-900 dark:text-white">Create Images:</strong> Generate professional visuals for presentations, social media, and marketing materials.
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Send message</span>
+                    <kbd className="px-2 py-1 bg-white dark:bg-slate-700 rounded text-xs font-mono border">Enter</kbd>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-orange-500 mt-0.5">🔄</span>
-                    <div>
-                      <strong className="text-gray-900 dark:text-white">Follow Up:</strong> Use the suggested follow-up questions to dive deeper and get more actionable insights.
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">New line</span>
+                    <div className="flex gap-1">
+                      <kbd className="px-2 py-1 bg-white dark:bg-slate-700 rounded text-xs font-mono border">Shift</kbd>
+                      <kbd className="px-2 py-1 bg-white dark:bg-slate-700 rounded text-xs font-mono border">Enter</kbd>
                     </div>
                   </div>
                 </div>
@@ -2024,13 +1926,11 @@ function DashboardContent() {
       )}
 
       {/* Image Generation Modal */}
-      {showImageModal && (
-        <ImageGenerationModal
-          open={showImageModal}
-          onClose={() => setShowImageModal(false)}
-          onImageGenerated={handleImageGenerated}
-        />
-      )}
+      <ImageGenerationModal
+        open={showImageModal}
+        onClose={() => setShowImageModal(false)}
+        onImageGenerated={handleImageGenerated}
+      />
 
       {/* Save Modal */}
       {showSaveModal && currentSaveMessageId && (
@@ -2041,30 +1941,36 @@ function DashboardContent() {
             setCurrentSaveMessageId(null)
           }}
           onConfirm={async (title: string) => {
-            await handleSaveToCollabZone(title, currentSaveMessageId)
+            if (currentSaveMessageId) {
+              await handleSaveResponse(title, currentSaveMessageId)
+            }
           }}
         />
       )}
 
       {/* Feedback Modal */}
-      {showFeedbackModal && (
+      {showFeedbackModal && currentFeedbackMessageId && (
         <FeedbackModal
           open={showFeedbackModal}
-          onClose={() => setShowFeedbackModal(false)}
-          responseId={currentSaveMessageId || "default-response"}
+          onClose={() => {
+            setShowFeedbackModal(false)
+            setCurrentFeedbackMessageId(null)
+          }}
+          responseId={currentFeedbackMessageId}
         />
       )}
     </div>
   )
 }
 
+// Main component with Suspense wrapper
 export default function Dashboard() {
   return (
     <Suspense fallback={
       <div className="h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading your dashboard...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading dashboard...</p>
         </div>
       </div>
     }>
