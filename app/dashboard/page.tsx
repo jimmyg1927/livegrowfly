@@ -1457,8 +1457,8 @@ function DashboardContent() {
     <div className="h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-textPrimary dark:text-white transition-colors duration-300 flex flex-col">
       
       {/* ✅ FIXED: Content Area - Reduced left padding and better spacing */}
-      <div className="flex-1 overflow-hidden ml-0 md:ml-64 lg:ml-72">
-        <div ref={containerRef} className="h-full overflow-y-auto p-3 md:p-6 pb-32">
+      <div className="flex-1 overflow-hidden ml-0 md:ml-60 lg:ml-64">
+        <div ref={containerRef} className="h-full overflow-y-auto p-3 md:p-6 pb-40">
 
         {/* Error Message */}
         {error && (
@@ -1550,29 +1550,9 @@ function DashboardContent() {
                 className={`relative p-4 rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md ${
                   msg.role === 'user'
                     ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white max-w-[80%] sm:max-w-[70%]'
-                    : 'bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-gray-800 dark:text-white max-w-[90%] sm:max-w-[85%]'
+                    : 'bg-white dark:bg-slate-800 border border-gray-100/50 dark:border-slate-700 text-gray-800 dark:text-white max-w-[95%] sm:max-w-[80%] shadow-sm'
                 }`}
               >
-                {/* ✅ FIXED: Transparent copy button on hover */}
-                {msg.role === 'assistant' && msg.content && hoveredMessageId === msg.id && (
-                  <button
-                    onClick={() => handleCopyMessage(msg.id, msg.content)}
-                    className="absolute top-3 right-3 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200 group z-10"
-                    title="Copy message"
-                  >
-                    <FaCopy className={`w-4 h-4 transition-colors duration-200 ${
-                      copiedMessageId === msg.id 
-                        ? 'text-green-500' 
-                        : ''
-                    }`} />
-                    {copiedMessageId === msg.id && (
-                      <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap">
-                        Copied!
-                      </div>
-                    )}
-                  </button>
-                )}
-
                 {/* Display uploaded files for user messages */}
                 {msg.role === 'user' && msg.files && msg.files.length > 0 && (
                   <div className="mb-4 space-y-2">
@@ -1665,30 +1645,48 @@ function DashboardContent() {
 
                 {msg.role === 'assistant' && msg.content && (
                   <>
-                    {/* ✅ FIXED: Follow-up Questions - Now guaranteed to show exactly 1 */}
+                    {/* ✅ FIXED: Follow-up Questions - Now guaranteed to show exactly 1 and centered */}
                     {msg.followUps && msg.followUps.length > 0 && (
                       <div className="mt-6 p-4 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-2xl border border-indigo-200/50 dark:border-indigo-700/50">
-                        <div className="flex items-center gap-2 mb-3">
+                        <div className="flex items-center justify-center gap-2 mb-3">
                           <span className="text-lg">💡</span>
                           <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">Continue the conversation:</span>
                         </div>
                         {/* Since we now guarantee exactly 1 follow-up, single button */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault()
-                            handleSubmit(msg.followUps![0])
-                          }}
-                          disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                          className="w-full group bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 disabled:bg-gray-100 disabled:dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 disabled:text-gray-500 dark:disabled:text-gray-500 px-4 py-3 rounded-xl text-sm font-medium shadow-sm hover:shadow-md border border-indigo-200 dark:border-indigo-700 disabled:border-gray-200 dark:disabled:border-gray-600 transition-all duration-200 transform hover:scale-[1.02] disabled:transform-none disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        >
-                          <span className="group-hover:scale-110 transition-transform duration-200">💬</span>
-                          {msg.followUps[0]}
-                        </button>
+                        <div className="flex justify-center">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault()
+                              handleSubmit(msg.followUps![0])
+                            }}
+                            disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+                            className="group bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 disabled:bg-gray-100 disabled:dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 disabled:text-gray-500 dark:disabled:text-gray-500 px-6 py-3 rounded-xl text-sm font-medium shadow-sm hover:shadow-md border border-indigo-200 dark:border-indigo-700 disabled:border-gray-200 dark:disabled:border-gray-600 transition-all duration-200 transform hover:scale-[1.02] disabled:transform-none disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                          >
+                            <span className="group-hover:scale-110 transition-transform duration-200">💬</span>
+                            {msg.followUps[0]}
+                          </button>
+                        </div>
                       </div>
                     )}
 
-                    {/* ✅ IMPROVED: Action Buttons without copy button (now floating) */}
-                    <div className="flex flex-wrap gap-4 mt-6 text-lg text-gray-500 dark:text-gray-400">
+                    {/* ✅ IMPROVED: Action Buttons with copy button included */}
+                    <div className="flex flex-wrap gap-4 mt-6 text-lg text-gray-500 dark:text-gray-400 relative">
+                      <div className="relative">
+                        <FaCopy
+                          className={`cursor-pointer transition-colors duration-200 transform hover:scale-110 ${
+                            copiedMessageId === msg.id 
+                              ? 'text-green-500' 
+                              : 'hover:text-blue-500'
+                          }`}
+                          onClick={() => handleCopyMessage(msg.id, msg.content)}
+                          title="Copy message"
+                        />
+                        {copiedMessageId === msg.id && (
+                          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap z-10">
+                            Copied!
+                          </div>
+                        )}
+                      </div>
                       <HiThumbUp
                         className="cursor-pointer hover:text-green-500 transition-colors duration-200 transform hover:scale-110"
                         onClick={() => setShowFeedbackModal(true)}
@@ -1727,7 +1725,7 @@ function DashboardContent() {
 
       {/* File Upload Preview - Fixed positioning */}
       {uploadedFiles.length > 0 && (
-        <div className="fixed bottom-28 left-4 right-4 md:left-64 lg:left-72 px-2 z-30">
+        <div className="fixed bottom-32 left-4 right-4 md:left-60 lg:left-64 px-2 z-30">
           <div className="max-w-4xl mx-auto">
             <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-xl p-3 border border-gray-200 dark:border-slate-700 shadow-lg">
               <div className="flex items-center justify-between mb-2">
@@ -1756,7 +1754,7 @@ function DashboardContent() {
       )}
 
       {/* ✅ FIXED: Better floating input section */}
-      <div className="fixed bottom-0 left-4 right-4 md:left-64 lg:left-72 z-20 p-3">
+      <div className="fixed bottom-0 left-4 right-4 md:left-60 lg:left-64 z-20 p-3">
         <div className="max-w-4xl mx-auto">
           {/* Helpful hints bar - Simplified */}
           {messages.length === 0 && (
@@ -1775,7 +1773,7 @@ function DashboardContent() {
           {/* Input container - More compact and modern */}
           <div className="flex items-end gap-2 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md rounded-xl p-3 shadow-xl border border-gray-200/50 dark:border-slate-600/50">
             
-            {/* Upload Files Button - More compact */}
+            {/* Upload Files Button - More compact with rounded corners */}
             <button
               onClick={(e) => {
                 e.preventDefault()
@@ -1784,7 +1782,7 @@ function DashboardContent() {
                 }
               }}
               disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-              className={`p-2.5 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-all duration-200 ${
+              className={`p-2.5 rounded-xl flex items-center gap-1.5 text-sm font-medium transition-all duration-200 ${
                 isLoading || isStreaming || promptsUsed >= promptLimit
                   ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
                   : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 shadow-sm hover:shadow-md transform hover:scale-[1.02]'
@@ -1794,7 +1792,7 @@ function DashboardContent() {
               <span className="hidden sm:inline text-xs">Upload</span>
             </button>
 
-            {/* Create Image Button - More compact */}
+            {/* Create Image Button - More compact with rounded corners */}
             <button
               onClick={() => {
                 if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
@@ -1803,7 +1801,7 @@ function DashboardContent() {
                   router.push('/change-plan')
                 }
               }}
-              className={`p-2.5 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-all duration-200 ${
+              className={`p-2.5 rounded-xl flex items-center gap-1.5 text-sm font-medium transition-all duration-200 ${
                 (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
                   ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 shadow-sm hover:shadow-md transform hover:scale-[1.02]'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -1837,14 +1835,14 @@ function DashboardContent() {
               />
             </div>
 
-            {/* Send Button - More compact */}
+            {/* Send Button - More compact with rounded corners */}
             <button
               onClick={(e) => {
                 e.preventDefault()
                 handleSubmit()
               }}
               disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || promptsUsed >= promptLimit}
-              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white p-2.5 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none flex-shrink-0 w-10 h-10 flex items-center justify-center"
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white p-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none flex-shrink-0 w-10 h-10 flex items-center justify-center"
             >
               {isLoading || isStreaming ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
