@@ -957,7 +957,7 @@ function DashboardContent() {
     }
   }, [input])
 
-  // Scroll handling
+  // Scroll handling - Fixed for single scroll container
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -982,17 +982,15 @@ function DashboardContent() {
     }
   }, [])
 
+  // Auto-scroll to bottom - Fixed for better UX
   useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-    
     if (!isUserScrolling && (isStreaming || messages.length > 0)) {
-      requestAnimationFrame(() => {
+      setTimeout(() => {
         chatEndRef.current?.scrollIntoView({ 
           behavior: isStreaming ? 'auto' : 'smooth',
           block: 'end'
         })
-      })
+      }, 100)
     }
   }, [messages, isUserScrolling, isStreaming])
 
@@ -1458,8 +1456,9 @@ function DashboardContent() {
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-textPrimary dark:text-white transition-colors duration-300 flex flex-col">
       
-      {/* ✅ IMPROVED: Content Area - Better spacing, no gap from sidebar */}
-      <div className="flex-1 overflow-y-auto p-4 pb-32 ml-0 md:ml-64 lg:ml-72">
+      {/* ✅ FIXED: Content Area - Reduced left padding and better spacing */}
+      <div className="flex-1 overflow-hidden ml-0 md:ml-64 lg:ml-72">
+        <div ref={containerRef} className="h-full overflow-y-auto p-3 md:p-6 pb-32">
 
         {/* Error Message */}
         {error && (
@@ -1494,36 +1493,36 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* ✅ IMPROVED: Chat Messages with iPhone-style layout and improved copy button */}
-        <div ref={containerRef} className="space-y-6 pb-4">
+        {/* ✅ FIXED: Chat Messages - Better layout with newest at bottom */}
+        <div className="space-y-4 min-h-0 flex-1">
           {messages.length === 0 ? (
-            <div className="flex items-center justify-center h-96">
+            <div className="flex items-center justify-center h-full min-h-[60vh]">
               <div className="text-center max-w-2xl px-4">
-                <div className="mb-8">
-                  <div className="text-8xl mb-6 animate-bounce">👋</div>
-                  <h3 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">
+                <div className="mb-6">
+                  <div className="text-6xl md:text-8xl mb-4 animate-bounce">👋</div>
+                  <h3 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-3">
                     Welcome to Growfly!
                   </h3>
-                  <p className="text-lg text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
+                  <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
                     Your AI business assistant is ready to help you grow, optimize, and succeed. 
                     Start by choosing a quick prompt or asking any business question.
                   </p>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-2xl border border-blue-200/30 dark:border-blue-700/30">
-                    <div className="text-2xl mb-2">💡</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-3 rounded-xl border border-blue-200/30 dark:border-blue-700/30">
+                    <div className="text-xl mb-2">💡</div>
                     <h4 className="font-semibold text-blue-900 dark:text-blue-300 text-sm">Smart Suggestions</h4>
                     <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">Get AI-powered business insights</p>
                   </div>
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-4 rounded-2xl border border-green-200/30 dark:border-green-700/30">
-                    <div className="text-2xl mb-2">📁</div>
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-3 rounded-xl border border-green-200/30 dark:border-green-700/30">
+                    <div className="text-xl mb-2">📁</div>
                     <h4 className="font-semibold text-green-900 dark:text-green-300 text-sm">File Analysis</h4>
                     <p className="text-xs text-green-700 dark:text-green-400 mt-1">Upload documents for analysis</p>
                   </div>
                 </div>
                 
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-gray-500 dark:text-gray-400">
                   <div className="flex items-center gap-2">
                     <kbd className="px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded text-xs font-mono">⌘</kbd>
                     <span>+</span>
@@ -1538,31 +1537,33 @@ function DashboardContent() {
               </div>
             </div>
           ) : (
-            messages.map((msg) => (
+            <>
+              {/* Messages container with proper scroll */}
+              {messages.map((msg, index) => (
             <div
               key={msg.id}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} mb-6`}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} mb-4`}
               onMouseEnter={() => setHoveredMessageId(msg.id)}
               onMouseLeave={() => setHoveredMessageId(null)}
             >
               <div
-                className={`relative p-5 rounded-3xl shadow-lg transition-all duration-300 hover:shadow-xl ${
+                className={`relative p-4 rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md ${
                   msg.role === 'user'
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white max-w-[70%] ml-auto mr-4'
-                    : 'bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-gray-800 dark:text-white shadow-[0_8px_40px_rgb(0,0,0,0.12)] backdrop-blur-sm max-w-[85%] ml-4 mr-auto'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white max-w-[80%] sm:max-w-[70%]'
+                    : 'bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-gray-800 dark:text-white max-w-[90%] sm:max-w-[85%]'
                 }`}
               >
-                {/* ✅ IMPROVED: Floating copy button on hover */}
+                {/* ✅ FIXED: Transparent copy button on hover */}
                 {msg.role === 'assistant' && msg.content && hoveredMessageId === msg.id && (
                   <button
                     onClick={() => handleCopyMessage(msg.id, msg.content)}
-                    className="absolute top-3 right-3 bg-white/90 dark:bg-slate-700/90 backdrop-blur-sm rounded-lg p-2 shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200/50 dark:border-slate-600/50 group z-10"
+                    className="absolute top-3 right-3 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200 group z-10"
                     title="Copy message"
                   >
                     <FaCopy className={`w-4 h-4 transition-colors duration-200 ${
                       copiedMessageId === msg.id 
                         ? 'text-green-500' 
-                        : 'text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400'
+                        : ''
                     }`} />
                     {copiedMessageId === msg.id && (
                       <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap">
@@ -1716,18 +1717,20 @@ function DashboardContent() {
                 )}
               </div>
             </div>
-            ))
+            ))}
+            <div ref={chatEndRef} className="h-4" />
+            </>
           )}
-          <div ref={chatEndRef} />
+        </div>
         </div>
       </div>
 
-      {/* File Upload Preview - Better positioning */}
+      {/* File Upload Preview - Fixed positioning */}
       {uploadedFiles.length > 0 && (
-        <div className="fixed bottom-32 left-0 right-0 md:left-64 lg:left-72 px-4 z-30">
+        <div className="fixed bottom-28 left-4 right-4 md:left-64 lg:left-72 px-2 z-30">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-2xl p-4 border border-gray-200 dark:border-slate-700 shadow-xl">
-              <div className="flex items-center justify-between mb-3">
+            <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-xl p-3 border border-gray-200 dark:border-slate-700 shadow-lg">
+              <div className="flex items-center justify-between mb-2">
                 <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   📎 Attached Files ({uploadedFiles.length})
                 </h4>
@@ -1738,7 +1741,7 @@ function DashboardContent() {
                   Clear All
                 </button>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                 {uploadedFiles.map((file) => (
                   <FilePreview
                     key={file.id}
@@ -1752,31 +1755,27 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* ✅ IMPROVED: Floating Input Section - No background box, truly floating */}
-      <div className="fixed bottom-0 left-0 right-0 md:left-64 lg:left-72 z-20 p-4">
+      {/* ✅ FIXED: Better floating input section */}
+      <div className="fixed bottom-0 left-4 right-4 md:left-64 lg:left-72 z-20 p-3">
         <div className="max-w-4xl mx-auto">
-          {/* Helpful hints bar */}
+          {/* Helpful hints bar - Simplified */}
           {messages.length === 0 && (
-            <div className="mb-4 flex items-center justify-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+            <div className="mb-3 flex items-center justify-center gap-3 text-xs text-gray-500 dark:text-gray-400">
               <div className="flex items-center gap-1">
                 <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-slate-700 rounded text-xs">⌘/</kbd>
-                <span>Quick help</span>
+                <span>Help</span>
               </div>
               <div className="flex items-center gap-1">
                 <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-slate-700 rounded text-xs">⏎</kbd>
                 <span>Send</span>
               </div>
-              <div className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-slate-700 rounded text-xs">⇧⏎</kbd>
-                <span>New line</span>
-              </div>
             </div>
           )}
           
-          {/* ✅ IMPROVED: Truly floating input without background box */}
-          <div className="flex items-end gap-3 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md rounded-2xl p-4 shadow-2xl border border-gray-200/50 dark:border-slate-600/50">
+          {/* Input container - More compact and modern */}
+          <div className="flex items-end gap-2 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md rounded-xl p-3 shadow-xl border border-gray-200/50 dark:border-slate-600/50">
             
-            {/* Upload Files Button */}
+            {/* Upload Files Button - More compact */}
             <button
               onClick={(e) => {
                 e.preventDefault()
@@ -1785,17 +1784,17 @@ function DashboardContent() {
                 }
               }}
               disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-              className={`p-3 rounded-xl flex items-center gap-2 text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+              className={`p-2.5 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-all duration-200 ${
                 isLoading || isStreaming || promptsUsed >= promptLimit
                   ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
                   : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 shadow-sm hover:shadow-md transform hover:scale-[1.02]'
               }`}
             >
               <FaPaperclip className="w-4 h-4" />
-              <span className="hidden sm:inline">Upload</span>
+              <span className="hidden sm:inline text-xs">Upload</span>
             </button>
 
-            {/* Create Image Button */}
+            {/* Create Image Button - More compact */}
             <button
               onClick={() => {
                 if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
@@ -1804,26 +1803,26 @@ function DashboardContent() {
                   router.push('/change-plan')
                 }
               }}
-              className={`p-3 rounded-xl flex items-center gap-2 text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+              className={`p-2.5 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-all duration-200 ${
                 (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
                   ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 shadow-sm hover:shadow-md transform hover:scale-[1.02]'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'
               }`}
             >
               <FaPalette className="w-4 h-4" />
-              <span className="hidden sm:inline">
+              <span className="hidden sm:inline text-xs">
                 {(imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) ? 'Image' : 'Upgrade'}
               </span>
             </button>
 
-            {/* Input Field */}
+            {/* Input Field - Better styling */}
             <div className="flex-1 relative">
               <textarea
                 ref={textareaRef}
                 rows={1}
-                className="w-full px-4 py-3 border-0 bg-transparent text-textPrimary dark:text-white resize-none text-sm focus:outline-none min-h-[44px] max-h-[120px] transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"
+                className="w-full px-3 py-2.5 border-0 bg-transparent text-textPrimary dark:text-white resize-none text-sm focus:outline-none min-h-[40px] max-h-[100px] transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"
                 placeholder={messages.length === 0 
-                  ? "Ask me anything about your business... (⌘K to focus)" 
+                  ? "Ask me anything about your business..." 
                   : "Continue the conversation..."
                 }
                 value={input}
@@ -1838,19 +1837,19 @@ function DashboardContent() {
               />
             </div>
 
-            {/* Send Button */}
+            {/* Send Button - More compact */}
             <button
               onClick={(e) => {
                 e.preventDefault()
                 handleSubmit()
               }}
               disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || promptsUsed >= promptLimit}
-              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white p-3 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none flex-shrink-0 w-11 h-11 flex items-center justify-center"
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white p-2.5 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none flex-shrink-0 w-10 h-10 flex items-center justify-center"
             >
               {isLoading || isStreaming ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
                 </svg>
               )}
@@ -1872,12 +1871,12 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* Help Button - Repositioned */}
-      <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-30">
+      {/* Help Button - Better positioning */}
+      <div className="fixed right-4 bottom-20 z-30">
         <button
           onClick={() => setShowHelpModal(true)}
           disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white p-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:transform-none w-10 h-10 flex items-center justify-center"
+          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white p-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:transform-none w-10 h-10 flex items-center justify-center"
           title="Quick Start Guide"
         >
           <FaQuestionCircle className="w-4 h-4" />
