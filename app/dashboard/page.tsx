@@ -67,7 +67,7 @@ interface GeneratedImage {
   createdAt: string
 }
 
-// ✅ UPDATED: Enhanced DALL-E Usage interface
+// ✅ UPDATED: Enhanced DALL-E Usage interface with new limits
 interface ImageUsage {
   subscriptionType: string
   subscriptionName: string
@@ -91,10 +91,18 @@ interface ImageUsage {
   _fallback?: boolean
 }
 
+// ✅ UPDATED: New subscription limits as requested
 const PROMPT_LIMITS: Record<string, number> = {
   free: 20,
   personal: 400,
   business: 2000,
+}
+
+// ✅ NEW: Image generation limits
+const IMAGE_LIMITS: Record<string, { daily: number; monthly: number }> = {
+  free: { daily: 2, monthly: 10 },
+  personal: { daily: 10, monthly: 50 },
+  business: { daily: 30, monthly: 150 },
 }
 
 // ✅ IMPROVED: Persistent storage keys
@@ -102,6 +110,9 @@ const STORAGE_KEYS = {
   DASHBOARD_IMAGES: 'growfly_dashboard_images',
   DASHBOARD_MESSAGES: 'growfly_dashboard_messages'
 }
+
+// ✅ IMPROVED: Max messages to keep persistent
+const MAX_PERSISTENT_MESSAGES = 10
 
 // ✅ NEW: Copy functionality
 const copyToClipboard = async (text: string) => {
@@ -219,7 +230,7 @@ const FilePreview: React.FC<{ file: UploadedFile; onRemove: () => void }> = ({ f
   )
 }
 
-// ✅ IMPROVED: Enhanced Image Generation Modal with better UX
+// ✅ IMPROVED: Enhanced Image Generation Modal with updated limits
 const ImageGenerationModal: React.FC<{
   open: boolean
   onClose: () => void
@@ -253,12 +264,15 @@ const ImageGenerationModal: React.FC<{
           if (data && !data.error && data.dailyImages && data.monthlyImages) {
             setImageUsage(data)
           } else {
+            // ✅ UPDATED: Use new image limits for fallback
+            const subType = data.subscriptionType || 'free'
+            const limits = IMAGE_LIMITS[subType] || IMAGE_LIMITS.free
             setImageUsage({
-              subscriptionType: 'free',
-              subscriptionName: 'Free',
-              dailyImages: { used: 0, limit: 2, remaining: 2 },
-              monthlyImages: { used: 0, limit: 10, remaining: 10 },
-              totalPrompts: { used: 0, limit: 20, remaining: 20 },
+              subscriptionType: subType,
+              subscriptionName: subType.charAt(0).toUpperCase() + subType.slice(1),
+              dailyImages: { used: 0, limit: limits.daily, remaining: limits.daily },
+              monthlyImages: { used: 0, limit: limits.monthly, remaining: limits.monthly },
+              totalPrompts: { used: 0, limit: PROMPT_LIMITS[subType] || 20, remaining: PROMPT_LIMITS[subType] || 20 },
               canGenerate: true,
               _fallback: true
             })
@@ -266,12 +280,13 @@ const ImageGenerationModal: React.FC<{
         })
         .catch(err => {
           console.error('❌ Failed to fetch image usage in modal:', err)
+          const limits = IMAGE_LIMITS.free
           setImageUsage({
             subscriptionType: 'free',
             subscriptionName: 'Free',
-            dailyImages: { used: 0, limit: 2, remaining: 2 },
-            monthlyImages: { used: 0, limit: 10, remaining: 10 },
-            totalPrompts: { used: 0, limit: 20, remaining: 20 },
+            dailyImages: { used: 0, limit: limits.daily, remaining: limits.daily },
+            monthlyImages: { used: 0, limit: limits.monthly, remaining: limits.monthly },
+            totalPrompts: { used: 0, limit: PROMPT_LIMITS.free, remaining: PROMPT_LIMITS.free },
             canGenerate: true,
             _fallback: true
           })
@@ -332,7 +347,7 @@ const ImageGenerationModal: React.FC<{
         return
       }
 
-      const imageData = {
+      const imageData: GeneratedImage = {
         id: data.imageId,
         url: data.imageUrl,
         originalPrompt: data.prompt,
@@ -731,9 +746,9 @@ function DashboardContent() {
   const saveMessagesToPersistentStorage = (messages: Message[]) => {
     try {
       // Save ALL messages with generated images, not just filtered ones
-      const imagesToRestore = messages.filter(m => m.generatedImage && m.generatedImage.url).slice(0, 20)
-      localStorage.setItem(STORAGE_KEYS.DASHBOARD_MESSAGES, JSON.stringify(imagesToRestore))
-      console.log('✅ Saved', imagesToRestore.length, 'image messages to storage')
+      const messagesToSave = messages.slice(-MAX_PERSISTENT_MESSAGES) // Keep last 10
+      localStorage.setItem(STORAGE_KEYS.DASHBOARD_MESSAGES, JSON.stringify(messagesToSave))
+      console.log('✅ Saved', messagesToSave.length, 'messages to storage')
     } catch (error) {
       console.error('Failed to save messages to storage:', error)
     }
@@ -746,18 +761,8 @@ function DashboardContent() {
     try {
       const savedMessages = JSON.parse(localStorage.getItem(STORAGE_KEYS.DASHBOARD_MESSAGES) || '[]')
       if (savedMessages.length > 0) {
-        console.log('✅ Restoring', savedMessages.length, 'persistent image messages')
-        setMessages(prev => {
-          if (prev.length === 0) {
-            return savedMessages
-          }
-          // Merge and deduplicate
-          const combined = [...savedMessages, ...prev]
-          const unique = combined.filter((msg, index, arr) => 
-            arr.findIndex(m => m.id === msg.id) === index
-          )
-          return unique.slice(0, 20)
-        })
+        console.log('✅ Restoring', savedMessages.length, 'persistent messages')
+        setMessages(savedMessages)
       }
     } catch (error) {
       console.error('Failed to load persistent messages:', error)
@@ -794,7 +799,7 @@ function DashboardContent() {
     setUploadedFiles([])
   }
 
-  // Enhanced image usage fetching
+  // Enhanced image usage fetching with new limits
   useEffect(() => {
     if (token) {
       fetch(`${API_BASE_URL}/api/dalle/usage`, {
@@ -811,11 +816,14 @@ function DashboardContent() {
           if (data && !data.error && data.dailyImages && data.monthlyImages && data.totalPrompts) {
             setImageUsage(data)
           } else {
+            // ✅ UPDATED: Use new image limits for fallback
+            const subType = user?.subscriptionType?.toLowerCase() || 'free'
+            const limits = IMAGE_LIMITS[subType] || IMAGE_LIMITS.free
             setImageUsage({
-              subscriptionType: 'free',
-              subscriptionName: 'Free',
-              dailyImages: { used: 0, limit: 2, remaining: 2 },
-              monthlyImages: { used: 0, limit: 10, remaining: 10 },
+              subscriptionType: subType,
+              subscriptionName: subType.charAt(0).toUpperCase() + subType.slice(1),
+              dailyImages: { used: 0, limit: limits.daily, remaining: limits.daily },
+              monthlyImages: { used: 0, limit: limits.monthly, remaining: limits.monthly },
               totalPrompts: { used: promptsUsed, limit: promptLimit, remaining: promptLimit - promptsUsed },
               canGenerate: true,
               _fallback: true
@@ -824,18 +832,19 @@ function DashboardContent() {
         })
         .catch(err => {
           console.error('❌ Failed to fetch image usage:', err)
+          const limits = IMAGE_LIMITS.free
           setImageUsage({
             subscriptionType: 'free',
             subscriptionName: 'Free',
-            dailyImages: { used: 0, limit: 2, remaining: 2 },
-            monthlyImages: { used: 0, limit: 10, remaining: 10 },
+            dailyImages: { used: 0, limit: limits.daily, remaining: limits.daily },
+            monthlyImages: { used: 0, limit: limits.monthly, remaining: limits.monthly },
             totalPrompts: { used: promptsUsed, limit: promptLimit, remaining: promptLimit - promptsUsed },
             canGenerate: true,
             _fallback: true
           })
         })
     }
-  }, [token, promptsUsed, promptLimit])
+  }, [token, promptsUsed, promptLimit, user?.subscriptionType])
 
   // Enhanced user data fetching
   useEffect(() => {
@@ -919,7 +928,7 @@ function DashboardContent() {
                 arr.findIndex(m => m.id === msg.id) === index
               )
               
-              return unique.slice(0, 10) // Keep only latest 10
+              return unique.slice(-MAX_PERSISTENT_MESSAGES) // Keep only latest 10, recent at bottom
             })
           }
         }
@@ -1040,34 +1049,25 @@ function DashboardContent() {
       if (!res.ok) throw new Error('Follow-ups fetch failed')
       const data = await res.json()
       const rawFollowUps = (data.followUps as string[]) || []
-      const unique = Array.from(new Set(rawFollowUps)).slice(0, 1) // Take only 1 follow-up
       
-      // Always ensure we have exactly 1 follow-up
-      if (unique.length > 0) {
-        return unique
+      // ✅ FIXED: Always ensure exactly 1 follow-up
+      if (rawFollowUps.length > 0) {
+        return [rawFollowUps[0]] // Take only the first one
+      }
+      
+      // Generate exactly 1 contextual follow-up based on content
+      if (text.toLowerCase().includes('marketing')) {
+        return ['How can I measure the success of these marketing strategies?']
+      } else if (text.toLowerCase().includes('business') || text.toLowerCase().includes('improve')) {
+        return ['What would be the first step to implement this improvement?']
+      } else if (text.toLowerCase().includes('document') || text.toLowerCase().includes('create')) {
+        return ['Can you help me customize this for my specific industry?']
       } else {
-        // Generate contextual follow-ups based on content
-        if (text.toLowerCase().includes('marketing')) {
-          return ['How can I measure the success of these marketing strategies?']
-        } else if (text.toLowerCase().includes('business') || text.toLowerCase().includes('improve')) {
-          return ['What would be the first step to implement this improvement?']
-        } else if (text.toLowerCase().includes('document') || text.toLowerCase().includes('create')) {
-          return ['Can you help me customize this for my specific industry?']
-        } else {
-          return ['Can you provide more specific examples for my situation?']
-        }
+        return ['Can you provide more specific examples for my situation?']
       }
     } catch {
-      // Generate contextual follow-ups based on content as fallback
-      if (text.toLowerCase().includes('marketing')) {
-        return ['How can I measure the ROI of these marketing strategies?']
-      } else if (text.toLowerCase().includes('business') || text.toLowerCase().includes('improve')) {
-        return ['What would be the first step to implement this?']
-      } else if (text.toLowerCase().includes('document') || text.toLowerCase().includes('create')) {
-        return ['Can you help me customize this template?']
-      } else {
-        return ['Tell me more about how to implement this']
-      }
+      // Always return exactly 1 fallback follow-up
+      return ['Tell me more about how to implement this']
     }
   }
 
@@ -1115,25 +1115,33 @@ function DashboardContent() {
           setIsLoading(false)
           setIsStreaming(false)
           
-          // ✅ FIXED: Always fetch follow-ups to ensure we get 1
+          // ✅ FIXED: Always fetch follow-ups to ensure we get exactly 1
           if (!followUps.length && fullContent.trim()) {
             followUps = await fetchFollowUps(fullContent)
             console.log('🔄 Generated follow-ups:', followUps)
           }
           
-          // ✅ ENSURE: If still no follow-ups, add a default one
+          // ✅ ENSURE: If still no follow-ups, add exactly 1 default
           if (!followUps.length) {
             followUps = ['Tell me more about this']
             console.log('🔄 Using default follow-up:', followUps)
           }
           
-          console.log('✅ Final follow-ups to display:', followUps)
+          // ✅ ENSURE: Take only the first follow-up to guarantee exactly 1
+          if (followUps.length > 1) {
+            followUps = [followUps[0]]
+          }
           
-          setMessages((prev) =>
-            prev.map((msg) =>
+          console.log('✅ Final follow-up to display:', followUps)
+          
+          setMessages((prev) => {
+            const updated = prev.map((msg) =>
               msg.id === aId ? { ...msg, content: fullContent, followUps } : msg
             )
-          )
+            // ✅ Keep only last 10 messages, recent at bottom
+            const trimmed = updated.slice(-MAX_PERSISTENT_MESSAGES)
+            return trimmed
+          })
           
           // Save to dashboard history automatically
           try {
@@ -1236,17 +1244,26 @@ function DashboardContent() {
     }
 
     const uId = `u${Date.now()}`
-    const userMessage = { 
+    const userMessage: Message = { 
       id: uId, 
       role: 'user' as const, 
       content: text,
       files: uploadedFiles.length > 0 ? [...uploadedFiles] : undefined
     }
-    setMessages((prev) => [...prev, userMessage])
+    
+    setMessages((prev) => {
+      const updated = [...prev, userMessage]
+      // ✅ Keep only last 10 messages, recent at bottom
+      return updated.slice(-MAX_PERSISTENT_MESSAGES)
+    })
     setInput('')
     
     const aId = `a${Date.now()}`
-    setMessages((prev) => [...prev, { id: aId, role: 'assistant', content: '' }])
+    setMessages((prev) => {
+      const updated = [...prev, { id: aId, role: 'assistant', content: '' } as Message]
+      // ✅ Keep only last 10 messages, recent at bottom
+      return updated.slice(-MAX_PERSISTENT_MESSAGES)
+    })
 
     const filesToSend: File[] = []
     
@@ -1379,9 +1396,11 @@ function DashboardContent() {
     // Add message and save immediately
     setMessages(prev => {
       const updated = [...prev, imageMessage]
+      // ✅ Keep only last 10 messages, recent at bottom
+      const trimmed = updated.slice(-MAX_PERSISTENT_MESSAGES)
       // Save to persistent storage immediately
-      setTimeout(() => saveMessagesToPersistentStorage(updated), 100)
-      return updated
+      setTimeout(() => saveMessagesToPersistentStorage(trimmed), 100)
+      return trimmed
     })
     
     // Refresh image usage
@@ -1439,7 +1458,7 @@ function DashboardContent() {
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-textPrimary dark:text-white transition-colors duration-300 flex flex-col">
       
-      {/* ✅ IMPROVED: Content Area - Better spacing, closed gap from sidebar */}
+      {/* ✅ IMPROVED: Content Area - Better spacing, no gap from sidebar */}
       <div className="flex-1 overflow-y-auto p-4 pb-32 ml-0 md:ml-64 lg:ml-72">
 
         {/* Error Message */}
@@ -1475,7 +1494,7 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* ✅ IMPROVED: Chat Messages with better spacing and copy functionality */}
+        {/* ✅ IMPROVED: Chat Messages with iPhone-style layout and improved copy button */}
         <div ref={containerRef} className="space-y-6 pb-4">
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-96">
@@ -1522,17 +1541,37 @@ function DashboardContent() {
             messages.map((msg) => (
             <div
               key={msg.id}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} mb-8`}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} mb-6`}
               onMouseEnter={() => setHoveredMessageId(msg.id)}
               onMouseLeave={() => setHoveredMessageId(null)}
             >
               <div
-                className={`p-5 rounded-3xl shadow-lg transition-all duration-300 hover:shadow-xl relative ${
+                className={`relative p-5 rounded-3xl shadow-lg transition-all duration-300 hover:shadow-xl ${
                   msg.role === 'user'
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white max-w-[85%] md:max-w-[70%] lg:max-w-[60%] ml-auto'
-                    : 'bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-gray-800 dark:text-white shadow-[0_8px_40px_rgb(0,0,0,0.12)] backdrop-blur-sm max-w-[90%] md:max-w-[85%] lg:max-w-[80%] mr-auto'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white max-w-[70%] ml-auto mr-4'
+                    : 'bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-gray-800 dark:text-white shadow-[0_8px_40px_rgb(0,0,0,0.12)] backdrop-blur-sm max-w-[85%] ml-4 mr-auto'
                 }`}
               >
+                {/* ✅ IMPROVED: Floating copy button on hover */}
+                {msg.role === 'assistant' && msg.content && hoveredMessageId === msg.id && (
+                  <button
+                    onClick={() => handleCopyMessage(msg.id, msg.content)}
+                    className="absolute top-3 right-3 bg-white/90 dark:bg-slate-700/90 backdrop-blur-sm rounded-lg p-2 shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200/50 dark:border-slate-600/50 group z-10"
+                    title="Copy message"
+                  >
+                    <FaCopy className={`w-4 h-4 transition-colors duration-200 ${
+                      copiedMessageId === msg.id 
+                        ? 'text-green-500' 
+                        : 'text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400'
+                    }`} />
+                    {copiedMessageId === msg.id && (
+                      <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap">
+                        Copied!
+                      </div>
+                    )}
+                  </button>
+                )}
+
                 {/* Display uploaded files for user messages */}
                 {msg.role === 'user' && msg.files && msg.files.length > 0 && (
                   <div className="mb-4 space-y-2">
@@ -1564,7 +1603,7 @@ function DashboardContent() {
                   />
                 )}
 
-                {/* Generated images */}
+                {/* Generated images with updated button colors */}
                 {msg.generatedImage && (
                   <div className="mb-4">
                     <SafeImage
@@ -1575,24 +1614,25 @@ function DashboardContent() {
                         console.error('Failed to load generated image:', msg.generatedImage?.url)
                       }}
                     />
+                    {/* ✅ FIXED: All buttons now use Growfly blue color */}
                     <div className="mt-3 flex gap-2">
                       <button
                         onClick={() => handleDownloadImage(msg.generatedImage!)}
-                        className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                        className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                       >
                         <FaFileDownload />
                         Download
                       </button>
                       <button
                         onClick={() => router.push('/gallery')}
-                        className="flex-1 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                        className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                       >
                         <FaImages />
                         Gallery
                       </button>
                       <button
                         onClick={() => handleShareImage(msg.generatedImage!)}
-                        className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                        className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                       >
                         <FaShareSquare />
                         Share
@@ -1624,33 +1664,29 @@ function DashboardContent() {
 
                 {msg.role === 'assistant' && msg.content && (
                   <>
-                    {/* Follow-up Questions */}
+                    {/* ✅ FIXED: Follow-up Questions - Now guaranteed to show exactly 1 */}
                     {msg.followUps && msg.followUps.length > 0 && (
                       <div className="mt-6 p-4 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-2xl border border-indigo-200/50 dark:border-indigo-700/50">
                         <div className="flex items-center gap-2 mb-3">
                           <span className="text-lg">💡</span>
                           <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">Continue the conversation:</span>
                         </div>
-                        <div className="flex gap-3 flex-wrap">
-                          {msg.followUps.map((fu, i) => (
-                            <button
-                              key={i}
-                              onClick={(e) => {
-                                e.preventDefault()
-                                handleSubmit(fu)
-                              }}
-                              disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                              className="group bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 disabled:bg-gray-100 disabled:dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 disabled:text-gray-500 dark:disabled:text-gray-500 px-4 py-3 rounded-xl text-sm font-medium shadow-sm hover:shadow-md border border-indigo-200 dark:border-indigo-700 disabled:border-gray-200 dark:disabled:border-gray-600 transition-all duration-200 transform hover:scale-[1.02] disabled:transform-none disabled:cursor-not-allowed flex items-center gap-2"
-                            >
-                              <span className="group-hover:scale-110 transition-transform duration-200">💬</span>
-                              {fu}
-                            </button>
-                          ))}
-                        </div>
+                        {/* Since we now guarantee exactly 1 follow-up, single button */}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            handleSubmit(msg.followUps![0])
+                          }}
+                          disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+                          className="w-full group bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 disabled:bg-gray-100 disabled:dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 disabled:text-gray-500 dark:disabled:text-gray-500 px-4 py-3 rounded-xl text-sm font-medium shadow-sm hover:shadow-md border border-indigo-200 dark:border-indigo-700 disabled:border-gray-200 dark:disabled:border-gray-600 transition-all duration-200 transform hover:scale-[1.02] disabled:transform-none disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                          <span className="group-hover:scale-110 transition-transform duration-200">💬</span>
+                          {msg.followUps[0]}
+                        </button>
                       </div>
                     )}
 
-                    {/* ✅ IMPROVED: Action Buttons with Copy functionality */}
+                    {/* ✅ IMPROVED: Action Buttons without copy button (now floating) */}
                     <div className="flex flex-wrap gap-4 mt-6 text-lg text-gray-500 dark:text-gray-400">
                       <HiThumbUp
                         className="cursor-pointer hover:text-green-500 transition-colors duration-200 transform hover:scale-110"
@@ -1662,21 +1698,6 @@ function DashboardContent() {
                         onClick={() => setShowFeedbackModal(true)}
                         title="Dislike this response"
                       />
-                      {/* ✅ NEW: Copy Button */}
-                      <button
-                        onClick={() => handleCopyMessage(msg.id, msg.content)}
-                        className="relative"
-                        title="Copy message"
-                      >
-                        <FaCopy className={`cursor-pointer transition-all duration-200 transform hover:scale-110 ${
-                          copiedMessageId === msg.id ? 'text-green-500' : 'hover:text-blue-500'
-                        }`} />
-                        {copiedMessageId === msg.id && (
-                          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg">
-                            Copied!
-                          </div>
-                        )}
-                      </button>
                       <FaRegBookmark
                         className="cursor-pointer hover:text-yellow-500 transition-colors duration-200 transform hover:scale-110"
                         onClick={() => {

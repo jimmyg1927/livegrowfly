@@ -134,7 +134,7 @@ export default function Header() {
     boxShadow: '0 0 8px ' + xpInfo.color + '40'
   }
 
-  const neededText = progressInfo.needed > 0 ? progressInfo.needed + ' to next' : 'Max level!'
+  const neededText = progressInfo.needed > 0 ? progressInfo.needed + ' to next level' : 'Max level!'
 
   return (
     <header className="w-full bg-gradient-to-r from-[#0f172a] via-[#1e3a8a] to-[#1e40af] text-white flex items-center justify-between px-4 sm:px-8 py-4 shadow-lg border-b border-white/10">
@@ -174,7 +174,7 @@ export default function Header() {
         {/* Refer a Friend Button */}
         <Link
           href="/refer"
-          className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+          className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full bg-gradient-to-r from-cyan-400 to-cyan-500 text-white hover:from-cyan-500 hover:to-cyan-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
         >
           <Gift size={16} />
           <span>Refer & Earn</span>

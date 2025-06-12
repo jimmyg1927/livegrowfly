@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { Check, Crown, Zap, Users, Shield } from 'lucide-react'
+import { Check, Crown, Zap, Users, Shield, Rocket, Plane } from 'lucide-react'
 
 // ✅ Define User type inline to avoid import issues
 interface User {
@@ -48,12 +48,13 @@ function getEffectiveSubscription(user: User | null | undefined): string {
 const plans = [
   {
     id: 'free',
-    name: 'Free',
+    name: 'Launch',
     price: '£0',
     period: '',
-    icon: Zap,
+    icon: Rocket,
     features: [
-      '20 AI prompts per month',
+      '20 AI text prompts per month',
+      '2 AI images daily (10 monthly)',
       'Basic AI model access',
       'Save your responses',
       'Community support',
@@ -64,30 +65,32 @@ const plans = [
   },
   {
     id: 'personal',
-    name: 'Personal',
+    name: 'Fly',
     price: '£8.99',
     period: '/month',
-    icon: Crown,
+    icon: Plane,
     features: [
-      '400 AI prompts per month',
+      '400 AI text prompts per month',
+      '10 AI images daily (50 monthly)',
       'Advanced AI model access',
       'AI brand strategy generator',
       'Save unlimited prompts',
       'Export responses to PDF',
       'Priority support',
     ],
-    button: 'Upgrade to Personal',
+    button: 'Upgrade to Fly',
     popular: false,
     color: 'from-blue-500 to-indigo-600',
   },
   {
     id: 'business',
-    name: 'Business',
+    name: 'Orbit',
     price: '£38.99',
     period: '/month',
-    icon: Users,
+    icon: Crown,
     features: [
-      '2000 AI prompts per month',
+      '2000 AI text prompts per month',
+      '30 AI images daily (150 monthly)',
       'Premium AI models (GPT-4, Claude)',
       'Multi-user team collaboration',
       'Advanced analytics dashboard',
@@ -95,7 +98,7 @@ const plans = [
       'Priority chat support',
       'Custom integrations',
     ],
-    button: 'Upgrade to Business',
+    button: 'Upgrade to Orbit',
     popular: true,
     color: 'from-purple-500 to-pink-600',
   },
@@ -106,7 +109,7 @@ const plans = [
     period: '',
     icon: Shield,
     features: [
-      'Unlimited AI prompts',
+      'Unlimited AI prompts & images',
       'Unlimited team members',
       'Dedicated account manager',
       'Custom AI model training',
@@ -115,7 +118,7 @@ const plans = [
       'SLA guarantee',
       'White-label options',
     ],
-    button: 'Contact Sales',
+    button: 'Need Something Custom?',
     popular: false,
     color: 'from-amber-500 to-orange-600',
   },
@@ -173,7 +176,7 @@ export default function ChangePlanPage() {
 
     if (planId === 'free') {
       // Can't downgrade to free directly, need to cancel subscription
-      setMessage('To downgrade to free, please contact support to cancel your subscription.')
+      setMessage('To downgrade to Launch, please contact support to cancel your subscription.')
       setSelectedPlan(null)
       return
     }
@@ -216,8 +219,8 @@ export default function ChangePlanPage() {
     return (
       <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
         <div className="flex flex-col items-center space-y-4">
-          <div className="w-8 h-8 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-600 dark:text-slate-300 text-sm">Loading your plan information...</p>
+          <div className="w-8 h-8 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-300 text-sm">Loading your plan information...</p>
         </div>
       </main>
     )
@@ -228,8 +231,8 @@ export default function ChangePlanPage() {
     return (
       <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
         <div className="flex flex-col items-center space-y-4">
-          <div className="w-8 h-8 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-600 dark:text-slate-300 text-sm">Loading user information...</p>
+          <div className="w-8 h-8 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-300 text-sm">Loading user information...</p>
         </div>
       </main>
     )
@@ -240,28 +243,22 @@ export default function ChangePlanPage() {
   const hasValidSub = hasValidSubscription(user)
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 px-4 py-6 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-purple-600/20 to-indigo-600/20" />
-      <div className="absolute top-0 left-0 w-full h-full opacity-30">
-        <div className="w-full h-full bg-gradient-to-br from-white/5 to-transparent" />
-      </div>
-      
-      <div className="relative z-10">
+    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 px-4 py-8">
+      <div className="max-w-7xl mx-auto">
         {/* Header Section */}
-        <div className="max-w-4xl mx-auto text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-3 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
             Choose Your Plan
           </h1>
-          <p className="text-lg text-white/80 max-w-2xl mx-auto mb-6">
+          <p className="text-base text-white/80 max-w-2xl mx-auto mb-4">
             Scale your AI-powered growth with the perfect plan for your needs
           </p>
           
           {/* ✅ Current Plan Status */}
-          <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20">
-            <div className={`w-3 h-3 rounded-full ${hasValidSub ? 'bg-green-400' : 'bg-red-400'}`} />
-            <span className="text-white font-medium">
-              Current Plan: {effectiveSubscription.charAt(0).toUpperCase() + effectiveSubscription.slice(1)}
+          <div className="inline-flex items-center gap-3 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-xl border border-cyan-400/30">
+            <div className={`w-2 h-2 rounded-full ${hasValidSub ? 'bg-green-400' : 'bg-red-400'}`} />
+            <span className="text-white text-sm font-medium">
+              Current: {effectiveSubscription.charAt(0).toUpperCase() + effectiveSubscription.slice(1)}
               {!hasValidSub && effectiveSubscription !== 'free' && (
                 <span className="text-red-400 ml-2">(Payment Required)</span>
               )}
@@ -270,150 +267,116 @@ export default function ChangePlanPage() {
         </div>
 
         {/* Plans Grid */}
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {plans.map((plan) => {
-              const PlanIcon = plan.icon
-              const isCurrentPlan = currentPlan === plan.id
-              const canUpgrade = plan.id !== 'free' && !isCurrentPlan
-              
-              return (
-                <div
-                  key={plan.id}
-                  className={`relative group ${plan.popular ? 'lg:scale-105' : ''}`}
-                >
-                  {/* Popular Badge */}
-                  {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20">
-                      <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black text-xs font-bold px-4 py-1 rounded-full shadow-lg">
-                        MOST POPULAR
-                      </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {plans.map((plan) => {
+            const PlanIcon = plan.icon
+            const isCurrentPlan = currentPlan === plan.id
+            const canUpgrade = plan.id !== 'free' && !isCurrentPlan
+            
+            return (
+              <div
+                key={plan.id}
+                className={`relative group ${plan.popular ? 'lg:scale-105' : ''}`}
+              >
+                {/* Popular Badge */}
+                {plan.popular && (
+                  <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-20">
+                    <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                      MOST POPULAR
                     </div>
-                  )}
-                  
-                  {/* Plan Card */}
-                  <div
-                    className={`relative h-full flex flex-col rounded-2xl p-6 transition-all duration-300 border backdrop-blur-sm ${
-                      plan.popular
-                        ? 'bg-gradient-to-b from-white/20 to-white/10 border-yellow-400/50 shadow-2xl shadow-yellow-500/20'
-                        : isCurrentPlan
-                        ? 'bg-gradient-to-b from-green-500/20 to-green-600/10 border-green-400/50 shadow-xl shadow-green-500/20'
-                        : 'bg-white/10 border-white/20 hover:border-white/40 hover:bg-white/15'
-                    } group-hover:transform group-hover:scale-[1.02]`}
-                  >
-                    {/* Plan Header */}
-                    <div className="text-center mb-6">
-                      <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-r ${plan.color} text-white mb-3`}>
-                        <PlanIcon size={24} />
-                      </div>
-                      <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
-                      <div className="flex items-baseline justify-center">
-                        <span className="text-3xl font-bold text-white">
-                          {plan.price}
-                        </span>
-                        {plan.period && (
-                          <span className="text-white/60 text-sm ml-1">{plan.period}</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Features List */}
-                    <div className="flex-1 mb-6">
-                      <ul className="space-y-3">
-                        {plan.features.map((feature, index) => (
-                          <li key={index} className="flex items-start">
-                            <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center mr-3 mt-0.5">
-                              <Check size={12} className="text-white" />
-                            </div>
-                            <span className="text-white/90 text-sm leading-relaxed">{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    {/* Action Button */}
-                    <button
-                      onClick={() => handleSelect(plan.id)}
-                      disabled={selectedPlan === plan.id || isCurrentPlan}
-                      className={`w-full py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 ${
-                        selectedPlan === plan.id
-                          ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                          : isCurrentPlan
-                          ? 'bg-green-500/20 text-green-300 border-2 border-green-400/50 cursor-not-allowed'
-                          : plan.popular
-                          ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black hover:from-yellow-300 hover:to-orange-400 shadow-lg hover:shadow-xl transform hover:scale-105'
-                          : canUpgrade
-                          ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-400 hover:to-purple-500 shadow-lg hover:shadow-xl transform hover:scale-105'
-                          : 'bg-white/10 text-white/60 border border-white/20 cursor-not-allowed'
-                      }`}
-                    >
-                      {selectedPlan === plan.id ? (
-                        <div className="flex items-center justify-center">
-                          <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin mr-2"></div>
-                          Processing...
-                        </div>
-                      ) : isCurrentPlan ? (
-                        'Current Plan'
-                      ) : (
-                        plan.button
-                      )}
-                    </button>
                   </div>
+                )}
+                
+                {/* Plan Card */}
+                <div
+                  className={`relative h-full flex flex-col rounded-xl p-5 transition-all duration-300 backdrop-blur-sm ${
+                    isCurrentPlan
+                      ? 'bg-gradient-to-b from-cyan-500/20 to-cyan-600/10 border-2 border-cyan-400 shadow-xl shadow-cyan-500/20'
+                      : plan.popular
+                      ? 'bg-gradient-to-b from-white/15 to-white/10 border-2 border-cyan-400/80 shadow-xl shadow-cyan-500/20'
+                      : 'bg-white/10 border-2 border-cyan-400/50 hover:border-cyan-400/80 hover:bg-white/15'
+                  } group-hover:transform group-hover:scale-[1.02]`}
+                >
+                  {/* Plan Header */}
+                  <div className="text-center mb-4">
+                    <div className={`inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-r ${plan.color} text-white mb-2`}>
+                      <PlanIcon size={20} />
+                    </div>
+                    <h3 className="text-lg font-bold text-white mb-1">{plan.name}</h3>
+                    <div className="flex items-baseline justify-center">
+                      <span className="text-2xl font-bold text-white">
+                        {plan.price}
+                      </span>
+                      {plan.period && (
+                        <span className="text-white/60 text-xs ml-1">{plan.period}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Features List */}
+                  <div className="flex-1 mb-4">
+                    <ul className="space-y-2">
+                      {plan.features.map((feature, index) => (
+                        <li key={index} className="flex items-start">
+                          <div className="flex-shrink-0 w-4 h-4 rounded-full bg-green-500 flex items-center justify-center mr-2 mt-0.5">
+                            <Check size={10} className="text-white" />
+                          </div>
+                          <span className="text-white/90 text-xs leading-relaxed">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Action Button */}
+                  <button
+                    onClick={() => handleSelect(plan.id)}
+                    disabled={selectedPlan === plan.id || isCurrentPlan}
+                    className={`w-full py-2.5 px-3 rounded-lg font-semibold text-xs transition-all duration-200 ${
+                      selectedPlan === plan.id
+                        ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                        : isCurrentPlan
+                        ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 cursor-not-allowed'
+                        : plan.popular
+                        ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black hover:from-yellow-300 hover:to-orange-400 shadow-md hover:shadow-lg transform hover:scale-105'
+                        : canUpgrade
+                        ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-white hover:from-cyan-300 hover:to-blue-400 shadow-md hover:shadow-lg transform hover:scale-105'
+                        : 'bg-white/10 text-white/60 border border-white/20 cursor-not-allowed'
+                    }`}
+                  >
+                    {selectedPlan === plan.id ? (
+                      <div className="flex items-center justify-center">
+                        <div className="w-3 h-3 border-2 border-gray-500 border-t-transparent rounded-full animate-spin mr-1"></div>
+                        Processing...
+                      </div>
+                    ) : isCurrentPlan ? (
+                      'Current Plan'
+                    ) : (
+                      plan.button
+                    )}
+                  </button>
                 </div>
-              )
-            })}
-          </div>
+              </div>
+            )
+          })}
         </div>
 
         {/* Message Display */}
         {message && (
-          <div className="max-w-2xl mx-auto mt-8">
-            <div className={`p-6 rounded-2xl border backdrop-blur-sm ${
+          <div className="max-w-2xl mx-auto mb-6">
+            <div className={`p-4 rounded-xl border backdrop-blur-sm ${
               message.includes('Unable') || message.includes('Failed')
                 ? 'bg-red-500/10 border-red-500/30 text-red-300'
                 : 'bg-blue-500/10 border-blue-500/30 text-blue-300'
             }`}>
-              <p className="font-medium text-center">{message}</p>
+              <p className="text-sm text-center">{message}</p>
             </div>
           </div>
         )}
 
-        {/* Features Comparison */}
-        <div className="max-w-4xl mx-auto mt-16">
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10">
-            <h3 className="text-2xl font-bold text-white text-center mb-6">
-              Why Upgrade?
-            </h3>
-            <div className="grid md:grid-cols-3 gap-6 text-center">
-              <div>
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-3">
-                  <Zap className="text-white" size={24} />
-                </div>
-                <h4 className="font-semibold text-white mb-2">More Prompts</h4>
-                <p className="text-white/70 text-sm">Get 20x more AI prompts to power your growth</p>
-              </div>
-              <div>
-                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mx-auto mb-3">
-                  <Users className="text-white" size={24} />
-                </div>
-                <h4 className="font-semibold text-white mb-2">Team Collaboration</h4>
-                <p className="text-white/70 text-sm">Work together with your team seamlessly</p>
-              </div>
-              <div>
-                <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl flex items-center justify-center mx-auto mb-3">
-                  <Crown className="text-white" size={24} />
-                </div>
-                <h4 className="font-semibold text-white mb-2">Premium Features</h4>
-                <p className="text-white/70 text-sm">Access advanced AI models and analytics</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Footer */}
-        <div className="max-w-4xl mx-auto text-center mt-12">
+        <div className="text-center">
           <p className="text-white/60 text-sm">
-            Need help choosing? <a href="/contact" className="text-blue-400 hover:text-blue-300 underline">Contact our team</a> for personalized recommendations.
+            Need help choosing? <a href="/contact" className="text-cyan-400 hover:text-cyan-300 underline">Contact our team</a> for personalized recommendations.
           </p>
         </div>
       </div>
