@@ -1561,6 +1561,61 @@ function DashboardContent() {
           </div>
         )}
 
+        {/* Prompt Limit Warning */}
+        {isAtPromptLimit && (
+          <div className="mr-4 mt-4 ml-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm relative">
+            <button 
+              onClick={dismissError}
+              className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+            >
+              <HiX className="w-4 h-4" />
+            </button>
+            <strong>🚫 Prompt Limit Reached</strong>
+            <p className="mt-2">
+              You've used all {promptLimit} prompts for your {user?.subscriptionType?.toLowerCase() || 'free'} plan.
+            </p>
+            <p className="text-sm mt-1">
+              Resets: {getResetDate(user?.subscriptionType?.toLowerCase() || 'free').toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+              })}
+            </p>
+            <div className="mt-3">
+              <button
+                onClick={() => router.push('/change-plan')}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors"
+              >
+                Upgrade Plan
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <div className="mr-4 mt-4 ml-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm relative">
+            <button 
+              onClick={dismissError}
+              className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+            >
+              <HiX className="w-4 h-4" />
+            </button>
+            <strong>⚠️ {error}</strong>
+            {error.includes('limit') && (
+              <div className="mt-2">
+                <button
+                  onClick={() => router.push('/change-plan')}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors"
+                >
+                  Upgrade Plan
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Chat Messages - Clean layout with proper spacing */}
         <div className="space-y-4 min-h-0 flex-1 pt-4 pr-4">
           {messages.length === 0 ? (
