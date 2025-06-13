@@ -1684,9 +1684,11 @@ function DashboardContent() {
                                 handleSubmit(cleanFollowUp)
                               }}
                               disabled={isLoading || isStreaming}
-                              className="w-full bg-white hover:bg-gray-50 disabled:bg-gray-100 text-gray-700 hover:text-gray-800 disabled:text-gray-500 px-3 py-2 rounded-lg text-sm font-medium shadow-sm hover:shadow-md border border-gray-200 disabled:border-gray-200 transition-all duration-200 hover:scale-[1.01] disabled:transform-none disabled:cursor-not-allowed text-left"
+                              className="w-full bg-white hover:bg-gray-50 disabled:bg-gray-100 text-gray-700 hover:text-gray-800 disabled:text-gray-500 p-0 rounded-lg text-sm font-medium shadow-sm hover:shadow-md border border-gray-200 disabled:border-gray-200 transition-all duration-200 hover:scale-[1.01] disabled:transform-none disabled:cursor-not-allowed text-left focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                             >
-                              {followUp.replace(/^\s*[\(\)]\s*/, '').trim()}
+                              <div className="px-3 py-2">
+                                {followUp.replace(/^\s*[\(\)]\s*/, '').trim()}
+                              </div>
                             </button>
                           ))}
                         </div>
@@ -1698,14 +1700,16 @@ function DashboardContent() {
                       <div className="relative">
                         <button
                           onClick={() => handleCopyMessage(msg.id, msg.content)}
-                          className={`p-3 md:p-2 rounded-lg border transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation ${
+                          className={`p-0 md:p-0 rounded-lg border transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 ${
                             copiedMessageId === msg.id 
                               ? 'text-green-600 bg-green-50 border-green-200' 
                               : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 border-gray-200 hover:border-gray-300'
                           }`}
                           title="Copy message"
                         >
-                          <FaCopy className="w-4 h-4" />
+                          <div className="p-2 md:p-1.5">
+                            <FaCopy className="w-4 h-4" />
+                          </div>
                         </button>
                         {copiedMessageId === msg.id && (
                           <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap z-10">
@@ -1718,37 +1722,45 @@ function DashboardContent() {
                           setCurrentFeedbackMessageId(msg.id)
                           setShowFeedbackModal(true)
                         }}
-                        className="p-3 md:p-2 rounded-lg border border-gray-200 text-gray-500 hover:text-green-600 hover:bg-green-50 hover:border-green-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation"
+                        className="p-0 md:p-0 rounded-lg border border-gray-200 text-gray-500 hover:text-green-600 hover:bg-green-50 hover:border-green-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                         title="Like this response"
                       >
-                        <HiThumbUp className="w-4 h-4" />
+                        <div className="p-2 md:p-1.5">
+                          <HiThumbUp className="w-4 h-4" />
+                        </div>
                       </button>
                       <button
                         onClick={() => {
                           setCurrentFeedbackMessageId(msg.id)
                           setShowFeedbackModal(true)
                         }}
-                        className="p-3 md:p-2 rounded-lg border border-gray-200 text-gray-500 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation"
+                        className="p-0 md:p-0 rounded-lg border border-gray-200 text-gray-500 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                         title="Dislike this response"
                       >
-                        <HiThumbDown className="w-4 h-4" />
+                        <div className="p-2 md:p-1.5">
+                          <HiThumbDown className="w-4 h-4" />
+                        </div>
                       </button>
                       <button
                         onClick={() => {
                           setCurrentSaveMessageId(msg.id)
                           setShowSaveModal(true)
                         }}
-                        className="p-3 md:p-2 rounded-lg border border-gray-200 text-gray-500 hover:text-yellow-600 hover:bg-yellow-50 hover:border-yellow-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation"
+                        className="p-0 md:p-0 rounded-lg border border-gray-200 text-gray-500 hover:text-yellow-600 hover:bg-yellow-50 hover:border-yellow-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                         title="Save to Saved Responses"
                       >
-                        <FaRegBookmark className="w-4 h-4" />
+                        <div className="p-2 md:p-1.5">
+                          <FaRegBookmark className="w-4 h-4" />
+                        </div>
                       </button>
                       <button
                         onClick={() => handleShareToCollabZone(msg.id)}
-                        className="p-3 md:p-2 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation"
+                        className="p-0 md:p-0 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                         title="Share to Collab Zone"
                       >
-                        <FaShareSquare className="w-4 h-4" />
+                        <div className="p-2 md:p-1.5">
+                          <FaShareSquare className="w-4 h-4" />
+                        </div>
                       </button>
                     </div>
                   </>
@@ -1819,14 +1831,16 @@ function DashboardContent() {
                 }
               }}
               disabled={isLoading || isStreaming || isAtPromptLimit}
-              className={`p-3 md:p-2.5 rounded-xl flex items-center gap-1.5 text-sm font-medium transition-all duration-200 touch-manipulation ${
+              className={`p-0 md:p-0 rounded-xl flex items-center gap-1.5 text-sm font-medium transition-all duration-200 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 ${
                 isLoading || isStreaming || isAtPromptLimit
                   ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   : 'border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-95'
               }`}
             >
-              <FaPaperclip className="w-4 h-4" />
-              <span className="hidden sm:inline text-xs">Upload</span>
+              <div className="p-2 md:p-1.5">
+                <FaPaperclip className="w-4 h-4" />
+                <span className="hidden sm:inline text-xs">Upload</span>
+              </div>
             </button>
 
             <button
@@ -1838,23 +1852,25 @@ function DashboardContent() {
                 }
               }}
               disabled={isAtPromptLimit}
-              className={`p-3 md:p-2.5 rounded-xl flex items-center gap-1.5 text-sm font-medium transition-all duration-200 touch-manipulation ${
+              className={`p-0 md:p-0 rounded-xl flex items-center gap-1.5 text-sm font-medium transition-all duration-200 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 ${
                 (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0 && !isAtPromptLimit)
                   ? 'border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-95'
                   : 'bg-gray-200 text-gray-400 hover:bg-gray-300'
               }`}
             >
-              <FaPalette className="w-4 h-4" />
-              <span className="hidden sm:inline text-xs">
-                {(imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0 && !isAtPromptLimit) ? 'Image' : 'Upgrade'}
-              </span>
+              <div className="p-2 md:p-1.5">
+                <FaPalette className="w-4 h-4" />
+                <span className="hidden sm:inline text-xs">
+                  {(imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0 && !isAtPromptLimit) ? 'Image' : 'Upgrade'}
+                </span>
+              </div>
             </button>
 
             <div className="flex-1 relative flex items-center">
               <textarea
                 ref={textareaRef}
                 rows={1}
-                className="w-full px-3 py-2.5 border-0 bg-transparent text-gray-900 resize-none text-sm focus:outline-none min-h-[40px] max-h-[100px] transition-all duration-200 placeholder-gray-400"
+                className="w-full px-3 py-2.5 border-0 bg-transparent text-gray-900 resize-none text-sm min-h-[40px] max-h-[100px] transition-all duration-200 placeholder-gray-400 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                 placeholder={messages.length === 0 
                   ? "Ask me anything about your business..." 
                   : "Continue the conversation..."
@@ -1877,7 +1893,7 @@ function DashboardContent() {
                 handleSubmit()
               }}
               disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || isAtPromptLimit}
-              className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white p-3 md:p-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl active:scale-95 disabled:transform-none disabled:shadow-none flex-shrink-0 w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation"
+              className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white p-0 md:p-0 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl active:scale-95 disabled:transform-none disabled:shadow-none flex-shrink-0 w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
             >
               {isLoading || isStreaming ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -1909,7 +1925,7 @@ function DashboardContent() {
         <button
           onClick={() => setShowHelpModal(true)}
           disabled={isLoading || isStreaming}
-          className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white p-3 md:p-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:transform-none w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation"
+          className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white p-0 md:p-0 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:transform-none w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
           title="Quick Start Guide"
         >
           <FaQuestionCircle className="w-5 h-5 md:w-4 md:h-4" />
