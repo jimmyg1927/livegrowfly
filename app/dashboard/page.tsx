@@ -103,7 +103,7 @@ const IMAGE_LIMITS: Record<string, { daily: number; monthly: number }> = {
 
 const MAX_PERSISTENT_MESSAGES = 10
 
-// ✅ FIXED: Copy functionality
+// Copy functionality
 const copyToClipboard = async (text: string) => {
   try {
     await navigator.clipboard.writeText(text)
@@ -125,7 +125,7 @@ const copyToClipboard = async (text: string) => {
   }
 }
 
-// ✅ FIXED: Image error handling component
+// Image error handling component
 const SafeImage: React.FC<{ 
   src: string; 
   alt: string; 
@@ -147,7 +147,7 @@ const SafeImage: React.FC<{
 
   if (error) {
     return (
-      <div className={`${className} bg-gray-200 dark:bg-slate-700 flex items-center justify-center rounded-xl border-2 border-dashed border-gray-300 dark:border-slate-600`}>
+      <div className={`${className} bg-gray-100 flex items-center justify-center rounded-xl border border-gray-200`}>
         <div className="text-center p-4">
           <FaImages className="text-gray-400 text-2xl mx-auto mb-2" />
           <p className="text-xs text-gray-500">Image unavailable</p>
@@ -159,7 +159,7 @@ const SafeImage: React.FC<{
   return (
     <div className="relative">
       {loading && (
-        <div className={`${className} bg-gray-200 dark:bg-slate-700 flex items-center justify-center rounded-xl animate-pulse`}>
+        <div className={`${className} bg-gray-100 flex items-center justify-center rounded-xl animate-pulse`}>
           <FaSpinner className="text-gray-400 text-xl animate-spin" />
         </div>
       )}
@@ -179,16 +179,16 @@ const FilePreview: React.FC<{ file: UploadedFile; onRemove: () => void }> = ({ f
   const getFileIcon = () => {
     if (file.type.startsWith('image/')) {
       return file.preview ? (
-        <img src={file.preview} alt={file.name} className="w-12 h-12 object-cover rounded border-2 border-gray-200" />
+        <img src={file.preview} alt={file.name} className="w-12 h-12 object-cover rounded border border-gray-200" />
       ) : (
-        <FaFileImage className="w-12 h-12 text-blue-500" />
+        <FaFileImage className="w-12 h-12 text-gray-500" />
       )
     } else if (file.type === 'application/pdf') {
       return <FaFilePdf className="w-12 h-12 text-red-500" />
     } else if (file.type.includes('sheet') || file.type.includes('excel') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
       return <FaFileExcel className="w-12 h-12 text-green-500" />
     } else if (file.type.includes('word') || file.name.endsWith('.docx') || file.name.endsWith('.doc')) {
-      return <FaFileAlt className="w-12 h-12 text-blue-600" />
+      return <FaFileAlt className="w-12 h-12 text-gray-600" />
     } else if (file.type.includes('presentation') || file.name.endsWith('.pptx') || file.name.endsWith('.ppt')) {
       return <FaFileAlt className="w-12 h-12 text-orange-500" />
     } else {
@@ -205,7 +205,7 @@ const FilePreview: React.FC<{ file: UploadedFile; onRemove: () => void }> = ({ f
   }
 
   return (
-    <div className="relative bg-gray-50 dark:bg-slate-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+    <div className="relative bg-gray-50 rounded-lg p-3 border border-gray-200">
       <button
         onClick={onRemove}
         className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
@@ -215,9 +215,9 @@ const FilePreview: React.FC<{ file: UploadedFile; onRemove: () => void }> = ({ f
       <div className="flex items-center gap-3">
         {getFileIcon()}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{file.name}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{formatFileSize(file.size)}</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500">{file.type}</p>
+          <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
+          <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+          <p className="text-xs text-gray-400">{file.type}</p>
         </div>
       </div>
     </div>
@@ -403,16 +403,16 @@ const ImageGenerationModal: React.FC<{
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <FaPalette className="text-purple-500" />
+            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <FaPalette className="text-gray-700" />
               Create an image with Growfly
             </h2>
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-gray-500 hover:text-gray-700"
               disabled={isGenerating}
             >
               <HiX className="w-6 h-6" />
@@ -425,10 +425,10 @@ const ImageGenerationModal: React.FC<{
                 <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
                   <FaCheck className="text-white text-2xl" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
                   Image Created Successfully!
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-600">
                   Your image has been generated and saved to your gallery.
                 </p>
               </div>
@@ -441,14 +441,14 @@ const ImageGenerationModal: React.FC<{
                 />
               </div>
               
-              <div className="text-sm text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-gray-500">
                 Adding to your chat conversation...
               </div>
             </div>
           ) : (
             <>
-              <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
-                <p className="text-sm text-blue-800 dark:text-blue-300">
+              <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                <p className="text-sm text-gray-800">
                   <strong>🎨 Create professional images for your business</strong><br />
                   Describe what you want and our AI will generate a custom image. Perfect for social media, presentations, marketing materials, and more.
                 </p>
@@ -457,22 +457,22 @@ const ImageGenerationModal: React.FC<{
               {imageUsage && (
                 <div className="mb-6 space-y-4">
                   {imageUsage._fallback && (
-                    <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
-                      <div className="text-yellow-800 dark:text-yellow-300 text-sm">
+                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div className="text-yellow-800 text-sm">
                         ⚠️ Using default limits. Some features may be limited until your account data is refreshed.
                       </div>
                     </div>
                   )}
 
-                  <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl border border-purple-200 dark:border-purple-700">
+                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold text-purple-800 dark:text-purple-300">
+                      <h3 className="font-semibold text-gray-800">
                         {imageUsage.subscriptionName} Plan Limits
                       </h3>
                       {!canGenerate && (
                         <button
                           onClick={handleUpgrade}
-                          className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200"
+                          className="bg-gray-900 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-xs font-medium transition-colors"
                         >
                           Upgrade Plan
                         </button>
@@ -481,8 +481,8 @@ const ImageGenerationModal: React.FC<{
                     
                     <div className="grid grid-cols-3 gap-4 text-sm">
                       <div className="text-center">
-                        <div className="text-gray-600 dark:text-gray-400 text-xs">Daily Images</div>
-                        <div className={`font-bold text-lg ${isAtDailyLimit ? 'text-red-600' : 'text-purple-700 dark:text-purple-300'}`}>
+                        <div className="text-gray-600 text-xs">Daily Images</div>
+                        <div className={`font-bold text-lg ${isAtDailyLimit ? 'text-red-600' : 'text-gray-700'}`}>
                           {imageUsage.dailyImages?.remaining || 0}/{imageUsage.dailyImages?.limit === -1 ? '∞' : imageUsage.dailyImages?.limit || 0}
                         </div>
                         {isAtDailyLimit && (
@@ -493,8 +493,8 @@ const ImageGenerationModal: React.FC<{
                       </div>
                       
                       <div className="text-center">
-                        <div className="text-gray-600 dark:text-gray-400 text-xs">Monthly Images</div>
-                        <div className={`font-bold text-lg ${isAtMonthlyLimit ? 'text-red-600' : 'text-blue-700 dark:text-blue-300'}`}>
+                        <div className="text-gray-600 text-xs">Monthly Images</div>
+                        <div className={`font-bold text-lg ${isAtMonthlyLimit ? 'text-red-600' : 'text-gray-700'}`}>
                           {imageUsage.monthlyImages?.remaining || 0}/{imageUsage.monthlyImages?.limit === -1 ? '∞' : imageUsage.monthlyImages?.limit || 0}
                         </div>
                         {isAtMonthlyLimit && (
@@ -505,8 +505,8 @@ const ImageGenerationModal: React.FC<{
                       </div>
                       
                       <div className="text-center">
-                        <div className="text-gray-600 dark:text-gray-400 text-xs">Total Prompts</div>
-                        <div className={`font-bold text-lg ${isAtPromptLimit ? 'text-red-600' : 'text-green-700 dark:text-green-300'}`}>
+                        <div className="text-gray-600 text-xs">Total Prompts</div>
+                        <div className={`font-bold text-lg ${isAtPromptLimit ? 'text-red-600' : 'text-gray-700'}`}>
                           {imageUsage.totalPrompts?.remaining || 0}/{imageUsage.totalPrompts?.limit === -1 ? '∞' : imageUsage.totalPrompts?.limit || 0}
                         </div>
                         {isAtPromptLimit && (
@@ -519,12 +519,12 @@ const ImageGenerationModal: React.FC<{
                   </div>
 
                   {!canGenerate && (
-                    <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-xl">
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-red-600 text-lg">🚫</span>
-                        <h4 className="font-semibold text-red-800 dark:text-red-300">Generation Limit Reached</h4>
+                        <h4 className="font-semibold text-red-800">Generation Limit Reached</h4>
                       </div>
-                      <div className="text-sm text-red-700 dark:text-red-300 space-y-1">
+                      <div className="text-sm text-red-700 space-y-1">
                         {isAtDailyLimit && (
                           <div>• Daily limit: Resets in {resetInfo.hoursUntilMidnight} hours</div>
                         )}
@@ -549,8 +549,8 @@ const ImageGenerationModal: React.FC<{
               )}
 
               {error && (
-                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
-                  <div className="text-red-700 dark:text-red-300 text-sm font-medium mb-2">
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="text-red-700 text-sm font-medium mb-2">
                     {error}
                   </div>
                   {error.includes('limit') && !error.includes('characters') && (
@@ -566,31 +566,31 @@ const ImageGenerationModal: React.FC<{
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Describe your image
                   </label>
                   <textarea
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     placeholder="Describe the image you want to generate... e.g., 'A professional logo for a tech startup, modern and minimalist style, blue and white colors'"
-                    className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[4rem] max-h-32"
+                    className="w-full p-4 border border-gray-300 rounded-xl bg-white text-gray-900 resize-none focus:ring-2 focus:ring-gray-500 focus:border-transparent min-h-[4rem] max-h-32"
                     rows={3}
                     disabled={isGenerating || !canGenerate}
                   />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-xs text-gray-500 mt-1">
                     Be specific and detailed for best results ({prompt.length}/4000 characters)
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Size
                     </label>
                     <select
                       value={size}
                       onChange={(e) => setSize(e.target.value)}
-                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+                      className="w-full p-2 border border-gray-300 rounded-lg bg-white text-gray-900"
                       disabled={isGenerating || !canGenerate}
                     >
                       <option value="1024x1024">Square (1024×1024)</option>
@@ -600,13 +600,13 @@ const ImageGenerationModal: React.FC<{
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Style
                     </label>
                     <select
                       value={style}
                       onChange={(e) => setStyle(e.target.value)}
-                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+                      className="w-full p-2 border border-gray-300 rounded-lg bg-white text-gray-900"
                       disabled={isGenerating || !canGenerate}
                     >
                       <option value="vivid">Vivid (More Creative)</option>
@@ -618,7 +618,7 @@ const ImageGenerationModal: React.FC<{
                 <div className="flex gap-3 pt-4">
                   <button
                     onClick={onClose}
-                    className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors"
                     disabled={isGenerating}
                   >
                     Cancel
@@ -626,7 +626,7 @@ const ImageGenerationModal: React.FC<{
                   <button
                     onClick={handleGenerate}
                     disabled={isGenerating || !prompt.trim() || !canGenerate}
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2"
+                    className="flex-1 px-4 py-3 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400 text-white rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2"
                   >
                     {isGenerating ? (
                       <>
@@ -663,7 +663,7 @@ function DashboardContent() {
   const promptsUsed = user?.promptsUsed ?? 0
   const promptsRemaining = Math.max(0, promptLimit - promptsUsed)
 
-  // ✅ States
+  // States
   const [showHelpModal, setShowHelpModal] = useState(false)
   const [showImageModal, setShowImageModal] = useState(false)
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([])
@@ -692,7 +692,7 @@ function DashboardContent() {
   const scrollTimeoutRef = useRef<NodeJS.Timeout>()
   const lastScrollTop = useRef<number>(0)
 
-  // ✅ FIXED: Copy message handler
+  // Copy message handler
   const handleCopyMessage = async (messageId: string, content: string) => {
     const success = await copyToClipboard(content)
     if (success) {
@@ -701,7 +701,7 @@ function DashboardContent() {
     }
   }
 
-  // ✅ CRITICAL FIX: Remove localStorage usage and only load from database
+  // Load dashboard conversations from DB
   const loadDashboardConversationsFromDB = async () => {
     if (!token) return
     
@@ -732,7 +732,7 @@ function DashboardContent() {
     }
   }
 
-  // ✅ CRITICAL FIX: Load user's private messages on mount
+  // Load user's private messages on mount
   useEffect(() => {
     if (token) {
       loadDashboardConversationsFromDB()
@@ -878,7 +878,7 @@ function DashboardContent() {
     }
   }, [input])
 
-  // ✅ FIXED: Improved scroll handling - detect manual scrolling
+  // Improved scroll handling - detect manual scrolling
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -919,7 +919,7 @@ function DashboardContent() {
     }
   }, [])
 
-  // ✅ FIXED: Better auto-scroll logic
+  // Better auto-scroll logic
   useEffect(() => {
     if (!disableAutoScroll && !isUserScrolling && (isStreaming || messages.length > 0)) {
       setTimeout(() => {
@@ -1031,7 +1031,7 @@ function DashboardContent() {
     }
   }
 
-  // ✅ CRITICAL FIX: Enhanced handleStream with conversation context and files
+  // Enhanced handleStream with conversation context and files
   const handleStreamWithFiles = async (prompt: string, aId: string, files: File[] = []) => {
     let fullContent = ''
     let followUps: string[] = []
@@ -1046,7 +1046,7 @@ function DashboardContent() {
     )
 
     try {
-      // ✅ CRITICAL FIX: Prepare conversation history for backend
+      // Prepare conversation history for backend
       const conversationHistory = messages.slice(-6).map(msg => ({
         role: msg.role,
         content: msg.content
@@ -1058,7 +1058,7 @@ function DashboardContent() {
         prompt,
         token,
         files,
-        conversationHistory, // ✅ Now sending to backend!
+        conversationHistory, // Now sending to backend!
         onStream: (chunk: any) => {
           if (chunk.content) {
             fullContent += chunk.content
@@ -1400,7 +1400,7 @@ function DashboardContent() {
 
   return (
     <div 
-      className="h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-textPrimary dark:text-white transition-colors duration-300 flex flex-col relative"
+      className="h-screen bg-gray-50 text-gray-900 transition-colors duration-300 flex flex-col relative"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -1408,27 +1408,27 @@ function DashboardContent() {
       
       {/* Drag and Drop Overlay */}
       {isDragOver && (
-        <div className="fixed inset-0 z-50 bg-blue-500/20 backdrop-blur-sm flex items-center justify-center">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-2xl border-2 border-dashed border-blue-500 max-w-md text-center">
+        <div className="fixed inset-0 z-50 bg-gray-500/20 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl border-2 border-dashed border-gray-500 max-w-md text-center">
             <div className="text-6xl mb-4">📁</div>
-            <h3 className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-2">Drop Files Here</h3>
-            <p className="text-gray-600 dark:text-gray-400">
+            <h3 className="text-2xl font-bold text-gray-600 mb-2">Drop Files Here</h3>
+            <p className="text-gray-600">
               Support for images, PDF, Word, Excel, PowerPoint
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+            <p className="text-sm text-gray-500 mt-2">
               Up to 25MB per document, 10MB per image
             </p>
           </div>
         </div>
       )}
       
-      {/* ✅ FIXED: Content Area - Better left margin and increased bottom padding */}
+      {/* Content Area - COMPLETELY FLUSH LEFT */}
       <div className="flex-1 overflow-hidden ml-0 md:ml-60 lg:ml-64">
-        <div ref={containerRef} className="h-full overflow-y-auto p-3 md:p-4 pb-60">
+        <div ref={containerRef} className="h-full overflow-y-auto pb-60">
 
         {/* Error Message */}
         {error && (
-          <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
+          <div className="m-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm relative">
             <button 
               onClick={dismissError}
               className="absolute top-2 right-2 text-red-500 hover:text-red-700"
@@ -1451,48 +1451,48 @@ function DashboardContent() {
 
         {/* Info about persistent conversations */}
         {messages.length > 0 && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-700 rounded-2xl">
-            <p className="text-blue-800 dark:text-blue-300 text-sm flex items-center gap-2">
+          <div className="m-4 p-4 bg-gray-50 border border-gray-200 rounded-2xl">
+            <p className="text-gray-800 text-sm flex items-center gap-2">
               <span className="text-lg">💡</span>
               <strong>Your conversations are securely saved!</strong> Your last 10 exchanges stay private to your account on this dashboard.
             </p>
           </div>
         )}
 
-        {/* ✅ FIXED: Chat Messages - 100% GUARANTEED LEFT ALIGNMENT */}
-        <div className="space-y-4 min-h-0 flex-1">
+        {/* Chat Messages - ABSOLUTELY NO LEFT PADDING */}
+        <div className="space-y-4 min-h-0 flex-1 p-4 pl-0">
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full min-h-[60vh]">
               <div className="text-center max-w-2xl px-4">
                 <div className="mb-6">
                   <div className="text-6xl md:text-8xl mb-4 animate-bounce">👋</div>
-                  <h3 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-3">
+                  <h3 className="text-2xl md:text-3xl font-bold text-gray-800 mb-3">
                     Welcome to Growfly!
                   </h3>
-                  <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
+                  <p className="text-base md:text-lg text-gray-600 mb-6 leading-relaxed">
                     Your AI business assistant is ready to help you grow, optimize, and succeed. 
                     Start by choosing a quick prompt or asking any business question.
                   </p>
                 </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-3 rounded-xl border border-blue-200/30 dark:border-blue-700/30">
+                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-200">
                     <div className="text-xl mb-2">💡</div>
-                    <h4 className="font-semibold text-blue-900 dark:text-blue-300 text-sm">Smart Suggestions</h4>
-                    <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">Get AI-powered business insights</p>
+                    <h4 className="font-semibold text-gray-900 text-sm">Smart Suggestions</h4>
+                    <p className="text-xs text-gray-700 mt-1">Get AI-powered business insights</p>
                   </div>
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-3 rounded-xl border border-green-200/30 dark:border-green-700/30">
+                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-200">
                     <div className="text-xl mb-2">📁</div>
-                    <h4 className="font-semibold text-green-900 dark:text-green-300 text-sm">Enhanced File Support</h4>
-                    <p className="text-xs text-green-700 dark:text-green-400 mt-1">Drag & drop Excel, Word, PowerPoint files</p>
+                    <h4 className="font-semibold text-gray-900 text-sm">Enhanced File Support</h4>
+                    <p className="text-xs text-gray-700 mt-1">Drag & drop Excel, Word, PowerPoint files</p>
                   </div>
                 </div>
                 
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-gray-500">
                   <div className="flex items-center gap-2">
-                    <kbd className="px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded text-xs font-mono">⌘</kbd>
+                    <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">⌘</kbd>
                     <span>+</span>
-                    <kbd className="px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded text-xs font-mono">K</kbd>
+                    <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">K</kbd>
                     <span>Quick shortcuts</span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1511,22 +1511,22 @@ function DashboardContent() {
               onMouseEnter={() => setHoveredMessageId(msg.id)}
               onMouseLeave={() => setHoveredMessageId(null)}
             >
-              {/* ✅ 100% GUARANTEED LEFT ALIGNMENT: Assistant messages completely flush left */}
+              {/* ASSISTANT MESSAGES: ABSOLUTELY FLUSH LEFT - NO MARGIN OR PADDING */}
               <div
                 className={`relative rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md ${
                   msg.role === 'user'
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white max-w-[80%] sm:max-w-[70%] ml-auto p-4'
-                    : 'bg-white dark:bg-slate-800 border border-gray-100/50 dark:border-slate-700 text-gray-800 dark:text-white max-w-[90%] sm:max-w-[80%] p-4'
+                    ? 'bg-gray-900 text-white max-w-[80%] sm:max-w-[70%] ml-auto p-4'
+                    : 'bg-white border border-gray-200 text-gray-800 max-w-[90%] sm:max-w-[80%] p-4'
                 }`}
                 style={msg.role === 'assistant' ? { marginLeft: 0, marginRight: 'auto' } : {}}
               >
                 {/* Display uploaded files for user messages */}
                 {msg.role === 'user' && msg.files && msg.files.length > 0 && (
                   <div className="mb-4 space-y-2">
-                    <p className="text-xs text-blue-100 font-medium">📎 Attached Files:</p>
+                    <p className="text-xs text-gray-300 font-medium">📎 Attached Files:</p>
                     <div className="grid grid-cols-1 gap-2">
                       {msg.files.map((file) => (
-                        <div key={file.id} className="bg-blue-500/20 rounded-lg p-2 flex items-center gap-2">
+                        <div key={file.id} className="bg-gray-800 rounded-lg p-2 flex items-center gap-2">
                           {file.type.startsWith('image/') && file.preview ? (
                             <img src={file.preview} alt={file.name} className="w-8 h-8 object-cover rounded" />
                           ) : file.type === 'application/pdf' ? (
@@ -1534,7 +1534,7 @@ function DashboardContent() {
                           ) : (
                             <FaFileAlt className="w-6 h-6 text-gray-300" />
                           )}
-                          <span className="text-xs text-blue-100">{file.name}</span>
+                          <span className="text-xs text-gray-300">{file.name}</span>
                         </div>
                       ))}
                     </div>
@@ -1565,27 +1565,27 @@ function DashboardContent() {
                     <div className="mt-3 flex gap-2">
                       <button
                         onClick={() => handleDownloadImage(msg.generatedImage!)}
-                        className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                        className="flex-1 bg-gray-900 hover:bg-gray-800 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                       >
                         <FaFileDownload />
                         Download
                       </button>
                       <button
                         onClick={() => router.push('/gallery')}
-                        className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                        className="flex-1 bg-gray-900 hover:bg-gray-800 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                       >
                         <FaImages />
                         Gallery
                       </button>
                       <button
                         onClick={() => handleShareImage(msg.generatedImage!)}
-                        className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                        className="flex-1 bg-gray-900 hover:bg-gray-800 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                       >
                         <FaShareSquare />
                         Share
                       </button>
                     </div>
-                    <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="mt-2 text-xs text-gray-500">
                       <p><strong>Size:</strong> {msg.generatedImage.size} • <strong>Style:</strong> {msg.generatedImage.style}</p>
                       <p><strong>Created:</strong> {new Date(msg.generatedImage.createdAt).toLocaleDateString()}</p>
                     </div>
@@ -1594,11 +1594,11 @@ function DashboardContent() {
                 
                 <div className="whitespace-pre-wrap text-sm leading-relaxed">
                   {msg.content ? (
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                    <div className="prose prose-sm max-w-none">
                       {msg.content}
                     </div>
                   ) : msg.role === 'assistant' && (isLoading || isStreaming) ? (
-                    <div className="flex items-center gap-3 text-blue-600 dark:text-blue-400 py-2">
+                    <div className="flex items-center gap-3 text-gray-600 py-2">
                       <div className="flex gap-1">
                         <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.3s]"></div>
                         <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.15s]"></div>
@@ -1611,37 +1611,36 @@ function DashboardContent() {
 
                 {msg.role === 'assistant' && msg.content && (
                   <>
-                    {/* ✅ FIXED: Follow-up Questions - Clean and bracket-free */}
+                    {/* Follow-up Questions - NO BLUE */}
                     {msg.followUps && msg.followUps.length > 0 && (
-                      <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200/50 dark:border-blue-700/50">
+                      <div className="mt-4 p-3 bg-gray-50 rounded-xl border border-gray-200">
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-sm">💡</span>
-                          <span className="text-xs font-medium text-blue-700 dark:text-blue-300">Continue the conversation:</span>
+                          <span className="text-xs font-medium text-gray-700">Continue the conversation:</span>
                         </div>
                         <button
                           onClick={(e) => {
                             e.preventDefault()
-                            // ✅ FIXED: Clean follow-up text without brackets
                             const cleanFollowUp = msg.followUps![0].replace(/^\s*[\(\)]\s*/, '').trim()
                             handleSubmit(cleanFollowUp)
                           }}
                           disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                          className="w-full bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 disabled:bg-gray-100 disabled:dark:bg-gray-800 text-blue-700 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200 disabled:text-gray-500 dark:disabled:text-gray-500 px-3 py-2 rounded-lg text-sm font-medium shadow-sm hover:shadow-md border border-blue-200 dark:border-blue-700 disabled:border-gray-200 dark:disabled:border-gray-600 transition-all duration-200 hover:scale-[1.01] disabled:transform-none disabled:cursor-not-allowed text-left"
+                          className="w-full bg-white hover:bg-gray-50 disabled:bg-gray-100 text-gray-700 hover:text-gray-800 disabled:text-gray-500 px-3 py-2 rounded-lg text-sm font-medium shadow-sm hover:shadow-md border border-gray-200 disabled:border-gray-200 transition-all duration-200 hover:scale-[1.01] disabled:transform-none disabled:cursor-not-allowed text-left"
                         >
                           {msg.followUps[0].replace(/^\s*[\(\)]\s*/, '').trim()}
                         </button>
                       </div>
                     )}
 
-                    {/* ✅ FIXED: Action Buttons with proper emojis instead of broken icons */}
-                    <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
+                    {/* Action Buttons - NO BLUE, CLEAN GRAYS */}
+                    <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-gray-100">
                       <div className="relative">
                         <button
                           onClick={() => handleCopyMessage(msg.id, msg.content)}
                           className={`p-3 md:p-2 rounded-lg transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation ${
                             copiedMessageId === msg.id 
-                              ? 'text-green-500 bg-green-50 dark:bg-green-900/20' 
-                              : 'text-gray-500 dark:text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                              ? 'text-green-500 bg-green-50' 
+                              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                           }`}
                           title="Copy message"
                         >
@@ -1658,7 +1657,7 @@ function DashboardContent() {
                           setCurrentFeedbackMessageId(msg.id)
                           setShowFeedbackModal(true)
                         }}
-                        className="p-3 md:p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation text-lg"
+                        className="p-3 md:p-2 rounded-lg text-gray-500 hover:text-green-500 hover:bg-green-50 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation text-lg"
                         title="Like this response"
                       >
                         👍
@@ -1668,7 +1667,7 @@ function DashboardContent() {
                           setCurrentFeedbackMessageId(msg.id)
                           setShowFeedbackModal(true)
                         }}
-                        className="p-3 md:p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation text-lg"
+                        className="p-3 md:p-2 rounded-lg text-gray-500 hover:text-red-500 hover:bg-red-50 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation text-lg"
                         title="Dislike this response"
                       >
                         👎
@@ -1678,14 +1677,14 @@ function DashboardContent() {
                           setCurrentSaveMessageId(msg.id)
                           setShowSaveModal(true)
                         }}
-                        className="p-3 md:p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation text-lg"
+                        className="p-3 md:p-2 rounded-lg text-gray-500 hover:text-yellow-500 hover:bg-yellow-50 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation text-lg"
                         title="Save to Saved Responses"
                       >
                         🔖
                       </button>
                       <button
                         onClick={() => handleShareToCollabZone(msg.id)}
-                        className="p-3 md:p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation text-lg"
+                        className="p-3 md:p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation text-lg"
                         title="Share to Collab Zone"
                       >
                         📤
@@ -1707,9 +1706,9 @@ function DashboardContent() {
       {uploadedFiles.length > 0 && (
         <div className="fixed bottom-36 left-4 right-4 md:left-60 lg:left-64 px-2 z-30">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-xl p-3 border border-gray-200 dark:border-slate-700 shadow-lg">
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-3 border border-gray-200 shadow-lg">
               <div className="flex items-center justify-between mb-2">
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <h4 className="text-sm font-medium text-gray-700">
                   📎 Attached Files ({uploadedFiles.length})
                 </h4>
                 <button
@@ -1733,24 +1732,23 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* ✅ FIXED: Floating Input Section - Properly centered and aligned */}
+      {/* Floating Input Section - NO BLUE */}
       <div className="fixed bottom-0 left-4 right-4 md:left-60 lg:left-64 z-20 p-3">
         <div className="max-w-4xl mx-auto">
           {messages.length === 0 && (
-            <div className="mb-3 flex items-center justify-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+            <div className="mb-3 flex items-center justify-center gap-3 text-xs text-gray-500">
               <div className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-slate-700 rounded text-xs">⌘/</kbd>
+                <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs">⌘/</kbd>
                 <span>Help</span>
               </div>
               <div className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-slate-700 rounded text-xs">⏎</kbd>
+                <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs">⏎</kbd>
                 <span>Send</span>
               </div>
             </div>
           )}
           
-          {/* ✅ FIXED: Input container properly aligned */}
-          <div className="flex items-end gap-2 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md rounded-xl p-3 shadow-xl border border-gray-200/50 dark:border-slate-600/50">
+          <div className="flex items-end gap-2 bg-white/95 backdrop-blur-md rounded-xl p-3 shadow-xl border border-gray-200/50">
             
             <button
               onClick={(e) => {
@@ -1762,8 +1760,8 @@ function DashboardContent() {
               disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
               className={`p-3 md:p-2.5 rounded-xl flex items-center gap-1.5 text-sm font-medium transition-all duration-200 touch-manipulation ${
                 isLoading || isStreaming || promptsUsed >= promptLimit
-                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-                  : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-95'
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-95'
               }`}
             >
               <FaPaperclip className="w-4 h-4" />
@@ -1780,8 +1778,8 @@ function DashboardContent() {
               }}
               className={`p-3 md:p-2.5 rounded-xl flex items-center gap-1.5 text-sm font-medium transition-all duration-200 touch-manipulation ${
                 (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
-                  ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-95'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'
+                  ? 'bg-gray-100 text-gray-600 hover:bg-gray-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-95'
+                  : 'bg-gray-200 text-gray-400 hover:bg-gray-300'
               }`}
             >
               <FaPalette className="w-4 h-4" />
@@ -1790,12 +1788,11 @@ function DashboardContent() {
               </span>
             </button>
 
-            {/* ✅ FIXED: Input field properly centered */}
             <div className="flex-1 relative flex items-center">
               <textarea
                 ref={textareaRef}
                 rows={1}
-                className="w-full px-3 py-2.5 border-0 bg-transparent text-textPrimary dark:text-white resize-none text-sm focus:outline-none min-h-[40px] max-h-[100px] transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"
+                className="w-full px-3 py-2.5 border-0 bg-transparent text-gray-900 resize-none text-sm focus:outline-none min-h-[40px] max-h-[100px] transition-all duration-200 placeholder-gray-400"
                 placeholder={messages.length === 0 
                   ? "Ask me anything about your business..." 
                   : "Continue the conversation..."
@@ -1818,7 +1815,7 @@ function DashboardContent() {
                 handleSubmit()
               }}
               disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || promptsUsed >= promptLimit}
-              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white p-3 md:p-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl active:scale-95 disabled:transform-none disabled:shadow-none flex-shrink-0 w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation"
+              className="bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400 text-white p-3 md:p-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl active:scale-95 disabled:transform-none disabled:shadow-none flex-shrink-0 w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation"
             >
               {isLoading || isStreaming ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -1845,35 +1842,35 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* Help Button - Mobile friendly */}
+      {/* Help Button */}
       <div className="fixed right-4 bottom-20 z-30">
         <button
           onClick={() => setShowHelpModal(true)}
           disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white p-3 md:p-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:transform-none w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation"
+          className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white p-3 md:p-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:transform-none w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation"
           title="Quick Start Guide"
         >
           <FaQuestionCircle className="w-5 h-5 md:w-4 md:h-4" />
         </button>
       </div>
 
-      {/* Help Modal */}
+      {/* Help Modal - NO BLUE */}
       {showHelpModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-5xl mx-4 w-full max-h-[90vh] overflow-y-auto border border-gray-200/50 dark:border-slate-700/50">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-5xl mx-4 w-full max-h-[90vh] overflow-y-auto border border-gray-200/50">
             <div className="p-8">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
+                  <h2 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
                     🚀 Quick Start Hub
                   </h2>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="text-gray-600">
                     Choose from these proven business prompts to get immediate value from Growfly
                   </p>
                 </div>
                 <button 
                   onClick={() => setShowHelpModal(false)} 
-                  className="p-3 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-all duration-200"
+                  className="p-3 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-all duration-200"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1887,16 +1884,16 @@ function DashboardContent() {
                     setShowHelpModal(false)
                   }}
                   disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                  className="group p-6 text-left bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/30 rounded-3xl hover:from-blue-100 hover:to-indigo-200 dark:hover:from-blue-900/30 dark:hover:to-indigo-900/40 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-blue-200/30 dark:border-blue-700/30"
+                  className="group p-6 text-left bg-gray-50 rounded-3xl hover:bg-gray-100 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200"
                 >
                   <div className="flex items-start gap-4">
                     <div className="text-4xl group-hover:scale-110 transition-transform duration-300">📈</div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Marketing Strategies</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Get actionable marketing ideas, campaign strategies, and customer acquisition tactics you can implement immediately to grow your business.</p>
+                      <h4 className="font-bold text-lg text-gray-900 mb-2">Marketing Strategies</h4>
+                      <p className="text-sm text-gray-600 leading-relaxed">Get actionable marketing ideas, campaign strategies, and customer acquisition tactics you can implement immediately to grow your business.</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs rounded-full">Social Media</span>
-                        <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs rounded-full">Content Strategy</span>
+                        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Social Media</span>
+                        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Content Strategy</span>
                       </div>
                     </div>
                   </div>
@@ -1907,16 +1904,16 @@ function DashboardContent() {
                     setShowHelpModal(false)
                   }}
                   disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                  className="group p-6 text-left bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/30 rounded-3xl hover:from-green-100 hover:to-emerald-200 dark:hover:from-green-900/30 dark:hover:to-emerald-900/40 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-green-200/30 dark:border-green-700/30"
+                  className="group p-6 text-left bg-gray-50 rounded-3xl hover:bg-gray-100 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200"
                 >
                   <div className="flex items-start gap-4">
                     <div className="text-4xl group-hover:scale-110 transition-transform duration-300">⚡</div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Business Optimization</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Identify bottlenecks, streamline processes, and find quick wins to improve efficiency, reduce costs, and boost productivity.</p>
+                      <h4 className="font-bold text-lg text-gray-900 mb-2">Business Optimization</h4>
+                      <p className="text-sm text-gray-600 leading-relaxed">Identify bottlenecks, streamline processes, and find quick wins to improve efficiency, reduce costs, and boost productivity.</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs rounded-full">Process Improvement</span>
-                        <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs rounded-full">Cost Reduction</span>
+                        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Process Improvement</span>
+                        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Cost Reduction</span>
                       </div>
                     </div>
                   </div>
@@ -1927,16 +1924,16 @@ function DashboardContent() {
                     setShowHelpModal(false)
                   }}
                   disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                  className="group p-6 text-left bg-gradient-to-br from-purple-50 to-violet-100 dark:from-purple-900/20 dark:to-violet-900/30 rounded-3xl hover:from-purple-100 hover:to-violet-200 dark:hover:from-purple-900/30 dark:hover:to-violet-900/40 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-purple-200/30 dark:border-purple-700/30"
+                  className="group p-6 text-left bg-gray-50 rounded-3xl hover:bg-gray-100 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200"
                 >
                   <div className="flex items-start gap-4">
                     <div className="text-4xl group-hover:scale-110 transition-transform duration-300">📊</div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Business Proposals</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Create compelling proposals, pitch decks, and business documents that win clients and secure funding opportunities.</p>
+                      <h4 className="font-bold text-lg text-gray-900 mb-2">Business Proposals</h4>
+                      <p className="text-sm text-gray-600 leading-relaxed">Create compelling proposals, pitch decks, and business documents that win clients and secure funding opportunities.</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs rounded-full">Proposals</span>
-                        <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs rounded-full">Pitch Decks</span>
+                        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Proposals</span>
+                        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Pitch Decks</span>
                       </div>
                     </div>
                   </div>
@@ -1947,53 +1944,53 @@ function DashboardContent() {
                     setShowHelpModal(false)
                   }}
                   disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                  className="group p-6 text-left bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-900/20 dark:to-amber-900/30 rounded-3xl hover:from-orange-100 hover:to-amber-200 dark:hover:from-orange-900/30 dark:hover:to-amber-900/40 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-orange-200/30 dark:border-orange-700/30"
+                  className="group p-6 text-left bg-gray-50 rounded-3xl hover:bg-gray-100 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200"
                 >
                   <div className="flex items-start gap-4">
                     <div className="text-4xl group-hover:scale-110 transition-transform duration-300">🎯</div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Industry Analysis</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Stay ahead of the competition with insights into industry trends, market opportunities, and strategic positioning.</p>
+                      <h4 className="font-bold text-lg text-gray-900 mb-2">Industry Analysis</h4>
+                      <p className="text-sm text-gray-600 leading-relaxed">Stay ahead of the competition with insights into industry trends, market opportunities, and strategic positioning.</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-xs rounded-full">Market Research</span>
-                        <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-xs rounded-full">Competitive Analysis</span>
+                        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Market Research</span>
+                        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Competitive Analysis</span>
                       </div>
                     </div>
                   </div>
                 </button>
               </div>
               
-              <div className="mt-8 p-6 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-900/20 dark:to-blue-900/20 rounded-2xl border border-gray-200/30 dark:border-gray-700/30">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+              <div className="mt-8 p-6 bg-gray-50 rounded-2xl border border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
                   ⚡ Pro Tips for Better Results
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div className="flex items-start gap-3">
-                    <span className="text-blue-500 text-lg">💡</span>
+                    <span className="text-gray-500 text-lg">💡</span>
                     <div>
-                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Be Specific</h4>
-                      <p className="text-gray-600 dark:text-gray-400">Include your industry, company size, and specific goals for more tailored advice.</p>
+                      <h4 className="font-semibold text-gray-800 mb-1">Be Specific</h4>
+                      <p className="text-gray-600">Include your industry, company size, and specific goals for more tailored advice.</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <span className="text-green-500 text-lg">📁</span>
+                    <span className="text-gray-500 text-lg">📁</span>
                     <div>
-                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Upload Files</h4>
-                      <p className="text-gray-600 dark:text-gray-400">Share documents, spreadsheets, or presentations for analysis and insights.</p>
+                      <h4 className="font-semibold text-gray-800 mb-1">Upload Files</h4>
+                      <p className="text-gray-600">Share documents, spreadsheets, or presentations for analysis and insights.</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <span className="text-purple-500 text-lg">🎨</span>
+                    <span className="text-gray-500 text-lg">🎨</span>
                     <div>
-                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Create Images</h4>
-                      <p className="text-gray-600 dark:text-gray-400">Generate professional visuals for marketing, presentations, and social media.</p>
+                      <h4 className="font-semibold text-gray-800 mb-1">Create Images</h4>
+                      <p className="text-gray-600">Generate professional visuals for marketing, presentations, and social media.</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <span className="text-yellow-500 text-lg">🔖</span>
+                    <span className="text-gray-500 text-lg">🔖</span>
                     <div>
-                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Save Responses</h4>
-                      <p className="text-gray-600 dark:text-gray-400">Bookmark useful responses to access them anytime in your saved collection.</p>
+                      <h4 className="font-semibold text-gray-800 mb-1">Save Responses</h4>
+                      <p className="text-gray-600">Bookmark useful responses to access them anytime in your saved collection.</p>
                     </div>
                   </div>
                 </div>
@@ -2042,10 +2039,10 @@ function DashboardContent() {
 export default function Dashboard() {
   return (
     <Suspense fallback={
-      <div className="h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
+      <div className="h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
         </div>
       </div>
     }>
