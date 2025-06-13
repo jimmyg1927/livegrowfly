@@ -1468,23 +1468,23 @@ function DashboardContent() {
         </div>
       )}
       
-      {/* Security Notice - Full Width at Top */}
+      {/* Security Notice - Compact Banner */}
       {messages.length > 0 && showSecurityNotice && (
-        <div className="w-full bg-blue-50 border-b border-blue-200 px-4 py-3">
-          <div className="flex items-center justify-between max-w-6xl mx-auto">
-            <div className="flex items-center gap-3">
-              <span className="text-blue-600 text-lg">💡</span>
-              <div>
-                <span className="text-blue-900 font-semibold">Your conversations are securely saved!</span>
-                <span className="text-blue-700 ml-2">Your last 10 exchanges stay private to your account on this dashboard.</span>
+        <div className="w-full bg-blue-50 border-b border-blue-200 p-2">
+          <div className="flex items-center justify-between max-w-5xl mx-auto">
+            <div className="flex items-center gap-2">
+              <span className="text-blue-600 text-base">💡</span>
+              <div className="text-sm">
+                <span className="text-blue-900 font-medium">Your conversations are securely saved!</span>
+                <span className="text-blue-700 ml-1">Your last 10 exchanges stay private to your account.</span>
               </div>
             </div>
             <button
               onClick={dismissSecurityNotice}
-              className="text-blue-400 hover:text-blue-600 p-1 rounded-full hover:bg-blue-100 transition-colors"
+              className="text-blue-400 hover:text-blue-600 p-1.5 rounded-lg hover:bg-blue-100 transition-all duration-200 transform hover:scale-105"
               title="Dismiss for 7 days"
             >
-              <HiX className="w-5 h-5" />
+              <HiX className="w-4 h-4" />
             </button>
           </div>
         </div>
