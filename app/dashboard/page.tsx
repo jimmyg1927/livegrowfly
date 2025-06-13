@@ -1449,11 +1449,11 @@ function DashboardContent() {
       
       {/* Content Area - COMPLETELY FLUSH LEFT */}
       <div className="flex-1 overflow-hidden ml-0 md:ml-60 lg:ml-64">
-        <div ref={containerRef} className="h-full overflow-y-auto pb-80">
+        <div ref={containerRef} className="h-full overflow-y-auto pb-80 pl-0">
 
         {/* Prompt Limit Warning */}
         {isAtPromptLimit && (
-          <div className="mx-4 mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm relative">
+          <div className="mr-4 mt-4 ml-0 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm relative">
             <button 
               onClick={dismissError}
               className="absolute top-2 right-2 text-red-500 hover:text-red-700"
@@ -1485,7 +1485,7 @@ function DashboardContent() {
 
         {/* Error Message */}
         {error && (
-          <div className="mx-4 mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm relative">
+          <div className="mr-4 mt-4 ml-0 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm relative">
             <button 
               onClick={dismissError}
               className="absolute top-2 right-2 text-red-500 hover:text-red-700"
@@ -1508,7 +1508,7 @@ function DashboardContent() {
 
         {/* Info about persistent conversations */}
         {messages.length > 0 && (
-          <div className="mx-4 mt-4 p-4 bg-gray-50 border border-gray-200 rounded-2xl">
+          <div className="mr-4 mt-4 ml-0 p-4 bg-gray-50 border border-gray-200 rounded-2xl">
             <p className="text-gray-800 text-sm flex items-center gap-2">
               <span className="text-lg">💡</span>
               <strong>Your conversations are securely saved!</strong> Your last 10 exchanges stay private to your account on this dashboard.
@@ -1517,7 +1517,7 @@ function DashboardContent() {
         )}
 
         {/* Chat Messages - ABSOLUTELY NO LEFT PADDING */}
-        <div className="space-y-4 min-h-0 flex-1 pr-4 pt-4">
+        <div className="space-y-4 min-h-0 flex-1 pr-4 pt-4 pl-0">
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full min-h-[60vh]">
               <div className="text-center max-w-2xl px-4">
@@ -1564,7 +1564,11 @@ function DashboardContent() {
               {messages.map((msg, index) => (
             <div
               key={msg.id}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} mb-4`}
+              className={`flex mb-4 ${
+                msg.role === 'user' 
+                  ? 'justify-end' 
+                  : 'justify-start -ml-0 md:-ml-60 lg:-ml-64 pl-0 md:pl-4'
+              }`}
               onMouseEnter={() => setHoveredMessageId(msg.id)}
               onMouseLeave={() => setHoveredMessageId(null)}
             >
@@ -1575,7 +1579,6 @@ function DashboardContent() {
                     ? 'bg-blue-600 text-white max-w-[80%] sm:max-w-[70%] ml-auto p-4'
                     : 'bg-white border border-gray-200 text-gray-800 max-w-[90%] sm:max-w-[80%] p-4'
                 }`}
-                style={msg.role === 'assistant' ? { marginLeft: '0px', marginRight: 'auto' } : {}}
               >
                 {/* Display uploaded files for user messages */}
                 {msg.role === 'user' && msg.files && msg.files.length > 0 && (
