@@ -1443,9 +1443,9 @@ function DashboardContent() {
         </div>
       )}
       
-      {/* Content Area - Fixed positioning and padding */}
-      <div className="flex-1 overflow-hidden ml-0 md:ml-60 lg:ml-64">
-        <div ref={containerRef} className="h-full overflow-y-auto pb-80 pl-0">
+      {/* Content Area - Remove sidebar offset margins */}
+      <div className="flex-1 overflow-hidden">
+        <div ref={containerRef} className="h-full overflow-y-auto pb-80">
 
         {/* Prompt Limit Warning */}
         {isAtPromptLimit && (
@@ -1777,7 +1777,7 @@ function DashboardContent() {
 
       {/* File Upload Preview */}
       {uploadedFiles.length > 0 && (
-        <div className="fixed bottom-36 left-4 right-4 md:left-60 lg:left-64 px-2 z-30">
+        <div className="fixed bottom-36 left-4 right-4 px-2 z-30">
           <div className="max-w-4xl mx-auto">
             <div className="bg-white/95 backdrop-blur-sm rounded-xl p-3 border border-gray-200 shadow-lg">
               <div className="flex items-center justify-between mb-2">
@@ -1806,7 +1806,7 @@ function DashboardContent() {
       )}
 
       {/* Floating Input Section - GROWFLY BLUE */}
-      <div className="fixed bottom-0 left-4 right-4 md:left-60 lg:left-64 z-20 p-3">
+      <div className="fixed bottom-0 left-4 right-4 z-20 p-3">
         <div className="max-w-4xl mx-auto">
           {messages.length === 0 && (
             <div className="mb-3 flex items-center justify-center gap-3 text-xs text-gray-500">
