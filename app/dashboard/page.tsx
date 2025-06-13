@@ -1046,24 +1046,19 @@ function DashboardContent() {
     )
 
     try {
-      // ✅ CRITICAL FIX: Include conversation context in the prompt
-      let contextualPrompt = prompt
-      
-      if (messages.length > 0) {
-        const recentMessages = messages.slice(-4).map(msg => 
-          `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`
-        ).join('\n\n')
-        
-        contextualPrompt = `Previous conversation context:
-${recentMessages}
+      // ✅ CRITICAL FIX: Prepare conversation history for backend
+      const conversationHistory = messages.slice(-6).map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }))
 
-Current user message: ${prompt}`
-      }
+      console.log('🔍 Sending conversation history:', conversationHistory.length, 'messages')
 
       await streamChat({
-        prompt: contextualPrompt,
+        prompt,
         token,
         files,
+        conversationHistory, // ✅ Now sending to backend!
         onStream: (chunk: any) => {
           if (chunk.content) {
             fullContent += chunk.content
@@ -1464,7 +1459,7 @@ Current user message: ${prompt}`
           </div>
         )}
 
-        {/* ✅ FIXED: Chat Messages - ZERO left padding/margin on assistant messages */}
+        {/* ✅ FIXED: Chat Messages - 100% GUARANTEED LEFT ALIGNMENT */}
         <div className="space-y-4 min-h-0 flex-1">
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full min-h-[60vh]">
@@ -1516,14 +1511,14 @@ Current user message: ${prompt}`
               onMouseEnter={() => setHoveredMessageId(msg.id)}
               onMouseLeave={() => setHoveredMessageId(null)}
             >
-              {/* ✅ CRITICAL FIX: Completely removed any left padding/margin for assistant messages */}
+              {/* ✅ 100% GUARANTEED LEFT ALIGNMENT: Assistant messages completely flush left */}
               <div
                 className={`relative rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md ${
                   msg.role === 'user'
                     ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white max-w-[80%] sm:max-w-[70%] ml-auto p-4'
                     : 'bg-white dark:bg-slate-800 border border-gray-100/50 dark:border-slate-700 text-gray-800 dark:text-white max-w-[90%] sm:max-w-[80%] p-4'
                 }`}
-                style={msg.role === 'assistant' ? { marginLeft: 0, paddingLeft: '1rem' } : {}}
+                style={msg.role === 'assistant' ? { marginLeft: 0, marginRight: 'auto' } : {}}
               >
                 {/* Display uploaded files for user messages */}
                 {msg.role === 'user' && msg.files && msg.files.length > 0 && (
@@ -1616,7 +1611,7 @@ Current user message: ${prompt}`
 
                 {msg.role === 'assistant' && msg.content && (
                   <>
-                    {/* ✅ FIXED: Follow-up Questions - Removed random bracket */}
+                    {/* ✅ FIXED: Follow-up Questions - Clean and bracket-free */}
                     {msg.followUps && msg.followUps.length > 0 && (
                       <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200/50 dark:border-blue-700/50">
                         <div className="flex items-center gap-2 mb-2">
@@ -1626,17 +1621,19 @@ Current user message: ${prompt}`
                         <button
                           onClick={(e) => {
                             e.preventDefault()
-                            handleSubmit(msg.followUps![0])
+                            // ✅ FIXED: Clean follow-up text without brackets
+                            const cleanFollowUp = msg.followUps![0].replace(/^\s*[\(\)]\s*/, '').trim()
+                            handleSubmit(cleanFollowUp)
                           }}
                           disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
                           className="w-full bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 disabled:bg-gray-100 disabled:dark:bg-gray-800 text-blue-700 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200 disabled:text-gray-500 dark:disabled:text-gray-500 px-3 py-2 rounded-lg text-sm font-medium shadow-sm hover:shadow-md border border-blue-200 dark:border-blue-700 disabled:border-gray-200 dark:disabled:border-gray-600 transition-all duration-200 hover:scale-[1.01] disabled:transform-none disabled:cursor-not-allowed text-left"
                         >
-                          {msg.followUps[0]}
+                          {msg.followUps[0].replace(/^\s*[\(\)]\s*/, '').trim()}
                         </button>
                       </div>
                     )}
 
-                    {/* Action Buttons - Mobile friendly layout */}
+                    {/* ✅ FIXED: Action Buttons with proper emojis instead of broken icons */}
                     <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
                       <div className="relative">
                         <button
@@ -1661,37 +1658,37 @@ Current user message: ${prompt}`
                           setCurrentFeedbackMessageId(msg.id)
                           setShowFeedbackModal(true)
                         }}
-                        className="p-3 md:p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation"
+                        className="p-3 md:p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation text-lg"
                         title="Like this response"
                       >
-                        <HiThumbUp className="w-4 h-4" />
+                        👍
                       </button>
                       <button
                         onClick={() => {
                           setCurrentFeedbackMessageId(msg.id)
                           setShowFeedbackModal(true)
                         }}
-                        className="p-3 md:p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation"
+                        className="p-3 md:p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation text-lg"
                         title="Dislike this response"
                       >
-                        <HiThumbDown className="w-4 h-4" />
+                        👎
                       </button>
                       <button
                         onClick={() => {
                           setCurrentSaveMessageId(msg.id)
                           setShowSaveModal(true)
                         }}
-                        className="p-3 md:p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation"
+                        className="p-3 md:p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation text-lg"
                         title="Save to Saved Responses"
                       >
-                        <FaRegBookmark className="w-4 h-4" />
+                        🔖
                       </button>
                       <button
                         onClick={() => handleShareToCollabZone(msg.id)}
-                        className="p-3 md:p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation"
+                        className="p-3 md:p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation text-lg"
                         title="Share to Collab Zone"
                       >
-                        <FaShareSquare className="w-4 h-4" />
+                        📤
                       </button>
                     </div>
                   </>
@@ -1926,75 +1923,77 @@ Current user message: ${prompt}`
                 </button>
                 <button
                   onClick={() => {
-                    handleSubmit("I need help creating business documents. Create a professional [specify type: business plan, proposal, contract, handbook, etc.] for my company.")
+                    handleSubmit("Help me create a compelling business proposal for a potential client or investor.")
                     setShowHelpModal(false)
                   }}
                   disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                  className="group p-6 text-left bg-gradient-to-br from-purple-50 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/30 rounded-3xl hover:from-purple-100 hover:to-pink-200 dark:hover:from-purple-900/30 dark:hover:to-pink-900/40 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-purple-200/30 dark:border-purple-700/30"
+                  className="group p-6 text-left bg-gradient-to-br from-purple-50 to-violet-100 dark:from-purple-900/20 dark:to-violet-900/30 rounded-3xl hover:from-purple-100 hover:to-violet-200 dark:hover:from-purple-900/30 dark:hover:to-violet-900/40 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-purple-200/30 dark:border-purple-700/30"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="text-4xl group-hover:scale-110 transition-transform duration-300">📄</div>
+                    <div className="text-4xl group-hover:scale-110 transition-transform duration-300">📊</div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Document Creation</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Generate professional business documents, proposals, contracts, policies, and reports tailored to your industry and needs.</p>
+                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Business Proposals</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Create compelling proposals, pitch decks, and business documents that win clients and secure funding opportunities.</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs rounded-full">Business Plans</span>
-                        <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs rounded-full">Contracts</span>
+                        <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs rounded-full">Proposals</span>
+                        <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs rounded-full">Pitch Decks</span>
                       </div>
                     </div>
                   </div>
                 </button>
                 <button
                   onClick={() => {
-                    handleSubmit("Give me personalized suggestions to improve my productivity today. Focus on time management, workflow optimization, and goal setting for my business.")
+                    handleSubmit("What are the current trends in my industry and how can I capitalize on them?")
                     setShowHelpModal(false)
                   }}
                   disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                  className="group p-6 text-left bg-gradient-to-br from-orange-50 to-red-100 dark:from-orange-900/20 dark:to-red-900/30 rounded-3xl hover:from-orange-100 hover:to-red-200 dark:hover:from-orange-900/30 dark:hover:to-red-900/40 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-orange-200/30 dark:border-orange-700/30"
+                  className="group p-6 text-left bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-900/20 dark:to-amber-900/30 rounded-3xl hover:from-orange-100 hover:to-amber-200 dark:hover:from-orange-900/30 dark:hover:to-amber-900/40 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-orange-200/30 dark:border-orange-700/30"
                 >
                   <div className="flex items-start gap-4">
                     <div className="text-4xl group-hover:scale-110 transition-transform duration-300">🎯</div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Productivity Enhancement</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Get personalized productivity tips, time management strategies, and workflow optimizations to maximize your business efficiency.</p>
+                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Industry Analysis</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Stay ahead of the competition with insights into industry trends, market opportunities, and strategic positioning.</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-xs rounded-full">Time Management</span>
-                        <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-xs rounded-full">Goal Setting</span>
+                        <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-xs rounded-full">Market Research</span>
+                        <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-xs rounded-full">Competitive Analysis</span>
                       </div>
                     </div>
                   </div>
                 </button>
               </div>
               
-              <div className="mt-8 p-6 bg-gradient-to-r from-gray-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 rounded-2xl border border-gray-200/50 dark:border-slate-700/50">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                  <span className="text-2xl">⌨️</span>
-                  Keyboard Shortcuts
+              <div className="mt-8 p-6 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-900/20 dark:to-blue-900/20 rounded-2xl border border-gray-200/30 dark:border-gray-700/30">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                  ⚡ Pro Tips for Better Results
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Focus input</span>
-                    <div className="flex gap-1">
-                      <kbd className="px-2 py-1 bg-white dark:bg-slate-700 rounded text-xs font-mono border">⌘</kbd>
-                      <kbd className="px-2 py-1 bg-white dark:bg-slate-700 rounded text-xs font-mono border">K</kbd>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-start gap-3">
+                    <span className="text-blue-500 text-lg">💡</span>
+                    <div>
+                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Be Specific</h4>
+                      <p className="text-gray-600 dark:text-gray-400">Include your industry, company size, and specific goals for more tailored advice.</p>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Open help</span>
-                    <div className="flex gap-1">
-                      <kbd className="px-2 py-1 bg-white dark:bg-slate-700 rounded text-xs font-mono border">⌘</kbd>
-                      <kbd className="px-2 py-1 bg-white dark:bg-slate-700 rounded text-xs font-mono border">/</kbd>
+                  <div className="flex items-start gap-3">
+                    <span className="text-green-500 text-lg">📁</span>
+                    <div>
+                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Upload Files</h4>
+                      <p className="text-gray-600 dark:text-gray-400">Share documents, spreadsheets, or presentations for analysis and insights.</p>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Send message</span>
-                    <kbd className="px-2 py-1 bg-white dark:bg-slate-700 rounded text-xs font-mono border">Enter</kbd>
+                  <div className="flex items-start gap-3">
+                    <span className="text-purple-500 text-lg">🎨</span>
+                    <div>
+                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Create Images</h4>
+                      <p className="text-gray-600 dark:text-gray-400">Generate professional visuals for marketing, presentations, and social media.</p>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">New line</span>
-                    <div className="flex gap-1">
-                      <kbd className="px-2 py-1 bg-white dark:bg-slate-700 rounded text-xs font-mono border">Shift</kbd>
-                      <kbd className="px-2 py-1 bg-white dark:bg-slate-700 rounded text-xs font-mono border">Enter</kbd>
+                  <div className="flex items-start gap-3">
+                    <span className="text-yellow-500 text-lg">🔖</span>
+                    <div>
+                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Save Responses</h4>
+                      <p className="text-gray-600 dark:text-gray-400">Bookmark useful responses to access them anytime in your saved collection.</p>
                     </div>
                   </div>
                 </div>
@@ -2019,11 +2018,9 @@ Current user message: ${prompt}`
             setShowSaveModal(false)
             setCurrentSaveMessageId(null)
           }}
-          onConfirm={async (title: string) => {
-            if (currentSaveMessageId) {
-              await handleSaveResponse(title, currentSaveMessageId)
-            }
-          }}
+          onSave={handleSaveResponse}
+          onSaveToCollabZone={handleSaveToCollabZone}
+          messageId={currentSaveMessageId}
         />
       )}
 
@@ -2035,20 +2032,19 @@ Current user message: ${prompt}`
             setShowFeedbackModal(false)
             setCurrentFeedbackMessageId(null)
           }}
-          responseId={currentFeedbackMessageId}
+          messageId={currentFeedbackMessageId}
         />
       )}
     </div>
   )
 }
 
-// Main component with Suspense wrapper
 export default function Dashboard() {
   return (
     <Suspense fallback={
       <div className="h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">Loading dashboard...</p>
         </div>
       </div>

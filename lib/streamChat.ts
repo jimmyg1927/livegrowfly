@@ -6,7 +6,7 @@ type StreamedChunk = {
   type: 'partial' | 'complete'
   content?: string
   followUps?: string[]
-  responseId?: string | null // ✅ FIXED: Allow null
+  responseId?: string | null
   processedFiles?: Array<{
     name: string
     type: string
@@ -20,10 +20,11 @@ interface StreamChatOptions {
   threadId?: string
   token: string
   files?: File[]
+  conversationHistory?: Array<{ role: string; content: string }> // ✅ NEW: Add conversation history
   onStream: (chunk: StreamedChunk) => void
   onComplete: (result?: {
     followUps?: string[]
-    responseId?: string | null // ✅ FIXED: Allow null
+    responseId?: string | null
     processedFiles?: Array<{
       name: string
       type: string
@@ -31,7 +32,7 @@ interface StreamChatOptions {
       error?: string
     }>
   }) => void
-  onError?: (error: unknown) => void // ✅ FIXED: Use unknown instead of any
+  onError?: (error: unknown) => void
 }
 
 export default async function streamChat({
@@ -39,16 +40,17 @@ export default async function streamChat({
   threadId,
   token,
   files = [],
+  conversationHistory = [], // ✅ NEW: Default to empty array
   onStream,
   onComplete,
   onError,
 }: StreamChatOptions) {
-  const controller = new AbortController() // ✅ FIXED: const instead of let
+  const controller = new AbortController()
   
   try {
     // ✅ ENHANCED: Handle file uploads with FormData when files are present
     let body: FormData | string
-    const headers: Record<string, string> = { // ✅ FIXED: const instead of let
+    const headers: Record<string, string> = {
       'Authorization': `Bearer ${token}`,
     }
 
@@ -58,11 +60,16 @@ export default async function streamChat({
       formData.append('message', prompt)
       if (threadId) formData.append('threadId', threadId)
       
+      // ✅ NEW: Add conversation history to FormData
+      if (conversationHistory.length > 0) {
+        formData.append('conversationHistory', JSON.stringify(conversationHistory))
+      }
+      
       // Add files to FormData
       files.forEach((file, index) => {
         if (file instanceof File) {
           formData.append('files', file)
-        } else if ((file as unknown as { preview?: string }).preview) { // ✅ FIXED: Better typing
+        } else if ((file as unknown as { preview?: string }).preview) {
           // Handle base64 images from file preview
           const fileWithPreview = file as unknown as { preview: string; name?: string }
           const blob = dataURLtoBlob(fileWithPreview.preview)
@@ -79,8 +86,11 @@ export default async function streamChat({
       body = JSON.stringify({
         message: prompt,
         threadId,
+        conversationHistory, // ✅ NEW: Include conversation history in JSON body
       })
     }
+
+    console.log('🔍 Sending request with conversation history:', conversationHistory.length, 'messages')
 
     const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
       method: 'POST',
@@ -112,7 +122,7 @@ export default async function streamChat({
 
     let buffer = ''
     let followUps: string[] = []
-    let responseId: string | null = null // ✅ FIXED: Allow null
+    let responseId: string | null = null
     let processedFiles: Array<{
       name: string
       type: string
@@ -120,7 +130,7 @@ export default async function streamChat({
       error?: string
     }> = []
 
-    // ✅ FIXED: Use proper loop condition instead of while(true)
+    // ✅ Process stream response
     let reading = true
     while (reading) {
       const { done, value } = await reader.read()
@@ -158,7 +168,7 @@ export default async function streamChat({
               })
             } else if (parsed.type === 'complete') {
               followUps = parsed.followUps || []
-              responseId = parsed.responseId || null // ✅ FIXED: Handle null properly
+              responseId = parsed.responseId || null
               processedFiles = parsed.processedFiles || []
               
               onStream({ 
@@ -182,7 +192,7 @@ export default async function streamChat({
       processedFiles
     })
 
-  } catch (error: unknown) { // ✅ FIXED: Use unknown instead of any
+  } catch (error: unknown) {
     if (error instanceof Error && error.name === 'AbortError') {
       return
     }
