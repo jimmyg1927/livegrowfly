@@ -1504,11 +1504,13 @@ function DashboardContent() {
 
         {/* Info about persistent conversations */}
         {messages.length > 0 && (
-          <div className="mr-4 mt-4 ml-4 p-4 bg-gray-50 border border-gray-200 rounded-2xl">
-            <p className="text-gray-800 text-sm flex items-center gap-2">
-              <span className="text-lg">💡</span>
-              <strong>Your conversations are securely saved!</strong> Your last 10 exchanges stay private to your account on this dashboard.
-            </p>
+          <div className="mx-auto mt-4 mb-6 max-w-4xl px-4">
+            <div className="p-4 bg-gray-50 border border-gray-200 rounded-2xl text-center">
+              <p className="text-gray-800 text-sm flex items-center justify-center gap-2">
+                <span className="text-lg">💡</span>
+                <strong>Your conversations are securely saved!</strong> Your last 10 exchanges stay private to your account on this dashboard.
+              </p>
+            </div>
           </div>
         )}
 
