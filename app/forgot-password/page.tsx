@@ -1,3 +1,5 @@
+'use client'
+
 import { useState } from 'react'
 
 export default function ForgotPasswordPage() {
@@ -7,7 +9,7 @@ export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setMessage('')
     setError('')
@@ -32,7 +34,7 @@ export default function ForgotPasswordPage() {
       setMessage(data.message)
       setIsSuccess(true)
       setEmail('')
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message)
       setIsSuccess(false)
     } finally {
