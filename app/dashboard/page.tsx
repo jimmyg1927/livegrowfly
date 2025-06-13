@@ -1046,17 +1046,24 @@ function DashboardContent() {
     )
 
     try {
-      // ✅ CRITICAL FIX: Include conversation context
-      const conversationHistory = messages.slice(-6).map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }))
+      // ✅ CRITICAL FIX: Include conversation context in the prompt
+      let contextualPrompt = prompt
+      
+      if (messages.length > 0) {
+        const recentMessages = messages.slice(-4).map(msg => 
+          `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`
+        ).join('\n\n')
+        
+        contextualPrompt = `Previous conversation context:
+${recentMessages}
+
+Current user message: ${prompt}`
+      }
 
       await streamChat({
-        prompt,
+        prompt: contextualPrompt,
         token,
         files,
-        conversationHistory, // ✅ This is the key fix - pass conversation history
         onStream: (chunk: any) => {
           if (chunk.content) {
             fullContent += chunk.content
