@@ -652,6 +652,22 @@ const ImageGenerationModal: React.FC<{
   )
 }
 
+// Helper function to get reset date
+const getResetDate = (subscriptionType: string) => {
+  const now = new Date()
+  if (subscriptionType?.toLowerCase() === 'free') {
+    // Daily reset at midnight
+    const tomorrow = new Date(now)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    tomorrow.setHours(0, 0, 0, 0)
+    return tomorrow
+  } else {
+    // Monthly reset on the 1st
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+    return nextMonth
+  }
+}
+
 function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -662,6 +678,7 @@ function DashboardContent() {
   const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || 'free'] || 20
   const promptsUsed = user?.promptsUsed ?? 0
   const promptsRemaining = Math.max(0, promptLimit - promptsUsed)
+  const isAtPromptLimit = promptsUsed >= promptLimit
 
   // States
   const [showHelpModal, setShowHelpModal] = useState(false)
@@ -1198,8 +1215,16 @@ function DashboardContent() {
 
     if (promptsUsed >= promptLimit) {
       const planType = user?.subscriptionType?.toLowerCase() || 'free'
+      const resetDate = getResetDate(planType)
       const periodText = planType === 'free' ? 'daily' : 'monthly'
-      setError(`You've reached your ${periodText} limit of ${promptLimit} prompts. Upgrade your plan to continue.`)
+      const resetDateText = resetDate.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      })
+      
+      setError(`You've reached your ${periodText} limit of ${promptLimit} prompts. Resets on ${resetDateText}. Upgrade your plan to continue.`)
       return
     }
 
@@ -1424,11 +1449,43 @@ function DashboardContent() {
       
       {/* Content Area - COMPLETELY FLUSH LEFT */}
       <div className="flex-1 overflow-hidden ml-0 md:ml-60 lg:ml-64">
-        <div ref={containerRef} className="h-full overflow-y-auto pb-60">
+        <div ref={containerRef} className="h-full overflow-y-auto pb-80">
+
+        {/* Prompt Limit Warning */}
+        {isAtPromptLimit && (
+          <div className="mx-4 mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm relative">
+            <button 
+              onClick={dismissError}
+              className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+            >
+              <HiX className="w-4 h-4" />
+            </button>
+            <strong>🚫 Prompt Limit Reached</strong>
+            <p className="mt-2">
+              You've used all {promptLimit} prompts for your {user?.subscriptionType?.toLowerCase() || 'free'} plan.
+            </p>
+            <p className="text-sm mt-1">
+              Resets: {getResetDate(user?.subscriptionType?.toLowerCase() || 'free').toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+              })}
+            </p>
+            <div className="mt-3">
+              <button
+                onClick={() => router.push('/change-plan')}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors"
+              >
+                Upgrade Plan
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Error Message */}
         {error && (
-          <div className="m-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm relative">
+          <div className="mx-4 mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm relative">
             <button 
               onClick={dismissError}
               className="absolute top-2 right-2 text-red-500 hover:text-red-700"
@@ -1451,7 +1508,7 @@ function DashboardContent() {
 
         {/* Info about persistent conversations */}
         {messages.length > 0 && (
-          <div className="m-4 p-4 bg-gray-50 border border-gray-200 rounded-2xl">
+          <div className="mx-4 mt-4 p-4 bg-gray-50 border border-gray-200 rounded-2xl">
             <p className="text-gray-800 text-sm flex items-center gap-2">
               <span className="text-lg">💡</span>
               <strong>Your conversations are securely saved!</strong> Your last 10 exchanges stay private to your account on this dashboard.
@@ -1460,7 +1517,7 @@ function DashboardContent() {
         )}
 
         {/* Chat Messages - ABSOLUTELY NO LEFT PADDING */}
-        <div className="space-y-4 min-h-0 flex-1 p-4 pl-0">
+        <div className="space-y-4 min-h-0 flex-1 pr-4 pt-4">
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full min-h-[60vh]">
               <div className="text-center max-w-2xl px-4">
@@ -1515,26 +1572,26 @@ function DashboardContent() {
               <div
                 className={`relative rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md ${
                   msg.role === 'user'
-                    ? 'bg-gray-900 text-white max-w-[80%] sm:max-w-[70%] ml-auto p-4'
+                    ? 'bg-blue-600 text-white max-w-[80%] sm:max-w-[70%] ml-auto p-4'
                     : 'bg-white border border-gray-200 text-gray-800 max-w-[90%] sm:max-w-[80%] p-4'
                 }`}
-                style={msg.role === 'assistant' ? { marginLeft: 0, marginRight: 'auto' } : {}}
+                style={msg.role === 'assistant' ? { marginLeft: '0px', marginRight: 'auto' } : {}}
               >
                 {/* Display uploaded files for user messages */}
                 {msg.role === 'user' && msg.files && msg.files.length > 0 && (
                   <div className="mb-4 space-y-2">
-                    <p className="text-xs text-gray-300 font-medium">📎 Attached Files:</p>
+                    <p className="text-xs text-blue-200 font-medium">📎 Attached Files:</p>
                     <div className="grid grid-cols-1 gap-2">
                       {msg.files.map((file) => (
-                        <div key={file.id} className="bg-gray-800 rounded-lg p-2 flex items-center gap-2">
+                        <div key={file.id} className="bg-blue-500 rounded-lg p-2 flex items-center gap-2">
                           {file.type.startsWith('image/') && file.preview ? (
                             <img src={file.preview} alt={file.name} className="w-8 h-8 object-cover rounded" />
                           ) : file.type === 'application/pdf' ? (
-                            <FaFilePdf className="w-6 h-6 text-red-300" />
+                            <FaFilePdf className="w-6 h-6 text-blue-200" />
                           ) : (
-                            <FaFileAlt className="w-6 h-6 text-gray-300" />
+                            <FaFileAlt className="w-6 h-6 text-blue-200" />
                           )}
-                          <span className="text-xs text-gray-300">{file.name}</span>
+                          <span className="text-xs text-blue-100">{file.name}</span>
                         </div>
                       ))}
                     </div>
@@ -1565,21 +1622,21 @@ function DashboardContent() {
                     <div className="mt-3 flex gap-2">
                       <button
                         onClick={() => handleDownloadImage(msg.generatedImage!)}
-                        className="flex-1 bg-gray-900 hover:bg-gray-800 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                       >
                         <FaFileDownload />
                         Download
                       </button>
                       <button
                         onClick={() => router.push('/gallery')}
-                        className="flex-1 bg-gray-900 hover:bg-gray-800 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                       >
                         <FaImages />
                         Gallery
                       </button>
                       <button
                         onClick={() => handleShareImage(msg.generatedImage!)}
-                        className="flex-1 bg-gray-900 hover:bg-gray-800 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                       >
                         <FaShareSquare />
                         Share
@@ -1611,7 +1668,7 @@ function DashboardContent() {
 
                 {msg.role === 'assistant' && msg.content && (
                   <>
-                    {/* Follow-up Questions - NO BLUE */}
+                    {/* Follow-up Questions */}
                     {msg.followUps && msg.followUps.length > 0 && (
                       <div className="mt-4 p-3 bg-gray-50 rounded-xl border border-gray-200">
                         <div className="flex items-center gap-2 mb-2">
@@ -1624,7 +1681,7 @@ function DashboardContent() {
                             const cleanFollowUp = msg.followUps![0].replace(/^\s*[\(\)]\s*/, '').trim()
                             handleSubmit(cleanFollowUp)
                           }}
-                          disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+                          disabled={isLoading || isStreaming}
                           className="w-full bg-white hover:bg-gray-50 disabled:bg-gray-100 text-gray-700 hover:text-gray-800 disabled:text-gray-500 px-3 py-2 rounded-lg text-sm font-medium shadow-sm hover:shadow-md border border-gray-200 disabled:border-gray-200 transition-all duration-200 hover:scale-[1.01] disabled:transform-none disabled:cursor-not-allowed text-left"
                         >
                           {msg.followUps[0].replace(/^\s*[\(\)]\s*/, '').trim()}
@@ -1632,15 +1689,15 @@ function DashboardContent() {
                       </div>
                     )}
 
-                    {/* Action Buttons - NO BLUE, CLEAN GRAYS */}
+                    {/* Action Buttons - Clean outlined style */}
                     <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-gray-100">
                       <div className="relative">
                         <button
                           onClick={() => handleCopyMessage(msg.id, msg.content)}
-                          className={`p-3 md:p-2 rounded-lg transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation ${
+                          className={`p-3 md:p-2 rounded-lg border transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation ${
                             copiedMessageId === msg.id 
-                              ? 'text-green-500 bg-green-50' 
-                              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                              ? 'text-green-600 bg-green-50 border-green-200' 
+                              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 border-gray-200 hover:border-gray-300'
                           }`}
                           title="Copy message"
                         >
@@ -1657,37 +1714,37 @@ function DashboardContent() {
                           setCurrentFeedbackMessageId(msg.id)
                           setShowFeedbackModal(true)
                         }}
-                        className="p-3 md:p-2 rounded-lg text-gray-500 hover:text-green-500 hover:bg-green-50 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation text-lg"
+                        className="p-3 md:p-2 rounded-lg border border-gray-200 text-gray-500 hover:text-green-600 hover:bg-green-50 hover:border-green-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation"
                         title="Like this response"
                       >
-                        👍
+                        <HiThumbUp className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => {
                           setCurrentFeedbackMessageId(msg.id)
                           setShowFeedbackModal(true)
                         }}
-                        className="p-3 md:p-2 rounded-lg text-gray-500 hover:text-red-500 hover:bg-red-50 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation text-lg"
+                        className="p-3 md:p-2 rounded-lg border border-gray-200 text-gray-500 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation"
                         title="Dislike this response"
                       >
-                        👎
+                        <HiThumbDown className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => {
                           setCurrentSaveMessageId(msg.id)
                           setShowSaveModal(true)
                         }}
-                        className="p-3 md:p-2 rounded-lg text-gray-500 hover:text-yellow-500 hover:bg-yellow-50 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation text-lg"
+                        className="p-3 md:p-2 rounded-lg border border-gray-200 text-gray-500 hover:text-yellow-600 hover:bg-yellow-50 hover:border-yellow-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation"
                         title="Save to Saved Responses"
                       >
-                        🔖
+                        <FaRegBookmark className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleShareToCollabZone(msg.id)}
-                        className="p-3 md:p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation text-lg"
+                        className="p-3 md:p-2 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation"
                         title="Share to Collab Zone"
                       >
-                        📤
+                        <FaShareSquare className="w-4 h-4" />
                       </button>
                     </div>
                   </>
@@ -1732,7 +1789,7 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* Floating Input Section - NO BLUE */}
+      {/* Floating Input Section - GROWFLY BLUE */}
       <div className="fixed bottom-0 left-4 right-4 md:left-60 lg:left-64 z-20 p-3">
         <div className="max-w-4xl mx-auto">
           {messages.length === 0 && (
@@ -1753,15 +1810,15 @@ function DashboardContent() {
             <button
               onClick={(e) => {
                 e.preventDefault()
-                if (!isLoading && !isStreaming && promptsUsed < promptLimit && fileInputRef.current) {
+                if (!isLoading && !isStreaming && fileInputRef.current) {
                   fileInputRef.current.click()
                 }
               }}
-              disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+              disabled={isLoading || isStreaming || isAtPromptLimit}
               className={`p-3 md:p-2.5 rounded-xl flex items-center gap-1.5 text-sm font-medium transition-all duration-200 touch-manipulation ${
-                isLoading || isStreaming || promptsUsed >= promptLimit
+                isLoading || isStreaming || isAtPromptLimit
                   ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-95'
+                  : 'bg-blue-100 text-blue-600 hover:bg-blue-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-95'
               }`}
             >
               <FaPaperclip className="w-4 h-4" />
@@ -1776,15 +1833,16 @@ function DashboardContent() {
                   router.push('/change-plan')
                 }
               }}
+              disabled={isAtPromptLimit}
               className={`p-3 md:p-2.5 rounded-xl flex items-center gap-1.5 text-sm font-medium transition-all duration-200 touch-manipulation ${
-                (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
-                  ? 'bg-gray-100 text-gray-600 hover:bg-gray-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-95'
+                (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0 && !isAtPromptLimit)
+                  ? 'bg-blue-100 text-blue-600 hover:bg-blue-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-95'
                   : 'bg-gray-200 text-gray-400 hover:bg-gray-300'
               }`}
             >
               <FaPalette className="w-4 h-4" />
               <span className="hidden sm:inline text-xs">
-                {(imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) ? 'Image' : 'Upgrade'}
+                {(imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0 && !isAtPromptLimit) ? 'Image' : 'Upgrade'}
               </span>
             </button>
 
@@ -1805,7 +1863,7 @@ function DashboardContent() {
                     handleSubmit()
                   }
                 }}
-                disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+                disabled={isLoading || isStreaming || isAtPromptLimit}
               />
             </div>
 
@@ -1814,8 +1872,8 @@ function DashboardContent() {
                 e.preventDefault()
                 handleSubmit()
               }}
-              disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || promptsUsed >= promptLimit}
-              className="bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400 text-white p-3 md:p-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl active:scale-95 disabled:transform-none disabled:shadow-none flex-shrink-0 w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation"
+              disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || isAtPromptLimit}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white p-3 md:p-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl active:scale-95 disabled:transform-none disabled:shadow-none flex-shrink-0 w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation"
             >
               {isLoading || isStreaming ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -1835,7 +1893,7 @@ function DashboardContent() {
               }}
               className="hidden"
               ref={fileInputRef}
-              disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+              disabled={isLoading || isStreaming || isAtPromptLimit}
               multiple
             />
           </div>
@@ -1846,15 +1904,15 @@ function DashboardContent() {
       <div className="fixed right-4 bottom-20 z-30">
         <button
           onClick={() => setShowHelpModal(true)}
-          disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-          className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white p-3 md:p-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:transform-none w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation"
+          disabled={isLoading || isStreaming}
+          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white p-3 md:p-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:transform-none w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation"
           title="Quick Start Guide"
         >
           <FaQuestionCircle className="w-5 h-5 md:w-4 md:h-4" />
         </button>
       </div>
 
-      {/* Help Modal - NO BLUE */}
+      {/* Help Modal */}
       {showHelpModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl max-w-5xl mx-4 w-full max-h-[90vh] overflow-y-auto border border-gray-200/50">
@@ -1883,7 +1941,7 @@ function DashboardContent() {
                     handleSubmit("What are some effective marketing strategies for my business that I can implement this month?")
                     setShowHelpModal(false)
                   }}
-                  disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+                  disabled={isLoading || isStreaming || isAtPromptLimit}
                   className="group p-6 text-left bg-gray-50 rounded-3xl hover:bg-gray-100 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200"
                 >
                   <div className="flex items-start gap-4">
@@ -1903,7 +1961,7 @@ function DashboardContent() {
                     handleSubmit("Analyze my business operations and suggest 3 specific improvements I can make this week.")
                     setShowHelpModal(false)
                   }}
-                  disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+                  disabled={isLoading || isStreaming || isAtPromptLimit}
                   className="group p-6 text-left bg-gray-50 rounded-3xl hover:bg-gray-100 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200"
                 >
                   <div className="flex items-start gap-4">
@@ -1923,7 +1981,7 @@ function DashboardContent() {
                     handleSubmit("Help me create a compelling business proposal for a potential client or investor.")
                     setShowHelpModal(false)
                   }}
-                  disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+                  disabled={isLoading || isStreaming || isAtPromptLimit}
                   className="group p-6 text-left bg-gray-50 rounded-3xl hover:bg-gray-100 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200"
                 >
                   <div className="flex items-start gap-4">
@@ -1943,7 +2001,7 @@ function DashboardContent() {
                     handleSubmit("What are the current trends in my industry and how can I capitalize on them?")
                     setShowHelpModal(false)
                   }}
-                  disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+                  disabled={isLoading || isStreaming || isAtPromptLimit}
                   className="group p-6 text-left bg-gray-50 rounded-3xl hover:bg-gray-100 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200"
                 >
                   <div className="flex items-start gap-4">
