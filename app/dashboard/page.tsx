@@ -1516,8 +1516,8 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* Chat Messages - ABSOLUTELY NO LEFT PADDING */}
-        <div className="space-y-4 min-h-0 flex-1 pr-4 pt-4 pl-0">
+        {/* Chat Messages - NO PADDING AT ALL */}
+        <div className="space-y-4 min-h-0 flex-1 pr-4 pt-4" style={{ paddingLeft: 0, marginLeft: 0 }}>
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full min-h-[60vh]">
               <div className="text-center max-w-2xl px-4">
@@ -2037,7 +2037,7 @@ function DashboardContent() {
                     <span className="text-gray-500 text-lg">📁</span>
                     <div>
                       <h4 className="font-semibold text-gray-800 mb-1">Upload Files</h4>
-                      <p className="text-gray-600">Share documents for analysis, editing and insights.</p>
+                      <p className="text-gray-600">Share documents, spreadsheets, or presentations for analysis and insights.</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
