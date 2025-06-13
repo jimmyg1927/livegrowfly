@@ -1109,10 +1109,6 @@ function DashboardContent() {
             followUps = ['Tell me more about this']
           }
           
-          if (followUps.length > 1) {
-            followUps = [followUps[0]]
-          }
-          
           setMessages((prev) => {
             const updated = prev.map((msg) =>
               msg.id === aId ? { ...msg, content: fullContent, followUps } : msg
@@ -1449,7 +1445,7 @@ function DashboardContent() {
       
       {/* Content Area - Fixed positioning and padding */}
       <div className="flex-1 overflow-hidden ml-0 md:ml-60 lg:ml-64">
-        <div ref={containerRef} className="h-full overflow-y-auto pb-80 pl-0 md:pl-4">
+        <div ref={containerRef} className="h-full overflow-y-auto pb-80 pl-0">
 
         {/* Prompt Limit Warning */}
         {isAtPromptLimit && (
@@ -1577,7 +1573,7 @@ function DashboardContent() {
                 className={`relative rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md ${
                   msg.role === 'user'
                     ? 'bg-blue-600 text-white max-w-[80%] sm:max-w-[70%] ml-auto p-4'
-                    : 'bg-white border border-gray-200 text-gray-800 max-w-[90%] sm:max-w-[80%] p-4'
+                    : 'bg-white border border-gray-200 text-gray-800 max-w-[90%] sm:max-w-[80%] py-4 px-2'
                 }`}
               >
                 {/* Display uploaded files for user messages */}
@@ -1678,17 +1674,22 @@ function DashboardContent() {
                           <span className="text-sm">💡</span>
                           <span className="text-xs font-medium text-gray-700">Continue the conversation:</span>
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault()
-                            const cleanFollowUp = msg.followUps![0].replace(/^\s*[\(\)]\s*/, '').trim()
-                            handleSubmit(cleanFollowUp)
-                          }}
-                          disabled={isLoading || isStreaming}
-                          className="w-full bg-white hover:bg-gray-50 disabled:bg-gray-100 text-gray-700 hover:text-gray-800 disabled:text-gray-500 px-3 py-2 rounded-lg text-sm font-medium shadow-sm hover:shadow-md border border-gray-200 disabled:border-gray-200 transition-all duration-200 hover:scale-[1.01] disabled:transform-none disabled:cursor-not-allowed text-left"
-                        >
-                          {msg.followUps[0].replace(/^\s*[\(\)]\s*/, '').trim()}
-                        </button>
+                        <div className="space-y-2">
+                          {msg.followUps.map((followUp, index) => (
+                            <button
+                              key={index}
+                              onClick={(e) => {
+                                e.preventDefault()
+                                const cleanFollowUp = followUp.replace(/^\s*[\(\)]\s*/, '').trim()
+                                handleSubmit(cleanFollowUp)
+                              }}
+                              disabled={isLoading || isStreaming}
+                              className="w-full bg-white hover:bg-gray-50 disabled:bg-gray-100 text-gray-700 hover:text-gray-800 disabled:text-gray-500 px-3 py-2 rounded-lg text-sm font-medium shadow-sm hover:shadow-md border border-gray-200 disabled:border-gray-200 transition-all duration-200 hover:scale-[1.01] disabled:transform-none disabled:cursor-not-allowed text-left"
+                            >
+                              {followUp.replace(/^\s*[\(\)]\s*/, '').trim()}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
 
@@ -1821,7 +1822,7 @@ function DashboardContent() {
               className={`p-3 md:p-2.5 rounded-xl flex items-center gap-1.5 text-sm font-medium transition-all duration-200 touch-manipulation ${
                 isLoading || isStreaming || isAtPromptLimit
                   ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'bg-blue-100 text-blue-600 hover:bg-blue-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-95'
+                  : 'border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-95'
               }`}
             >
               <FaPaperclip className="w-4 h-4" />
@@ -1839,7 +1840,7 @@ function DashboardContent() {
               disabled={isAtPromptLimit}
               className={`p-3 md:p-2.5 rounded-xl flex items-center gap-1.5 text-sm font-medium transition-all duration-200 touch-manipulation ${
                 (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0 && !isAtPromptLimit)
-                  ? 'bg-blue-100 text-blue-600 hover:bg-blue-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-95'
+                  ? 'border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-95'
                   : 'bg-gray-200 text-gray-400 hover:bg-gray-300'
               }`}
             >
@@ -1876,7 +1877,7 @@ function DashboardContent() {
                 handleSubmit()
               }}
               disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || isAtPromptLimit}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white p-3 md:p-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl active:scale-95 disabled:transform-none disabled:shadow-none flex-shrink-0 w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation"
+              className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white p-3 md:p-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl active:scale-95 disabled:transform-none disabled:shadow-none flex-shrink-0 w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation"
             >
               {isLoading || isStreaming ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -1908,7 +1909,7 @@ function DashboardContent() {
         <button
           onClick={() => setShowHelpModal(true)}
           disabled={isLoading || isStreaming}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white p-3 md:p-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:transform-none w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation"
+          className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white p-3 md:p-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:transform-none w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation"
           title="Quick Start Guide"
         >
           <FaQuestionCircle className="w-5 h-5 md:w-4 md:h-4" />
