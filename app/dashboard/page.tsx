@@ -1445,7 +1445,7 @@ function DashboardContent() {
       
       {/* Content Area - Proper sidebar spacing */}
       <div className="flex-1 overflow-hidden ml-0 md:ml-60 lg:ml-64">
-        <div ref={containerRef} className="h-full overflow-y-auto pb-80 px-4">
+        <div ref={containerRef} className="h-full overflow-y-auto pb-80 pl-2 pr-4">
 
         {/* Prompt Limit Warning */}
         {isAtPromptLimit && (
@@ -1684,7 +1684,7 @@ function DashboardContent() {
                                 handleSubmit(cleanFollowUp)
                               }}
                               disabled={isLoading || isStreaming}
-                              className="w-full bg-white hover:bg-gray-50 disabled:bg-gray-100 text-gray-700 hover:text-gray-800 disabled:text-gray-500 p-0 rounded-lg text-sm font-medium shadow-sm hover:shadow-md border border-gray-200 disabled:border-gray-200 transition-all duration-200 hover:scale-[1.01] disabled:transform-none disabled:cursor-not-allowed text-left focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                              className="w-full bg-gray-50 hover:bg-gray-100 disabled:bg-gray-100 text-gray-700 hover:text-gray-800 disabled:text-gray-500 p-0 rounded-lg text-sm font-medium shadow-sm hover:shadow-md border border-gray-200 disabled:border-gray-200 transition-all duration-200 hover:scale-[1.01] disabled:transform-none disabled:cursor-not-allowed text-left focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                             >
                               <div className="px-3 py-2">
                                 {followUp.replace(/^\s*[\(\)]\s*/, '').trim()}
@@ -1703,7 +1703,7 @@ function DashboardContent() {
                           className={`p-0 md:p-0 rounded-lg border transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 ${
                             copiedMessageId === msg.id 
                               ? 'text-green-600 bg-green-50 border-green-200' 
-                              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 border-gray-200 hover:border-gray-300'
+                              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 border-gray-200 hover:border-gray-300 bg-gray-50'
                           }`}
                           title="Copy message"
                         >
@@ -1722,7 +1722,7 @@ function DashboardContent() {
                           setCurrentFeedbackMessageId(msg.id)
                           setShowFeedbackModal(true)
                         }}
-                        className="p-0 md:p-0 rounded-lg border border-gray-200 text-gray-500 hover:text-green-600 hover:bg-green-50 hover:border-green-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                        className="p-0 md:p-0 rounded-lg border border-gray-200 text-gray-500 hover:text-green-600 hover:bg-green-50 hover:border-green-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50"
                         title="Like this response"
                       >
                         <div className="p-2 md:p-1.5">
@@ -1734,7 +1734,7 @@ function DashboardContent() {
                           setCurrentFeedbackMessageId(msg.id)
                           setShowFeedbackModal(true)
                         }}
-                        className="p-0 md:p-0 rounded-lg border border-gray-200 text-gray-500 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                        className="p-0 md:p-0 rounded-lg border border-gray-200 text-gray-500 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50"
                         title="Dislike this response"
                       >
                         <div className="p-2 md:p-1.5">
@@ -1746,7 +1746,7 @@ function DashboardContent() {
                           setCurrentSaveMessageId(msg.id)
                           setShowSaveModal(true)
                         }}
-                        className="p-0 md:p-0 rounded-lg border border-gray-200 text-gray-500 hover:text-yellow-600 hover:bg-yellow-50 hover:border-yellow-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                        className="p-0 md:p-0 rounded-lg border border-gray-200 text-gray-500 hover:text-yellow-600 hover:bg-yellow-50 hover:border-yellow-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50"
                         title="Save to Saved Responses"
                       >
                         <div className="p-2 md:p-1.5">
@@ -1755,7 +1755,7 @@ function DashboardContent() {
                       </button>
                       <button
                         onClick={() => handleShareToCollabZone(msg.id)}
-                        className="p-0 md:p-0 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                        className="p-0 md:p-0 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50"
                         title="Share to Collab Zone"
                       >
                         <div className="p-2 md:p-1.5">
