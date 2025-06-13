@@ -152,19 +152,19 @@ export default function Sidebar() {
           />
         </Link>
         
-        {/* ✅ UPDATED: Much More Obvious Collapse Toggle */}
+        {/* ✅ UPDATED: More Subtle and Friendly Collapse Toggle */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className={`hidden sm:block absolute -right-3 top-1/2 transform -translate-y-1/2 bg-white/30 hover:bg-white/40 text-white rounded-xl p-3 transition-all duration-300 backdrop-blur-sm shadow-xl hover:shadow-2xl border border-white/20 hover:border-white/30 hover:scale-110 ${
-            isCollapsed ? 'opacity-80 hover:opacity-100' : 'opacity-60 group-hover:opacity-100'
+          className={`hidden sm:block absolute -right-1 top-1/2 transform -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white/70 hover:text-white rounded-lg p-1.5 transition-all duration-200 hover:shadow-sm ${
+            isCollapsed ? 'opacity-70 hover:opacity-100' : 'opacity-50 group-hover:opacity-80'
           }`}
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {isCollapsed ? (
-            <HiOutlineMenuAlt2 className="w-5 h-5" />
+            <HiOutlineMenuAlt2 className="w-3.5 h-3.5" />
           ) : (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           )}
         </button>
@@ -185,7 +185,7 @@ export default function Sidebar() {
         <NavSection items={settingsItems} showDivider={true} />
       </nav>
 
-      {/* ✅ UPDATED: Logout Button with Better Rounded Corners */}
+      {/* ✅ UPDATED: Logout Button with Better rounded Corners */}
       <div className={`w-full pt-4 border-t border-white/10 transition-all duration-200 ${isCollapsed ? 'px-2' : 'px-2 sm:px-4'}`}>
         <button
           onClick={() => {
