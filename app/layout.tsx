@@ -15,6 +15,13 @@ export const metadata = {
   authors: [{ name: 'Growfly Team' }],
   viewport: 'width=device-width, initial-scale=1',
   robots: 'index, follow',
+  // ✅ ADD FAVICON TO METADATA
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
+  manifest: '/manifest.json',
   openGraph: {
     title: 'Growfly - AI-Powered Business Growth Platform',
     description: 'Transform your business with AI-powered insights, automation, and growth strategies.',
@@ -32,12 +39,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className="h-full">
-      <head>
-        <link rel="icon" href="/favicon.ico" />
-        <meta name="theme-color" content="#6366f1" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <link rel="manifest" href="/manifest.json" />
-      </head>
+      {/* ✅ REMOVE MANUAL HEAD SECTION - Let metadata handle it */}
       <body className={`${inter.className} h-full antialiased`}>
         <NextThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <ThemeContextProvider>

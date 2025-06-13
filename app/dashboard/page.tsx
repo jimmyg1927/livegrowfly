@@ -1643,8 +1643,8 @@ function DashboardContent() {
         {/* Chat Messages - Clean layout with proper spacing */}
         <div className="space-y-4 min-h-0 flex-1 pt-4 pr-4">
           {messages.length === 0 ? (
-            <div className="flex items-center justify-center h-full min-h-[60vh]">
-              <div className="text-center max-w-2xl px-4">
+            <div className="flex items-center justify-center h-full min-h-[60vh] pt-32 md:pt-40">
+              <div className="text-center max-w-2xl px-4 mt-12">
                 <div className="mb-6">
                   <div className="text-6xl md:text-8xl mb-4 animate-bounce">👋</div>
                   <h3 className="text-2xl md:text-3xl font-bold text-gray-800 mb-3">
@@ -1962,10 +1962,10 @@ function DashboardContent() {
             </div>
           )}
           
-          <div className={`bg-white shadow-md rounded-xl p-3 backdrop-blur-sm border border-gray-200 transition-all duration-200 ${shakeInput ? 'animate-pulse border-red-300' : ''}`}>
+          <div className={`bg-white shadow-lg rounded-2xl p-4 backdrop-blur-sm border border-gray-200 transition-all duration-200 ${shakeInput ? 'animate-pulse border-red-300' : ''}`}>
             <div className="flex items-end gap-2">
               
-              {/* Upload Button - Outline Style */}
+              {/* Upload Button - Enhanced Style */}
               <button
                 onClick={(e) => {
                   e.preventDefault()
@@ -1974,17 +1974,17 @@ function DashboardContent() {
                   }
                 }}
                 disabled={isLoading || isStreaming || isAtPromptLimit}
-                className={`p-2.5 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 touch-manipulation ${
+                className={`p-3 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 flex items-center justify-center text-blue-600 hover:from-blue-100 hover:to-blue-200 hover:border-blue-300 hover:text-blue-700 transition-all duration-200 shadow-sm hover:shadow-lg ${
                   isLoading || isStreaming || isAtPromptLimit
                     ? 'opacity-50 cursor-not-allowed'
-                    : 'hover:scale-105'
+                    : 'hover:scale-105 active:scale-95'
                 }`}
                 title="Upload files"
               >
-                <FaPaperclip className="w-4 h-4" />
+                <FaPaperclip className="w-5 h-5" />
               </button>
 
-              {/* Image Button - Outline Style */}
+              {/* Image Button - Enhanced Style */}
               <button
                 onClick={() => {
                   if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
@@ -1994,14 +1994,14 @@ function DashboardContent() {
                   }
                 }}
                 disabled={isAtPromptLimit}
-                className={`p-2.5 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 touch-manipulation ${
+                className={`p-3 rounded-2xl bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 flex items-center justify-center text-purple-600 hover:from-purple-100 hover:to-purple-200 hover:border-purple-300 hover:text-purple-700 transition-all duration-200 shadow-sm hover:shadow-lg ${
                   (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0 && !isAtPromptLimit)
-                    ? 'hover:scale-105'
-                    : 'opacity-50'
+                    ? 'hover:scale-105 active:scale-95'
+                    : 'opacity-50 cursor-not-allowed'
                 }`}
                 title="Generate image"
               >
-                <FaPalette className="w-4 h-4" />
+                <FaPalette className="w-5 h-5" />
               </button>
 
               {/* Textarea with Floating Label */}
@@ -2033,14 +2033,14 @@ function DashboardContent() {
                 />
               </div>
 
-              {/* Send Button - Solid Blue */}
+              {/* Send Button - Enhanced Style */}
               <button
                 onClick={(e) => {
                   e.preventDefault()
                   handleSubmit()
                 }}
                 disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || isAtPromptLimit}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white p-2.5 rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:transform-none flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px]"
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white p-2.5 rounded-2xl shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:transform-none flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px]"
                 title="Send message"
               >
                 {isLoading || isStreaming ? (
@@ -2069,12 +2069,12 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* Help Button - Positioned Above Input */}
+      {/* Help Button - Enhanced Style */}
       <div className="fixed right-4 bottom-20 md:bottom-24 z-30">
         <button
           onClick={() => setShowHelpModal(true)}
           disabled={isLoading || isStreaming}
-          className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white p-0 md:p-0 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:transform-none w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+          className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white p-0 md:p-0 rounded-full shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-110 active:scale-95 disabled:transform-none w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
           title="Quick Start Guide"
         >
           <FaQuestionCircle className="w-5 h-5 md:w-4 md:h-4" />
