@@ -2018,9 +2018,9 @@ function DashboardContent() {
             setShowSaveModal(false)
             setCurrentSaveMessageId(null)
           }}
-          onSave={handleSaveResponse}
-          onSaveToCollabZone={handleSaveToCollabZone}
           messageId={currentSaveMessageId}
+          onSaveResponse={handleSaveResponse}
+          onSaveToCollabZone={handleSaveToCollabZone}
         />
       )}
 
