@@ -1524,7 +1524,7 @@ function DashboardContent() {
                 <div className="mb-6">
                   <div className="text-6xl md:text-8xl mb-4 animate-bounce">👋</div>
                   <h3 className="text-2xl md:text-3xl font-bold text-gray-800 mb-3">
-                    Welcome to Growfly!
+                    Welcome to Growfly! 🚀
                   </h3>
                   <p className="text-base md:text-lg text-gray-600 mb-6 leading-relaxed">
                     Your AI business assistant is ready to help you grow, optimize, and succeed. 
@@ -2037,7 +2037,7 @@ function DashboardContent() {
                     <span className="text-gray-500 text-lg">📁</span>
                     <div>
                       <h4 className="font-semibold text-gray-800 mb-1">Upload Files</h4>
-                      <p className="text-gray-600">Share documents, spreadsheets, or presentations for analysis and insights.</p>
+                      <p className="text-gray-600">Share documents for analysis, editing and insights.</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
