@@ -185,6 +185,12 @@ const FilePreview: React.FC<{ file: UploadedFile; onRemove: () => void }> = ({ f
       )
     } else if (file.type === 'application/pdf') {
       return <FaFilePdf className="w-12 h-12 text-red-500" />
+    } else if (file.type.includes('sheet') || file.type.includes('excel') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+      return <FaFileExcel className="w-12 h-12 text-green-500" />
+    } else if (file.type.includes('word') || file.name.endsWith('.docx') || file.name.endsWith('.doc')) {
+      return <FaFileAlt className="w-12 h-12 text-blue-600" />
+    } else if (file.type.includes('presentation') || file.name.endsWith('.pptx') || file.name.endsWith('.ppt')) {
+      return <FaFileAlt className="w-12 h-12 text-orange-500" />
     } else {
       return <FaFileAlt className="w-12 h-12 text-gray-500" />
     }
@@ -676,6 +682,7 @@ function DashboardContent() {
   const [currentFeedbackMessageId, setCurrentFeedbackMessageId] = useState<string | null>(null)
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
   const [disableAutoScroll, setDisableAutoScroll] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false)
 
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -924,11 +931,14 @@ function DashboardContent() {
     }
   }, [messages, disableAutoScroll, isUserScrolling, isStreaming])
 
-  // Enhanced file handling
+  // Enhanced file handling with drag & drop
   const handleFileSelect = (files: FileList) => {
     Array.from(files).forEach(file => {
-      if (file.size > 10 * 1024 * 1024) {
-        setError(`File ${file.name} is too large. Maximum size is 10MB.`)
+      // Enhanced file size limit (25MB for documents, 10MB for images)
+      const maxSize = file.type.startsWith('image/') ? 10 * 1024 * 1024 : 25 * 1024 * 1024
+      if (file.size > maxSize) {
+        const sizeMB = Math.round(maxSize / (1024 * 1024))
+        setError(`File ${file.name} is too large. Maximum size is ${sizeMB}MB.`)
         return
       }
 
@@ -941,6 +951,7 @@ function DashboardContent() {
         file: file,
       }
 
+      // Enhanced file preview support
       if (file.type.startsWith('image/')) {
         const reader = new FileReader()
         reader.onload = (e) => {
@@ -949,10 +960,14 @@ function DashboardContent() {
           ))
         }
         reader.readAsDataURL(file)
-      }
-
-      if (file.type === 'application/pdf') {
+      } else if (file.type === 'application/pdf') {
         newFile.content = `PDF file: ${file.name}`
+      } else if (file.type.includes('sheet') || file.type.includes('excel') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+        newFile.content = `Excel file: ${file.name}`
+      } else if (file.type.includes('word') || file.name.endsWith('.docx') || file.name.endsWith('.doc')) {
+        newFile.content = `Word document: ${file.name}`
+      } else if (file.type.includes('presentation') || file.name.endsWith('.pptx') || file.name.endsWith('.ppt')) {
+        newFile.content = `PowerPoint presentation: ${file.name}`
       }
 
       setUploadedFiles(prev => [...prev, newFile])
@@ -961,6 +976,27 @@ function DashboardContent() {
 
   const removeFile = (fileId: string) => {
     setUploadedFiles(prev => prev.filter(f => f.id !== fileId))
+  }
+
+  // Drag and drop handlers
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+    
+    const files = e.dataTransfer.files
+    if (files.length > 0) {
+      handleFileSelect(files)
+    }
   }
 
   const fetchFollowUps = async (text: string): Promise<string[]> => {
@@ -995,7 +1031,7 @@ function DashboardContent() {
     }
   }
 
-  // Enhanced handleStream with file support
+  // ✅ CRITICAL FIX: Enhanced handleStream with conversation context and files
   const handleStreamWithFiles = async (prompt: string, aId: string, files: File[] = []) => {
     let fullContent = ''
     let followUps: string[] = []
@@ -1010,10 +1046,17 @@ function DashboardContent() {
     )
 
     try {
+      // ✅ CRITICAL FIX: Include conversation context
+      const conversationHistory = messages.slice(-6).map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }))
+
       await streamChat({
         prompt,
         token,
         files,
+        conversationHistory, // ✅ This is the key fix - pass conversation history
         onStream: (chunk: any) => {
           if (chunk.content) {
             fullContent += chunk.content
@@ -1354,11 +1397,32 @@ function DashboardContent() {
   const dismissError = () => setError(null)
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-textPrimary dark:text-white transition-colors duration-300 flex flex-col">
+    <div 
+      className="h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-textPrimary dark:text-white transition-colors duration-300 flex flex-col relative"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      
+      {/* Drag and Drop Overlay */}
+      {isDragOver && (
+        <div className="fixed inset-0 z-50 bg-blue-500/20 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-2xl border-2 border-dashed border-blue-500 max-w-md text-center">
+            <div className="text-6xl mb-4">📁</div>
+            <h3 className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-2">Drop Files Here</h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              Support for images, PDF, Word, Excel, PowerPoint
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+              Up to 25MB per document, 10MB per image
+            </p>
+          </div>
+        </div>
+      )}
       
       {/* ✅ FIXED: Content Area - Better left margin and increased bottom padding */}
       <div className="flex-1 overflow-hidden ml-0 md:ml-60 lg:ml-64">
-        <div ref={containerRef} className="h-full overflow-y-auto p-3 md:p-4 pb-48">
+        <div ref={containerRef} className="h-full overflow-y-auto p-3 md:p-4 pb-60">
 
         {/* Error Message */}
         {error && (
@@ -1393,7 +1457,7 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* ✅ FIXED: Chat Messages - Left-aligned assistant responses */}
+        {/* ✅ FIXED: Chat Messages - ZERO left padding/margin on assistant messages */}
         <div className="space-y-4 min-h-0 flex-1">
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full min-h-[60vh]">
@@ -1417,8 +1481,8 @@ function DashboardContent() {
                   </div>
                   <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-3 rounded-xl border border-green-200/30 dark:border-green-700/30">
                     <div className="text-xl mb-2">📁</div>
-                    <h4 className="font-semibold text-green-900 dark:text-green-300 text-sm">File Analysis</h4>
-                    <p className="text-xs text-green-700 dark:text-green-400 mt-1">Upload documents for analysis</p>
+                    <h4 className="font-semibold text-green-900 dark:text-green-300 text-sm">Enhanced File Support</h4>
+                    <p className="text-xs text-green-700 dark:text-green-400 mt-1">Drag & drop Excel, Word, PowerPoint files</p>
                   </div>
                 </div>
                 
@@ -1445,13 +1509,14 @@ function DashboardContent() {
               onMouseEnter={() => setHoveredMessageId(msg.id)}
               onMouseLeave={() => setHoveredMessageId(null)}
             >
-              {/* ✅ FIXED: Assistant messages now properly left-aligned with better width */}
+              {/* ✅ CRITICAL FIX: Completely removed any left padding/margin for assistant messages */}
               <div
-                className={`relative p-4 rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md ${
+                className={`relative rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md ${
                   msg.role === 'user'
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white max-w-[80%] sm:max-w-[70%]'
-                    : 'bg-white dark:bg-slate-800 border border-gray-100/50 dark:border-slate-700 text-gray-800 dark:text-white max-w-[95%] sm:max-w-[85%] shadow-sm mr-auto'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white max-w-[80%] sm:max-w-[70%] ml-auto p-4'
+                    : 'bg-white dark:bg-slate-800 border border-gray-100/50 dark:border-slate-700 text-gray-800 dark:text-white max-w-[90%] sm:max-w-[80%] p-4'
                 }`}
+                style={msg.role === 'assistant' ? { marginLeft: 0, paddingLeft: '1rem' } : {}}
               >
                 {/* Display uploaded files for user messages */}
                 {msg.role === 'user' && msg.files && msg.files.length > 0 && (
@@ -1544,76 +1609,83 @@ function DashboardContent() {
 
                 {msg.role === 'assistant' && msg.content && (
                   <>
-                    {/* ✅ FIXED: Follow-up Questions - Centered */}
+                    {/* ✅ FIXED: Follow-up Questions - Removed random bracket */}
                     {msg.followUps && msg.followUps.length > 0 && (
-                      <div className="mt-6 p-4 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-2xl border border-indigo-200/50 dark:border-indigo-700/50">
-                        <div className="flex items-center justify-center gap-2 mb-3">
-                          <span className="text-lg">💡</span>
-                          <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">Continue the conversation:</span>
+                      <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200/50 dark:border-blue-700/50">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-sm">💡</span>
+                          <span className="text-xs font-medium text-blue-700 dark:text-blue-300">Continue the conversation:</span>
                         </div>
-                        <div className="flex justify-center">
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault()
-                              handleSubmit(msg.followUps![0])
-                            }}
-                            disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-                            className="group bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 disabled:bg-gray-100 disabled:dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 disabled:text-gray-500 dark:disabled:text-gray-500 px-6 py-3 rounded-xl text-sm font-medium shadow-sm hover:shadow-md border border-indigo-200 dark:border-indigo-700 disabled:border-gray-200 dark:disabled:border-gray-600 transition-all duration-200 transform hover:scale-[1.02] disabled:transform-none disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                          >
-                            <span className="group-hover:scale-110 transition-transform duration-200">💬</span>
-                            {msg.followUps[0]}
-                          </button>
-                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            handleSubmit(msg.followUps![0])
+                          }}
+                          disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
+                          className="w-full bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 disabled:bg-gray-100 disabled:dark:bg-gray-800 text-blue-700 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200 disabled:text-gray-500 dark:disabled:text-gray-500 px-3 py-2 rounded-lg text-sm font-medium shadow-sm hover:shadow-md border border-blue-200 dark:border-blue-700 disabled:border-gray-200 dark:disabled:border-gray-600 transition-all duration-200 hover:scale-[1.01] disabled:transform-none disabled:cursor-not-allowed text-left"
+                        >
+                          {msg.followUps[0]}
+                        </button>
                       </div>
                     )}
 
-                    {/* Action Buttons with copy button included */}
-                    <div className="flex flex-wrap gap-4 mt-6 text-lg text-gray-500 dark:text-gray-400 relative">
+                    {/* Action Buttons - Mobile friendly layout */}
+                    <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
                       <div className="relative">
-                        <FaCopy
-                          className={`cursor-pointer transition-colors duration-200 transform hover:scale-110 ${
-                            copiedMessageId === msg.id 
-                              ? 'text-green-500' 
-                              : 'hover:text-blue-500'
-                          }`}
+                        <button
                           onClick={() => handleCopyMessage(msg.id, msg.content)}
+                          className={`p-3 md:p-2 rounded-lg transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation ${
+                            copiedMessageId === msg.id 
+                              ? 'text-green-500 bg-green-50 dark:bg-green-900/20' 
+                              : 'text-gray-500 dark:text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                          }`}
                           title="Copy message"
-                        />
+                        >
+                          <FaCopy className="w-4 h-4" />
+                        </button>
                         {copiedMessageId === msg.id && (
                           <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap z-10">
                             Copied!
                           </div>
                         )}
                       </div>
-                      <HiThumbUp
-                        className="cursor-pointer hover:text-green-500 transition-colors duration-200 transform hover:scale-110"
+                      <button
                         onClick={() => {
                           setCurrentFeedbackMessageId(msg.id)
                           setShowFeedbackModal(true)
                         }}
+                        className="p-3 md:p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation"
                         title="Like this response"
-                      />
-                      <HiThumbDown
-                        className="cursor-pointer hover:text-red-500 transition-colors duration-200 transform hover:scale-110"
+                      >
+                        <HiThumbUp className="w-4 h-4" />
+                      </button>
+                      <button
                         onClick={() => {
                           setCurrentFeedbackMessageId(msg.id)
                           setShowFeedbackModal(true)
                         }}
+                        className="p-3 md:p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation"
                         title="Dislike this response"
-                      />
-                      <FaRegBookmark
-                        className="cursor-pointer hover:text-yellow-500 transition-colors duration-200 transform hover:scale-110"
+                      >
+                        <HiThumbDown className="w-4 h-4" />
+                      </button>
+                      <button
                         onClick={() => {
                           setCurrentSaveMessageId(msg.id)
                           setShowSaveModal(true)
                         }}
+                        className="p-3 md:p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation"
                         title="Save to Saved Responses"
-                      />
-                      <FaShareSquare
-                        className="cursor-pointer hover:text-blue-500 transition-colors duration-200 transform hover:scale-110"
+                      >
+                        <FaRegBookmark className="w-4 h-4" />
+                      </button>
+                      <button
                         onClick={() => handleShareToCollabZone(msg.id)}
+                        className="p-3 md:p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation"
                         title="Share to Collab Zone"
-                      />
+                      >
+                        <FaShareSquare className="w-4 h-4" />
+                      </button>
                     </div>
                   </>
                 )}
@@ -1684,10 +1756,10 @@ function DashboardContent() {
                 }
               }}
               disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-              className={`p-2.5 rounded-xl flex items-center gap-1.5 text-sm font-medium transition-all duration-200 ${
+              className={`p-3 md:p-2.5 rounded-xl flex items-center gap-1.5 text-sm font-medium transition-all duration-200 touch-manipulation ${
                 isLoading || isStreaming || promptsUsed >= promptLimit
                   ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-                  : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 shadow-sm hover:shadow-md transform hover:scale-[1.02]'
+                  : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-95'
               }`}
             >
               <FaPaperclip className="w-4 h-4" />
@@ -1702,9 +1774,9 @@ function DashboardContent() {
                   router.push('/change-plan')
                 }
               }}
-              className={`p-2.5 rounded-xl flex items-center gap-1.5 text-sm font-medium transition-all duration-200 ${
+              className={`p-3 md:p-2.5 rounded-xl flex items-center gap-1.5 text-sm font-medium transition-all duration-200 touch-manipulation ${
                 (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0)
-                  ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 shadow-sm hover:shadow-md transform hover:scale-[1.02]'
+                  ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-95'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'
               }`}
             >
@@ -1742,7 +1814,7 @@ function DashboardContent() {
                 handleSubmit()
               }}
               disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || promptsUsed >= promptLimit}
-              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white p-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none flex-shrink-0 w-10 h-10 flex items-center justify-center"
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white p-3 md:p-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl active:scale-95 disabled:transform-none disabled:shadow-none flex-shrink-0 w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation"
             >
               {isLoading || isStreaming ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -1755,7 +1827,7 @@ function DashboardContent() {
             
             <input
               type="file"
-              accept="image/*,application/pdf,.txt,.doc,.docx"
+              accept="image/*,application/pdf,.txt,.doc,.docx,.xls,.xlsx,.ppt,.pptx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-excel,application/vnd.ms-powerpoint,application/msword"
               onChange={(e) => {
                 const files = e.target.files
                 if (files) handleFileSelect(files)
@@ -1769,15 +1841,15 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* Help Button */}
+      {/* Help Button - Mobile friendly */}
       <div className="fixed right-4 bottom-20 z-30">
         <button
           onClick={() => setShowHelpModal(true)}
           disabled={isLoading || isStreaming || promptsUsed >= promptLimit}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white p-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:transform-none w-10 h-10 flex items-center justify-center"
+          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white p-3 md:p-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:transform-none w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation"
           title="Quick Start Guide"
         >
-          <FaQuestionCircle className="w-4 h-4" />
+          <FaQuestionCircle className="w-5 h-5 md:w-4 md:h-4" />
         </button>
       </div>
 
