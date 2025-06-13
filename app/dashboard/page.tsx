@@ -701,6 +701,9 @@ function DashboardContent() {
   const [disableAutoScroll, setDisableAutoScroll] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
   const [showSecurityNotice, setShowSecurityNotice] = useState(true)
+  const [showSuggestions, setShowSuggestions] = useState<{[key: string]: boolean}>({})
+  const [inputFocused, setInputFocused] = useState(false)
+  const [shakeInput, setShakeInput] = useState(false)
 
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -1241,6 +1244,8 @@ function DashboardContent() {
       })
       
       setError(`You've reached your ${periodText} limit of ${promptLimit} prompts. Resets on ${resetDateText}. Upgrade your plan to continue.`)
+      setShakeInput(true)
+      setTimeout(() => setShakeInput(false), 600)
       return
     }
 
@@ -1451,6 +1456,25 @@ function DashboardContent() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
+      <style jsx>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+          20%, 40%, 60%, 80% { transform: translateX(2px); }
+        }
+        
+        @media (max-width: 640px) {
+          .message-bubble {
+            max-width: 90% !important;
+            margin: 0 auto;
+          }
+          
+          .mobile-centered {
+            display: flex;
+            justify-content: center;
+          }
+        }
+      `}</style>
       
       {/* Drag and Drop Overlay */}
       {isDragOver && (
@@ -1879,153 +1903,174 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* File Upload Preview */}
+      {/* File Upload Preview - Above Input Card */}
       {uploadedFiles.length > 0 && (
-        <div className="fixed bottom-36 left-4 right-4 md:left-60 lg:left-64 px-2 z-30">
+        <div className="fixed bottom-28 left-4 right-4 md:left-60 lg:left-64 z-30">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-3 border border-gray-200 shadow-lg">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-sm font-medium text-gray-700">
-                  📎 Attached Files ({uploadedFiles.length})
-                </h4>
-                <button
-                  onClick={() => setUploadedFiles([])}
-                  className="text-xs text-red-600 hover:text-red-800 font-medium"
-                >
-                  Clear All
-                </button>
+            <div className="bg-white/90 backdrop-blur p-3 rounded-lg border border-gray-200 flex items-center justify-between shadow-lg">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <div className="flex items-center gap-2 overflow-x-auto">
+                  {uploadedFiles.map((file) => (
+                    <div key={file.id} className="relative flex-shrink-0">
+                      <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-2 border border-gray-200">
+                        {file.type.startsWith('image/') && file.preview ? (
+                          <img src={file.preview} alt={file.name} className="w-10 h-10 object-cover rounded" />
+                        ) : file.type === 'application/pdf' ? (
+                          <FaFilePdf className="w-10 h-10 text-red-500 p-2" />
+                        ) : file.type.includes('sheet') || file.type.includes('excel') ? (
+                          <FaFileExcel className="w-10 h-10 text-green-500 p-2" />
+                        ) : (
+                          <FaFileAlt className="w-10 h-10 text-gray-500 p-2" />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-medium text-gray-900 truncate max-w-[100px]">{file.name}</p>
+                          <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)}KB</p>
+                        </div>
+                        <button
+                          onClick={() => removeFile(file.id)}
+                          className="text-gray-400 hover:text-red-500 p-1"
+                        >
+                          <FaTimes className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                {uploadedFiles.map((file) => (
-                  <FilePreview
-                    key={file.id}
-                    file={file}
-                    onRemove={() => removeFile(file.id)}
-                  />
-                ))}
-              </div>
+              <button
+                onClick={() => setUploadedFiles([])}
+                className="text-sm text-gray-500 hover:text-gray-700 font-medium ml-3 flex-shrink-0"
+              >
+                Clear All
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Floating Input Section */}
-      <div className="fixed bottom-0 left-4 right-4 md:left-60 lg:left-64 z-20 p-3">
+      {/* Floating Input Section - Modern Card Design */}
+      <div className="fixed bottom-4 left-4 right-4 md:left-60 lg:left-64 z-20 pb-safe">
         <div className="max-w-4xl mx-auto">
-          {messages.length === 0 && (
-            <div className="mb-3 flex items-center justify-center gap-3 text-xs text-gray-500">
-              <div className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs">⌘/</kbd>
-                <span>Help</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs">⏎</kbd>
-                <span>Send</span>
-              </div>
+          {/* Inline Error Messages */}
+          {error && (
+            <div className="mb-3 text-sm text-red-600 flex items-center gap-1 bg-red-50 p-2 rounded-lg border border-red-200">
+              <span>⚠️</span>
+              <span>{error}</span>
+              <button onClick={dismissError} className="ml-auto text-red-400 hover:text-red-600">
+                <HiX className="w-4 h-4" />
+              </button>
             </div>
           )}
           
-          <div className="flex items-end gap-2 bg-white/95 backdrop-blur-md rounded-xl p-3 shadow-xl border border-gray-200/50">
-            
-            <button
-              onClick={(e) => {
-                e.preventDefault()
-                if (!isLoading && !isStreaming && fileInputRef.current) {
-                  fileInputRef.current.click()
-                }
-              }}
-              disabled={isLoading || isStreaming || isAtPromptLimit}
-              className={`p-0 md:p-0 rounded-xl flex items-center gap-1.5 text-sm font-medium transition-all duration-200 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 ${
-                isLoading || isStreaming || isAtPromptLimit
-                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-95'
-              }`}
-            >
-              <div className="p-2 md:p-1.5">
-                <FaPaperclip className="w-4 h-4" />
-                <span className="hidden sm:inline text-xs">Upload</span>
-              </div>
-            </button>
-
-            <button
-              onClick={() => {
-                if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
-                  setShowImageModal(true)
-                } else {
-                  router.push('/change-plan')
-                }
-              }}
-              disabled={isAtPromptLimit}
-              className={`p-0 md:p-0 rounded-xl flex items-center gap-1.5 text-sm font-medium transition-all duration-200 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 ${
-                (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0 && !isAtPromptLimit)
-                  ? 'bg-gray-100 text-gray-600 hover:bg-gray-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-95'
-                  : 'bg-gray-200 text-gray-400 hover:bg-gray-300'
-              }`}
-            >
-              <div className="p-2 md:p-1.5">
-                <FaPalette className="w-4 h-4" />
-                <span className="hidden sm:inline text-xs">
-                  {(imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0 && !isAtPromptLimit) ? 'Image' : 'Upgrade'}
-                </span>
-              </div>
-            </button>
-
-            <div className="flex-1 relative flex items-center">
-              <textarea
-                ref={textareaRef}
-                rows={1}
-                className="w-full px-3 py-2.5 border-0 bg-transparent text-gray-900 resize-none text-sm min-h-[40px] max-h-[100px] transition-all duration-200 placeholder-gray-400 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
-                placeholder={messages.length === 0 
-                  ? "Ask me anything about your business..." 
-                  : "Continue the conversation..."
-                }
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    handleSubmit()
+          <div className={`bg-white shadow-md rounded-xl p-3 backdrop-blur-sm border border-gray-200 transition-all duration-200 ${shakeInput ? 'animate-pulse border-red-300' : ''}`}>
+            <div className="flex items-end gap-2">
+              
+              {/* Upload Button - Outline Style */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  if (!isLoading && !isStreaming && fileInputRef.current) {
+                    fileInputRef.current.click()
                   }
                 }}
                 disabled={isLoading || isStreaming || isAtPromptLimit}
+                className={`p-2.5 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 touch-manipulation ${
+                  isLoading || isStreaming || isAtPromptLimit
+                    ? 'opacity-50 cursor-not-allowed'
+                    : 'hover:scale-105'
+                }`}
+                title="Upload files"
+              >
+                <FaPaperclip className="w-4 h-4" />
+              </button>
+
+              {/* Image Button - Outline Style */}
+              <button
+                onClick={() => {
+                  if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
+                    setShowImageModal(true)
+                  } else {
+                    router.push('/change-plan')
+                  }
+                }}
+                disabled={isAtPromptLimit}
+                className={`p-2.5 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 touch-manipulation ${
+                  (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0 && !isAtPromptLimit)
+                    ? 'hover:scale-105'
+                    : 'opacity-50'
+                }`}
+                title="Generate image"
+              >
+                <FaPalette className="w-4 h-4" />
+              </button>
+
+              {/* Textarea with Floating Label */}
+              <div className="flex-1 relative">
+                <label 
+                  className={`absolute left-3 transition-all duration-200 pointer-events-none ${
+                    inputFocused || input.trim() 
+                      ? 'top-1 text-xs text-gray-500' 
+                      : 'top-3 text-sm text-gray-400'
+                  }`}
+                >
+                  Type your message…
+                </label>
+                <textarea
+                  ref={textareaRef}
+                  rows={1}
+                  className="w-full px-3 pt-6 pb-3 border-0 bg-transparent text-gray-900 resize-none text-sm min-h-[48px] max-h-[120px] transition-all duration-200 focus:outline-none"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onFocus={() => setInputFocused(true)}
+                  onBlur={() => setInputFocused(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handleSubmit()
+                    }
+                  }}
+                  disabled={isLoading || isStreaming || isAtPromptLimit}
+                />
+              </div>
+
+              {/* Send Button - Solid Blue */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleSubmit()
+                }}
+                disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || isAtPromptLimit}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white p-2.5 rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:transform-none flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px]"
+                title="Send message"
+              >
+                {isLoading || isStreaming ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                  </svg>
+                )}
+              </button>
+              
+              <input
+                type="file"
+                accept="image/*,application/pdf,.txt,.doc,.docx,.xls,.xlsx,.ppt,.pptx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-excel,application/vnd.ms-powerpoint,application/msword"
+                onChange={(e) => {
+                  const files = e.target.files
+                  if (files) handleFileSelect(files)
+                }}
+                className="hidden"
+                ref={fileInputRef}
+                disabled={isLoading || isStreaming || isAtPromptLimit}
+                multiple
               />
             </div>
-
-            <button
-              onClick={(e) => {
-                e.preventDefault()
-                handleSubmit()
-              }}
-              disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || isAtPromptLimit}
-              className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white p-0 md:p-0 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl active:scale-95 disabled:transform-none disabled:shadow-none flex-shrink-0 w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
-            >
-              {isLoading || isStreaming ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                </svg>
-              )}
-            </button>
-            
-            <input
-              type="file"
-              accept="image/*,application/pdf,.txt,.doc,.docx,.xls,.xlsx,.ppt,.pptx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-excel,application/vnd.ms-powerpoint,application/msword"
-              onChange={(e) => {
-                const files = e.target.files
-                if (files) handleFileSelect(files)
-              }}
-              className="hidden"
-              ref={fileInputRef}
-              disabled={isLoading || isStreaming || isAtPromptLimit}
-              multiple
-            />
           </div>
         </div>
       </div>
 
-      {/* Help Button */}
-      <div className="fixed right-4 bottom-20 z-30">
+      {/* Help Button - Positioned Above Input */}
+      <div className="fixed right-4 bottom-20 md:bottom-24 z-30">
         <button
           onClick={() => setShowHelpModal(true)}
           disabled={isLoading || isStreaming}
