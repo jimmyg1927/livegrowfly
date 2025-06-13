@@ -700,6 +700,7 @@ function DashboardContent() {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
   const [disableAutoScroll, setDisableAutoScroll] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
+  const [showSecurityNotice, setShowSecurityNotice] = useState(true)
 
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -863,6 +864,20 @@ function DashboardContent() {
     
     return () => clearInterval(syncInterval)
   }, [token, router, setUser])
+
+  // Check if security notice should be shown
+  useEffect(() => {
+    const lastDismissed = localStorage.getItem('security_notice_dismissed')
+    if (lastDismissed) {
+      const dismissedDate = new Date(lastDismissed)
+      const now = new Date()
+      const daysDiff = (now.getTime() - dismissedDate.getTime()) / (1000 * 3600 * 24)
+      
+      if (daysDiff < 7) {
+        setShowSecurityNotice(false)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1107,6 +1122,11 @@ function DashboardContent() {
           
           if (!followUps.length) {
             followUps = ['Tell me more about this']
+          }
+          
+          // Only show one follow-up
+          if (followUps.length > 1) {
+            followUps = [followUps[0]]
           }
           
           setMessages((prev) => {
@@ -1419,6 +1439,11 @@ function DashboardContent() {
 
   const dismissError = () => setError(null)
 
+  const dismissSecurityNotice = () => {
+    setShowSecurityNotice(false)
+    localStorage.setItem('security_notice_dismissed', new Date().toISOString())
+  }
+
   return (
     <div 
       className="h-screen bg-gray-50 text-gray-900 transition-colors duration-300 flex flex-col relative"
@@ -1443,6 +1468,28 @@ function DashboardContent() {
         </div>
       )}
       
+      {/* Security Notice - Full Width at Top */}
+      {messages.length > 0 && showSecurityNotice && (
+        <div className="w-full bg-blue-50 border-b border-blue-200 px-4 py-3">
+          <div className="flex items-center justify-between max-w-6xl mx-auto">
+            <div className="flex items-center gap-3">
+              <span className="text-blue-600 text-lg">💡</span>
+              <div>
+                <span className="text-blue-900 font-semibold">Your conversations are securely saved!</span>
+                <span className="text-blue-700 ml-2">Your last 10 exchanges stay private to your account on this dashboard.</span>
+              </div>
+            </div>
+            <button
+              onClick={dismissSecurityNotice}
+              className="text-blue-400 hover:text-blue-600 p-1 rounded-full hover:bg-blue-100 transition-colors"
+              title="Dismiss for 7 days"
+            >
+              <HiX className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Content Area - Proper sidebar spacing */}
       <div className="flex-1 overflow-hidden ml-0 md:ml-60 lg:ml-64">
         <div ref={containerRef} className="h-full overflow-y-auto pb-80 pl-2 pr-4">
@@ -1686,7 +1733,7 @@ function DashboardContent() {
                                 handleSubmit(cleanFollowUp)
                               }}
                               disabled={isLoading || isStreaming}
-                              className="w-full bg-gray-50 hover:bg-gray-100 disabled:bg-gray-100 text-gray-700 hover:text-gray-800 disabled:text-gray-500 p-0 rounded-lg text-sm font-medium shadow-sm hover:shadow-md border border-gray-200 disabled:border-gray-200 transition-all duration-200 hover:scale-[1.01] disabled:transform-none disabled:cursor-not-allowed text-left focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                              className="w-full bg-gray-50 hover:bg-gray-100 disabled:bg-gray-100 text-gray-700 hover:text-gray-800 disabled:text-gray-500 p-0 rounded-xl text-sm font-medium shadow-sm hover:shadow-md border border-gray-200 disabled:border-gray-200 transition-all duration-200 hover:scale-[1.01] disabled:transform-none disabled:cursor-not-allowed text-left focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                             >
                               <div className="px-3 py-2">
                                 {followUp.replace(/^\s*[\(\)]\s*/, '').trim()}
@@ -1702,7 +1749,7 @@ function DashboardContent() {
                       <div className="relative">
                         <button
                           onClick={() => handleCopyMessage(msg.id, msg.content)}
-                          className={`p-0 md:p-0 rounded-lg border transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 ${
+                          className={`p-0 md:p-0 rounded-xl border transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 ${
                             copiedMessageId === msg.id 
                               ? 'text-green-600 bg-green-50 border-green-200' 
                               : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 border-gray-200 hover:border-gray-300 bg-gray-50'
@@ -1724,7 +1771,7 @@ function DashboardContent() {
                           setCurrentFeedbackMessageId(msg.id)
                           setShowFeedbackModal(true)
                         }}
-                        className="p-0 md:p-0 rounded-lg border border-gray-200 text-gray-500 hover:text-green-600 hover:bg-green-50 hover:border-green-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50"
+                        className="p-0 md:p-0 rounded-xl border border-gray-200 text-gray-500 hover:text-green-600 hover:bg-green-50 hover:border-green-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50"
                         title="Like this response"
                       >
                         <div className="p-2 md:p-1.5">
@@ -1736,7 +1783,7 @@ function DashboardContent() {
                           setCurrentFeedbackMessageId(msg.id)
                           setShowFeedbackModal(true)
                         }}
-                        className="p-0 md:p-0 rounded-lg border border-gray-200 text-gray-500 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50"
+                        className="p-0 md:p-0 rounded-xl border border-gray-200 text-gray-500 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50"
                         title="Dislike this response"
                       >
                         <div className="p-2 md:p-1.5">
@@ -1748,7 +1795,7 @@ function DashboardContent() {
                           setCurrentSaveMessageId(msg.id)
                           setShowSaveModal(true)
                         }}
-                        className="p-0 md:p-0 rounded-lg border border-gray-200 text-gray-500 hover:text-yellow-600 hover:bg-yellow-50 hover:border-yellow-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50"
+                        className="p-0 md:p-0 rounded-xl border border-gray-200 text-gray-500 hover:text-yellow-600 hover:bg-yellow-50 hover:border-yellow-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50"
                         title="Save to Saved Responses"
                       >
                         <div className="p-2 md:p-1.5">
@@ -1757,7 +1804,7 @@ function DashboardContent() {
                       </button>
                       <button
                         onClick={() => handleShareToCollabZone(msg.id)}
-                        className="p-0 md:p-0 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50"
+                        className="p-0 md:p-0 rounded-xl border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50"
                         title="Share to Collab Zone"
                       >
                         <div className="p-2 md:p-1.5">
