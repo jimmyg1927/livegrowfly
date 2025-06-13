@@ -2032,7 +2032,7 @@ function DashboardContent() {
             setShowFeedbackModal(false)
             setCurrentFeedbackMessageId(null)
           }}
-          messageId={currentFeedbackMessageId}
+          responseId={currentFeedbackMessageId}
         />
       )}
     </div>
