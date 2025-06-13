@@ -15,10 +15,10 @@ export const metadata = {
   authors: [{ name: 'Growfly Team' }],
   viewport: 'width=device-width, initial-scale=1',
   robots: 'index, follow',
-  // ✅ ADD FAVICON TO METADATA
+  // ✅ USE PROPER FAVICON FILES
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
+    icon: '/favicon-32x32.png',
+    shortcut: '/favicon-16x16.png',
     apple: '/apple-touch-icon.png',
   },
   manifest: '/manifest.json',
