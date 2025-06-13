@@ -1447,9 +1447,9 @@ function DashboardContent() {
         </div>
       )}
       
-      {/* Content Area - COMPLETELY FLUSH LEFT */}
+      {/* Content Area - Fixed positioning and padding */}
       <div className="flex-1 overflow-hidden ml-0 md:ml-60 lg:ml-64">
-        <div ref={containerRef} className="h-full overflow-y-auto pb-80 pl-0">
+        <div ref={containerRef} className="h-full overflow-y-auto pb-80 pl-0 md:pl-4">
 
         {/* Prompt Limit Warning */}
         {isAtPromptLimit && (
@@ -1516,7 +1516,7 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* Chat Messages - Simple and clean */}
+        {/* Chat Messages - Clean layout with proper spacing */}
         <div className="space-y-4 min-h-0 flex-1 pt-4 pr-4">
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full min-h-[60vh]">
@@ -1567,12 +1567,12 @@ function DashboardContent() {
               className={`flex mb-4 ${
                 msg.role === 'user' 
                   ? 'justify-end' 
-                  : 'justify-start -ml-0 md:-ml-60 lg:-ml-64 pl-0 md:pl-4'
+                  : 'justify-start'
               }`}
               onMouseEnter={() => setHoveredMessageId(msg.id)}
               onMouseLeave={() => setHoveredMessageId(null)}
             >
-              {/* ASSISTANT MESSAGES: ABSOLUTELY FLUSH LEFT - NO MARGIN OR PADDING */}
+              {/* MESSAGES: Proper layout without negative margins */}
               <div
                 className={`relative rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md ${
                   msg.role === 'user'
