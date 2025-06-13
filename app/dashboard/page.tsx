@@ -1443,9 +1443,9 @@ function DashboardContent() {
         </div>
       )}
       
-      {/* Content Area - Remove sidebar offset margins */}
-      <div className="flex-1 overflow-hidden">
-        <div ref={containerRef} className="h-full overflow-y-auto pb-80">
+      {/* Content Area - Proper sidebar spacing */}
+      <div className="flex-1 overflow-hidden ml-0 md:ml-60 lg:ml-64">
+        <div ref={containerRef} className="h-full overflow-y-auto pb-80 px-4">
 
         {/* Prompt Limit Warning */}
         {isAtPromptLimit && (
@@ -1621,21 +1621,21 @@ function DashboardContent() {
                     <div className="mt-3 flex gap-2">
                       <button
                         onClick={() => handleDownloadImage(msg.generatedImage!)}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                        className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                       >
                         <FaFileDownload />
                         Download
                       </button>
                       <button
                         onClick={() => router.push('/gallery')}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                        className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                       >
                         <FaImages />
                         Gallery
                       </button>
                       <button
                         onClick={() => handleShareImage(msg.generatedImage!)}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                        className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                       >
                         <FaShareSquare />
                         Share
@@ -1777,7 +1777,7 @@ function DashboardContent() {
 
       {/* File Upload Preview */}
       {uploadedFiles.length > 0 && (
-        <div className="fixed bottom-36 left-4 right-4 px-2 z-30">
+        <div className="fixed bottom-36 left-4 right-4 md:left-60 lg:left-64 px-2 z-30">
           <div className="max-w-4xl mx-auto">
             <div className="bg-white/95 backdrop-blur-sm rounded-xl p-3 border border-gray-200 shadow-lg">
               <div className="flex items-center justify-between mb-2">
@@ -1805,8 +1805,8 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* Floating Input Section - GROWFLY BLUE */}
-      <div className="fixed bottom-0 left-4 right-4 z-20 p-3">
+      {/* Floating Input Section */}
+      <div className="fixed bottom-0 left-4 right-4 md:left-60 lg:left-64 z-20 p-3">
         <div className="max-w-4xl mx-auto">
           {messages.length === 0 && (
             <div className="mb-3 flex items-center justify-center gap-3 text-xs text-gray-500">
@@ -1834,7 +1834,7 @@ function DashboardContent() {
               className={`p-0 md:p-0 rounded-xl flex items-center gap-1.5 text-sm font-medium transition-all duration-200 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 ${
                 isLoading || isStreaming || isAtPromptLimit
                   ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-95'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-95'
               }`}
             >
               <div className="p-2 md:p-1.5">
@@ -1854,7 +1854,7 @@ function DashboardContent() {
               disabled={isAtPromptLimit}
               className={`p-0 md:p-0 rounded-xl flex items-center gap-1.5 text-sm font-medium transition-all duration-200 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 ${
                 (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0 && !isAtPromptLimit)
-                  ? 'border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-95'
+                  ? 'bg-gray-100 text-gray-600 hover:bg-gray-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-95'
                   : 'bg-gray-200 text-gray-400 hover:bg-gray-300'
               }`}
             >
