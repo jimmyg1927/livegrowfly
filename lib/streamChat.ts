@@ -1,4 +1,4 @@
-// File: lib/streamChat.ts - FIXED VERSION
+// File: lib/streamChat.ts - FIXED VERSION with Better Error Handling
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://glowfly-api-production.up.railway.app'
 
@@ -64,15 +64,32 @@ export default async function streamChat({
       throw new Error('Either message or files are required')
     }
 
-    // ✅ Validate files before sending
+    // ✅ Enhanced file validation
     for (const file of files) {
       if (!(file instanceof File)) {
         console.warn('⚠️ Invalid file object detected:', file)
         continue
       }
       
-      if (file.size > 25 * 1024 * 1024) {
-        throw new Error(`File "${file.name}" is too large (max 25MB)`)
+      // Check file size (25MB for documents, 10MB for images)
+      const maxSize = file.type.startsWith('image/') ? 10 * 1024 * 1024 : 25 * 1024 * 1024
+      if (file.size > maxSize) {
+        const sizeMB = Math.round(maxSize / (1024 * 1024))
+        throw new Error(`File "${file.name}" is too large (max ${sizeMB}MB for ${file.type.startsWith('image/') ? 'images' : 'documents'})`)
+      }
+
+      // ✅ NEW: Check for unsupported file types
+      const supportedTypes = [
+        'image/', 'application/pdf', 'text/plain',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel', 'application/msword'
+      ]
+      
+      const isSupported = supportedTypes.some(type => file.type.includes(type) || file.type.startsWith(type))
+      if (!isSupported) {
+        console.warn('⚠️ Unsupported file type:', file.type, 'for file:', file.name)
+        throw new Error(`File type "${file.type}" is not supported. Please use images, PDF, Word, Excel, or text files.`)
       }
     }
 
@@ -102,7 +119,7 @@ export default async function streamChat({
         if (file instanceof File) {
           formData.append('files', file)
           validFileCount++
-          console.log(`🔍 Added file ${index + 1}: ${file.name} (${file.size} bytes)`)
+          console.log(`🔍 Added file ${index + 1}: ${file.name} (${file.size} bytes, ${file.type})`)
         } else if ((file as any).preview) {
           // Handle base64 images from file preview
           try {
@@ -150,26 +167,65 @@ export default async function streamChat({
 
     if (!response.ok) {
       let errorData: any = {}
+      let errorMessage = ''
       
       try {
         const contentType = response.headers.get('content-type')
+        console.log('🔍 Error response content-type:', contentType)
+        
         if (contentType?.includes('application/json')) {
           errorData = await response.json()
+          errorMessage = errorData.error || errorData.message || `HTTP ${response.status}`
         } else {
+          // ✅ FIXED: Better handling of HTML error responses (like 500 errors)
           const text = await response.text()
-          errorData = { error: text || `HTTP ${response.status}` }
+          console.log('🔍 Error response text (first 200 chars):', text.substring(0, 200))
+          
+          if (text.includes('<!DOCTYPE html>') || text.includes('<html>')) {
+            // This is an HTML error page, likely a 500 error
+            if (response.status === 500) {
+              if (files.length > 0) {
+                errorMessage = `Server error while processing uploaded files. Please try with smaller files or different file types.`
+              } else {
+                errorMessage = `Server error occurred. Please try again in a moment.`
+              }
+            } else {
+              errorMessage = `Server returned HTML error page (${response.status}). Please try again.`
+            }
+          } else {
+            errorMessage = text || `HTTP ${response.status}: ${response.statusText}`
+          }
+          
+          errorData = { error: errorMessage }
         }
       } catch (parseError) {
         console.error('❌ Failed to parse error response:', parseError)
-        errorData = { error: `HTTP ${response.status}: ${response.statusText}` }
+        if (response.status === 500) {
+          errorMessage = files.length > 0 
+            ? 'Server error while processing files. Please try with different files or contact support.'
+            : 'Server error occurred. Please try again or contact support.'
+        } else {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`
+        }
+        errorData = { error: errorMessage }
       }
       
       console.error('❌ HTTP Error:', response.status, errorData)
       
-      if (response.status === 403 && errorData.error?.includes('limit')) {
+      // ✅ Enhanced error handling for different status codes
+      if (response.status === 500) {
+        onError?.({
+          type: 'server_error',
+          message: errorMessage,
+          status: 500
+        })
+        return
+      }
+      
+      if (response.status === 403 && errorMessage?.includes('limit')) {
         onError?.({
           type: 'rate_limit',
-          message: errorData.error,
+          message: errorMessage,
         })
         return
       }
@@ -177,12 +233,20 @@ export default async function streamChat({
       if (response.status === 400) {
         onError?.({
           type: 'validation_error',
-          message: errorData.error || 'Invalid request',
+          message: errorMessage || 'Invalid request',
         })
         return
       }
       
-      throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
+      if (response.status === 413) {
+        onError?.({
+          type: 'file_too_large',
+          message: 'Files are too large. Please use smaller files (max 25MB for documents, 10MB for images).',
+        })
+        return
+      }
+      
+      throw new Error(errorMessage)
     }
 
     if (!response.body) {
@@ -312,17 +376,29 @@ export default async function streamChat({
       return
     }
 
-    // Enhanced error handling
+    // ✅ Enhanced error handling with more specific messages
     if (error instanceof Error) {
       if (error.message.includes('Failed to fetch')) {
         onError?.({
           type: 'network_error',
           message: 'Network error - please check your connection and try again'
         })
-      } else if (error.message.includes('limit')) {
+      } else if (error.message.includes('limit') || error.message.includes('too large')) {
         onError?.({
-          type: 'rate_limit',
+          type: 'file_error',
           message: error.message
+        })
+      } else if (error.message.includes('unsupported') || error.message.includes('not supported')) {
+        onError?.({
+          type: 'file_type_error',
+          message: error.message
+        })
+      } else if (error.message.includes('Server error') || error.message.includes('500')) {
+        onError?.({
+          type: 'server_error',
+          message: files.length > 0 
+            ? 'Server error while processing your files. Please try with different files or try again later.'
+            : 'Server error occurred. Please try again in a moment.'
         })
       } else {
         onError?.(error)
