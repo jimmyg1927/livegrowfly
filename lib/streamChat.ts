@@ -277,7 +277,8 @@ export default async function streamChat({
                 })
               }
             } catch (parseError) {
-              console.warn('⚠️ Failed to parse chunk data:', data.substring(0, 100), parseError.message)
+              // ✅ FIXED: TypeScript-safe error handling
+              console.warn('⚠️ Failed to parse chunk data:', data.substring(0, 100), parseError instanceof Error ? parseError.message : String(parseError))
               // Continue processing other chunks
             }
           } else if (line.startsWith('event: ')) {
@@ -287,7 +288,7 @@ export default async function streamChat({
         }
       } catch (readError) {
         console.error('❌ Error reading stream chunk:', readError)
-        if (readError.name === 'AbortError') {
+        if (readError instanceof Error && readError.name === 'AbortError') {
           console.log('⚠️ Stream aborted')
           return
         }
