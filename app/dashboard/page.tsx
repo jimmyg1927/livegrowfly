@@ -722,6 +722,86 @@ function DashboardContent() {
     }
   }
 
+  // ✅ NEW: PDF/Excel Download Functions
+  const handleDownloadPDF = async (messageContent: string, title?: string) => {
+    try {
+      setIsLoading(true)
+      
+      const response = await fetch(`${API_BASE_URL}/api/file-generation/pdf`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          content: messageContent,
+          title: title || `Growfly_Response_${new Date().toISOString().split('T')[0]}`
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF')
+      }
+
+      // Download the PDF
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `growfly-response-${new Date().toISOString().split('T')[0]}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+    } catch (error) {
+      console.error('PDF download failed:', error)
+      setError('Failed to download PDF. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleDownloadExcel = async (messageContent: string, title?: string) => {
+    try {
+      setIsLoading(true)
+      
+      const response = await fetch(`${API_BASE_URL}/api/file-generation/excel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          content: messageContent,
+          title: title || `Growfly_Analysis_${new Date().toISOString().split('T')[0]}`,
+          type: 'auto'
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate Excel')
+      }
+
+      // Download the Excel file
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `growfly-analysis-${new Date().toISOString().split('T')[0]}.xlsx`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+    } catch (error) {
+      console.error('Excel download failed:', error)
+      setError('Failed to download Excel. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   // Load dashboard conversations from DB
   const loadDashboardConversationsFromDB = async () => {
     if (!token) return
@@ -1823,7 +1903,7 @@ function DashboardContent() {
                       </div>
                     )}
 
-                    {/* Action Buttons - Clean outlined style */}
+                    {/* ✅ UPDATED: Action Buttons with PDF/Excel Downloads */}
                     <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-gray-100">
                       <div className="relative">
                         <button
@@ -1845,6 +1925,31 @@ function DashboardContent() {
                           </div>
                         )}
                       </div>
+
+                      {/* ✅ NEW: PDF Download Button */}
+                      <button
+                        onClick={() => handleDownloadPDF(msg.content, `AI_Response_${msg.id}`)}
+                        disabled={isLoading}
+                        className="p-0 md:p-0 rounded-xl border border-gray-200 text-gray-500 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50"
+                        title="Download as PDF"
+                      >
+                        <div className="p-2 md:p-1.5">
+                          <FaFilePdf className="w-4 h-4" />
+                        </div>
+                      </button>
+
+                      {/* ✅ NEW: Excel Download Button */}
+                      <button
+                        onClick={() => handleDownloadExcel(msg.content, `AI_Analysis_${msg.id}`)}
+                        disabled={isLoading}
+                        className="p-0 md:p-0 rounded-xl border border-gray-200 text-gray-500 hover:text-green-600 hover:bg-green-50 hover:border-green-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50"
+                        title="Download as Excel"
+                      >
+                        <div className="p-2 md:p-1.5">
+                          <FaFileExcel className="w-4 h-4" />
+                        </div>
+                      </button>
+
                       <button
                         onClick={() => {
                           setCurrentFeedbackMessageId(msg.id)
