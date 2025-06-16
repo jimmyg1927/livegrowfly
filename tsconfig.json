@@ -19,9 +19,9 @@
 
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@lib/*": ["lib/*"],                   // ✅ FIXED
-      "@components/*": ["src/components/*"]  // ✅ ADDED
+      "@/*": ["./*"],
+      "@lib/*": ["lib/*"],
+      "@components/*": ["components/*"]
     },
 
     "types": ["node", "next"],
