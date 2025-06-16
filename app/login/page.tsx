@@ -73,19 +73,19 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
       {/* ✅ Animated Background Elements */}
       <div className="absolute inset-0">
-        <div className="absolute top-20 left-20 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-500/5 rounded-full blur-3xl animate-pulse delay-500"></div>
+        <div className="absolute top-20 left-20 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-cyan-500/5 rounded-full blur-3xl animate-pulse delay-500"></div>
       </div>
 
       <div className="relative z-10 min-h-screen flex">
         {/* ✅ Left Side - Features Showcase */}
         <div className="hidden lg:flex lg:w-1/2 flex-col justify-center px-12 text-white">
           <div className="max-w-lg">
-            <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
+            <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
               Welcome to Growfly
             </h2>
             <p className="text-xl text-gray-300 mb-8 leading-relaxed">
@@ -94,7 +94,7 @@ export default function LoginPage() {
             
             <div className="space-y-6">
               <div className="flex items-center gap-4">
-                <div className="bg-gradient-to-r from-purple-500 to-blue-500 p-3 rounded-2xl">
+                <div className="bg-gradient-to-r from-blue-500 to-indigo-500 p-3 rounded-2xl">
                   <FaBrain className="text-white text-xl" />
                 </div>
                 <div>
@@ -104,7 +104,7 @@ export default function LoginPage() {
               </div>
               
               <div className="flex items-center gap-4">
-                <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-3 rounded-2xl">
+                <div className="bg-gradient-to-r from-indigo-500 to-cyan-500 p-3 rounded-2xl">
                   <FaChartLine className="text-white text-xl" />
                 </div>
                 <div>
@@ -164,7 +164,7 @@ export default function LoginPage() {
                     value={email}
                     required
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 bg-white/5 backdrop-blur-sm text-white border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 placeholder-gray-400"
+                    className="w-full pl-12 pr-4 py-4 bg-white/5 backdrop-blur-sm text-white border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-gray-400"
                     placeholder="you@example.com"
                     disabled={isLoading}
                   />
@@ -183,7 +183,7 @@ export default function LoginPage() {
                     value={password}
                     required
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-12 pr-12 py-4 bg-white/5 backdrop-blur-sm text-white border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 placeholder-gray-400"
+                    className="w-full pl-12 pr-12 py-4 bg-white/5 backdrop-blur-sm text-white border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-gray-400"
                     placeholder="Enter your password"
                     disabled={isLoading}
                   />
@@ -202,7 +202,7 @@ export default function LoginPage() {
               <div className="text-right">
                 <Link 
                   href="/forgot-password" 
-                  className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
                 >
                   Forgot your password?
                 </Link>
@@ -212,7 +212,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold rounded-2xl transition-all duration-200 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transform hover:scale-[1.02] disabled:transform-none disabled:cursor-not-allowed"
+                className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold rounded-2xl transition-all duration-200 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transform hover:scale-[1.02] disabled:transform-none disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <>
