@@ -9,8 +9,8 @@ import ClientLayout from './ClientLayout'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Growfly - AI-Powered Business Growth Platform',
-  description: 'Growfly.io is the Artificial Intelligence (AI) powered growth platform for startups and small businesses.',
+  title: 'growfly - AI-Powered Business Growth Platform',
+  description: 'growfly.io is the Artificial Intelligence (AI) powered growth platform for startups and small businesses.',
   keywords: 'AI, business growth, automation, analytics, productivity, startups, small business',
   authors: [{ name: 'Growfly Team' }],
   viewport: 'width=device-width, initial-scale=1',
@@ -23,15 +23,15 @@ export const metadata = {
   },
   manifest: '/manifest.json',
   openGraph: {
-    title: 'Growfly - AI-Powered Business Growth Platform',
+    title: 'growfly - AI-Powered Business Growth Platform',
     description: 'Transform your business with AI-powered insights, automation, and growth strategies.',
     url: 'https://www.growfly.io',
-    siteName: 'Growfly',
+    siteName: 'growfly',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Growfly - AI-Powered Business Growth Platform',
+    title: 'growfly - AI-Powered Business Growth Platform',
     description: 'Transform your business with AI-powered insights, automation, and growth strategies.',
   }
 }

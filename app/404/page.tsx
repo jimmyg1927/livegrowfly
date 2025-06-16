@@ -59,12 +59,12 @@ export default function NotFoundPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
       {/* ✅ Animated Background Elements */}
       <div className="absolute inset-0">
-        <div className="absolute top-20 left-20 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-500/5 rounded-full blur-3xl animate-pulse delay-500"></div>
+        <div className="absolute top-20 left-20 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-cyan-500/5 rounded-full blur-3xl animate-pulse delay-500"></div>
       </div>
 
       <div className="relative z-10 min-h-screen flex items-center justify-center px-6">
@@ -83,12 +83,12 @@ export default function NotFoundPage() {
 
           {/* ✅ 404 Animation */}
           <div className="mb-8">
-            <div className="text-8xl md:text-9xl font-bold text-transparent bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text mb-4 animate-pulse">
+            <div className="text-8xl md:text-9xl font-bold text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-cyan-400 bg-clip-text mb-4 animate-pulse">
               404
             </div>
             <div className="flex items-center justify-center gap-4 mb-6">
-              <FaCogs className="text-purple-400 text-2xl animate-spin" />
-              <FaTools className="text-blue-400 text-xl animate-bounce" />
+              <FaCogs className="text-blue-400 text-2xl animate-spin" />
+              <FaTools className="text-indigo-400 text-xl animate-bounce" />
               <FaLaptopCode className="text-cyan-400 text-2xl animate-pulse" />
             </div>
           </div>
@@ -112,7 +112,7 @@ export default function NotFoundPage() {
             {/* ✅ Left Side - Quick Actions */}
             <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-8 border border-white/10">
               <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-                <FaRocket className="text-purple-400" />
+                <FaRocket className="text-blue-400" />
                 Quick Actions
               </h2>
               
@@ -137,7 +137,7 @@ export default function NotFoundPage() {
                 
                 <Link
                   href="/dashboard"
-                  className="w-full flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold rounded-2xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                  className="w-full flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-2xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                 >
                   <FaHome />
                   Go to Dashboard
@@ -181,7 +181,7 @@ export default function NotFoundPage() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-4 py-3 bg-white/5 backdrop-blur-sm text-white border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 placeholder-gray-400"
+                      className="w-full px-4 py-3 bg-white/5 backdrop-blur-sm text-white border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-gray-400"
                       placeholder="your@email.com"
                       required
                     />
@@ -195,7 +195,7 @@ export default function NotFoundPage() {
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       rows={4}
-                      className="w-full px-4 py-3 bg-white/5 backdrop-blur-sm text-white border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 placeholder-gray-400 resize-none"
+                      className="w-full px-4 py-3 bg-white/5 backdrop-blur-sm text-white border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-gray-400 resize-none"
                       placeholder="Describe what happened or what you were trying to access..."
                       required
                     />
@@ -227,7 +227,7 @@ export default function NotFoundPage() {
                   
                   <p className="text-xs text-gray-500 text-center">
                     Reports go directly to{' '}
-                    <span className="text-purple-400">support@growfly.io</span>
+                    <span className="text-blue-400">support@growfly.io</span>
                   </p>
                 </form>
               )}
@@ -240,7 +240,7 @@ export default function NotFoundPage() {
               Having trouble? Email us directly at{' '}
               <a 
                 href="mailto:support@growfly.io" 
-                className="text-purple-400 hover:text-purple-300 transition-colors"
+                className="text-blue-400 hover:text-blue-300 transition-colors"
               >
                 support@growfly.io
               </a>
