@@ -31,6 +31,8 @@ import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
 import streamChat from '@lib/streamChat'
 import { useUserStore } from '@lib/store'
+// ✅ NEW: Import tutorial component
+import GrowflyTutorial from '@/components/tutorial/GrowflyTutorial'
 
 // Use environment variable directly instead of importing from constants
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://glowfly-api-production.up.railway.app'
@@ -680,6 +682,9 @@ function DashboardContent() {
   const promptsRemaining = Math.max(0, promptLimit - promptsUsed)
   const isAtPromptLimit = promptsUsed >= promptLimit
 
+  // ✅ NEW: Tutorial state
+  const [isFirstTime, setIsFirstTime] = useState(false)
+
   // States
   const [showHelpModal, setShowHelpModal] = useState(false)
   const [showImageModal, setShowImageModal] = useState(false)
@@ -712,6 +717,33 @@ function DashboardContent() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const scrollTimeoutRef = useRef<NodeJS.Timeout>()
   const lastScrollTop = useRef<number>(0)
+
+  // ✅ NEW: Tutorial integration
+  useEffect(() => {
+    // Check if user just completed onboarding
+    const justCompleted = sessionStorage.getItem('justCompletedOnboarding')
+    const hasSeenTutorial = localStorage.getItem('growfly-tutorial-completed')
+    
+    if (justCompleted && !hasSeenTutorial) {
+      setIsFirstTime(true)
+      sessionStorage.removeItem('justCompletedOnboarding')
+    }
+
+    // Listen for custom event from settings page
+    const handleStartTour = () => {
+      setIsFirstTime(true)
+    }
+
+    window.addEventListener('startGrowflyTour', handleStartTour)
+    
+    return () => {
+      window.removeEventListener('startGrowflyTour', handleStartTour)
+    }
+  }, [])
+
+  const handleTutorialComplete = () => {
+    setIsFirstTime(false)
+  }
 
   // Copy message handler
   const handleCopyMessage = async (messageId: string, content: string) => {
@@ -1595,7 +1627,7 @@ function DashboardContent() {
       )}
 
       {/* Content Area - Proper sidebar spacing */}
-      <div className="flex-1 overflow-hidden ml-0 md:ml-60 lg:ml-64">
+      <div className="flex-1 overflow-hidden ml-0 md:ml-60 lg:ml-64" data-tour="dashboard">
         <div ref={containerRef} className="h-full overflow-y-auto pb-80 pl-2 pr-4">
 
         {/* Prompt Limit Warning */}
@@ -1742,7 +1774,7 @@ function DashboardContent() {
                     <h4 className="font-semibold text-gray-900 text-sm">Smart Suggestions</h4>
                     <p className="text-xs text-gray-700 mt-1">Get AI-powered business insights</p>
                   </div>
-                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-200">
+                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-200" data-tour="gallery">
                     <div className="text-xl mb-2">📁</div>
                     <h4 className="font-semibold text-gray-900 text-sm">Enhanced File Support</h4>
                     <p className="text-xs text-gray-700 mt-1">Drag & drop Excel, Word, PowerPoint files</p>
@@ -1981,6 +2013,7 @@ function DashboardContent() {
                         }}
                         className="p-0 md:p-0 rounded-xl border border-gray-200 text-gray-500 hover:text-yellow-600 hover:bg-yellow-50 hover:border-yellow-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50"
                         title="Save to Saved Responses"
+                        data-tour="saved-responses"
                       >
                         <div className="p-2 md:p-1.5">
                           <FaRegBookmark className="w-4 h-4" />
@@ -1990,6 +2023,7 @@ function DashboardContent() {
                         onClick={() => handleShareToCollabZone(msg.id)}
                         className="p-0 md:p-0 rounded-xl border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50"
                         title="Share to Collab Zone"
+                        data-tour="collab-zone"
                       >
                         <div className="p-2 md:p-1.5">
                           <FaShareSquare className="w-4 h-4" />
@@ -2105,6 +2139,7 @@ function DashboardContent() {
                     : 'opacity-50 cursor-not-allowed'
                 }`}
                 title="Generate image"
+                data-tour="gallery"
               >
                 <FaPalette className="w-5 h-5" />
               </button>
@@ -2181,6 +2216,7 @@ function DashboardContent() {
           disabled={isLoading || isStreaming}
           className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white p-0 md:p-0 rounded-full shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-110 active:scale-95 disabled:transform-none w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
           title="Quick Start Guide"
+          data-tour="education-hub"
         >
           <FaQuestionCircle className="w-5 h-5 md:w-4 md:h-4" />
         </button>
@@ -2282,7 +2318,7 @@ function DashboardContent() {
                     <div className="text-4xl group-hover:scale-110 transition-transform duration-300">🎯</div>
                     <div className="flex-1">
                       <h4 className="font-bold text-lg text-gray-900 mb-2">Industry Analysis</h4>
-                      <p className="text-sm text-gray-600 leading-relaxed">Stay ahead of the competition with insights into industry trends, market opportunities, and strategic positioning.</p>
+                      <p className="text-gray-600 leading-relaxed">Stay ahead of the competition with insights into industry trends, market opportunities, and strategic positioning.</p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Market Research</span>
                         <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Competitive Analysis</span>
@@ -2364,6 +2400,12 @@ function DashboardContent() {
           responseId={currentFeedbackMessageId}
         />
       )}
+
+      {/* ✅ NEW: Tutorial Component */}
+      <GrowflyTutorial 
+        isFirstTime={isFirstTime}
+        onComplete={handleTutorialComplete}
+      />
     </div>
   )
 }

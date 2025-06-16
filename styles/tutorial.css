@@ -1,0 +1,224 @@
+/* Growfly Tutorial Custom Styles */
+
+/* Global tutorial animations */
+@keyframes tutorial-glow {
+  0% { box-shadow: 0 0 5px rgba(139, 92, 246, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.6); }
+  100% { box-shadow: 0 0 5px rgba(139, 92, 246, 0.3); }
+}
+
+@keyframes tutorial-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+@keyframes tutorial-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Enhanced beacon styling */
+.__floater__body .__floater__arrow {
+  display: none;
+}
+
+.__floater__body {
+  animation: tutorial-fade-in 0.3s ease-out;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+/* Joyride beacon enhanced */
+.react-joyride__beacon {
+  background: linear-gradient(135deg, #8b5cf6, #ec4899) !important;
+  border: 3px solid white !important;
+  box-shadow: 0 0 0 6px rgba(139, 92, 246, 0.2) !important;
+  animation: tutorial-glow 2s infinite ease-in-out;
+}
+
+.react-joyride__beacon:before {
+  background: linear-gradient(135deg, #8b5cf6, #ec4899) !important;
+  animation: tutorial-pulse 2s infinite ease-in-out;
+}
+
+/* Spotlight enhancement */
+.react-joyride__spotlight {
+  border-radius: 12px !important;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5), 
+              0 0 20px rgba(139, 92, 246, 0.3) !important;
+}
+
+/* Tutorial tooltip enhancements */
+.__floater__body {
+  border-radius: 16px !important;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Progress bar styling */
+.react-joyride__tooltip [data-action="primary"] {
+  background: linear-gradient(135deg, #8b5cf6, #ec4899) !important;
+  transition: all 0.2s ease !important;
+  font-weight: 600 !important;
+  padding: 10px 20px !important;
+  border-radius: 8px !important;
+  border: none !important;
+}
+
+.react-joyride__tooltip [data-action="primary"]:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4) !important;
+}
+
+.react-joyride__tooltip [data-action="back"] {
+  color: #6b7280 !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+}
+
+.react-joyride__tooltip [data-action="back"]:hover {
+  color: #374151 !important;
+  transform: translateX(-2px) !important;
+}
+
+.react-joyride__tooltip [data-action="skip"] {
+  color: #9ca3af !important;
+  font-size: 12px !important;
+  transition: all 0.2s ease !important;
+}
+
+.react-joyride__tooltip [data-action="skip"]:hover {
+  color: #6b7280 !important;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .__floater__body {
+    max-width: 90vw !important;
+    margin: 0 5vw !important;
+  }
+  
+  .react-joyride__tooltip {
+    padding: 15px !important;
+  }
+  
+  .tutorial-welcome h2,
+  .tutorial-step h3,
+  .tutorial-finale h2 {
+    font-size: 1.3rem !important;
+  }
+  
+  .tutorial-welcome,
+  .tutorial-step,
+  .tutorial-finale {
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+  }
+  
+  .react-joyride__beacon {
+    width: 40px !important;
+    height: 40px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .__floater__body {
+    max-width: 95vw !important;
+    margin: 0 2.5vw !important;
+  }
+  
+  .tutorial-welcome h2,
+  .tutorial-step h3,
+  .tutorial-finale h2 {
+    font-size: 1.1rem !important;
+  }
+  
+  .tutorial-welcome,
+  .tutorial-step,
+  .tutorial-finale {
+    font-size: 12px !important;
+  }
+  
+  .react-joyride__tooltip [data-action="primary"] {
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+  }
+}
+
+/* Enhanced tooltip content styling */
+.tutorial-step ul li,
+.tutorial-welcome ul li,
+.tutorial-finale ul li {
+  padding: 2px 0;
+  position: relative;
+}
+
+.tutorial-step ul li:before,
+.tutorial-welcome ul li:before,
+.tutorial-finale ul li:before {
+  content: '';
+  position: absolute;
+  left: -15px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 4px;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  border-radius: 50%;
+}
+
+/* Tutorial button hover effects */
+.tutorial-button-container button:hover .tutorial-icon {
+  animation: tutorial-pulse 1s infinite ease-in-out;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .__floater__body {
+    background: rgba(31, 41, 55, 0.95) !important;
+    border: 1px solid rgba(139, 92, 246, 0.2) !important;
+    color: #f9fafb !important;
+  }
+  
+  .tutorial-welcome,
+  .tutorial-step,
+  .tutorial-finale {
+    color: #f9fafb !important;
+  }
+  
+  .tutorial-welcome h2,
+  .tutorial-step h3,
+  .tutorial-finale h2 {
+    color: #f9fafb !important;
+  }
+}
+
+/* Accessibility improvements */
+.react-joyride__tooltip {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif !important;
+}
+
+.react-joyride__tooltip [data-action="primary"]:focus,
+.react-joyride__tooltip [data-action="back"]:focus,
+.react-joyride__tooltip [data-action="skip"]:focus {
+  outline: 2px solid #8b5cf6 !important;
+  outline-offset: 2px !important;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .react-joyride__beacon {
+    border: 3px solid #000 !important;
+  }
+  
+  .__floater__body {
+    border: 2px solid #000 !important;
+  }
+  
+  .react-joyride__tooltip [data-action="primary"] {
+    background: #000 !important;
+    color: #fff !important;
+  }
+}

@@ -479,6 +479,53 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
+
+          {/* Tutorial Section */}
+          <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-xl border border-gray-200 dark:border-slate-700">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mr-4">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Getting Started</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Need a refresher on how Growfly works?</p>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-6 border border-purple-200 dark:border-purple-700">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-purple-800 dark:text-purple-300 mb-2">Take the Growfly Tour</h3>
+                  <p className="text-purple-600 dark:text-purple-400 text-sm mb-4">
+                    Discover all the powerful features that make Growfly unique to your business. 
+                    Perfect for new users or as a refresher on our latest updates!
+                  </p>
+                  <div className="flex items-center gap-2 text-xs text-purple-500 dark:text-purple-400">
+                    <span>🚀</span>
+                    <span>Interactive tour of all features</span>
+                    <span>•</span>
+                    <span>📱</span>
+                    <span>Takes about 2 minutes</span>
+                    <span>•</span>
+                    <span>✨</span>
+                    <span>Learn pro tips & tricks</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new CustomEvent('startGrowflyTour'))}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                  </svg>
+                  Start Tour
+                </button>
+              </div>
+            </div>
+          </div>
           
           {/* Account Information */}
           <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-xl border border-gray-200 dark:border-slate-700">
