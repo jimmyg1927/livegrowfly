@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'react-hot-toast'
-import { Eye, EyeOff, CheckCircle, XCircle, ArrowRight, ArrowLeft, Sparkles, Gift } from 'lucide-react'
+import { Eye, EyeOff, CheckCircle, XCircle, ArrowRight, ArrowLeft, Sparkles, Gift, Rocket } from 'lucide-react'
 import { API_BASE_URL } from '@lib/constants'
 
 type FormState = {
@@ -248,7 +248,7 @@ export default function OnboardingClient() {
               placeholder={placeholder}
               value={form[name]}
               onChange={handleChange}
-              className={`w-full bg-white/10 backdrop-blur-sm text-white border p-3 rounded-xl placeholder-white/60 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent resize-none text-sm ${
+              className={`w-full bg-white/10 backdrop-blur-sm text-white border p-3 rounded-xl placeholder-white/60 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none text-sm ${
                 hasError 
                   ? 'border-red-400 focus:ring-red-400' 
                   : 'border-white/30 hover:border-white/50'
@@ -261,7 +261,7 @@ export default function OnboardingClient() {
               placeholder={placeholder}
               value={form[name]}
               onChange={handleChange}
-              className={`w-full bg-white/10 backdrop-blur-sm text-white border p-3 rounded-xl placeholder-white/60 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-sm ${
+              className={`w-full bg-white/10 backdrop-blur-sm text-white border p-3 rounded-xl placeholder-white/60 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm ${
                 hasError 
                   ? 'border-red-400 focus:ring-red-400' 
                   : 'border-white/30 hover:border-white/50'
@@ -300,10 +300,26 @@ export default function OnboardingClient() {
   }
 
   const stepTitles = [
-    { title: 'Create Account', subtitle: 'Get started with Growfly', icon: '🚀' },
-    { title: 'About Your Brand', subtitle: 'Tell us about your company', icon: '🏢' },
-    { title: 'Inspiration', subtitle: 'Brands you admire', icon: '✨' },
-    { title: 'About You', subtitle: 'Your role and goals', icon: '👤' },
+    { 
+      title: "Let's set up your brand's growth engine", 
+      subtitle: "This takes just 2–3 minutes — we promise it's worth it", 
+      icon: '🚀' 
+    },
+    { 
+      title: 'Teach us your brand — so we can think like it', 
+      subtitle: 'Your answers here help Growfly write, plan, and strategise like it\'s on your team', 
+      icon: '🏢' 
+    },
+    { 
+      title: 'Who are your brand heroes, and what do they nail that you want to nail too?', 
+      subtitle: 'Knowing who you rate helps us shape outputs that feel sharp, modern, and aligned with your vision', 
+      icon: '✨' 
+    },
+    { 
+      title: 'Final step! What do you really want to achieve?', 
+      subtitle: 'Let\'s dig really deep. This is the cherry on top of personalising Growfly for your brand — so we can guide you toward the stuff that actually matters', 
+      icon: '👤' 
+    },
   ]
 
   return (
@@ -343,10 +359,10 @@ export default function OnboardingClient() {
         )}
 
         {/* Progress and XP */}
-        <div className="max-w-2xl mx-auto mb-4">
+        <div className="max-w-3xl mx-auto mb-4">
           <div className="text-center mb-3">
-            <h1 className="text-2xl font-bold mb-1">{stepTitles[step - 1].title}</h1>
-            <p className="text-white/80 text-sm">{stepTitles[step - 1].subtitle}</p>
+            <h1 className="text-xl md:text-2xl font-bold mb-1 leading-tight">{stepTitles[step - 1].title}</h1>
+            <p className="text-white/80 text-sm leading-relaxed">{stepTitles[step - 1].subtitle}</p>
           </div>
 
           {/* XP Progress */}
@@ -394,13 +410,18 @@ export default function OnboardingClient() {
             <div className="space-y-3">
               {step === 1 && (
                 <>
+                  <div className="text-center mb-4">
+                    <p className="text-white/90 text-sm">
+                      Just a few questions so Growfly can write, plan, and think like it's already part of your team.
+                    </p>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {renderField('Full Name', 'name', 'Enter your full name')}
-                    {renderField('Email Address', 'email', 'your@email.com', false, 'email')}
+                    {renderField('Your name', 'name', 'Enter your full name')}
+                    {renderField('Email address', 'email', 'your@email.com', false, 'email')}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {renderField('Password', 'password', 'Create a strong password', false, 'password')}
-                    {renderField('Confirm Password', 'confirmPassword', 'Confirm your password', false, 'password')}
+                    {renderField('Confirm password', 'confirmPassword', 'Confirm your password', false, 'password')}
                   </div>
 
                   {/* ✅ NEW: Show referral code if applied */}
@@ -420,26 +441,51 @@ export default function OnboardingClient() {
               
               {step === 2 && (
                 <>
-                  {renderField('Brand/Company Name', 'companyName', 'Acme Corp')}
-                  {renderField('Elevator Pitch', 'brandDescription', 'Describe what your company does in 1-2 sentences...', true)}
-                  {renderField('Brand Personality', 'brandVoice', 'How would you describe your brand\'s voice? (e.g., Professional, Friendly, Bold)', true)}
-                  {renderField('Mission Statement', 'brandMission', 'What\'s your company\'s mission or core purpose?', true)}
+                  {renderField('Brand/Company name', 'companyName', 'Your company or brand name')}
+                  {renderField(
+                    'Sum up your business in one or two killer sentences. No fluff.', 
+                    'brandDescription', 
+                    'e.g., "An independent coffee shop known for oat flat whites, clean branding, and a cult local following."', 
+                    true
+                  )}
+                  {renderField(
+                    'If your brand walked into a room, how would it act?', 
+                    'brandVoice', 
+                    'e.g., "Clean, sharp, and professional — gets to the point and doesn\'t waste words."', 
+                    true
+                  )}
+                  {renderField(
+                    'What are you building — and why does it matter?', 
+                    'brandMission', 
+                    'e.g., "To replace fast fashion with timeless, slow-designed pieces that actually last."', 
+                    true
+                  )}
                 </>
               )}
               
               {step === 3 && (
                 <>
-                  {renderField('Brands That Inspire You', 'inspiredBy', 'Which brands, companies, or competitors do you admire and why? This helps us understand your style preferences...', true)}
+                  {renderField(
+                    'Which brands do you admire and why?', 
+                    'inspiredBy', 
+                    'Tell us about brands, companies, or competitors that inspire you and what they do well...', 
+                    true
+                  )}
                 </>
               )}
               
               {step === 4 && (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {renderField('Your Job Title', 'jobTitle', 'Marketing Director')}
-                    {renderField('Industry', 'industry', 'Technology, Healthcare, Finance...')}
+                    {renderField('What\'s your role?', 'jobTitle', 'Marketing Director, Founder, etc.')}
+                    {renderField('What industry are you in?', 'industry', 'Technology, Healthcare, Finance...')}
                   </div>
-                  {renderField('Goals with Growfly', 'goals', 'What do you hope to achieve? (e.g., increase sales, improve content, save time...)', true)}
+                  {renderField(
+                    'Why have you decided to use Growfly?', 
+                    'goals', 
+                    'Be specific about what brought you here — increase sales, improve content, save time, grow audience...', 
+                    true
+                  )}
                 </>
               )}
             </div>
@@ -478,12 +524,12 @@ export default function OnboardingClient() {
                 {loading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Creating...
+                    Launching...
                   </>
                 ) : (
                   <>
-                    <Sparkles size={16} />
-                    Complete Setup
+                    <Rocket size={16} />
+                    Launch Growfly
                   </>
                 )}
               </button>
