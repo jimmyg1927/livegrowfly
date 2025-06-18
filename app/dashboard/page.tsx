@@ -149,10 +149,10 @@ const SafeImage: React.FC<{
 
   if (error) {
     return (
-      <div className={`${className} bg-gray-100 flex items-center justify-center rounded-xl border border-gray-200`}>
+      <div className={`${className} bg-gray-100 dark:bg-gray-800 flex items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700`}>
         <div className="text-center p-4">
           <FaImages className="text-gray-400 text-2xl mx-auto mb-2" />
-          <p className="text-xs text-gray-500">Image unavailable</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Image unavailable</p>
         </div>
       </div>
     )
@@ -161,7 +161,7 @@ const SafeImage: React.FC<{
   return (
     <div className="relative">
       {loading && (
-        <div className={`${className} bg-gray-100 flex items-center justify-center rounded-xl animate-pulse`}>
+        <div className={`${className} bg-gray-100 dark:bg-gray-800 flex items-center justify-center rounded-xl animate-pulse`}>
           <FaSpinner className="text-gray-400 text-xl animate-spin" />
         </div>
       )}
@@ -181,7 +181,7 @@ const FilePreview: React.FC<{ file: UploadedFile; onRemove: () => void }> = ({ f
   const getFileIcon = () => {
     if (file.type.startsWith('image/')) {
       return file.preview ? (
-        <img src={file.preview} alt={file.name} className="w-12 h-12 object-cover rounded border border-gray-200" />
+        <img src={file.preview} alt={file.name} className="w-12 h-12 object-cover rounded border border-gray-200 dark:border-gray-700" />
       ) : (
         <FaFileImage className="w-12 h-12 text-gray-500" />
       )
@@ -207,7 +207,7 @@ const FilePreview: React.FC<{ file: UploadedFile; onRemove: () => void }> = ({ f
   }
 
   return (
-    <div className="relative bg-gray-50 rounded-lg p-3 border border-gray-200">
+    <div className="relative bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
       <button
         onClick={onRemove}
         className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
@@ -217,8 +217,8 @@ const FilePreview: React.FC<{ file: UploadedFile; onRemove: () => void }> = ({ f
       <div className="flex items-center gap-3">
         {getFileIcon()}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
-          <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{file.name}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{formatFileSize(file.size)}</p>
           <p className="text-xs text-gray-400">{file.type}</p>
         </div>
       </div>
@@ -405,16 +405,16 @@ const ImageGenerationModal: React.FC<{
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <FaPalette className="text-gray-700" />
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <FaPalette className="text-gray-700 dark:text-gray-300" />
               Create an image with Growfly
             </h2>
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               disabled={isGenerating}
             >
               <HiX className="w-6 h-6" />
@@ -427,10 +427,10 @@ const ImageGenerationModal: React.FC<{
                 <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
                   <FaCheck className="text-white text-2xl" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                   Image Created Successfully!
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   Your image has been generated and saved to your gallery.
                 </p>
               </div>
@@ -443,14 +443,14 @@ const ImageGenerationModal: React.FC<{
                 />
               </div>
               
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
                 Adding to your chat conversation...
               </div>
             </div>
           ) : (
             <>
-              <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                <p className="text-sm text-gray-800">
+              <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                <p className="text-sm text-gray-800 dark:text-gray-200">
                   <strong>🎨 Create professional images for your business</strong><br />
                   Describe what you want and our AI will generate a custom image. Perfect for social media, presentations, marketing materials, and more.
                 </p>
@@ -459,22 +459,22 @@ const ImageGenerationModal: React.FC<{
               {imageUsage && (
                 <div className="mb-6 space-y-4">
                   {imageUsage._fallback && (
-                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <div className="text-yellow-800 text-sm">
+                    <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                      <div className="text-yellow-800 dark:text-yellow-200 text-sm">
                         ⚠️ Using default limits. Some features may be limited until your account data is refreshed.
                       </div>
                     </div>
                   )}
 
-                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold text-gray-800">
+                      <h3 className="font-semibold text-gray-800 dark:text-gray-200">
                         {imageUsage.subscriptionName} Plan Limits
                       </h3>
                       {!canGenerate && (
                         <button
                           onClick={handleUpgrade}
-                          className="bg-gray-900 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-xs font-medium transition-colors"
+                          className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 text-white px-3 py-1 rounded-lg text-xs font-medium transition-colors"
                         >
                           Upgrade Plan
                         </button>
@@ -483,8 +483,8 @@ const ImageGenerationModal: React.FC<{
                     
                     <div className="grid grid-cols-3 gap-4 text-sm">
                       <div className="text-center">
-                        <div className="text-gray-600 text-xs">Daily Images</div>
-                        <div className={`font-bold text-lg ${isAtDailyLimit ? 'text-red-600' : 'text-gray-700'}`}>
+                        <div className="text-gray-600 dark:text-gray-400 text-xs">Daily Images</div>
+                        <div className={`font-bold text-lg ${isAtDailyLimit ? 'text-red-600' : 'text-gray-700 dark:text-gray-300'}`}>
                           {imageUsage.dailyImages?.remaining || 0}/{imageUsage.dailyImages?.limit === -1 ? '∞' : imageUsage.dailyImages?.limit || 0}
                         </div>
                         {isAtDailyLimit && (
@@ -495,8 +495,8 @@ const ImageGenerationModal: React.FC<{
                       </div>
                       
                       <div className="text-center">
-                        <div className="text-gray-600 text-xs">Monthly Images</div>
-                        <div className={`font-bold text-lg ${isAtMonthlyLimit ? 'text-red-600' : 'text-gray-700'}`}>
+                        <div className="text-gray-600 dark:text-gray-400 text-xs">Monthly Images</div>
+                        <div className={`font-bold text-lg ${isAtMonthlyLimit ? 'text-red-600' : 'text-gray-700 dark:text-gray-300'}`}>
                           {imageUsage.monthlyImages?.remaining || 0}/{imageUsage.monthlyImages?.limit === -1 ? '∞' : imageUsage.monthlyImages?.limit || 0}
                         </div>
                         {isAtMonthlyLimit && (
@@ -507,8 +507,8 @@ const ImageGenerationModal: React.FC<{
                       </div>
                       
                       <div className="text-center">
-                        <div className="text-gray-600 text-xs">Total Prompts</div>
-                        <div className={`font-bold text-lg ${isAtPromptLimit ? 'text-red-600' : 'text-gray-700'}`}>
+                        <div className="text-gray-600 dark:text-gray-400 text-xs">Total Prompts</div>
+                        <div className={`font-bold text-lg ${isAtPromptLimit ? 'text-red-600' : 'text-gray-700 dark:text-gray-300'}`}>
                           {imageUsage.totalPrompts?.remaining || 0}/{imageUsage.totalPrompts?.limit === -1 ? '∞' : imageUsage.totalPrompts?.limit || 0}
                         </div>
                         {isAtPromptLimit && (
@@ -521,12 +521,12 @@ const ImageGenerationModal: React.FC<{
                   </div>
 
                   {!canGenerate && (
-                    <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
+                    <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-red-600 text-lg">🚫</span>
-                        <h4 className="font-semibold text-red-800">Generation Limit Reached</h4>
+                        <h4 className="font-semibold text-red-800 dark:text-red-200">Generation Limit Reached</h4>
                       </div>
-                      <div className="text-sm text-red-700 space-y-1">
+                      <div className="text-sm text-red-700 dark:text-red-300 space-y-1">
                         {isAtDailyLimit && (
                           <div>• Daily limit: Resets in {resetInfo.hoursUntilMidnight} hours</div>
                         )}
@@ -551,8 +551,8 @@ const ImageGenerationModal: React.FC<{
               )}
 
               {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <div className="text-red-700 text-sm font-medium mb-2">
+                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <div className="text-red-700 dark:text-red-300 text-sm font-medium mb-2">
                     {error}
                   </div>
                   {error.includes('limit') && !error.includes('characters') && (
@@ -568,31 +568,31 @@ const ImageGenerationModal: React.FC<{
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Describe your image
                   </label>
                   <textarea
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     placeholder="Describe the image you want to generate... e.g., 'A professional logo for a tech startup, modern and minimalist style, blue and white colors'"
-                    className="w-full p-4 border border-gray-300 rounded-xl bg-white text-gray-900 resize-none focus:ring-2 focus:ring-gray-500 focus:border-transparent min-h-[4rem] max-h-32"
+                    className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none focus:ring-2 focus:ring-gray-500 focus:border-transparent min-h-[4rem] max-h-32"
                     rows={3}
                     disabled={isGenerating || !canGenerate}
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Be specific and detailed for best results ({prompt.length}/4000 characters)
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Size
                     </label>
                     <select
                       value={size}
                       onChange={(e) => setSize(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-lg bg-white text-gray-900"
+                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                       disabled={isGenerating || !canGenerate}
                     >
                       <option value="1024x1024">Square (1024×1024)</option>
@@ -602,13 +602,13 @@ const ImageGenerationModal: React.FC<{
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Style
                     </label>
                     <select
                       value={style}
                       onChange={(e) => setStyle(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-lg bg-white text-gray-900"
+                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                       disabled={isGenerating || !canGenerate}
                     >
                       <option value="vivid">Vivid (More Creative)</option>
@@ -620,7 +620,7 @@ const ImageGenerationModal: React.FC<{
                 <div className="flex gap-3 pt-4">
                   <button
                     onClick={onClose}
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     disabled={isGenerating}
                   >
                     Cancel
@@ -682,8 +682,9 @@ function DashboardContent() {
   const promptsRemaining = Math.max(0, promptLimit - promptsUsed)
   const isAtPromptLimit = promptsUsed >= promptLimit
 
-  // ✅ FIXED: Tutorial state management
+  // ✅ FIXED: Tutorial state management with force option
   const [showTutorial, setShowTutorial] = useState(false)
+  const [forceTutorial, setForceTutorial] = useState(false)
 
   // States
   const [showHelpModal, setShowHelpModal] = useState(false)
@@ -718,51 +719,91 @@ function DashboardContent() {
   const scrollTimeoutRef = useRef<NodeJS.Timeout>()
   const lastScrollTop = useRef<number>(0)
 
-  // ✅ FIXED: Tutorial integration with better state management
+  // ✅ ENHANCED: Tutorial integration for new users with better logging
   useEffect(() => {
     // Check if user just completed onboarding
     const justCompleted = sessionStorage.getItem('justCompletedOnboarding')
     const hasSeenTutorial = localStorage.getItem('growfly-tutorial-completed')
     
-    console.log('🎯 Tutorial check:', { justCompleted, hasSeenTutorial, user: !!user })
+    console.log('🎯 New user tutorial check:', { 
+      justCompleted, 
+      hasSeenTutorial, 
+      user: !!user,
+      showTutorial,
+      forceTutorial
+    })
     
-    if (justCompleted && !hasSeenTutorial) {
+    if (justCompleted && !hasSeenTutorial && user) {
       console.log('🚀 Starting tutorial for new user')
       sessionStorage.removeItem('justCompletedOnboarding')
-      setTimeout(() => setShowTutorial(true), 2000)
+      setTimeout(() => {
+        setShowTutorial(true)
+        setForceTutorial(true)
+      }, 2000)
     }
-  }, [user])
+  }, [user]) // Depend on user so it runs when user data loads
 
-  // ✅ FIXED: Event listener for settings button
+  // ✅ ENHANCED: Multiple trigger methods for tutorial
   useEffect(() => {
     const handleTutorialStart = (event: any) => {
       console.log('🎯 Tutorial start event received:', event)
       setShowTutorial(true)
+      setForceTutorial(true)  // ✅ Force tutorial for existing users
     }
 
+    // Method 1: Custom event listener (from Settings button)
     window.addEventListener('startGrowflyTour', handleTutorialStart)
+    
+    // Method 2: Check URL parameters (from Settings navigation)
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get('tutorial') === 'start') {
+      console.log('🎯 Tutorial triggered via URL parameter')
+      setTimeout(() => {
+        setShowTutorial(true)
+        setForceTutorial(true)
+        // Clean up URL
+        window.history.replaceState({}, '', '/dashboard')
+      }, 1000)
+    }
+    
+    // Method 3: Check localStorage flag (backup method)
+    const forceTutorialFlag = localStorage.getItem('force-tutorial-start')
+    if (forceTutorialFlag === 'true') {
+      console.log('🎯 Tutorial triggered via localStorage flag')
+      localStorage.removeItem('force-tutorial-start') // Clean up
+      setTimeout(() => {
+        setShowTutorial(true)
+        setForceTutorial(true)
+      }, 1500)
+    }
     
     return () => {
       window.removeEventListener('startGrowflyTour', handleTutorialStart)
     }
-  }, [])
+  }, []) // Run once on mount
 
-  // ✅ FIXED: Tutorial completion handler
+  // ✅ ENHANCED: Tutorial completion handler with proper cleanup
   const handleTutorialComplete = () => {
     console.log('✅ Tutorial completed')
     setShowTutorial(false)
+    setForceTutorial(false)
     localStorage.setItem('growfly-tutorial-completed', 'true')
+    
+    // Clean up any remaining flags
+    localStorage.removeItem('force-tutorial-start')
+    sessionStorage.removeItem('justCompletedOnboarding')
   }
 
   // ✅ DEBUG: Add debugging for tutorial state
   useEffect(() => {
     console.log('🔍 Tutorial state debug:', {
       showTutorial,
+      forceTutorial,
       hasSeenTutorial: localStorage.getItem('growfly-tutorial-completed'),
       justCompleted: sessionStorage.getItem('justCompletedOnboarding'),
       user: !!user
     })
-  }, [showTutorial, user])
+  }, [showTutorial, forceTutorial, user])
 
   // Copy message handler
   const handleCopyMessage = async (messageId: string, content: string) => {
@@ -1582,7 +1623,7 @@ function DashboardContent() {
 
   return (
     <div 
-      className="h-screen bg-gray-50 text-gray-900 transition-colors duration-300 flex flex-col relative"
+      className="h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300 flex flex-col relative"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -1610,13 +1651,13 @@ function DashboardContent() {
       {/* Drag and Drop Overlay */}
       {isDragOver && (
         <div className="fixed inset-0 z-50 bg-gray-500/20 backdrop-blur-sm flex items-center justify-center">
-          <div className="bg-white rounded-2xl p-8 shadow-2xl border-2 border-dashed border-gray-500 max-w-md text-center">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-2xl border-2 border-dashed border-gray-500 max-w-md text-center">
             <div className="text-6xl mb-4">📁</div>
-            <h3 className="text-2xl font-bold text-gray-600 mb-2">Drop Files Here</h3>
-            <p className="text-gray-600">
+            <h3 className="text-2xl font-bold text-gray-600 dark:text-gray-300 mb-2">Drop Files Here</h3>
+            <p className="text-gray-600 dark:text-gray-400">
               Support for images, PDF, Word, Excel, PowerPoint
             </p>
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
               Up to 25MB per document, 10MB per image
             </p>
           </div>
@@ -1625,18 +1666,18 @@ function DashboardContent() {
       
       {/* Security Notice - Compact Banner */}
       {messages.length > 0 && showSecurityNotice && (
-        <div className="w-full bg-blue-50 border-b border-blue-200 p-2">
+        <div className="w-full bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800 p-2">
           <div className="flex items-center justify-between max-w-5xl mx-auto">
             <div className="flex items-center gap-2">
-              <span className="text-blue-600 text-base">💡</span>
+              <span className="text-blue-600 dark:text-blue-400 text-base">💡</span>
               <div className="text-sm">
-                <span className="text-blue-900 font-medium">Your conversations are securely saved!</span>
-                <span className="text-blue-700 ml-1">Your last 10 exchanges stay private to your account.</span>
+                <span className="text-blue-900 dark:text-blue-100 font-medium">Your conversations are securely saved!</span>
+                <span className="text-blue-700 dark:text-blue-300 ml-1">Your last 10 exchanges stay private to your account.</span>
               </div>
             </div>
             <button
               onClick={dismissSecurityNotice}
-              className="text-blue-400 hover:text-blue-600 p-1.5 rounded-lg hover:bg-blue-100 transition-all duration-200 transform hover:scale-105"
+              className="text-blue-400 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-300 p-1.5 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-800 transition-all duration-200 transform hover:scale-105"
               title="Dismiss for 7 days"
             >
               <HiX className="w-4 h-4" />
@@ -1651,10 +1692,10 @@ function DashboardContent() {
 
         {/* Prompt Limit Warning */}
         {isAtPromptLimit && (
-          <div className="mr-4 mt-4 ml-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm relative">
+          <div className="mr-4 mt-4 ml-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
             <button 
               onClick={dismissError}
-              className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+              className="absolute top-2 right-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200"
             >
               <HiX className="w-4 h-4" />
             </button>
@@ -1683,10 +1724,10 @@ function DashboardContent() {
 
         {/* Error Message */}
         {error && (
-          <div className="mr-4 mt-4 ml-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm relative">
+          <div className="mr-4 mt-4 ml-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
             <button 
               onClick={dismissError}
-              className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+              className="absolute top-2 right-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200"
             >
               <HiX className="w-4 h-4" />
             </button>
@@ -1707,8 +1748,8 @@ function DashboardContent() {
         {/* Info about persistent conversations */}
         {messages.length > 0 && (
           <div className="mx-auto mt-4 mb-6 max-w-4xl px-4">
-            <div className="p-4 bg-gray-50 border border-gray-200 rounded-2xl text-center">
-              <p className="text-gray-800 text-sm flex items-center justify-center gap-2">
+            <div className="p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-center">
+              <p className="text-gray-800 dark:text-gray-200 text-sm flex items-center justify-center gap-2">
                 <span className="text-lg">💡</span>
                 <strong>Your conversations are securely saved!</strong> Your last 10 exchanges stay private to your account on this dashboard.
               </p>
@@ -1723,33 +1764,33 @@ function DashboardContent() {
               <div className="text-center max-w-2xl px-4 mt-12">
                 <div className="mb-6">
                   <div className="text-6xl md:text-8xl mb-4 animate-bounce">👋</div>
-                  <h3 className="text-2xl md:text-3xl font-bold text-gray-800 mb-3">
+                  <h3 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-3">
                     Welcome to Growfly! 🚀
                   </h3>
-                  <p className="text-base md:text-lg text-gray-600 mb-6 leading-relaxed">
+                  <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
                     Your AI business assistant is ready to help you grow, optimize, and succeed. 
                     Start by choosing a quick prompt or asking any business question.
                   </p>
                 </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-200">
+                  <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
                     <div className="text-xl mb-2">💡</div>
-                    <h4 className="font-semibold text-gray-900 text-sm">Smart Suggestions</h4>
-                    <p className="text-xs text-gray-700 mt-1">Get AI-powered business insights</p>
+                    <h4 className="font-semibold text-gray-900 dark:text-white text-sm">Smart Suggestions</h4>
+                    <p className="text-xs text-gray-700 dark:text-gray-300 mt-1">Get AI-powered business insights</p>
                   </div>
-                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-200" data-tour="gallery">
+                  <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700" data-tour="gallery">
                     <div className="text-xl mb-2">📁</div>
-                    <h4 className="font-semibold text-gray-900 text-sm">Enhanced File Support</h4>
-                    <p className="text-xs text-gray-700 mt-1">Drag & drop Excel, Word, PowerPoint files</p>
+                    <h4 className="font-semibold text-gray-900 dark:text-white text-sm">Enhanced File Support</h4>
+                    <p className="text-xs text-gray-700 dark:text-gray-300 mt-1">Drag & drop Excel, Word, PowerPoint files</p>
                   </div>
                 </div>
                 
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-gray-500">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-gray-500 dark:text-gray-400">
                   <div className="flex items-center gap-2">
-                    <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">⌘</kbd>
+                    <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">⌘</kbd>
                     <span>+</span>
-                    <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">K</kbd>
+                    <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">K</kbd>
                     <span>Quick shortcuts</span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1777,7 +1818,7 @@ function DashboardContent() {
                 className={`relative rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md ${
                   msg.role === 'user'
                     ? 'bg-blue-600 text-white max-w-[80%] sm:max-w-[70%] ml-auto p-4'
-                    : 'bg-white border border-gray-200 text-gray-800 max-w-[90%] sm:max-w-[80%] py-4 px-2'
+                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-white max-w-[90%] sm:max-w-[80%] py-4 px-2'
                 }`}
               >
                 {/* Display uploaded files for user messages */}
@@ -1845,7 +1886,7 @@ function DashboardContent() {
                         Share
                       </button>
                     </div>
-                    <div className="mt-2 text-xs text-gray-500">
+                    <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                       <p><strong>Size:</strong> {msg.generatedImage.size} • <strong>Style:</strong> {msg.generatedImage.style}</p>
                       <p><strong>Created:</strong> {new Date(msg.generatedImage.createdAt).toLocaleDateString()}</p>
                     </div>
@@ -1854,11 +1895,11 @@ function DashboardContent() {
                 
                 <div className="whitespace-pre-wrap text-sm leading-relaxed">
                   {msg.content ? (
-                    <div className="prose prose-sm max-w-none">
+                    <div className="prose prose-sm max-w-none dark:prose-invert">
                       {msg.content}
                     </div>
                   ) : msg.role === 'assistant' && (isLoading || isStreaming) ? (
-                    <div className="flex items-center gap-3 text-gray-600 py-2">
+                    <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400 py-2">
                       <div className="flex gap-1">
                         <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.3s]"></div>
                         <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.15s]"></div>
@@ -1873,10 +1914,10 @@ function DashboardContent() {
                   <>
                     {/* Follow-up Questions */}
                     {msg.followUps && msg.followUps.length > 0 && (
-                      <div className="mt-4 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                      <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600">
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-sm">💡</span>
-                          <span className="text-xs font-medium text-gray-700">Continue the conversation:</span>
+                          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Continue the conversation:</span>
                         </div>
                         <div className="space-y-2">
                           {msg.followUps.map((followUp, index) => (
@@ -1888,7 +1929,7 @@ function DashboardContent() {
                                 handleSubmit(cleanFollowUp)
                               }}
                               disabled={isLoading || isStreaming}
-                              className="w-full bg-gray-50 hover:bg-gray-100 disabled:bg-gray-100 text-gray-700 hover:text-gray-800 disabled:text-gray-500 p-0 rounded-xl text-sm font-medium shadow-sm hover:shadow-md border border-gray-200 disabled:border-gray-200 transition-all duration-200 hover:scale-[1.01] disabled:transform-none disabled:cursor-not-allowed text-left focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                              className="w-full bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 disabled:bg-gray-100 dark:disabled:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-200 disabled:text-gray-500 dark:disabled:text-gray-500 p-0 rounded-xl text-sm font-medium shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-600 disabled:border-gray-200 dark:disabled:border-gray-600 transition-all duration-200 hover:scale-[1.01] disabled:transform-none disabled:cursor-not-allowed text-left focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                             >
                               <div className="px-3 py-2">
                                 {followUp.replace(/^\s*[\(\)]\s*/, '').trim()}
@@ -1900,14 +1941,14 @@ function DashboardContent() {
                     )}
 
                     {/* ✅ UPDATED: Action Buttons with PDF/Excel Downloads */}
-                    <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-gray-100">
+                    <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
                       <div className="relative">
                         <button
                           onClick={() => handleCopyMessage(msg.id, msg.content)}
                           className={`p-0 md:p-0 rounded-xl border transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 ${
                             copiedMessageId === msg.id 
-                              ? 'text-green-600 bg-green-50 border-green-200' 
-                              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 border-gray-200 hover:border-gray-300 bg-gray-50'
+                              ? 'text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+                              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-gray-50 dark:bg-gray-800'
                           }`}
                           title="Copy message"
                         >
@@ -1926,7 +1967,7 @@ function DashboardContent() {
                       <button
                         onClick={() => handleDownloadPDF(msg.content, `AI_Response_${msg.id}`)}
                         disabled={isLoading}
-                        className="p-0 md:p-0 rounded-xl border border-gray-200 text-gray-500 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50"
+                        className="p-0 md:p-0 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 dark:hover:border-red-800 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
                         title="Download as PDF"
                       >
                         <div className="p-2 md:p-1.5">
@@ -1938,7 +1979,7 @@ function DashboardContent() {
                       <button
                         onClick={() => handleDownloadExcel(msg.content, `AI_Analysis_${msg.id}`)}
                         disabled={isLoading}
-                        className="p-0 md:p-0 rounded-xl border border-gray-200 text-gray-500 hover:text-green-600 hover:bg-green-50 hover:border-green-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50"
+                        className="p-0 md:p-0 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-200 dark:hover:border-green-800 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
                         title="Download as Excel"
                       >
                         <div className="p-2 md:p-1.5">
@@ -1951,7 +1992,7 @@ function DashboardContent() {
                           setCurrentFeedbackMessageId(msg.id)
                           setShowFeedbackModal(true)
                         }}
-                        className="p-0 md:p-0 rounded-xl border border-gray-200 text-gray-500 hover:text-green-600 hover:bg-green-50 hover:border-green-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50"
+                        className="p-0 md:p-0 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-200 dark:hover:border-green-800 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
                         title="Like this response"
                       >
                         <div className="p-2 md:p-1.5">
@@ -1963,7 +2004,7 @@ function DashboardContent() {
                           setCurrentFeedbackMessageId(msg.id)
                           setShowFeedbackModal(true)
                         }}
-                        className="p-0 md:p-0 rounded-xl border border-gray-200 text-gray-500 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50"
+                        className="p-0 md:p-0 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 dark:hover:border-red-800 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
                         title="Dislike this response"
                       >
                         <div className="p-2 md:p-1.5">
@@ -1975,7 +2016,7 @@ function DashboardContent() {
                           setCurrentSaveMessageId(msg.id)
                           setShowSaveModal(true)
                         }}
-                        className="p-0 md:p-0 rounded-xl border border-gray-200 text-gray-500 hover:text-yellow-600 hover:bg-yellow-50 hover:border-yellow-200 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50"
+                        className="p-0 md:p-0 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-yellow-600 dark:hover:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:border-yellow-200 dark:hover:border-yellow-800 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
                         title="Save to Saved Responses"
                         data-tour="saved-responses"
                       >
@@ -1985,7 +2026,7 @@ function DashboardContent() {
                       </button>
                       <button
                         onClick={() => handleShareToCollabZone(msg.id)}
-                        className="p-0 md:p-0 rounded-xl border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50"
+                        className="p-0 md:p-0 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
                         title="Share to Collab Zone"
                         data-tour="collab-zone"
                       >
@@ -2010,12 +2051,12 @@ function DashboardContent() {
       {uploadedFiles.length > 0 && (
         <div className="fixed bottom-28 left-4 right-4 md:left-60 lg:left-64 z-30">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-white/90 backdrop-blur p-3 rounded-lg border border-gray-200 flex items-center justify-between shadow-lg">
+            <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur p-3 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-between shadow-lg">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <div className="flex items-center gap-2 overflow-x-auto">
                   {uploadedFiles.map((file) => (
                     <div key={file.id} className="relative flex-shrink-0">
-                      <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-2 border border-gray-200">
+                      <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 rounded-lg p-2 border border-gray-200 dark:border-gray-600">
                         {file.type.startsWith('image/') && file.preview ? (
                           <img src={file.preview} alt={file.name} className="w-10 h-10 object-cover rounded" />
                         ) : file.type === 'application/pdf' ? (
@@ -2026,8 +2067,8 @@ function DashboardContent() {
                           <FaFileAlt className="w-10 h-10 text-gray-500 p-2" />
                         )}
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-medium text-gray-900 truncate max-w-[100px]">{file.name}</p>
-                          <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)}KB</p>
+                          <p className="text-xs font-medium text-gray-900 dark:text-white truncate max-w-[100px]">{file.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{(file.size / 1024).toFixed(1)}KB</p>
                         </div>
                         <button
                           onClick={() => removeFile(file.id)}
@@ -2042,7 +2083,7 @@ function DashboardContent() {
               </div>
               <button
                 onClick={() => setUploadedFiles([])}
-                className="text-sm text-gray-500 hover:text-gray-700 font-medium ml-3 flex-shrink-0"
+                className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 font-medium ml-3 flex-shrink-0"
               >
                 Clear All
               </button>
@@ -2056,16 +2097,16 @@ function DashboardContent() {
         <div className="max-w-4xl mx-auto">
           {/* Inline Error Messages */}
           {error && (
-            <div className="mb-3 text-sm text-red-600 flex items-center gap-1 bg-red-50 p-2 rounded-lg border border-red-200">
+            <div className="mb-3 text-sm text-red-600 dark:text-red-400 flex items-center gap-1 bg-red-50 dark:bg-red-900/20 p-2 rounded-lg border border-red-200 dark:border-red-800">
               <span>⚠️</span>
               <span>{error}</span>
-              <button onClick={dismissError} className="ml-auto text-red-400 hover:text-red-600">
+              <button onClick={dismissError} className="ml-auto text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-300">
                 <HiX className="w-4 h-4" />
               </button>
             </div>
           )}
           
-          <div className={`bg-white shadow-lg rounded-2xl p-4 backdrop-blur-sm border border-gray-200 transition-all duration-200 ${shakeInput ? 'animate-pulse border-red-300' : ''}`}>
+          <div className={`bg-white dark:bg-gray-800 shadow-lg rounded-2xl p-4 backdrop-blur-sm border border-gray-200 dark:border-gray-700 transition-all duration-200 ${shakeInput ? 'animate-pulse border-red-300 dark:border-red-700' : ''}`}>
             <div className="flex items-end gap-2">
               
               {/* Upload Button - Enhanced Style */}
@@ -2077,7 +2118,7 @@ function DashboardContent() {
                   }
                 }}
                 disabled={isLoading || isStreaming || isAtPromptLimit}
-                className={`p-3 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 flex items-center justify-center text-blue-600 hover:from-blue-100 hover:to-blue-200 hover:border-blue-300 hover:text-blue-700 transition-all duration-200 shadow-sm hover:shadow-lg ${
+                className={`p-3 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 hover:from-blue-100 hover:to-blue-200 dark:hover:from-blue-800/30 dark:hover:to-blue-700/30 hover:border-blue-300 dark:hover:border-blue-700 hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-200 shadow-sm hover:shadow-lg ${
                   isLoading || isStreaming || isAtPromptLimit
                     ? 'opacity-50 cursor-not-allowed'
                     : 'hover:scale-105 active:scale-95'
@@ -2097,7 +2138,7 @@ function DashboardContent() {
                   }
                 }}
                 disabled={isAtPromptLimit}
-                className={`p-3 rounded-2xl bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 flex items-center justify-center text-purple-600 hover:from-purple-100 hover:to-purple-200 hover:border-purple-300 hover:text-purple-700 transition-all duration-200 shadow-sm hover:shadow-lg ${
+                className={`p-3 rounded-2xl bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border border-purple-200 dark:border-purple-800 flex items-center justify-center text-purple-600 dark:text-purple-400 hover:from-purple-100 hover:to-purple-200 dark:hover:from-purple-800/30 dark:hover:to-purple-700/30 hover:border-purple-300 dark:hover:border-purple-700 hover:text-purple-700 dark:hover:text-purple-300 transition-all duration-200 shadow-sm hover:shadow-lg ${
                   (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0 && !isAtPromptLimit)
                     ? 'hover:scale-105 active:scale-95'
                     : 'opacity-50 cursor-not-allowed'
@@ -2113,8 +2154,8 @@ function DashboardContent() {
                 <label 
                   className={`absolute left-3 transition-all duration-200 pointer-events-none ${
                     inputFocused || input.trim() 
-                      ? 'top-1 text-xs text-gray-500' 
-                      : 'top-3 text-sm text-gray-400'
+                      ? 'top-1 text-xs text-gray-500 dark:text-gray-400' 
+                      : 'top-3 text-sm text-gray-400 dark:text-gray-500'
                   }`}
                 >
                   Type your message…
@@ -2122,7 +2163,7 @@ function DashboardContent() {
                 <textarea
                   ref={textareaRef}
                   rows={1}
-                  className="w-full px-3 pt-6 pb-3 border-0 bg-transparent text-gray-900 resize-none text-sm min-h-[48px] max-h-[120px] transition-all duration-200 focus:outline-none"
+                  className="w-full px-3 pt-6 pb-3 border-0 bg-transparent text-gray-900 dark:text-white resize-none text-sm min-h-[48px] max-h-[120px] transition-all duration-200 focus:outline-none placeholder-gray-400 dark:placeholder-gray-500"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onFocus={() => setInputFocused(true)}
@@ -2144,7 +2185,7 @@ function DashboardContent() {
                   handleSubmit()
                 }}
                 disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || isAtPromptLimit}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white p-2.5 rounded-2xl shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:transform-none flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px]"
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white p-2.5 rounded-2xl shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:transform-none flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px]"
                 title="Send message"
               >
                 {isLoading || isStreaming ? (
@@ -2178,7 +2219,7 @@ function DashboardContent() {
         <button
           onClick={() => setShowHelpModal(true)}
           disabled={isLoading || isStreaming}
-          className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white p-0 md:p-0 rounded-full shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-110 active:scale-95 disabled:transform-none w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+          className="bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white p-0 md:p-0 rounded-full shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-110 active:scale-95 disabled:transform-none w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
           title="Quick Start Guide"
           data-tour="education-hub"
         >
@@ -2186,36 +2227,59 @@ function DashboardContent() {
         </button>
       </div>
 
-      {/* ✅ DEBUG: Development test button */}
+      {/* ✅ ENHANCED: Development test button with better debug info */}
       {process.env.NODE_ENV === 'development' && (
-        <button
-          onClick={() => {
-            console.log('🎯 Manual tutorial trigger')
-            setShowTutorial(true)
-          }}
-          className="fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded z-50 text-sm"
-        >
-          Test Tutorial
-        </button>
+        <div className="fixed top-4 right-4 bg-red-500 text-white p-3 rounded-lg z-50 text-sm space-y-2">
+          <div>
+            <strong>🧪 Tutorial Debug</strong>
+          </div>
+          <div className="text-xs space-y-1">
+            <div>isActive: {isActive.toString()}</div>
+            <div>showTutorial: {showTutorial.toString()}</div>
+            <div>forceTutorial: {forceTutorial.toString()}</div>
+            <div>isFirstTime: {isFirstTime.toString()}</div>
+            <div>hasCompleted: {localStorage.getItem('growfly-tutorial-completed') || 'false'}</div>
+          </div>
+          <button
+            onClick={() => {
+              console.log('🎯 Manual tutorial trigger from debug panel')
+              setShowTutorial(true)
+              setForceTutorial(true)
+            }}
+            className="bg-white text-red-500 px-2 py-1 rounded text-xs font-bold w-full"
+          >
+            🎯 Force Start Tutorial
+          </button>
+          <button
+            onClick={() => {
+              localStorage.removeItem('growfly-tutorial-completed')
+              sessionStorage.setItem('justCompletedOnboarding', 'true')
+              window.location.reload()
+            }}
+            className="bg-yellow-500 text-white px-2 py-1 rounded text-xs font-bold w-full"
+          >
+            🔄 Reset as New User
+          </button>
+        </div>
       )}
 
       {/* Help Modal */}
       {showHelpModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-5xl mx-4 w-full max-h-[90vh] overflow-y-auto border border-gray-200/50">
+          <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-5xl mx-4 w-full max-h-[90vh] overflow-y-auto border border-gray-200/50 dark:border-gray-700/50">
             <div className="p-8">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
                     🚀 Quick Start Hub
                   </h2>
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 dark:text-gray-400">
                     Choose from these proven business prompts to get immediate value from Growfly
                   </p>
                 </div>
                 <button 
                   onClick={() => setShowHelpModal(false)} 
-                  className="p-3 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-all duration-200"
+                  className="p-3 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -2229,16 +2293,16 @@ function DashboardContent() {
                     setShowHelpModal(false)
                   }}
                   disabled={isLoading || isStreaming || isAtPromptLimit}
-                  className="group p-6 text-left bg-gray-50 rounded-3xl hover:bg-gray-100 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200"
+                  className="group p-6 text-left bg-gray-50 dark:bg-gray-800 rounded-3xl hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200 dark:border-gray-700"
                 >
                   <div className="flex items-start gap-4">
                     <div className="text-4xl group-hover:scale-110 transition-transform duration-300">📈</div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-lg text-gray-900 mb-2">Marketing Strategies</h4>
-                      <p className="text-sm text-gray-600 leading-relaxed">Get actionable marketing ideas, campaign strategies, and customer acquisition tactics you can implement immediately to grow your business.</p>
+                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Marketing Strategies</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Get actionable marketing ideas, campaign strategies, and customer acquisition tactics you can implement immediately to grow your business.</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Social Media</span>
-                        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Content Strategy</span>
+                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Social Media</span>
+                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Content Strategy</span>
                       </div>
                     </div>
                   </div>
@@ -2249,16 +2313,16 @@ function DashboardContent() {
                     setShowHelpModal(false)
                   }}
                   disabled={isLoading || isStreaming || isAtPromptLimit}
-                  className="group p-6 text-left bg-gray-50 rounded-3xl hover:bg-gray-100 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200"
+                  className="group p-6 text-left bg-gray-50 dark:bg-gray-800 rounded-3xl hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200 dark:border-gray-700"
                 >
                   <div className="flex items-start gap-4">
                     <div className="text-4xl group-hover:scale-110 transition-transform duration-300">⚡</div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-lg text-gray-900 mb-2">Business Optimization</h4>
-                      <p className="text-sm text-gray-600 leading-relaxed">Identify bottlenecks, streamline processes, and find quick wins to improve efficiency, reduce costs, and boost productivity.</p>
+                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Business Optimization</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Identify bottlenecks, streamline processes, and find quick wins to improve efficiency, reduce costs, and boost productivity.</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Process Improvement</span>
-                        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Cost Reduction</span>
+                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Process Improvement</span>
+                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Cost Reduction</span>
                       </div>
                     </div>
                   </div>
@@ -2269,16 +2333,16 @@ function DashboardContent() {
                     setShowHelpModal(false)
                   }}
                   disabled={isLoading || isStreaming || isAtPromptLimit}
-                  className="group p-6 text-left bg-gray-50 rounded-3xl hover:bg-gray-100 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200"
+                  className="group p-6 text-left bg-gray-50 dark:bg-gray-800 rounded-3xl hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200 dark:border-gray-700"
                 >
                   <div className="flex items-start gap-4">
                     <div className="text-4xl group-hover:scale-110 transition-transform duration-300">📊</div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-lg text-gray-900 mb-2">Business Proposals</h4>
-                      <p className="text-sm text-gray-600 leading-relaxed">Create compelling proposals, pitch decks, and business documents that win clients and secure funding opportunities.</p>
+                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Business Proposals</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Create compelling proposals, pitch decks, and business documents that win clients and secure funding opportunities.</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Proposals</span>
-                        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Pitch Decks</span>
+                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Proposals</span>
+                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Pitch Decks</span>
                       </div>
                     </div>
                   </div>
@@ -2289,53 +2353,53 @@ function DashboardContent() {
                     setShowHelpModal(false)
                   }}
                   disabled={isLoading || isStreaming || isAtPromptLimit}
-                  className="group p-6 text-left bg-gray-50 rounded-3xl hover:bg-gray-100 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200"
+                  className="group p-6 text-left bg-gray-50 dark:bg-gray-800 rounded-3xl hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200 dark:border-gray-700"
                 >
                   <div className="flex items-start gap-4">
                     <div className="text-4xl group-hover:scale-110 transition-transform duration-300">🎯</div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-lg text-gray-900 mb-2">Industry Analysis</h4>
-                      <p className="text-gray-600 leading-relaxed">Stay ahead of the competition with insights into industry trends, market opportunities, and strategic positioning.</p>
+                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Industry Analysis</h4>
+                      <p className="text-gray-600 dark:text-gray-400 leading-relaxed">Stay ahead of the competition with insights into industry trends, market opportunities, and strategic positioning.</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Market Research</span>
-                        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Competitive Analysis</span>
+                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Market Research</span>
+                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Competitive Analysis</span>
                       </div>
                     </div>
                   </div>
                 </button>
               </div>
               
-              <div className="mt-8 p-6 bg-gray-50 rounded-2xl border border-gray-200">
-                <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <div className="mt-8 p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                   ⚡ Pro Tips for Better Results
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div className="flex items-start gap-3">
                     <span className="text-gray-500 text-lg">💡</span>
                     <div>
-                      <h4 className="font-semibold text-gray-800 mb-1">Be Specific</h4>
-                      <p className="text-gray-600">Include your industry, company size, and specific goals for more tailored advice.</p>
+                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Be Specific</h4>
+                      <p className="text-gray-600 dark:text-gray-400">Include your industry, company size, and specific goals for more tailored advice.</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <span className="text-gray-500 text-lg">📁</span>
                     <div>
-                      <h4 className="font-semibold text-gray-800 mb-1">Upload Files</h4>
-                      <p className="text-gray-600">Share documents, spreadsheets, or presentations for analysis and insights.</p>
+                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Upload Files</h4>
+                      <p className="text-gray-600 dark:text-gray-400">Share documents, spreadsheets, or presentations for analysis and insights.</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <span className="text-gray-500 text-lg">🎨</span>
                     <div>
-                      <h4 className="font-semibold text-gray-800 mb-1">Create Images</h4>
-                      <p className="text-gray-600">Generate professional visuals for marketing, presentations, and social media.</p>
+                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Create Images</h4>
+                      <p className="text-gray-600 dark:text-gray-400">Generate professional visuals for marketing, presentations, and social media.</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <span className="text-gray-500 text-lg">🔖</span>
                     <div>
-                      <h4 className="font-semibold text-gray-800 mb-1">Save Responses</h4>
-                      <p className="text-gray-600">Bookmark useful responses to access them anytime in your saved collection.</p>
+                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Save Responses</h4>
+                      <p className="text-gray-600 dark:text-gray-400">Bookmark useful responses to access them anytime in your saved collection.</p>
                     </div>
                   </div>
                 </div>
@@ -2378,9 +2442,9 @@ function DashboardContent() {
         />
       )}
 
-      {/* ✅ FIXED: Tutorial Component with proper state management */}
+      {/* ✅ FIXED: Tutorial Component with force option */}
       <GrowflyTutorial 
-        isFirstTime={showTutorial}
+        isFirstTime={showTutorial || forceTutorial}
         onComplete={handleTutorialComplete}
       />
     </div>
@@ -2390,10 +2454,10 @@ function DashboardContent() {
 export default function Dashboard() {
   return (
     <Suspense fallback={
-      <div className="h-screen bg-gray-50 flex items-center justify-center">
+      <div className="h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 dark:border-gray-400 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading dashboard...</p>
         </div>
       </div>
     }>

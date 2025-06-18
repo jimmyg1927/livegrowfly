@@ -37,17 +37,29 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
   const [userInteracted, setUserInteracted] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
 
-  // ✅ FIXED: Respond to isFirstTime prop changes properly
+  // ✅ FIXED: Better logic for responding to isFirstTime prop changes
   useEffect(() => {
     console.log('🎯 Tutorial isFirstTime changed:', isFirstTime, 'isActive:', isActive)
-    if (isFirstTime && !isActive) {
+    
+    if (isFirstTime) {
       console.log('🚀 Starting tutorial from prop change')
+      // Reset state for fresh start
+      setCurrentStep(0)
+      setStepCompleted(false)
+      setUserInteracted(false)
+      setTargetRect(null)
+      
+      // Start tutorial after a short delay
       setTimeout(() => {
         startTutorial()
         playSound('welcome')
       }, 500)
+    } else if (!isFirstTime && isActive) {
+      // If isFirstTime becomes false and tutorial is active, close it
+      console.log('🎯 Closing tutorial due to isFirstTime becoming false')
+      setIsActive(false)
     }
-  }, [isFirstTime])
+  }, [isFirstTime]) // Only depend on isFirstTime, not isActive
 
   // Sound effects using Web Audio API
   const playSound = useCallback((type: 'start' | 'step' | 'complete' | 'welcome' | 'celebration') => {
@@ -215,10 +227,11 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
     }
   ]
 
+  // ✅ FIXED: Simplified start tutorial function
   const startTutorial = () => {
     console.log('🎯 Starting tutorial...')
-    setCurrentStep(0)
     setIsActive(true)
+    setCurrentStep(0)
     setStepCompleted(false)
     setUserInteracted(false)
     updateTargetPosition(tutorialSteps[0])
@@ -287,7 +300,7 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
     }
   }
 
-  // ✅ FIXED: Close tutorial properly
+  // ✅ FIXED: Better close tutorial handling
   const closeTutorial = () => {
     console.log('✅ Closing tutorial')
     setShowConfetti(true)
@@ -297,6 +310,9 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
       setIsActive(false)
       setTargetRect(null)
       setShowConfetti(false)
+      setCurrentStep(0)
+      setStepCompleted(false)
+      setUserInteracted(false)
       
       // Call the parent's onComplete callback
       if (onComplete) {
@@ -312,8 +328,14 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
     }
   }
 
-  // ✅ FIXED: Add debug logging to render
-  console.log('🎯 Tutorial render state:', { isActive, isFirstTime, currentStep, targetRect: !!targetRect })
+  // ✅ ENHANCED: Add debug logging to render
+  console.log('🎯 Tutorial render state:', { 
+    isActive, 
+    isFirstTime, 
+    currentStep, 
+    targetRect: !!targetRect,
+    hasCompletedTutorial: typeof window !== 'undefined' ? localStorage.getItem('growfly-tutorial-completed') : null
+  })
 
   if (!isActive) {
     console.log('🎯 Tutorial not active, not rendering')
