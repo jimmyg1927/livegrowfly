@@ -627,50 +627,49 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
       {/* 🎨 Interactive overlay */}
       <div className="fixed inset-0 bg-gradient-to-br from-slate-900/70 via-blue-900/40 to-slate-900/70 z-[999] backdrop-blur-sm">
         
-        {/* ✨ Advanced interactive spotlight */}
+        {/* ✨ IMPROVED: Crystal clear spotlight with sharp borders */}
         {hasTarget && (
           <>
-            {/* Animated spotlight with glow */}
+            {/* Dark overlay with sharp cutout */}
             <div 
-              className="absolute rounded-2xl transition-all duration-700 ease-out"
-              style={{
-                top: targetRect!.top - 12,
-                left: targetRect!.left - 12,
-                width: targetRect!.width + 24,
-                height: targetRect!.height + 24,
-                boxShadow: `
-                  0 0 0 9999px rgba(15, 23, 42, 0.3),
-                  0 0 80px rgba(59, 130, 246, 0.4),
-                  inset 0 0 80px rgba(99, 102, 241, 0.1)
-                `,
-                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(99, 102, 241, 0.1))',
-              }}
-            />
-            
-            {/* Interactive border ring */}
-            <div 
-              className="absolute border-4 rounded-2xl transition-all duration-700 ease-out"
+              className="absolute rounded-xl transition-all duration-700 ease-out"
               style={{
                 top: targetRect!.top - 8,
                 left: targetRect!.left - 8,
                 width: targetRect!.width + 16,
                 height: targetRect!.height + 16,
-                borderImage: 'linear-gradient(135deg, #3b82f6, #8b5cf6, #10b981) 1',
-                animation: isWaitingForAction ? 'tutorial-urgent-pulse 1s infinite' : 'tutorial-gentle-pulse 2s infinite',
+                boxShadow: `
+                  0 0 0 9999px rgba(15, 23, 42, 0.85),
+                  inset 0 0 0 4px rgba(59, 130, 246, 0.8)
+                `,
+                background: 'transparent',
               }}
             />
             
-            {/* Action indicator */}
+            {/* Bright, crisp border ring */}
+            <div 
+              className="absolute border-4 border-blue-400 rounded-xl transition-all duration-700 ease-out shadow-lg"
+              style={{
+                top: targetRect!.top - 6,
+                left: targetRect!.left - 6,
+                width: targetRect!.width + 12,
+                height: targetRect!.height + 12,
+                animation: isWaitingForAction ? 'tutorial-urgent-pulse 1s infinite' : 'tutorial-gentle-pulse 2s infinite',
+                boxShadow: '0 0 20px rgba(59, 130, 246, 0.6), 0 0 40px rgba(59, 130, 246, 0.3)',
+              }}
+            />
+            
+            {/* Clear action indicator */}
             {isWaitingForAction && (
               <div 
-                className="absolute flex items-center gap-2 bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium animate-bounce"
+                className="absolute flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-bold animate-bounce shadow-xl"
                 style={{
-                  top: targetRect!.top - 35,
-                  left: targetRect!.left + targetRect!.width / 2 - 50,
+                  top: targetRect!.top - 45,
+                  left: targetRect!.left + targetRect!.width / 2 - 60,
                 }}
               >
                 <MousePointer className="w-4 h-4" />
-                Click here!
+                👆 Click here!
               </div>
             )}
           </>
