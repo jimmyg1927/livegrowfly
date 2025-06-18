@@ -1,10 +1,12 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import { 
   Sparkles, Zap, Users, Heart, Lightbulb, Trophy, Handshake, Settings, 
   Image, BookOpen, X, ChevronRight, ChevronLeft, Star, Rocket, 
-  Target, Brain, Palette, MessageCircle, Gift, Crown, Wand2, Play
+  Target, Brain, Palette, MessageCircle, Gift, Crown, Wand2, Play,
+  ArrowDown, MousePointer, Eye, Navigation
 } from 'lucide-react'
 
 interface GrowflyTutorialProps {
@@ -14,55 +16,51 @@ interface GrowflyTutorialProps {
 
 interface TutorialStep {
   id: string
-  target: string
   title: string
   content: string
   icon: React.ReactNode
-  placement: 'top' | 'bottom' | 'left' | 'right' | 'center'
+  route?: string // Page to navigate to
+  target?: string // Element to highlight
+  action?: 'click' | 'type' | 'hover' | 'observe' // Required user action
   actionText?: string
   proTip?: string
-  challenge?: string
+  waitForUser?: boolean // Wait for user to perform action
   celebration?: boolean
 }
 
-const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({ 
+const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({ 
   isFirstTime = false,
   onComplete 
 }) => {
+  const router = useRouter()
+  const pathname = usePathname()
   const [isActive, setIsActive] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null)
   const [showConfetti, setShowConfetti] = useState(false)
-  const [stepCompleted, setStepCompleted] = useState(false)
-  const [userInteracted, setUserInteracted] = useState(false)
+  const [userActionCompleted, setUserActionCompleted] = useState(false)
+  const [isWaitingForUser, setIsWaitingForUser] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
   const [showSkipModal, setShowSkipModal] = useState(false)
 
-  // ✅ FIXED: Respond to isFirstTime prop changes properly
+  // ✅ Start tutorial when prop changes
   useEffect(() => {
-    console.log('🎯 Tutorial isFirstTime changed:', isFirstTime, 'isActive:', isActive)
     if (isFirstTime) {
-      console.log('🚀 Starting tutorial from prop change')
-      // Reset state for fresh start
+      console.log('🚀 Starting interactive tutorial')
       setCurrentStep(0)
-      setStepCompleted(false)
-      setUserInteracted(false)
-      setTargetRect(null)
-      
-      // Start tutorial after a short delay
+      setUserActionCompleted(false)
+      setIsWaitingForUser(false)
       setTimeout(() => {
         startTutorial()
         playSound('welcome')
       }, 500)
     } else if (!isFirstTime && isActive) {
-      // If isFirstTime becomes false and tutorial is active, close it
-      console.log('🎯 Closing tutorial due to isFirstTime becoming false')
       setIsActive(false)
     }
   }, [isFirstTime])
 
-  // Sound effects using Web Audio API
-  const playSound = useCallback((type: 'start' | 'step' | 'complete' | 'welcome' | 'celebration') => {
+  // Sound effects
+  const playSound = useCallback((type: 'start' | 'step' | 'complete' | 'welcome' | 'celebration' | 'navigate') => {
     if (typeof window === 'undefined') return
     
     try {
@@ -73,13 +71,13 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
       oscillator.connect(gainNode)
       gainNode.connect(audioContext.destination)
       
-      // Different frequencies for different actions
       const frequencies = {
         start: [440, 550, 660],
         step: [523.25],
         complete: [523.25, 659.25, 783.99],
         welcome: [440, 523.25, 659.25],
-        celebration: [523.25, 659.25, 783.99, 1046.50]
+        celebration: [523.25, 659.25, 783.99, 1046.50],
+        navigate: [659.25, 783.99]
       }
       
       const freq = frequencies[type]
@@ -97,179 +95,254 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
       oscillator.start()
       oscillator.stop(audioContext.currentTime + 0.3)
     } catch (error) {
-      // Gracefully handle audio errors
       console.log('Audio not available')
     }
   }, [])
 
+  // 🚀 INTERACTIVE TUTORIAL STEPS
   const tutorialSteps: TutorialStep[] = [
     {
       id: 'welcome',
-      target: 'body',
-      title: 'Welcome to Growfly! 🚀',
-      content: 'Get ready for an incredible journey! Growfly is your AI-powered business growth companion that adapts to YOUR unique needs. With cutting-edge features added daily, you\'re about to unlock the future of business success!',
-      icon: <div className="relative"><Sparkles className="w-6 h-6 text-emerald-400" /></div>,
-      placement: 'center',
-      actionText: 'Start Your Journey',
-      proTip: 'This tour takes just 2 minutes but could transform your business forever!',
+      title: 'Welcome to Your Interactive Tour! 🎯',
+      content: 'Ready for a hands-on journey? I\'ll guide you through Growfly\'s most powerful features step by step. You\'ll actually use each feature as we explore together!',
+      icon: <Sparkles className="w-6 h-6 text-emerald-400" />,
+      actionText: 'Let\'s start exploring your new superpower!',
+      proTip: 'This interactive tour takes 3 minutes and will make you a Growfly expert!',
       celebration: true
     },
     {
-      id: 'dashboard',
-      target: 'body', // ✅ Use body for center placement until data-tour elements are added
-      title: 'Your AI Command Center',
-      content: 'This is mission control for your business growth! Here, you can have natural conversations with AI that knows YOUR brand, upload any file type for instant analysis, and generate content that sounds authentically you.',
-      icon: <div className="relative"><Zap className="w-6 h-6 text-blue-400" /></div>,
-      placement: 'center', // ✅ Center it for now
-      actionText: 'Try asking: "Create a social media campaign for my new product launch"',
-      proTip: 'Pro tip: The more specific you are, the more amazing your results will be!',
-      challenge: 'Challenge: Upload a document and ask Growfly to summarize it in your brand voice'
+      id: 'sidebar-navigation',
+      title: 'Your Command Center 🎛️',
+      content: 'This sidebar is your mission control! Each section unlocks different superpowers. Let\'s explore them one by one.',
+      icon: <Navigation className="w-6 h-6 text-blue-400" />,
+      target: '[data-sidebar]', // Target the entire sidebar
+      action: 'observe',
+      actionText: 'Look at all these powerful features waiting for you!',
+      proTip: 'Each icon represents a different way to grow your business'
     },
     {
-      id: 'saved-responses',
-      target: 'body',
-      title: 'Your Digital Treasure Vault',
-      content: 'Every brilliant response becomes a reusable asset! Save your best AI-generated content here and build an ever-growing library of winning templates, copy, and ideas that you can customize and reuse infinitely.',
-      icon: <div className="relative"><Heart className="w-6 h-6 text-pink-400" /></div>,
-      placement: 'center',
-      actionText: 'Build your content empire, one response at a time',
-      proTip: 'Smart entrepreneurs save everything - you never know when you\'ll need that perfect headline again!',
-      challenge: 'Goal: Create your first template library this week'
+      id: 'collab-zone-nav',
+      title: 'Team Collaboration Magic ✨',
+      content: 'Let\'s visit your collaboration headquarters! Click "Collab Zone" in the sidebar to see where teams become unstoppable.',
+      icon: <Users className="w-6 h-6 text-indigo-400" />,
+      route: '/collab-zone',
+      target: '[href="/collab-zone"], [data-nav="collab-zone"]',
+      action: 'click',
+      waitForUser: true,
+      actionText: 'Click "Collab Zone" in the sidebar now!',
+      proTip: 'Teams using collaborative AI are 3x more productive!'
     },
     {
-      id: 'collab-zone',
-      target: 'body',
-      title: 'Team Collaboration Magic',
-      content: 'Transform solo work into team brilliance! Share AI responses instantly with your team, collaborate in real-time, provide feedback, and download polished final versions. Turn individual insights into collective genius.',
-      icon: <div className="relative"><Users className="w-6 h-6 text-indigo-400" /></div>,
-      placement: 'center',
-      actionText: 'Perfect for agencies, marketing teams, and content creators',
-      proTip: 'Teams using collaborative AI are 3x more productive than solo workers!',
-      challenge: 'Next step: Invite your first team member and share a response'
+      id: 'collab-features',
+      title: 'Collaboration Superpowers 🤝',
+      content: 'Here\'s where magic happens! Share AI responses with your team, get feedback in real-time, and build collective brilliance.',
+      icon: <Heart className="w-6 h-6 text-pink-400" />,
+      target: '[data-tour="collab-features"]',
+      action: 'observe',
+      actionText: 'This is where teams become unstoppable!',
+      proTip: 'Share any AI response instantly with one click'
     },
     {
-      id: 'gallery',
-      target: 'body',
-      title: 'Your Creative Gallery',
-      content: 'Every visual you create becomes part of your growing creative portfolio! Browse stunning AI-generated artwork, organize by campaigns, and watch your visual brand library expand with every creation.',
-      icon: <div className="relative"><Image className="w-6 h-6 text-purple-400" /></div>,
-      placement: 'center',
-      actionText: 'From social media graphics to presentation visuals - all in one place',
-      proTip: 'Visual content gets 94% more engagement than text alone!',
-      challenge: 'Try this: Generate 5 different styles of the same concept'
+      id: 'saved-responses-nav',
+      title: 'Your Content Treasure Vault 💎',
+      content: 'Time to see your digital gold mine! Click "Saved Responses" to discover your growing content library.',
+      icon: <BookOpen className="w-6 h-6 text-amber-400" />,
+      route: '/saved-responses',
+      target: '[href="/saved-responses"], [data-nav="saved-responses"]',
+      action: 'click',
+      waitForUser: true,
+      actionText: 'Click "Saved Responses" in the sidebar!',
+      proTip: 'Every brilliant response becomes a reusable template'
     },
     {
-      id: 'education-hub',
-      target: 'body',
-      title: 'AI Mastery Academy',
-      content: 'Level up from AI beginner to business growth expert! Access cutting-edge strategies, proven frameworks, and insider techniques that top entrepreneurs use to 10x their results with AI.',
-      icon: <div className="relative"><BookOpen className="w-6 h-6 text-amber-400" /></div>,
-      placement: 'center',
-      actionText: 'From prompt engineering to growth hacking - master it all',
-      proTip: 'Companies using AI strategically grow 5x faster than competitors!',
-      challenge: 'This week: Complete one advanced tutorial and implement the strategy'
+      id: 'saved-features',
+      title: 'Your Content Empire 📚',
+      content: 'Every amazing AI response you generate gets saved here. Build templates, organize by campaigns, and never lose a great idea again!',
+      icon: <Target className="w-6 h-6 text-green-400" />,
+      target: '[data-tour="saved-content"]',
+      action: 'observe',
+      actionText: 'Your content library grows with every interaction!',
+      proTip: 'Smart entrepreneurs save everything - you never know when you\'ll need that perfect headline'
     },
     {
-      id: 'wishlist',
-      target: 'body',
-      title: 'Shape Growfly\'s Future',
-      content: 'Your ideas drive our innovation! This isn\'t just a suggestion box - it\'s where game-changing features are born. Our development team prioritizes the most-loved ideas from power users like you.',
-      icon: <div className="relative"><Lightbulb className="w-6 h-6 text-yellow-400" /></div>,
-      placement: 'center',
-      actionText: 'Your breakthrough idea could become reality within weeks',
-      proTip: 'Users who actively suggest features get early access to new releases!',
-      challenge: 'Mission: Submit your first feature idea and vote on others'
+      id: 'gallery-nav',
+      title: 'Visual Creativity Hub 🎨',
+      content: 'Ready to see your creative gallery? Click "Gallery" to explore your AI-generated visual masterpieces!',
+      icon: <Palette className="w-6 h-6 text-purple-400" />,
+      route: '/gallery',
+      target: '[href="/gallery"], [data-nav="gallery"]',
+      action: 'click',
+      waitForUser: true,
+      actionText: 'Click "Gallery" to see your creative workspace!',
+      proTip: 'Visual content gets 94% more engagement than text alone'
     },
     {
-      id: 'trusted-partners',
-      target: 'body',
-      title: 'Human + AI Powerhouse',
-      content: 'Coming soon: The perfect fusion of AI efficiency and human expertise! Connect with verified professionals who can take your AI-generated work to the final mile. Think AI + expert = unstoppable results.',
-      icon: <div className="relative"><Handshake className="w-6 h-6 text-green-400" /></div>,
-      placement: 'center',
-      actionText: 'The future of work: AI creativity + human polish',
-      proTip: 'Early access list members get 50% off professional services when we launch!',
-      challenge: 'Be ready: Join the waitlist for exclusive early access'
+      id: 'gallery-features',
+      title: 'Creative Powerhouse 🖼️',
+      content: 'Every image you create with AI becomes part of your growing visual brand library. Organize by campaigns and watch your creativity compound!',
+      icon: <Image className="w-6 h-6 text-cyan-400" />,
+      target: '[data-tour="gallery-grid"]',
+      action: 'observe',
+      actionText: 'Your visual empire starts here!',
+      proTip: 'Generate multiple styles of the same concept to find what works best'
     },
     {
-      id: 'brand-settings',
-      target: 'body',
-      title: 'Your Brand DNA Lab',
-      content: 'This is where the magic begins! Fine-tune how Growfly understands your unique voice, style, and business personality. The more it knows about you, the more it becomes your perfect AI business partner.',
-      icon: <div className="relative"><Settings className="w-6 h-6 text-slate-400" /></div>,
-      placement: 'center',
-      actionText: 'Make every AI response sound authentically YOU',
-      proTip: 'Brands with consistent voice across all content see 23% more revenue!',
-      challenge: 'Action item: Spend 5 minutes perfecting your brand voice settings'
+      id: 'brand-settings-nav',
+      title: 'Your Brand DNA Lab 🧬',
+      content: 'Let\'s fine-tune your AI assistant! Click "Brand Settings" to teach Growfly your unique voice and style.',
+      icon: <Settings className="w-6 h-6 text-slate-400" />,
+      route: '/brand-settings',
+      target: '[href="/brand-settings"], [data-nav="brand-settings"]',
+      action: 'click',
+      waitForUser: true,
+      actionText: 'Click "Brand Settings" to personalize your AI!',
+      proTip: 'The more Growfly knows about you, the better it becomes'
     },
     {
-      id: 'xp-system',
-      target: 'body',
-      title: 'Level Up & Get Rewarded',
-      content: 'Every interaction makes you stronger! Earn XP, unlock achievements, and climb the leaderboards. Top performers get exclusive rewards: gift cards, VIP event access, networking opportunities, and surprise bonuses!',
-      icon: <div className="relative"><Trophy className="w-6 h-6 text-orange-400" /></div>,
-      placement: 'center',
-      actionText: 'Gaming meets business growth - achieve while you succeed',
-      proTip: 'Power users in the top 10% get monthly surprise rewards!',
-      challenge: 'Your first goal: Reach level 5 this week by engaging daily'
+      id: 'brand-features',
+      title: 'AI Personality Training 🎭',
+      content: 'This is where you train your AI to sound exactly like YOU. Set your tone, style, and business personality for authentic results every time.',
+      icon: <Brain className="w-6 h-6 text-orange-400" />,
+      target: '[data-tour="brand-voice"]',
+      action: 'observe',
+      actionText: 'Make every AI response authentically YOU!',
+      proTip: 'Brands with consistent voice see 23% more revenue'
+    },
+    {
+      id: 'back-to-dashboard',
+      title: 'Back to Mission Control 🚀',
+      content: 'Let\'s return to your AI command center! Click "Dashboard" to see where the magic begins.',
+      icon: <Zap className="w-6 h-6 text-blue-400" />,
+      route: '/dashboard',
+      target: '[href="/dashboard"], [data-nav="dashboard"]',
+      action: 'click',
+      waitForUser: true,
+      actionText: 'Click "Dashboard" to return to your AI workspace!',
+      proTip: 'This is where every great idea starts'
+    },
+    {
+      id: 'chat-interface',
+      title: 'Your AI Conversation Partner 💬',
+      content: 'This is where conversations become conversions! Type anything and watch Growfly understand your business like a human expert.',
+      icon: <MessageCircle className="w-6 h-6 text-emerald-400" />,
+      target: '[data-tour="chat-input"], input[placeholder*="message"], textarea[placeholder*="message"]',
+      action: 'click',
+      waitForUser: true,
+      actionText: 'Click in the message box and try asking: "Create a social media post"',
+      proTip: 'The more specific you are, the more amazing your results!'
     },
     {
       id: 'finale',
-      target: 'body',
-      title: 'You\'re Ready to Dominate!',
-      content: 'Congratulations, growth hacker! You\'ve unlocked the full power of Growfly. You\'re now equipped with tools that 99% of businesses don\'t even know exist. Time to leave your competition in the dust!',
-      icon: <div className="relative"><Rocket className="w-6 h-6 text-emerald-400" /></div>,
-      placement: 'center',
-      actionText: 'Start your business transformation NOW',
+      title: 'You\'re Ready to Dominate! 🏆',
+      content: 'Congratulations! You\'ve mastered Growfly\'s core features. You\'re now equipped with AI superpowers that 99% of businesses don\'t even know exist!',
+      icon: <Trophy className="w-6 h-6 text-yellow-400" />,
+      actionText: 'Start creating amazing content right now!',
       proTip: 'Remember: You can replay this tour anytime from Settings → Tutorial',
-      challenge: 'Ultimate challenge: Generate your first piece of content right now!',
       celebration: true
     }
   ]
 
-  // ✅ FIXED: Simplified start tutorial function
   const startTutorial = () => {
-    console.log('🎯 Starting tutorial...')
+    console.log('🎯 Starting interactive tutorial...')
     setIsActive(true)
     setCurrentStep(0)
-    setStepCompleted(false)
-    setUserInteracted(false)
-    updateTargetPosition(tutorialSteps[0])
+    setUserActionCompleted(false)
+    setIsWaitingForUser(false)
+    updateCurrentStep(tutorialSteps[0])
     playSound('start')
   }
 
-  const updateTargetPosition = (step: TutorialStep) => {
+  const updateCurrentStep = async (step: TutorialStep) => {
     setIsAnimating(true)
     
-    if (step.target === 'body') {
+    // Navigate to route if specified
+    if (step.route && pathname !== step.route) {
+      console.log(`🧭 Navigating to ${step.route}`)
+      playSound('navigate')
+      router.push(step.route)
+      
+      // Wait for navigation to complete
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    }
+    
+    // Find and highlight target element
+    if (step.target) {
+      setTimeout(() => {
+        const element = document.querySelector(step.target!) as HTMLElement
+        if (element) {
+          const rect = element.getBoundingClientRect()
+          setTargetRect(rect)
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          
+          // Add interactive pulse animation
+          element.style.animation = 'tutorial-interactive-pulse 2s infinite'
+          setTimeout(() => {
+            if (element.style) element.style.animation = ''
+          }, 6000)
+        } else {
+          console.log('🎯 Target element not found:', step.target)
+          setTargetRect(null)
+        }
+        setIsAnimating(false)
+      }, 500)
+    } else {
       setTargetRect(null)
       setIsAnimating(false)
-      return
     }
+    
+    // Set up user interaction waiting
+    if (step.waitForUser && step.action === 'click' && step.target) {
+      setIsWaitingForUser(true)
+      setUserActionCompleted(false)
+      setupUserInteractionListener(step)
+    } else {
+      setIsWaitingForUser(false)
+      setUserActionCompleted(true)
+    }
+  }
 
-    setTimeout(() => {
-      const element = document.querySelector(step.target) as HTMLElement
-      if (element) {
-        const rect = element.getBoundingClientRect()
-        setTargetRect(rect)
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  const setupUserInteractionListener = (step: TutorialStep) => {
+    const handleUserAction = (event: Event) => {
+      const target = event.target as HTMLElement
+      const stepElement = document.querySelector(step.target!)
+      
+      if (stepElement && (stepElement.contains(target) || stepElement === target)) {
+        console.log('✅ User completed required action!')
+        setUserActionCompleted(true)
+        setIsWaitingForUser(false)
+        playSound('step')
         
-        // Add pulse animation to target
-        element.style.animation = 'tutorial-pulse 2s infinite'
+        // Remove listener
+        document.removeEventListener('click', handleUserAction)
+        
+        // Auto-advance after user action
         setTimeout(() => {
-          if (element.style) element.style.animation = ''
-        }, 4000)
-      } else {
-        console.log('🎯 Target element not found:', step.target)
-        setTargetRect(null)
+          nextStep()
+        }, 1500)
       }
-      setIsAnimating(false)
-    }, 300)
+    }
+    
+    // Add click listener for user actions
+    document.addEventListener('click', handleUserAction)
+    
+    // Cleanup after 30 seconds if no action
+    setTimeout(() => {
+      document.removeEventListener('click', handleUserAction)
+      if (isWaitingForUser) {
+        console.log('⏱️ User action timeout, auto-advancing')
+        setUserActionCompleted(true)
+        setIsWaitingForUser(false)
+      }
+    }, 30000)
   }
 
   const nextStep = () => {
+    if (isWaitingForUser && !userActionCompleted) {
+      // Don't advance if waiting for user action
+      return
+    }
+    
     playSound('step')
-    setStepCompleted(true)
     
     if (tutorialSteps[currentStep].celebration) {
       setShowConfetti(true)
@@ -281,9 +354,9 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
       if (currentStep < tutorialSteps.length - 1) {
         const nextStepIndex = currentStep + 1
         setCurrentStep(nextStepIndex)
-        setStepCompleted(false)
-        setUserInteracted(false)
-        updateTargetPosition(tutorialSteps[nextStepIndex])
+        setUserActionCompleted(false)
+        setIsWaitingForUser(false)
+        updateCurrentStep(tutorialSteps[nextStepIndex])
       } else {
         closeTutorial()
       }
@@ -294,15 +367,14 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
     if (currentStep > 0) {
       const prevStepIndex = currentStep - 1
       setCurrentStep(prevStepIndex)
-      setStepCompleted(false)
-      setUserInteracted(false)
-      updateTargetPosition(tutorialSteps[prevStepIndex])
+      setUserActionCompleted(false)
+      setIsWaitingForUser(false)
+      updateCurrentStep(tutorialSteps[prevStepIndex])
     }
   }
 
-  // ✅ FIXED: Better close tutorial handling
   const closeTutorial = () => {
-    console.log('✅ Closing tutorial')
+    console.log('✅ Closing interactive tutorial')
     setShowConfetti(true)
     playSound('complete')
     
@@ -311,10 +383,9 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
       setTargetRect(null)
       setShowConfetti(false)
       setCurrentStep(0)
-      setStepCompleted(false)
-      setUserInteracted(false)
+      setUserActionCompleted(false)
+      setIsWaitingForUser(false)
       
-      // Call the parent's onComplete callback
       if (onComplete) {
         console.log('🎯 Calling onComplete callback')
         onComplete()
@@ -322,7 +393,6 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
     }, 1000)
   }
 
-  // ✅ ENHANCED: Beautiful branded skip modal instead of browser confirm
   const handleSkipClick = () => {
     setShowSkipModal(true)
   }
@@ -336,27 +406,18 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
     setShowSkipModal(false)
   }
 
-  console.log('🎯 Tutorial render state:', { 
-    isActive, 
-    isFirstTime, 
-    currentStep, 
-    targetRect: !!targetRect,
-    hasCompletedTutorial: typeof window !== 'undefined' ? localStorage.getItem('growfly-tutorial-completed') : null
-  })
-
   if (!isActive) {
-    console.log('🎯 Tutorial not active, not rendering')
     return null
   }
 
   const currentStepData = tutorialSteps[currentStep]
-  const isCenter = currentStepData.placement === 'center'
   const progress = ((currentStep + 1) / tutorialSteps.length) * 100
+  const hasTarget = currentStepData.target && targetRect
+  const isWaitingForAction = isWaitingForUser && !userActionCompleted
 
-  // ✅ COMPLETELY FIXED: Perfect positioning that prevents scrolling issues
+  // Position tooltip near target element or center
   const getTooltipPosition = () => {
-    // Always center if it's a center placement OR if target element is missing
-    if (isCenter || !targetRect) {
+    if (!hasTarget) {
       return {
         position: 'fixed' as const,
         top: '50%',
@@ -366,66 +427,45 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
       }
     }
 
-    const tooltipWidth = 480
-    const tooltipHeight = 420
+    const tooltipWidth = 420
+    const tooltipHeight = 350
     const viewportWidth = window.innerWidth
     const viewportHeight = window.innerHeight
     const padding = 24
 
-    let top = 0
-    let left = 0
+    // Position to the right of target by default
+    let top = targetRect!.top + (targetRect!.height / 2) - (tooltipHeight / 2)
+    let left = targetRect!.right + padding
 
-    // Calculate initial position based on placement
-    switch (currentStepData.placement) {
-      case 'bottom':
-        top = targetRect.bottom + padding
-        left = targetRect.left + (targetRect.width / 2) - (tooltipWidth / 2)
-        break
-      case 'top':
-        top = targetRect.top - padding - tooltipHeight
-        left = targetRect.left + (targetRect.width / 2) - (tooltipWidth / 2)
-        break
-      case 'right':
-        top = targetRect.top + (targetRect.height / 2) - (tooltipHeight / 2)
-        left = targetRect.right + padding
-        break
-      case 'left':
-        top = targetRect.top + (targetRect.height / 2) - (tooltipHeight / 2)
-        left = targetRect.left - padding - tooltipWidth
-        break
-    }
-
-    // ✅ CRITICAL FIX: Ensure tooltip is ALWAYS fully visible within viewport
-    // Horizontal constraints
-    if (left < padding) {
-      left = padding
-    }
+    // If not enough space on right, try left
     if (left + tooltipWidth > viewportWidth - padding) {
-      left = viewportWidth - tooltipWidth - padding
+      left = targetRect!.left - padding - tooltipWidth
     }
 
-    // Vertical constraints - this prevents the scrolling issue
-    if (top < padding) {
-      top = padding
+    // If still not enough space, position below
+    if (left < padding) {
+      top = targetRect!.bottom + padding
+      left = targetRect!.left + (targetRect!.width / 2) - (tooltipWidth / 2)
     }
-    if (top + tooltipHeight > viewportHeight - padding) {
-      top = viewportHeight - tooltipHeight - padding
-    }
+
+    // Ensure within viewport bounds
+    top = Math.max(padding, Math.min(top, viewportHeight - tooltipHeight - padding))
+    left = Math.max(padding, Math.min(left, viewportWidth - tooltipWidth - padding))
 
     return {
       position: 'fixed' as const,
-      top: `${Math.max(padding, top)}px`,
-      left: `${Math.max(padding, left)}px`,
+      top: `${top}px`,
+      left: `${left}px`,
       zIndex: 1000,
     }
   }
 
   return (
     <>
-      {/* ✨ STUNNING: Premium particle celebration effect */}
+      {/* ✨ Premium celebration particles */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none z-[1100] overflow-hidden">
-          {[...Array(50)].map((_, i) => (
+          {[...Array(40)].map((_, i) => (
             <div
               key={i}
               className="absolute"
@@ -437,72 +477,67 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
                 animation: 'sparkle-float 3s ease-out forwards'
               }}
             >
-              <div className={`text-2xl transform rotate-${Math.floor(Math.random() * 360)} opacity-90 animate-pulse`}>
-                {['✨', '🎯', '⚡', '🚀', '💎', '🌟', '🎊', '🔥'][Math.floor(Math.random() * 8)]}
+              <div className={`text-2xl transform rotate-${Math.floor(Math.random() * 360)} opacity-90`}>
+                {['🎯', '⚡', '🚀', '💎', '🌟', '🎊', '🔥', '✨'][Math.floor(Math.random() * 8)]}
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* 🎨 PREMIUM: Ultra-modern overlay with glassmorphism */}
-      <div className="fixed inset-0 bg-gradient-to-br from-slate-900/80 via-blue-900/50 to-slate-900/80 z-[999] backdrop-blur-lg">
+      {/* 🎨 Interactive overlay */}
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-900/70 via-blue-900/40 to-slate-900/70 z-[999] backdrop-blur-sm">
         
-        {/* ✨ INCREDIBLE: Dynamic spotlight with animated ring */}
-        {targetRect && !isCenter && (
+        {/* ✨ Advanced interactive spotlight */}
+        {hasTarget && (
           <>
-            {/* Animated spotlight background */}
+            {/* Animated spotlight with glow */}
             <div 
               className="absolute rounded-2xl transition-all duration-700 ease-out"
               style={{
-                top: targetRect.top - 16,
-                left: targetRect.left - 16,
-                width: targetRect.width + 32,
-                height: targetRect.height + 32,
+                top: targetRect!.top - 12,
+                left: targetRect!.left - 12,
+                width: targetRect!.width + 24,
+                height: targetRect!.height + 24,
                 boxShadow: `
-                  0 0 0 9999px rgba(15, 23, 42, 0.4),
-                  0 0 60px rgba(59, 130, 246, 0.3),
-                  inset 0 0 60px rgba(99, 102, 241, 0.1)
+                  0 0 0 9999px rgba(15, 23, 42, 0.3),
+                  0 0 80px rgba(59, 130, 246, 0.4),
+                  inset 0 0 80px rgba(99, 102, 241, 0.1)
                 `,
                 background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(99, 102, 241, 0.1))',
               }}
             />
             
-            {/* Pulsing border ring */}
+            {/* Interactive border ring */}
             <div 
-              className="absolute border-4 border-gradient-to-r from-blue-400 via-purple-500 to-emerald-400 rounded-2xl animate-pulse transition-all duration-700 ease-out"
+              className="absolute border-4 rounded-2xl transition-all duration-700 ease-out"
               style={{
-                top: targetRect.top - 12,
-                left: targetRect.left - 12,
-                width: targetRect.width + 24,
-                height: targetRect.height + 24,
-                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(168, 85, 247, 0.2), rgba(16, 185, 129, 0.2))',
-                borderRadius: '16px',
-                padding: '4px',
-              }}
-            >
-              <div 
-                className="w-full h-full rounded-xl bg-transparent"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(168, 85, 247, 0.1), rgba(16, 185, 129, 0.1))',
-                }}
-              />
-            </div>
-            
-            {/* Floating indicator dot */}
-            <div 
-              className="absolute w-4 h-4 rounded-full animate-bounce"
-              style={{
-                top: targetRect.top + targetRect.height / 2 - 8,
-                left: targetRect.left + targetRect.width / 2 - 8,
-                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6, #10b981)',
-                boxShadow: '0 0 20px rgba(59, 130, 246, 0.6)',
+                top: targetRect!.top - 8,
+                left: targetRect!.left - 8,
+                width: targetRect!.width + 16,
+                height: targetRect!.height + 16,
+                borderImage: 'linear-gradient(135deg, #3b82f6, #8b5cf6, #10b981) 1',
+                animation: isWaitingForAction ? 'tutorial-urgent-pulse 1s infinite' : 'tutorial-gentle-pulse 2s infinite',
               }}
             />
+            
+            {/* Action indicator */}
+            {isWaitingForAction && (
+              <div 
+                className="absolute flex items-center gap-2 bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium animate-bounce"
+                style={{
+                  top: targetRect!.top - 35,
+                  left: targetRect!.left + targetRect!.width / 2 - 50,
+                }}
+              >
+                <MousePointer className="w-4 h-4" />
+                Click here!
+              </div>
+            )}
           </>
         )}
 
-        {/* 🚀 INCREDIBLE: Modern glassmorphic tooltip with stunning design */}
+        {/* 🚀 Interactive tutorial tooltip */}
         <div 
           className={`absolute transform transition-all duration-500 ease-out ${
             isAnimating ? 'scale-95 opacity-0 translate-y-4' : 'scale-100 opacity-100 translate-y-0'
@@ -510,8 +545,8 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
           style={getTooltipPosition()}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="relative w-[480px] max-w-[95vw]">
-            {/* Background with incredible glassmorphism */}
+          <div className="relative w-[420px] max-w-[95vw]">
+            {/* Glassmorphic background */}
             <div className="absolute inset-0 bg-gradient-to-br from-white/95 via-white/90 to-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20" />
             
             {/* Premium gradient border */}
@@ -519,55 +554,79 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
               <div className="w-full h-full bg-gradient-to-br from-white/95 via-white/90 to-white/95 rounded-3xl" />
             </div>
 
-            {/* Content container */}
-            <div className="relative p-8">
-              {/* ✨ STUNNING: Premium header with animated icon */}
-              <div className="flex items-start justify-between mb-6">
-                <div className="flex items-center gap-4">
+            {/* Content */}
+            <div className="relative p-6">
+              {/* Header */}
+              <div className="flex items-start justify-between mb-5">
+                <div className="flex items-center gap-3">
                   <div className="relative">
-                    {/* Animated icon background */}
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-emerald-500/20 rounded-2xl animate-pulse" />
-                    <div className="relative w-14 h-14 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl flex items-center justify-center shadow-lg border border-white/40">
+                    <div className="relative w-12 h-12 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl flex items-center justify-center shadow-lg border border-white/40">
                       {currentStepData.icon}
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold bg-gradient-to-r from-slate-800 via-blue-600 to-purple-600 bg-clip-text text-transparent leading-tight mb-1">
+                    <h3 className="text-lg font-bold bg-gradient-to-r from-slate-800 via-blue-600 to-purple-600 bg-clip-text text-transparent leading-tight mb-1">
                       {currentStepData.title}
                     </h3>
-                    <div className="flex items-center gap-2 text-sm text-slate-500">
-                      <Play className="w-4 h-4" />
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <Play className="w-3 h-3" />
                       <span>Interactive Tutorial</span>
+                      {isWaitingForAction && (
+                        <>
+                          <span>•</span>
+                          <span className="text-blue-600 font-medium animate-pulse">Waiting for you...</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
                 
-                {/* ✨ PREMIUM: Elegant close button */}
                 <button 
                   onClick={handleSkipClick}
-                  className="group relative w-10 h-10 bg-gradient-to-br from-slate-100 to-slate-200 hover:from-slate-200 hover:to-slate-300 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg border border-white/40 hover:shadow-xl hover:scale-105"
+                  className="group relative w-8 h-8 bg-gradient-to-br from-slate-100 to-slate-200 hover:from-slate-200 hover:to-slate-300 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg border border-white/40 hover:shadow-xl hover:scale-105"
                   title="Skip tour"
                 >
-                  <X className="w-5 h-5 text-slate-600 group-hover:text-slate-800 transition-colors duration-200" strokeWidth={2} />
+                  <X className="w-4 h-4 text-slate-600 group-hover:text-slate-800 transition-colors duration-200" strokeWidth={2} />
                 </button>
               </div>
 
-              {/* 🎨 BEAUTIFUL: Content sections with premium styling */}
-              <div className="space-y-5 mb-8">
-                <p className="text-slate-700 text-base leading-relaxed font-medium">
+              {/* Content */}
+              <div className="space-y-4 mb-6">
+                <p className="text-slate-700 text-sm leading-relaxed font-medium">
                   {currentStepData.content}
                 </p>
                 
                 {currentStepData.actionText && (
-                  <div className="relative p-4 bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl border border-emerald-200/60 shadow-sm">
-                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-green-500/5 rounded-2xl" />
+                  <div className={`relative p-3 rounded-2xl border shadow-sm ${
+                    isWaitingForAction 
+                      ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200/60 animate-pulse' 
+                      : 'bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200/60'
+                  }`}>
+                    <div className={`absolute inset-0 rounded-2xl ${
+                      isWaitingForAction ? 'bg-gradient-to-br from-blue-500/5 to-indigo-500/5' : 'bg-gradient-to-br from-emerald-500/5 to-green-500/5'
+                    }`} />
                     <div className="relative flex items-start gap-3">
-                      <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-500 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0 mt-0.5">
-                        <Target className="w-4 h-4 text-white" strokeWidth={2.5} />
+                      <div className={`w-7 h-7 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0 ${
+                        isWaitingForAction 
+                          ? 'bg-gradient-to-br from-blue-500 to-indigo-500' 
+                          : 'bg-gradient-to-br from-emerald-500 to-green-500'
+                      }`}>
+                        {isWaitingForAction ? (
+                          <MousePointer className="w-3 h-3 text-white" strokeWidth={2.5} />
+                        ) : (
+                          <Target className="w-3 h-3 text-white" strokeWidth={2.5} />
+                        )}
                       </div>
                       <div>
-                        <div className="font-semibold text-emerald-800 text-sm mb-1">🎯 Action Step</div>
-                        <p className="text-emerald-700 text-sm font-medium leading-relaxed">
+                        <div className={`font-semibold text-xs mb-1 ${
+                          isWaitingForAction ? 'text-blue-800' : 'text-emerald-800'
+                        }`}>
+                          {isWaitingForAction ? '👆 Your Turn!' : '🎯 Action Step'}
+                        </div>
+                        <p className={`text-xs font-medium leading-relaxed ${
+                          isWaitingForAction ? 'text-blue-700' : 'text-emerald-700'
+                        }`}>
                           {currentStepData.actionText}
                         </p>
                       </div>
@@ -576,15 +635,15 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
                 )}
                 
                 {currentStepData.proTip && (
-                  <div className="relative p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-200/60 shadow-sm">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 rounded-2xl" />
+                  <div className="relative p-3 bg-gradient-to-br from-amber-50 to-yellow-50 rounded-2xl border border-amber-200/60 shadow-sm">
+                    <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-yellow-500/5 rounded-2xl" />
                     <div className="relative flex items-start gap-3">
-                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0 mt-0.5">
-                        <Brain className="w-4 h-4 text-white" strokeWidth={2.5} />
+                      <div className="w-7 h-7 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                        <Brain className="w-3 h-3 text-white" strokeWidth={2.5} />
                       </div>
                       <div>
-                        <div className="font-semibold text-blue-800 text-sm mb-1">💡 Pro Tip</div>
-                        <p className="text-blue-700 text-sm font-medium leading-relaxed">
+                        <div className="font-semibold text-amber-800 text-xs mb-1">💡 Pro Tip</div>
+                        <p className="text-amber-700 text-xs font-medium leading-relaxed">
                           {currentStepData.proTip}
                         </p>
                       </div>
@@ -593,15 +652,15 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
                 )}
               </div>
 
-              {/* 🚀 STUNNING: Progress indicator with gradient */}
-              <div className="mb-8">
-                <div className="flex justify-between text-sm font-semibold mb-3">
+              {/* Progress */}
+              <div className="mb-6">
+                <div className="flex justify-between text-xs font-semibold mb-2">
                   <span className="text-slate-600">Step {currentStep + 1} of {tutorialSteps.length}</span>
                   <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                     {Math.round(progress)}% Complete
                   </span>
                 </div>
-                <div className="relative w-full h-3 bg-gradient-to-r from-slate-200 to-slate-300 rounded-full overflow-hidden shadow-inner">
+                <div className="relative w-full h-2 bg-gradient-to-r from-slate-200 to-slate-300 rounded-full overflow-hidden shadow-inner">
                   <div 
                     className="absolute inset-0 bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500 rounded-full transition-all duration-700 ease-out shadow-lg"
                     style={{ width: `${progress}%` }}
@@ -611,35 +670,45 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
                 </div>
               </div>
 
-              {/* 🎯 INCREDIBLE: Premium navigation with rounded buttons */}
+              {/* Navigation */}
               <div className="flex justify-between items-center">
                 <button
                   onClick={handleSkipClick}
-                  className="group relative px-5 py-3 text-slate-600 hover:text-slate-800 text-sm font-semibold bg-gradient-to-br from-slate-100 to-slate-200 hover:from-slate-200 hover:to-slate-300 rounded-2xl transition-all duration-300 shadow-lg border border-white/40 hover:shadow-xl hover:scale-105"
+                  className="group relative px-4 py-2 text-slate-600 hover:text-slate-800 text-xs font-semibold bg-gradient-to-br from-slate-100 to-slate-200 hover:from-slate-200 hover:to-slate-300 rounded-xl transition-all duration-300 shadow-lg border border-white/40 hover:shadow-xl hover:scale-105"
                 >
-                  <span className="relative z-10">Skip Tour</span>
+                  Skip Tour
                 </button>
                 
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                   {currentStep > 0 && (
                     <button
                       onClick={prevStep}
-                      className="group relative flex items-center gap-2 px-5 py-3 text-slate-700 hover:text-slate-900 text-sm font-semibold bg-gradient-to-br from-white to-slate-50 hover:from-slate-50 hover:to-slate-100 rounded-2xl transition-all duration-300 shadow-lg border border-white/60 hover:shadow-xl hover:scale-105"
+                      className="group relative flex items-center gap-1 px-4 py-2 text-slate-700 hover:text-slate-900 text-xs font-semibold bg-gradient-to-br from-white to-slate-50 hover:from-slate-50 hover:to-slate-100 rounded-xl transition-all duration-300 shadow-lg border border-white/60 hover:shadow-xl hover:scale-105"
                     >
-                      <ChevronLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" strokeWidth={2.5} />
-                      <span className="relative z-10">Back</span>
+                      <ChevronLeft className="w-3 h-3 transition-transform duration-200 group-hover:-translate-x-0.5" strokeWidth={2.5} />
+                      Back
                     </button>
                   )}
                   
                   <button
                     onClick={nextStep}
-                    className="group relative flex items-center gap-2 px-6 py-3 text-white text-sm font-bold bg-gradient-to-br from-blue-600 via-purple-600 to-emerald-600 hover:from-blue-700 hover:via-purple-700 hover:to-emerald-700 rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 border border-white/20"
+                    disabled={isWaitingForAction}
+                    className={`group relative flex items-center gap-2 px-5 py-2 text-white text-xs font-bold rounded-xl transition-all duration-300 shadow-xl hover:shadow-2xl border border-white/20 ${
+                      isWaitingForAction 
+                        ? 'bg-gradient-to-br from-slate-400 to-slate-500 cursor-not-allowed opacity-60' 
+                        : 'bg-gradient-to-br from-blue-600 via-purple-600 to-emerald-600 hover:from-blue-700 hover:via-purple-700 hover:to-emerald-700 hover:scale-105'
+                    }`}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-2xl" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-xl" />
                     {currentStep === tutorialSteps.length - 1 ? (
                       <>
                         <Rocket className="w-4 h-4 transition-transform duration-200 group-hover:translate-y-0.5" strokeWidth={2.5} />
                         <span className="relative z-10">Get Started!</span>
+                      </>
+                    ) : isWaitingForAction ? (
+                      <>
+                        <Eye className="w-4 h-4 animate-pulse" strokeWidth={2.5} />
+                        <span className="relative z-10">Waiting...</span>
                       </>
                     ) : (
                       <>
@@ -655,49 +724,43 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
         </div>
       </div>
 
-      {/* 🎨 INCREDIBLE: Premium skip confirmation modal */}
+      {/* Skip confirmation modal */}
       {showSkipModal && (
         <div className="fixed inset-0 bg-slate-900/80 z-[1200] flex items-center justify-center backdrop-blur-xl p-4">
           <div className="relative max-w-md w-full">
-            {/* Background with glassmorphism */}
             <div className="absolute inset-0 bg-gradient-to-br from-white/95 via-white/90 to-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20" />
             
-            {/* Premium gradient border */}
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-emerald-500/20 rounded-3xl p-0.5">
               <div className="w-full h-full bg-gradient-to-br from-white/95 via-white/90 to-white/95 rounded-3xl" />
             </div>
 
-            {/* Content */}
-            <div className="relative p-8">
-              {/* Header */}
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl flex items-center justify-center shadow-lg border border-white/40">
-                  <Sparkles className="w-6 h-6 text-blue-500" strokeWidth={2} />
+            <div className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl flex items-center justify-center shadow-lg border border-white/40">
+                  <Sparkles className="w-5 h-5 text-blue-500" strokeWidth={2} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold bg-gradient-to-r from-slate-800 to-blue-600 bg-clip-text text-transparent">Skip Tutorial?</h3>
-                  <p className="text-sm text-slate-600 font-medium">You can always restart it later</p>
+                  <h3 className="text-lg font-bold bg-gradient-to-r from-slate-800 to-blue-600 bg-clip-text text-transparent">Skip Interactive Tour?</h3>
+                  <p className="text-xs text-slate-600 font-medium">You can always restart it later</p>
                 </div>
               </div>
               
-              {/* Content */}
-              <p className="text-slate-700 text-sm mb-8 leading-relaxed font-medium">
-                This quick tour shows you powerful features that could
-                <span className="font-bold text-slate-800"> save you hours</span> and help you get 
-                <span className="font-bold text-slate-800"> better results faster</span>.
+              <p className="text-slate-700 text-sm mb-6 leading-relaxed font-medium">
+                This interactive tour shows you powerful features that could
+                <span className="font-bold text-slate-800"> save you hours</span> and help you 
+                <span className="font-bold text-slate-800"> work more efficiently</span>.
               </p>
               
-              {/* Actions */}
               <div className="flex gap-3">
                 <button
                   onClick={confirmSkip}
-                  className="flex-1 bg-gradient-to-br from-slate-100 to-slate-200 hover:from-slate-200 hover:to-slate-300 text-slate-700 hover:text-slate-800 py-3 px-4 rounded-2xl text-sm font-semibold transition-all duration-300 shadow-lg border border-white/40 hover:shadow-xl"
+                  className="flex-1 bg-gradient-to-br from-slate-100 to-slate-200 hover:from-slate-200 hover:to-slate-300 text-slate-700 hover:text-slate-800 py-2 px-3 rounded-xl text-sm font-semibold transition-all duration-300 shadow-lg border border-white/40 hover:shadow-xl"
                 >
                   Skip
                 </button>
                 <button
                   onClick={cancelSkip}
-                  className="flex-1 bg-gradient-to-br from-blue-600 via-purple-600 to-emerald-600 hover:from-blue-700 hover:via-purple-700 hover:to-emerald-700 text-white py-3 px-4 rounded-2xl text-sm font-bold transition-all duration-300 shadow-xl hover:shadow-2xl border border-white/20 relative overflow-hidden"
+                  className="flex-1 bg-gradient-to-br from-blue-600 via-purple-600 to-emerald-600 hover:from-blue-700 hover:via-purple-700 hover:to-emerald-700 text-white py-2 px-3 rounded-xl text-sm font-bold transition-all duration-300 shadow-xl hover:shadow-2xl border border-white/20 relative overflow-hidden"
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
                   <span className="relative z-10">Continue Tour</span>
@@ -708,16 +771,38 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
         </div>
       )}
 
-      {/* ✨ PREMIUM: Advanced CSS animations */}
+      {/* Enhanced CSS animations */}
       <style jsx global>{`
-        @keyframes tutorial-pulse {
+        @keyframes tutorial-interactive-pulse {
           0%, 100% { 
             transform: scale(1);
-            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6);
           }
           50% { 
+            transform: scale(1.03);
+            box-shadow: 0 0 0 15px rgba(59, 130, 246, 0);
+          }
+        }
+        
+        @keyframes tutorial-gentle-pulse {
+          0%, 100% { 
+            border-color: rgba(59, 130, 246, 0.8);
+            transform: scale(1);
+          }
+          50% { 
+            border-color: rgba(168, 85, 247, 0.8);
+            transform: scale(1.01);
+          }
+        }
+        
+        @keyframes tutorial-urgent-pulse {
+          0%, 100% { 
+            border-color: rgba(239, 68, 68, 0.9);
+            transform: scale(1);
+          }
+          50% { 
+            border-color: rgba(59, 130, 246, 0.9);
             transform: scale(1.02);
-            box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
           }
         }
         
@@ -748,4 +833,4 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
   )
 }
 
-export default GrowflyTutorial
+export default GrowflyInteractiveTutorial
