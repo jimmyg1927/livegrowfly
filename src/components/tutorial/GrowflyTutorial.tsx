@@ -627,10 +627,10 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
       {/* 🎨 Interactive overlay */}
       <div className="fixed inset-0 bg-gradient-to-br from-slate-900/70 via-blue-900/40 to-slate-900/70 z-[999] backdrop-blur-sm">
         
-        {/* ✨ IMPROVED: Crystal clear spotlight with sharp borders */}
+        {/* ✨ FIXED: Crystal clear spotlight with transparent highlighted area */}
         {hasTarget && (
           <>
-            {/* Dark overlay with sharp cutout */}
+            {/* Dark overlay with transparent cutout for the highlighted element */}
             <div 
               className="absolute rounded-xl transition-all duration-700 ease-out"
               style={{
@@ -639,8 +639,8 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
                 width: targetRect!.width + 16,
                 height: targetRect!.height + 16,
                 boxShadow: `
-                  0 0 0 9999px rgba(15, 23, 42, 0.85),
-                  inset 0 0 0 4px rgba(59, 130, 246, 0.8)
+                  0 0 0 9999px rgba(15, 23, 42, 0.8),
+                  inset 0 0 0 9999px transparent
                 `,
                 background: 'transparent',
               }}
