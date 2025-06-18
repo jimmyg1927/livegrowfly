@@ -44,15 +44,19 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // ✅ Start tutorial when prop changes
+  // ✅ FIXED: Start tutorial when prop changes with safety checks
   useEffect(() => {
-    if (isFirstTime) {
+    if (isFirstTime && typeof window !== 'undefined' && typeof document !== 'undefined') {
       console.log('🚀 Starting enhanced interactive tour')
       setCurrentStep(0)
       setTimeout(() => {
-        startTutorial()
-        playSound('welcome')
-      }, 300)
+        try {
+          startTutorial()
+          playSound('welcome')
+        } catch (error) {
+          console.log('❌ Error starting tutorial:', error)
+        }
+      }, 500)
     } else if (!isFirstTime && isActive) {
       setIsActive(false)
     }
@@ -215,123 +219,158 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
     playSound('start')
   }
 
-  // Enhanced element finding with intelligent retry
+  // FIXED: Enhanced element finding with safe access
   const findTargetElement = useCallback((step: TutorialStep): HTMLElement | null => {
-    if (!step.target) return null
+    if (!step.target || typeof document === 'undefined') return null
     
-    const selectors = step.target.split(', ').map(s => s.trim())
-    
-    // Sort selectors by priority (more specific first)
-    const prioritizedSelectors = selectors.sort((a, b) => {
-      const aScore = (a.includes('[data-') ? 10 : 0) + (a.includes('href') ? 5 : 0)
-      const bScore = (b.includes('[data-') ? 10 : 0) + (b.includes('href') ? 5 : 0)
-      return bScore - aScore
-    })
-    
-    for (const selector of prioritizedSelectors) {
-      try {
-        const element = document.querySelector(selector) as HTMLElement
-        if (element && 
-            element.offsetParent !== null && 
-            element.getBoundingClientRect().width > 0 && 
-            element.getBoundingClientRect().height > 0) {
-          return element
+    try {
+      const selectors = step.target.split(', ').map(s => s.trim()).filter(Boolean)
+      
+      // Sort selectors by priority (more specific first)
+      const prioritizedSelectors = selectors.sort((a, b) => {
+        const aScore = (a.includes('[data-') ? 10 : 0) + (a.includes('href') ? 5 : 0)
+        const bScore = (b.includes('[data-') ? 10 : 0) + (b.includes('href') ? 5 : 0)
+        return bScore - aScore
+      })
+      
+      for (const selector of prioritizedSelectors) {
+        try {
+          const element = document.querySelector(selector) as HTMLElement
+          if (element && 
+              element.offsetParent !== null && 
+              element.getBoundingClientRect &&
+              element.getBoundingClientRect().width > 0 && 
+              element.getBoundingClientRect().height > 0) {
+            return element
+          }
+        } catch (selectorError) {
+          console.log(`❌ Selector error for ${selector}:`, selectorError)
+          continue // Try next selector
         }
-      } catch (error) {
-        console.log(`❌ Selector error for ${selector}:`, error)
       }
+      
+      return null
+    } catch (error) {
+      console.log('❌ Error in findTargetElement:', error)
+      return null
     }
-    
-    return null
   }, [])
 
   const updateCurrentStep = async (step: TutorialStep) => {
-    setIsAnimating(true)
-    setIsNavigating(false)
-    setElementFound(true)
-    
-    // Clear any existing timeouts
-    if (retryTimeoutRef.current) {
-      clearTimeout(retryTimeoutRef.current)
-    }
-    
-    // Navigate to route if specified
-    if (step.route && pathname !== step.route) {
-      console.log(`🧭 Navigating to ${step.route}`)
-      setIsNavigating(true)
-      playSound('navigate')
+    try {
+      setIsAnimating(true)
+      setIsNavigating(false)
+      setElementFound(true)
       
-      try {
-        router.push(step.route)
-        await new Promise(resolve => setTimeout(resolve, 1800)) // Increased wait time
-      } catch (error) {
-        console.log('❌ Navigation error:', error)
-        playSound('error')
+      // Clear any existing timeouts
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current)
       }
       
-      setIsNavigating(false)
-    }
-    
-    // Enhanced element finding with retry logic
-    if (step.target) {
-      let retryCount = 0
-      const maxRetries = 4
-      
-      const attemptFind = () => {
-        const element = findTargetElement(step)
+      // Navigate to route if specified
+      if (step.route && pathname !== step.route) {
+        console.log(`🧭 Navigating to ${step.route}`)
+        setIsNavigating(true)
+        playSound('navigate')
         
-        if (element) {
-          console.log(`✅ Found target element on attempt ${retryCount + 1}:`, element)
-          const rect = element.getBoundingClientRect()
-          setTargetRect(rect)
-          setElementFound(true)
-          
-          // Smooth scroll with enhanced options
+        try {
+          router.push(step.route)
+          await new Promise(resolve => setTimeout(resolve, 1800)) // Increased wait time
+        } catch (error) {
+          console.log('❌ Navigation error:', error)
+          playSound('error')
+        }
+        
+        setIsNavigating(false)
+      }
+      
+      // Enhanced element finding with retry logic
+      if (step.target) {
+        let retryCount = 0
+        const maxRetries = 4
+        
+        const attemptFind = () => {
           try {
-            element.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'center',
-              inline: 'center'
-            })
-          } catch (error) {
-            window.scrollTo({
-              top: Math.max(0, element.offsetTop - window.innerHeight / 2),
-              left: Math.max(0, element.offsetLeft - window.innerWidth / 2),
-              behavior: 'smooth'
-            })
-          }
-          
-          playSound('success')
-          setIsAnimating(false)
-          return true
-        } else {
-          retryCount++
-          console.log(`🎯 Target element not found (attempt ${retryCount}/${maxRetries}):`, step.target)
-          
-          if (retryCount < maxRetries) {
-            retryTimeoutRef.current = setTimeout(attemptFind, 1000 * retryCount) // Exponential backoff
-            return false
-          } else {
-            console.log('❌ Max retries reached, continuing without target highlight')
-            setTargetRect(null)
-            setElementFound(false)
-            playSound('error')
-            setIsAnimating(false)
+            const element = findTargetElement(step)
+            
+            if (element) {
+              console.log(`✅ Found target element on attempt ${retryCount + 1}:`, element)
+              const rect = element.getBoundingClientRect()
+              
+              // Validate rect
+              if (rect && rect.width > 0 && rect.height > 0) {
+                setTargetRect(rect)
+                setElementFound(true)
+                
+                // Smooth scroll with enhanced options
+                try {
+                  element.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center',
+                    inline: 'center'
+                  })
+                } catch (scrollError) {
+                  try {
+                    window.scrollTo({
+                      top: Math.max(0, element.offsetTop - window.innerHeight / 2),
+                      left: Math.max(0, element.offsetLeft - window.innerWidth / 2),
+                      behavior: 'smooth'
+                    })
+                  } catch (fallbackScrollError) {
+                    console.log('❌ Scroll error:', fallbackScrollError)
+                  }
+                }
+                
+                playSound('success')
+                setIsAnimating(false)
+                return true
+              }
+            }
+            
+            retryCount++
+            console.log(`🎯 Target element not found (attempt ${retryCount}/${maxRetries}):`, step.target)
+            
+            if (retryCount < maxRetries) {
+              retryTimeoutRef.current = setTimeout(attemptFind, 1000 * retryCount) // Exponential backoff
+              return false
+            } else {
+              console.log('❌ Max retries reached, continuing without target highlight')
+              setTargetRect(null)
+              setElementFound(false)
+              playSound('error')
+              setIsAnimating(false)
+              return false
+            }
+          } catch (findError) {
+            console.log('❌ Error in attemptFind:', findError)
+            retryCount++
+            if (retryCount < maxRetries) {
+              retryTimeoutRef.current = setTimeout(attemptFind, 1000 * retryCount)
+            } else {
+              setTargetRect(null)
+              setElementFound(false)
+              setIsAnimating(false)
+            }
             return false
           }
         }
+        
+        // Start finding with initial delay
+        setTimeout(attemptFind, 800)
+      } else {
+        setTargetRect(null)
+        setElementFound(true)
+        setIsAnimating(false)
       }
-      
-      // Start finding with initial delay
-      setTimeout(attemptFind, 800)
-    } else {
-      setTargetRect(null)
-      setElementFound(true)
+    } catch (error) {
+      console.log('❌ Error in updateCurrentStep:', error)
       setIsAnimating(false)
+      setTargetRect(null)
+      setElementFound(false)
     }
   }
 
-  // Enhanced positioning with multiple strategies
+  // FIXED: Enhanced positioning with proper null checks
   const getTooltipPosition = useCallback(() => {
     const tooltipWidth = 360
     const tooltipHeight = 320
@@ -340,8 +379,23 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
     const padding = 24
     const mobileBreakpoint = 1024
 
-    // Mobile-first approach
-    if (viewportWidth < mobileBreakpoint || !hasTarget) {
+    // Mobile-first approach or no target
+    if (viewportWidth < mobileBreakpoint || !targetRect || !hasTarget) {
+      return {
+        position: 'fixed' as const,
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 1000,
+        width: `${Math.min(tooltipWidth, viewportWidth - padding * 2)}px`,
+        maxHeight: `${viewportHeight - padding * 2}px`,
+      }
+    }
+
+    // Safe access to targetRect
+    const rect = targetRect
+    if (!rect || rect.width === 0 || rect.height === 0) {
+      // Fallback to center if rect is invalid
       return {
         position: 'fixed' as const,
         top: '50%',
@@ -354,7 +408,6 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
     }
 
     // Desktop positioning strategies
-    const rect = targetRect!
     const strategies = [
       // Strategy 1: Right side
       {
@@ -418,7 +471,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
       width: `${Math.min(tooltipWidth, viewportWidth - padding * 2)}px`,
       maxHeight: `${viewportHeight - padding * 2}px`,
     }
-  }, [targetRect])
+  }, [targetRect, hasTarget])
 
   const nextStep = useCallback(() => {
     if (!isActive || isAnimating || isNavigating) return
@@ -544,14 +597,14 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
       {/* 🎨 Enhanced overlay with perfect spotlight */}
       <div className="fixed inset-0 z-[999] transition-all duration-500">
         
-        {/* Perfect spotlight effect */}
-        {hasTarget && (
+        {/* FIXED: Perfect spotlight effect with null checks */}
+        {hasTarget && targetRect && targetRect.width > 0 && targetRect.height > 0 && (
           <>
             {/* Subtle gradient overlay */}
             <div 
               className="absolute inset-0 transition-all duration-1000 ease-out"
               style={{
-                background: `radial-gradient(ellipse ${targetRect!.width + 80}px ${targetRect!.height + 80}px at ${targetRect!.left + targetRect!.width/2}px ${targetRect!.top + targetRect!.height/2}px, transparent 0%, transparent 40%, rgba(15, 23, 42, 0.3) 80%)`
+                background: `radial-gradient(ellipse ${targetRect.width + 80}px ${targetRect.height + 80}px at ${targetRect.left + targetRect.width/2}px ${targetRect.top + targetRect.height/2}px, transparent 0%, transparent 40%, rgba(15, 23, 42, 0.3) 80%)`
               }}
             />
             
@@ -559,10 +612,10 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
             <div 
               className="absolute rounded-2xl transition-all duration-1000 ease-out"
               style={{
-                top: targetRect!.top - 6,
-                left: targetRect!.left - 6,
-                width: targetRect!.width + 12,
-                height: targetRect!.height + 12,
+                top: targetRect.top - 6,
+                left: targetRect.left - 6,
+                width: targetRect.width + 12,
+                height: targetRect.height + 12,
                 background: 'linear-gradient(45deg, #3b82f6, #8b5cf6, #10b981, #3b82f6)',
                 backgroundSize: '200% 200%',
                 animation: 'gradient-flow 3s ease infinite, tutorial-bright-pulse 2s infinite',
@@ -577,10 +630,10 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
             <div 
               className="absolute border-2 border-white/70 rounded-2xl transition-all duration-1000 ease-out"
               style={{
-                top: targetRect!.top - 2,
-                left: targetRect!.left - 2,
-                width: targetRect!.width + 4,
-                height: targetRect!.height + 4,
+                top: targetRect.top - 2,
+                left: targetRect.left - 2,
+                width: targetRect.width + 4,
+                height: targetRect.height + 4,
                 boxShadow: 'inset 0 0 20px rgba(255, 255, 255, 0.4)',
               }}
             />
