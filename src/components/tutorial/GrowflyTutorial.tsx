@@ -130,7 +130,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
       content: 'Every brilliant AI response auto-saves here. Build your personal content empire and never lose an idea.',
       icon: <BookOpen className="w-5 h-5 text-amber-400" />,
       route: '/saved',
-      target: 'main, .main-content, [data-tour="saved-content"], .saved-responses-container, body',
+      target: 'h1, h2, .heading, [class*="heading"], [class*="title"], main, body',
       proTip: 'Create templates, organize by campaigns, and build your content library!',
       priority: 2
     },
@@ -140,7 +140,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
       content: 'All your AI-generated images organized beautifully. Your visual brand library grows automatically.',
       icon: <Image className="w-5 h-5 text-purple-400" />,
       route: '/gallery',
-      target: '[href="/gallery"], [data-nav="gallery"], a[href*="gallery"], nav a:contains("Gallery")',
+      target: 'h1, h2, .heading, [class*="heading"], [class*="title"], main, body',
       proTip: 'Visual content gets 94% more engagement than text alone!',
       priority: 2
     },
@@ -150,7 +150,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
       content: 'Share AI responses instantly with your team. Real-time collaboration that makes teams unstoppable.',
       icon: <Users className="w-5 h-5 text-indigo-400" />,
       route: '/collab-zone',
-      target: '[href="/collab-zone"], [data-nav="collab-zone"], a[href*="collab"], nav a:contains("Collab")',
+      target: 'h1, h2, .heading, [class*="heading"], [class*="title"], main, body',
       proTip: 'Teams using collaborative AI are 3x more productive than solo workers!',
       priority: 2
     },
@@ -160,7 +160,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
       content: 'Coming soon: Connect with verified professionals to polish your AI work to perfection.',
       icon: <Crown className="w-5 h-5 text-yellow-400" />,
       route: '/trusted-partners',
-      target: '[href="/trusted-partners"], [data-nav="trusted-partners"], a[href*="partner"], nav a:contains("Partner")',
+      target: 'h1, h2, .heading, [class*="heading"], [class*="title"], main, body',
       proTip: 'AI creativity + human expertise = unstoppable business results!',
       priority: 3
     },
@@ -170,7 +170,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
       content: 'Train your AI to sound exactly like you. Set your tone, style, and brand voice for authentic results.',
       icon: <Settings className="w-5 h-5 text-slate-400" />,
       route: '/brand-settings',
-      target: '[href="/brand-settings"], [data-nav="brand-settings"], a[href*="brand"], a[href*="settings"], nav a:contains("Brand")',
+      target: 'h1, h2, .heading, [class*="heading"], [class*="title"], main, body',
       proTip: 'Brands with consistent voice see 23% more revenue growth!',
       priority: 2
     },
@@ -180,7 +180,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
       content: 'Master cutting-edge AI strategies and growth techniques that top entrepreneurs use to dominate.',
       icon: <Lightbulb className="w-5 h-5 text-yellow-400" />,
       route: '/nerd-mode',
-      target: '[href="/nerd-mode"], [data-nav="education-hub"], a[href*="education"], a[href*="nerd"], nav a:contains("Education")',
+      target: 'h1, h2, .heading, [class*="heading"], [class*="title"], main, body',
       proTip: 'AI-savvy companies grow 5x faster than their competitors!',
       priority: 2
     },
@@ -204,12 +204,13 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
     playSound('start')
   }
 
-  // FIXED: Enhanced element finding with safe access
+  // Enhanced element finding with safe access and better error recovery
   const findTargetElement = useCallback((step: TutorialStep): HTMLElement | null => {
     if (!step.target || typeof document === 'undefined') return null
     
     try {
       const selectors = step.target.split(', ').map(s => s.trim()).filter(Boolean)
+      console.log(`🔍 Searching for elements with selectors:`, selectors)
       
       // Sort selectors by priority (more specific first)
       const prioritizedSelectors = selectors.sort((a, b) => {
@@ -226,7 +227,10 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
               element.getBoundingClientRect &&
               element.getBoundingClientRect().width > 0 && 
               element.getBoundingClientRect().height > 0) {
+            console.log(`✅ Found element with selector: ${selector}`, element)
             return element
+          } else if (element) {
+            console.log(`⚠️ Found element but not visible with selector: ${selector}`)
           }
         } catch (selectorError) {
           console.log(`❌ Selector error for ${selector}:`, selectorError)
@@ -234,6 +238,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
         }
       }
       
+      console.log(`❌ No valid elements found for:`, step.target)
       return null
     } catch (error) {
       console.log('❌ Error in findTargetElement:', error)
@@ -319,12 +324,11 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
               retryTimeoutRef.current = setTimeout(attemptFind, 1000 * retryCount) // Exponential backoff
               return false
             } else {
-              console.log('❌ Max retries reached, continuing without target highlight')
+              console.log('❌ Max retries reached, showing tutorial without target highlight')
               setTargetRect(null)
               setElementFound(false)
-              playSound('error')
-              setIsAnimating(false)
-              return false
+              setIsAnimating(false) // Make sure tutorial still shows
+              return true // Continue tutorial even without element
             }
           } catch (findError) {
             console.log('❌ Error in attemptFind:', findError)
@@ -332,9 +336,10 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
             if (retryCount < maxRetries) {
               retryTimeoutRef.current = setTimeout(attemptFind, 1000 * retryCount)
             } else {
+              console.log('❌ Giving up on element finding, showing tutorial centered')
               setTargetRect(null)
               setElementFound(false)
-              setIsAnimating(false)
+              setIsAnimating(false) // Always continue tutorial
             }
             return false
           }
@@ -342,6 +347,16 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
         
         // Start finding with initial delay
         setTimeout(attemptFind, 1200) // Increased delay for page stability
+        
+        // Safety timeout - always show tutorial after 8 seconds
+        setTimeout(() => {
+          if (isAnimating) {
+            console.log('🔒 Safety timeout: forcing tutorial to show')
+            setTargetRect(null)
+            setElementFound(false)
+            setIsAnimating(false)
+          }
+        }, 8000)
       } else {
         setTargetRect(null)
         setElementFound(true)
@@ -370,7 +385,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
     const padding = 24
     const mobileBreakpoint = 1024
 
-    // Mobile-first approach or no target
+    // Mobile-first approach or no target - ALWAYS show tutorial
     if (viewportWidth < mobileBreakpoint || !targetRect || !hasTarget) {
       return {
         position: 'fixed' as const,
@@ -649,7 +664,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
                       {!elementFound && (
                         <>
                           <span>•</span>
-                          <span className="text-amber-600 font-medium">Element not found</span>
+                          <span className="text-amber-600 font-medium">Showing centered</span>
                         </>
                       )}
                     </div>
