@@ -36,11 +36,11 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
   const [stepCompleted, setStepCompleted] = useState(false)
   const [userInteracted, setUserInteracted] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
+  const [showSkipModal, setShowSkipModal] = useState(false)
 
-  // ✅ FIXED: Better logic for responding to isFirstTime prop changes
+  // ✅ FIXED: Respond to isFirstTime prop changes properly
   useEffect(() => {
     console.log('🎯 Tutorial isFirstTime changed:', isFirstTime, 'isActive:', isActive)
-    
     if (isFirstTime) {
       console.log('🚀 Starting tutorial from prop change')
       // Reset state for fresh start
@@ -322,10 +322,18 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
     }, 1000)
   }
 
-  const skipTutorial = () => {
-    if (window.confirm('Are you sure you want to skip this amazing tour? You\'ll miss out on some incredible features!')) {
-      closeTutorial()
-    }
+  // ✅ ENHANCED: Beautiful branded skip modal instead of browser confirm
+  const handleSkipClick = () => {
+    setShowSkipModal(true)
+  }
+
+  const confirmSkip = () => {
+    setShowSkipModal(false)
+    closeTutorial()
+  }
+
+  const cancelSkip = () => {
+    setShowSkipModal(false)
   }
 
   // ✅ ENHANCED: Add debug logging to render
@@ -346,6 +354,7 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
   const isCenter = currentStepData.placement === 'center'
   const progress = ((currentStep + 1) / tutorialSteps.length) * 100
 
+  // ✅ ENHANCED: Much better tooltip positioning - closer to targets and more visible
   const getTooltipPosition = () => {
     if (isCenter || !targetRect) {
       return {
@@ -353,85 +362,109 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
+        zIndex: 60,
       }
     }
 
-    const padding = 20
+    const padding = 15 // Reduced padding for closer positioning
+    const tooltipWidth = 450
+    const tooltipHeight = 400
     let top = 0
     let left = 0
 
     switch (currentStepData.placement) {
       case 'bottom':
         top = targetRect.bottom + padding
-        left = targetRect.left + targetRect.width / 2
+        left = targetRect.left + (targetRect.width / 2) - (tooltipWidth / 2)
         break
       case 'top':
-        top = targetRect.top - padding - 300
-        left = targetRect.left + targetRect.width / 2
+        top = targetRect.top - padding - tooltipHeight
+        left = targetRect.left + (targetRect.width / 2) - (tooltipWidth / 2)
         break
       case 'right':
-        top = targetRect.top + targetRect.height / 2
+        top = targetRect.top + (targetRect.height / 2) - (tooltipHeight / 2)
         left = targetRect.right + padding
         break
       case 'left':
-        top = targetRect.top + targetRect.height / 2
-        left = targetRect.left - padding - 400
+        top = targetRect.top + (targetRect.height / 2) - (tooltipHeight / 2)
+        left = targetRect.left - padding - tooltipWidth
         break
       default:
         top = targetRect.bottom + padding
-        left = targetRect.left + targetRect.width / 2
+        left = targetRect.left + (targetRect.width / 2) - (tooltipWidth / 2)
     }
+
+    // ✅ IMPROVED: Better boundary checks to keep tooltip visible
+    const windowWidth = window.innerWidth
+    const windowHeight = window.innerHeight
+    
+    // Horizontal boundary checks
+    if (left < 20) left = 20
+    if (left + tooltipWidth > windowWidth - 20) left = windowWidth - tooltipWidth - 20
+    
+    // Vertical boundary checks
+    if (top < 20) top = 20
+    if (top + tooltipHeight > windowHeight - 20) top = windowHeight - tooltipHeight - 20
 
     return {
       position: 'fixed' as const,
-      top: `${Math.max(20, Math.min(window.innerHeight - 450, top))}px`,
-      left: `${Math.max(20, Math.min(window.innerWidth - 450, left - 200))}px`,
+      top: `${top}px`,
+      left: `${left}px`,
+      zIndex: 60,
     }
   }
 
   return (
     <>
-      {/* Confetti Effect */}
+      {/* ✅ ENHANCED: More spectacular confetti effect */}
       {showConfetti && (
-        <div className="fixed inset-0 pointer-events-none z-[60]">
-          {[...Array(50)].map((_, i) => (
+        <div className="fixed inset-0 pointer-events-none z-[70]">
+          {[...Array(80)].map((_, i) => (
             <div
               key={i}
-              className="absolute animate-ping"
+              className="absolute animate-ping text-2xl"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 2}s`,
-                animationDuration: '1s'
+                animationDelay: `${Math.random() * 3}s`,
+                animationDuration: `${1 + Math.random()}s`,
+                transform: `rotate(${Math.random() * 360}deg) scale(${0.8 + Math.random() * 0.4})`
               }}
             >
-              {['🎉', '✨', '🚀', '💎', '⭐', '🏆'][Math.floor(Math.random() * 6)]}
+              {['🎉', '✨', '🚀', '💎', '⭐', '🏆', '🎊', '💫', '🌟', '🎈'][Math.floor(Math.random() * 10)]}
             </div>
           ))}
         </div>
       )}
 
-      {/* Main Overlay */}
-      <div className="fixed inset-0 bg-black bg-opacity-60 z-50 backdrop-blur-sm" onClick={skipTutorial}>
+      {/* ✅ ENHANCED: Better overlay with reduced opacity to see background */}
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 backdrop-blur-sm">
         
-        {/* Animated Spotlight */}
+        {/* ✅ ENHANCED: More dramatic spotlight effect */}
         {targetRect && !isCenter && (
           <>
             <div 
-              className="absolute border-4 border-purple-400 rounded-xl shadow-2xl transition-all duration-500 ease-out"
+              className="absolute border-4 border-purple-400 rounded-2xl shadow-2xl transition-all duration-500 ease-out"
               style={{
-                top: targetRect.top - 8,
-                left: targetRect.left - 8,
-                width: targetRect.width + 16,
-                height: targetRect.height + 16,
-                boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 30px rgba(139, 92, 246, 0.8)',
+                top: targetRect.top - 12,
+                left: targetRect.left - 12,
+                width: targetRect.width + 24,
+                height: targetRect.height + 24,
+                boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5), 0 0 50px rgba(139, 92, 246, 0.8), inset 0 0 20px rgba(139, 92, 246, 0.3)',
                 animation: 'tutorial-glow 2s infinite ease-in-out'
               }}
             />
             
-            {/* Pulsing dot indicator */}
+            {/* ✅ ENHANCED: Multiple pulsing indicators */}
             <div 
-              className="absolute w-4 h-4 bg-yellow-400 rounded-full animate-ping"
+              className="absolute w-6 h-6 bg-yellow-400 rounded-full animate-ping shadow-lg"
+              style={{
+                top: targetRect.top + targetRect.height / 2 - 12,
+                left: targetRect.left + targetRect.width / 2 - 12,
+              }}
+            />
+            <div 
+              className="absolute w-4 h-4 bg-white rounded-full animate-pulse"
               style={{
                 top: targetRect.top + targetRect.height / 2 - 8,
                 left: targetRect.left + targetRect.width / 2 - 8,
@@ -440,27 +473,28 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
           </>
         )}
 
-        {/* Enhanced Tooltip */}
+        {/* ✅ ENHANCED: Magnificent tooltip design */}
         <div 
-          className={`absolute bg-white rounded-3xl shadow-2xl max-w-lg w-[450px] z-10 transform transition-all duration-500 tutorial-tooltip ${
+          className={`absolute bg-white rounded-3xl shadow-2xl max-w-lg w-[450px] transform transition-all duration-500 tutorial-tooltip ${
             isAnimating ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
           } ${stepCompleted ? 'scale-105' : ''}`}
           style={getTooltipPosition()}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Background Gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-50 via-white to-pink-50 rounded-3xl" />
+          {/* ✅ ENHANCED: Dynamic gradient background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-50 via-white to-pink-50 rounded-3xl opacity-90" />
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 rounded-3xl animate-pulse" />
           
           {/* Content */}
           <div className="relative p-8">
-            {/* Header */}
+            {/* ✅ ENHANCED: Header with better close button */}
             <div className="flex items-start justify-between mb-6">
               <div className="flex items-center gap-4">
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 transform hover:scale-110 transition-transform duration-300">
                   {currentStepData.icon}
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-1">
+                  <h3 className="text-2xl font-bold text-gray-800 mb-1 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                     {currentStepData.title}
                   </h3>
                   <div className="flex items-center gap-2">
@@ -468,32 +502,35 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
                       {[...Array(5)].map((_, i) => (
                         <Star 
                           key={i} 
-                          className={`w-3 h-3 ${i < 5 ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                          className={`w-3 h-3 ${i < 5 ? 'text-yellow-400 fill-current' : 'text-gray-300'} animate-pulse`} 
+                          style={{ animationDelay: `${i * 0.1}s` }}
                         />
                       ))}
                     </div>
-                    <span className="text-xs text-gray-500 font-medium">Premium Feature</span>
+                    <span className="text-xs text-gray-500 font-medium bg-yellow-100 px-2 py-1 rounded-full">Premium Feature</span>
                   </div>
                 </div>
               </div>
+              {/* ✅ FIXED: Much better close button with white X */}
               <button 
-                onClick={skipTutorial}
-                className="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition-all"
+                onClick={handleSkipClick}
+                className="w-10 h-10 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-110"
+                title="Skip tour"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 text-white font-bold" strokeWidth={3} />
               </button>
             </div>
 
-            {/* Main Content */}
+            {/* ✅ ENHANCED: More engaging content layout */}
             <div className="space-y-4 mb-6">
-              <p className="text-gray-700 text-lg leading-relaxed">
+              <p className="text-gray-700 text-lg leading-relaxed font-medium">
                 {currentStepData.content}
               </p>
               
               {currentStepData.actionText && (
-                <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-200">
+                <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-200 shadow-sm">
                   <div className="flex items-center gap-2">
-                    <Target className="w-4 h-4 text-green-600" />
+                    <Target className="w-4 h-4 text-green-600 animate-pulse" />
                     <span className="text-sm font-semibold text-green-800">Action Step:</span>
                   </div>
                   <p className="text-sm text-green-700 mt-1 font-medium">
@@ -503,9 +540,9 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
               )}
               
               {currentStepData.proTip && (
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-200">
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-200 shadow-sm">
                   <div className="flex items-center gap-2">
-                    <Brain className="w-4 h-4 text-blue-600" />
+                    <Brain className="w-4 h-4 text-blue-600 animate-bounce" />
                     <span className="text-sm font-semibold text-blue-800">Pro Tip:</span>
                   </div>
                   <p className="text-sm text-blue-700 mt-1 font-medium">
@@ -515,9 +552,9 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
               )}
               
               {currentStepData.challenge && (
-                <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border border-purple-200">
+                <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border border-purple-200 shadow-sm">
                   <div className="flex items-center gap-2">
-                    <Trophy className="w-4 h-4 text-purple-600" />
+                    <Trophy className="w-4 h-4 text-purple-600 animate-pulse" />
                     <span className="text-sm font-semibold text-purple-800">Challenge:</span>
                   </div>
                   <p className="text-sm text-purple-700 mt-1 font-medium">
@@ -527,19 +564,19 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
               )}
             </div>
 
-            {/* Enhanced Progress */}
+            {/* ✅ ENHANCED: More exciting progress bar */}
             <div className="mb-6">
               <div className="flex justify-between text-sm font-semibold mb-3">
                 <span className="text-gray-600">Step {currentStep + 1} of {tutorialSteps.length}</span>
-                <span className="text-purple-600">{Math.round(progress)}% Complete</span>
+                <span className="text-purple-600 font-bold">{Math.round(progress)}% Complete</span>
               </div>
-              <div className="relative w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+              <div className="relative w-full h-4 bg-gray-200 rounded-full overflow-hidden shadow-inner">
                 <div 
                   className="absolute top-0 left-0 h-full bg-gradient-to-r from-purple-500 via-pink-500 to-purple-600 rounded-full transition-all duration-700 ease-out shadow-lg"
                   style={{ width: `${progress}%` }}
                 />
                 <div 
-                  className="absolute top-0 left-0 h-full bg-white opacity-30 rounded-full transition-all duration-700"
+                  className="absolute top-0 left-0 h-full bg-white opacity-40 rounded-full transition-all duration-700"
                   style={{ 
                     width: `${progress}%`,
                     animation: 'shimmer 2s infinite'
@@ -547,19 +584,20 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
                 />
               </div>
               {progress > 50 && (
-                <div className="text-center mt-2">
-                  <span className="text-xs text-gray-500 bg-yellow-100 px-2 py-1 rounded-full">
-                    🔥 You're on fire! Keep going!
+                <div className="text-center mt-3">
+                  <span className="text-sm text-gray-600 bg-gradient-to-r from-yellow-100 to-orange-100 px-3 py-1 rounded-full shadow-sm border border-yellow-200">
+                    🔥 You're absolutely crushing it! Keep going!
                   </span>
                 </div>
               )}
             </div>
 
-            {/* Enhanced Navigation */}
+            {/* ✅ ENHANCED: Better navigation buttons */}
             <div className="flex justify-between items-center">
+              {/* ✅ IMPROVED: Better skip button with rounded corners */}
               <button
-                onClick={skipTutorial}
-                className="text-gray-500 hover:text-gray-700 text-sm font-medium px-3 py-2 rounded-lg hover:bg-gray-100 transition-all"
+                onClick={handleSkipClick}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 px-6 py-3 rounded-2xl text-sm font-semibold transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
               >
                 Skip Tour
               </button>
@@ -568,7 +606,7 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
                 {currentStep > 0 && (
                   <button
                     onClick={prevStep}
-                    className="flex items-center gap-2 px-4 py-3 text-gray-600 hover:text-gray-800 font-semibold bg-gray-100 hover:bg-gray-200 rounded-xl transition-all transform hover:scale-105"
+                    className="flex items-center gap-2 px-4 py-3 text-gray-600 hover:text-gray-800 font-semibold bg-gray-100 hover:bg-gray-200 rounded-2xl transition-all transform hover:scale-105 shadow-md hover:shadow-lg"
                   >
                     <ChevronLeft className="w-4 h-4" />
                     Back
@@ -577,7 +615,7 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
                 
                 <button
                   onClick={nextStep}
-                  className="flex items-center gap-2 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-700 hover:from-purple-700 hover:via-pink-700 hover:to-purple-800 text-white px-8 py-3 rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 relative overflow-hidden"
+                  className="flex items-center gap-2 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-700 hover:from-purple-700 hover:via-pink-700 hover:to-purple-800 text-white px-8 py-3 rounded-2xl font-bold transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 relative overflow-hidden"
                 >
                   <div className="absolute inset-0 bg-white opacity-20 transform skew-x-12 -translate-x-full animate-shimmer" />
                   {currentStep === tutorialSteps.length - 1 ? (
@@ -598,14 +636,76 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
         </div>
       </div>
 
-      {/* Enhanced Styles */}
+      {/* ✅ ENHANCED: Beautiful branded skip confirmation modal */}
+      {showSkipModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-[70] flex items-center justify-center backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md mx-4 overflow-hidden transform scale-100 animate-pulse">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6 text-white">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                  <Sparkles className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">Wait, don't miss out! 🚀</h3>
+                  <p className="text-purple-100 text-sm">You're about to skip something amazing</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Content */}
+            <div className="p-6">
+              <p className="text-gray-700 text-center mb-6 leading-relaxed">
+                This exclusive tour reveals <strong>game-changing features</strong> that could 
+                <span className="bg-yellow-100 px-1 rounded"> transform your business forever</span>. 
+                Most users discover at least 3 features they didn't know existed!
+              </p>
+              
+              <div className="grid grid-cols-3 gap-3 mb-6 text-center text-xs">
+                <div className="p-2 bg-blue-50 rounded-lg">
+                  <div className="text-lg mb-1">⚡</div>
+                  <div className="font-semibold text-blue-800">Hidden</div>
+                  <div className="text-blue-600">Power Tools</div>
+                </div>
+                <div className="p-2 bg-green-50 rounded-lg">
+                  <div className="text-lg mb-1">💎</div>
+                  <div className="font-semibold text-green-800">Secret</div>
+                  <div className="text-green-600">Features</div>
+                </div>
+                <div className="p-2 bg-purple-50 rounded-lg">
+                  <div className="text-lg mb-1">🎯</div>
+                  <div className="font-semibold text-purple-800">Pro</div>
+                  <div className="text-purple-600">Tips</div>
+                </div>
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={confirmSkip}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-4 rounded-2xl font-semibold transition-all duration-200"
+                >
+                  Skip Anyway
+                </button>
+                <button
+                  onClick={cancelSkip}
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-3 px-4 rounded-2xl font-bold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  Continue Tour! 🚀
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ ENHANCED: Better CSS with improved animations */}
       <style jsx global>{`
         @keyframes tutorial-glow {
           0%, 100% { 
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 20px rgba(139, 92, 246, 0.6);
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5), 0 0 30px rgba(139, 92, 246, 0.6), inset 0 0 20px rgba(139, 92, 246, 0.2);
           }
           50% { 
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 40px rgba(139, 92, 246, 1);
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5), 0 0 60px rgba(139, 92, 246, 1), inset 0 0 30px rgba(139, 92, 246, 0.4);
           }
         }
         
@@ -616,12 +716,12 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
         
         @keyframes shimmer {
           0% { transform: translateX(-100%) skew(-12deg); }
-          100% { transform: translateX(200%) skew(-12deg); }
+          100% { transform: translateX(300%) skew(-12deg); }
         }
         
         @keyframes animate-shimmer {
           0% { transform: translateX(-100%) skew(-12deg); }
-          100% { transform: translateX(200%) skew(-12deg); }
+          100% { transform: translateX(300%) skew(-12deg); }
         }
         
         .animate-shimmer {
