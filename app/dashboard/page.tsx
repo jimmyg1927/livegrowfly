@@ -2234,7 +2234,6 @@ function DashboardContent() {
             <strong>🧪 Tutorial Debug</strong>
           </div>
           <div className="text-xs space-y-1">
-            <div>isActive: {isActive.toString()}</div>
             <div>showTutorial: {showTutorial.toString()}</div>
             <div>forceTutorial: {forceTutorial.toString()}</div>
             <div>isFirstTime: {isFirstTime.toString()}</div>
