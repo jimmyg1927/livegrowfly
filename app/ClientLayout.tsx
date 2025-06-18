@@ -3,8 +3,8 @@
 
 import React, { ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
-import Sidebar from '@/components/Sidebar'
-import Header from '@/components/Header'
+import Sidebar from '@/src/components/Sidebar'
+import Header from '@/src/components/Header'
 import AuthProtection from '../components/AuthProtection'
 
 export default function ClientLayout({ children }: { children: ReactNode }) {
