@@ -814,86 +814,6 @@ function DashboardContent() {
     }
   }
 
-  // ✅ NEW: PDF/Excel Download Functions
-  const handleDownloadPDF = async (messageContent: string, title?: string) => {
-    try {
-      setIsLoading(true)
-      
-      const response = await fetch(`${API_BASE_URL}/api/file-generation/pdf`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          content: messageContent,
-          title: title || `Growfly_Response_${new Date().toISOString().split('T')[0]}`
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to generate PDF')
-      }
-
-      // Download the PDF
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `growfly-response-${new Date().toISOString().split('T')[0]}.pdf`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
-
-    } catch (error) {
-      console.error('PDF download failed:', error)
-      setError('Failed to download PDF. Please try again.')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleDownloadExcel = async (messageContent: string, title?: string) => {
-    try {
-      setIsLoading(true)
-      
-      const response = await fetch(`${API_BASE_URL}/api/file-generation/excel`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          content: messageContent,
-          title: title || `Growfly_Analysis_${new Date().toISOString().split('T')[0]}`,
-          type: 'auto'
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to generate Excel')
-      }
-
-      // Download the Excel file
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `growfly-analysis-${new Date().toISOString().split('T')[0]}.xlsx`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
-
-    } catch (error) {
-      console.error('Excel download failed:', error)
-      setError('Failed to download Excel. Please try again.')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   // Load dashboard conversations from DB
   const loadDashboardConversationsFromDB = async () => {
     if (!token) return
@@ -1220,6 +1140,7 @@ function DashboardContent() {
       const data = await res.json()
       const rawFollowUps = (data.followUps as string[]) || []
       
+      // Only return ONE follow-up question
       if (rawFollowUps.length > 0) {
         return [rawFollowUps[0]]
       }
@@ -1299,7 +1220,7 @@ function DashboardContent() {
             followUps = ['Tell me more about this']
           }
           
-          // Only show one follow-up
+          // Ensure only ONE follow-up question
           if (followUps.length > 1) {
             followUps = [followUps[0]]
           }
@@ -1634,18 +1555,6 @@ function DashboardContent() {
           10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
           20%, 40%, 60%, 80% { transform: translateX(2px); }
         }
-        
-        @media (max-width: 640px) {
-          .message-bubble {
-            max-width: 90% !important;
-            margin: 0 auto;
-          }
-          
-          .mobile-centered {
-            display: flex;
-            justify-content: center;
-          }
-        }
       `}</style>
       
       {/* Drag and Drop Overlay */}
@@ -1745,23 +1654,11 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* Info about persistent conversations */}
-        {messages.length > 0 && (
-          <div className="mx-auto mt-4 mb-6 max-w-4xl px-4">
-            <div className="p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-center">
-              <p className="text-gray-800 dark:text-gray-200 text-sm flex items-center justify-center gap-2">
-                <span className="text-lg">💡</span>
-                <strong>Your conversations are securely saved!</strong> Your last 10 exchanges stay private to your account on this dashboard.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Chat Messages - Clean layout with proper spacing */}
-        <div className="space-y-4 min-h-0 flex-1 pt-4 pr-4">
+        {/* Chat Messages - Traditional Chat Layout */}
+        <div className="space-y-3 min-h-0 flex-1 px-4">
           {messages.length === 0 ? (
-            <div className="flex items-center justify-center h-full min-h-[60vh] pt-32 md:pt-40">
-              <div className="text-center max-w-2xl px-4 mt-12">
+            <div className="flex items-center justify-center h-full min-h-[50vh]">
+              <div className="text-center max-w-2xl px-4">
                 <div className="mb-6">
                   <div className="text-6xl md:text-8xl mb-4 animate-bounce">👋</div>
                   <h3 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-3">
@@ -1803,244 +1700,201 @@ function DashboardContent() {
           ) : (
             <>
               {messages.map((msg, index) => (
-            <div
-              key={msg.id}
-              className={`flex mb-4 ${
-                msg.role === 'user' 
-                  ? 'justify-end' 
-                  : 'justify-start'
-              }`}
-              onMouseEnter={() => setHoveredMessageId(msg.id)}
-              onMouseLeave={() => setHoveredMessageId(null)}
-            >
-              {/* MESSAGES: Proper layout without negative margins */}
-              <div
-                className={`relative rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md ${
-                  msg.role === 'user'
-                    ? 'bg-blue-600 text-white max-w-[80%] sm:max-w-[70%] ml-auto p-4'
-                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-white max-w-[90%] sm:max-w-[80%] py-4 px-2'
-                }`}
-              >
-                {/* Display uploaded files for user messages */}
-                {msg.role === 'user' && msg.files && msg.files.length > 0 && (
-                  <div className="mb-4 space-y-2">
-                    <p className="text-xs text-blue-200 font-medium">📎 Attached Files:</p>
-                    <div className="grid grid-cols-1 gap-2">
-                      {msg.files.map((file) => (
-                        <div key={file.id} className="bg-blue-500 rounded-lg p-2 flex items-center gap-2">
-                          {file.type.startsWith('image/') && file.preview ? (
-                            <img src={file.preview} alt={file.name} className="w-8 h-8 object-cover rounded" />
-                          ) : file.type === 'application/pdf' ? (
-                            <FaFilePdf className="w-6 h-6 text-blue-200" />
-                          ) : (
-                            <FaFileAlt className="w-6 h-6 text-blue-200" />
-                          )}
-                          <span className="text-xs text-blue-100">{file.name}</span>
+                <div
+                  key={msg.id}
+                  className={`flex mb-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  onMouseEnter={() => setHoveredMessageId(msg.id)}
+                  onMouseLeave={() => setHoveredMessageId(null)}
+                >
+                  {/* Traditional Chat Bubbles */}
+                  <div
+                    className={`relative rounded-2xl shadow-sm transition-all duration-200 ${
+                      msg.role === 'user'
+                        ? 'bg-blue-600 text-white max-w-[85%] sm:max-w-[75%] p-4'
+                        : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-white max-w-[85%] sm:max-w-[75%] p-4'
+                    }`}
+                  >
+                    {/* Display uploaded files for user messages */}
+                    {msg.role === 'user' && msg.files && msg.files.length > 0 && (
+                      <div className="mb-3 space-y-2">
+                        <p className="text-xs text-blue-200 font-medium">📎 Attached Files:</p>
+                        <div className="grid grid-cols-1 gap-2">
+                          {msg.files.map((file) => (
+                            <div key={file.id} className="bg-blue-500 rounded-lg p-2 flex items-center gap-2">
+                              {file.type.startsWith('image/') && file.preview ? (
+                                <img src={file.preview} alt={file.name} className="w-8 h-8 object-cover rounded" />
+                              ) : file.type === 'application/pdf' ? (
+                                <FaFilePdf className="w-6 h-6 text-blue-200" />
+                              ) : (
+                                <FaFileAlt className="w-6 h-6 text-blue-200" />
+                              )}
+                              <span className="text-xs text-blue-100">{file.name}</span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {msg.imageUrl && (
-                  <Image
-                    src={msg.imageUrl}
-                    alt="Uploaded"
-                    width={280}
-                    height={280}
-                    className="mb-4 rounded-xl shadow-md"
-                  />
-                )}
-
-                {/* Generated images */}
-                {msg.generatedImage && (
-                  <div className="mb-4">
-                    <SafeImage
-                      src={msg.generatedImage.url}
-                      alt={msg.generatedImage.originalPrompt}
-                      className="w-full max-w-lg rounded-xl shadow-lg"
-                      onError={() => {
-                        console.error('Failed to load generated image:', msg.generatedImage?.url)
-                      }}
-                    />
-                    <div className="mt-3 flex gap-2">
-                      <button
-                        onClick={() => handleDownloadImage(msg.generatedImage!)}
-                        className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
-                      >
-                        <FaFileDownload />
-                        Download
-                      </button>
-                      <button
-                        onClick={() => router.push('/gallery')}
-                        className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
-                      >
-                        <FaImages />
-                        Gallery
-                      </button>
-                      <button
-                        onClick={() => handleShareImage(msg.generatedImage!)}
-                        className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
-                      >
-                        <FaShareSquare />
-                        Share
-                      </button>
-                    </div>
-                    <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                      <p><strong>Size:</strong> {msg.generatedImage.size} • <strong>Style:</strong> {msg.generatedImage.style}</p>
-                      <p><strong>Created:</strong> {new Date(msg.generatedImage.createdAt).toLocaleDateString()}</p>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                  {msg.content ? (
-                    <div className="prose prose-sm max-w-none dark:prose-invert">
-                      {msg.content}
-                    </div>
-                  ) : msg.role === 'assistant' && (isLoading || isStreaming) ? (
-                    <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400 py-2">
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                        <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                        <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
                       </div>
-                      <span className="animate-pulse text-sm font-medium">Thinking...</span>
-                    </div>
-                  ) : ''}
-                </div>
+                    )}
 
-                {msg.role === 'assistant' && msg.content && (
-                  <>
-                    {/* Follow-up Questions */}
-                    {msg.followUps && msg.followUps.length > 0 && (
-                      <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-sm">💡</span>
-                          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Continue the conversation:</span>
+                    {msg.imageUrl && (
+                      <Image
+                        src={msg.imageUrl}
+                        alt="Uploaded"
+                        width={280}
+                        height={280}
+                        className="mb-3 rounded-xl shadow-md"
+                      />
+                    )}
+
+                    {/* Generated images */}
+                    {msg.generatedImage && (
+                      <div className="mb-3">
+                        <SafeImage
+                          src={msg.generatedImage.url}
+                          alt={msg.generatedImage.originalPrompt}
+                          className="w-full max-w-lg rounded-xl shadow-lg"
+                          onError={() => {
+                            console.error('Failed to load generated image:', msg.generatedImage?.url)
+                          }}
+                        />
+                        <div className="mt-3 flex gap-2">
+                          <button
+                            onClick={() => handleDownloadImage(msg.generatedImage!)}
+                            className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                          >
+                            <FaFileDownload />
+                            Download
+                          </button>
+                          <button
+                            onClick={() => router.push('/gallery')}
+                            className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                          >
+                            <FaImages />
+                            Gallery
+                          </button>
+                          <button
+                            onClick={() => handleShareImage(msg.generatedImage!)}
+                            className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                          >
+                            <FaShareSquare />
+                            Share
+                          </button>
                         </div>
-                        <div className="space-y-2">
-                          {msg.followUps.map((followUp, index) => (
+                        <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                          <p><strong>Size:</strong> {msg.generatedImage.size} • <strong>Style:</strong> {msg.generatedImage.style}</p>
+                          <p><strong>Created:</strong> {new Date(msg.generatedImage.createdAt).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                      {msg.content ? (
+                        <div className="prose prose-sm max-w-none dark:prose-invert">
+                          {msg.content}
+                        </div>
+                      ) : msg.role === 'assistant' && (isLoading || isStreaming) ? (
+                        <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400 py-2">
+                          <div className="flex gap-1">
+                            <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                            <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                            <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
+                          </div>
+                          <span className="animate-pulse text-sm font-medium">Thinking...</span>
+                        </div>
+                      ) : ''}
+                    </div>
+
+                    {msg.role === 'assistant' && msg.content && (
+                      <>
+                        {/* Follow-up Questions - Only ONE */}
+                        {msg.followUps && msg.followUps.length > 0 && (
+                          <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-sm">💡</span>
+                              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Continue the conversation:</span>
+                            </div>
                             <button
-                              key={index}
                               onClick={(e) => {
                                 e.preventDefault()
-                                const cleanFollowUp = followUp.replace(/^\s*[\(\)]\s*/, '').trim()
+                                const cleanFollowUp = msg.followUps![0].replace(/^\s*[\(\)]\s*/, '').trim()
                                 handleSubmit(cleanFollowUp)
                               }}
                               disabled={isLoading || isStreaming}
                               className="w-full bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 disabled:bg-gray-100 dark:disabled:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-200 disabled:text-gray-500 dark:disabled:text-gray-500 p-0 rounded-xl text-sm font-medium shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-600 disabled:border-gray-200 dark:disabled:border-gray-600 transition-all duration-200 hover:scale-[1.01] disabled:transform-none disabled:cursor-not-allowed text-left focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                             >
                               <div className="px-3 py-2">
-                                {followUp.replace(/^\s*[\(\)]\s*/, '').trim()}
+                                {msg.followUps[0].replace(/^\s*[\(\)]\s*/, '').trim()}
                               </div>
                             </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* ✅ UPDATED: Action Buttons with PDF/Excel Downloads */}
-                    <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
-                      <div className="relative">
-                        <button
-                          onClick={() => handleCopyMessage(msg.id, msg.content)}
-                          className={`p-0 md:p-0 rounded-xl border transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 ${
-                            copiedMessageId === msg.id 
-                              ? 'text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
-                              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-gray-50 dark:bg-gray-800'
-                          }`}
-                          title="Copy message"
-                        >
-                          <div className="p-2 md:p-1.5">
-                            <FaCopy className="w-4 h-4" />
-                          </div>
-                        </button>
-                        {copiedMessageId === msg.id && (
-                          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap z-10">
-                            Copied!
                           </div>
                         )}
-                      </div>
 
-                      {/* ✅ NEW: PDF Download Button */}
-                      <button
-                        onClick={() => handleDownloadPDF(msg.content, `AI_Response_${msg.id}`)}
-                        disabled={isLoading}
-                        className="p-0 md:p-0 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 dark:hover:border-red-800 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
-                        title="Download as PDF"
-                      >
-                        <div className="p-2 md:p-1.5">
-                          <FaFilePdf className="w-4 h-4" />
-                        </div>
-                      </button>
+                        {/* Action Buttons - NO PDF/Excel downloads */}
+                        <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                          <div className="relative">
+                            <button
+                              onClick={() => handleCopyMessage(msg.id, msg.content)}
+                              className={`p-2 rounded-xl border transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 ${
+                                copiedMessageId === msg.id 
+                                  ? 'text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+                                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-gray-50 dark:bg-gray-800'
+                              }`}
+                              title="Copy message"
+                            >
+                              <FaCopy className="w-4 h-4" />
+                            </button>
+                            {copiedMessageId === msg.id && (
+                              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap z-10">
+                                Copied!
+                              </div>
+                            )}
+                          </div>
 
-                      {/* ✅ NEW: Excel Download Button */}
-                      <button
-                        onClick={() => handleDownloadExcel(msg.content, `AI_Analysis_${msg.id}`)}
-                        disabled={isLoading}
-                        className="p-0 md:p-0 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-200 dark:hover:border-green-800 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
-                        title="Download as Excel"
-                      >
-                        <div className="p-2 md:p-1.5">
-                          <FaFileExcel className="w-4 h-4" />
+                          <button
+                            onClick={() => {
+                              setCurrentFeedbackMessageId(msg.id)
+                              setShowFeedbackModal(true)
+                            }}
+                            className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-200 dark:hover:border-green-800 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
+                            title="Like this response"
+                          >
+                            <HiThumbUp className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setCurrentFeedbackMessageId(msg.id)
+                              setShowFeedbackModal(true)
+                            }}
+                            className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 dark:hover:border-red-800 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
+                            title="Dislike this response"
+                          >
+                            <HiThumbDown className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setCurrentSaveMessageId(msg.id)
+                              setShowSaveModal(true)
+                            }}
+                            className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-yellow-600 dark:hover:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:border-yellow-200 dark:hover:border-yellow-800 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
+                            title="Save to Saved Responses"
+                            data-tour="saved-responses"
+                          >
+                            <FaRegBookmark className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleShareToCollabZone(msg.id)}
+                            className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
+                            title="Share to Collab Zone"
+                            data-tour="collab-zone"
+                          >
+                            <FaShareSquare className="w-4 h-4" />
+                          </button>
                         </div>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setCurrentFeedbackMessageId(msg.id)
-                          setShowFeedbackModal(true)
-                        }}
-                        className="p-0 md:p-0 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-200 dark:hover:border-green-800 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
-                        title="Like this response"
-                      >
-                        <div className="p-2 md:p-1.5">
-                          <HiThumbUp className="w-4 h-4" />
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setCurrentFeedbackMessageId(msg.id)
-                          setShowFeedbackModal(true)
-                        }}
-                        className="p-0 md:p-0 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 dark:hover:border-red-800 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
-                        title="Dislike this response"
-                      >
-                        <div className="p-2 md:p-1.5">
-                          <HiThumbDown className="w-4 h-4" />
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setCurrentSaveMessageId(msg.id)
-                          setShowSaveModal(true)
-                        }}
-                        className="p-0 md:p-0 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-yellow-600 dark:hover:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:border-yellow-200 dark:hover:border-yellow-800 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
-                        title="Save to Saved Responses"
-                        data-tour="saved-responses"
-                      >
-                        <div className="p-2 md:p-1.5">
-                          <FaRegBookmark className="w-4 h-4" />
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => handleShareToCollabZone(msg.id)}
-                        className="p-0 md:p-0 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
-                        title="Share to Collab Zone"
-                        data-tour="collab-zone"
-                      >
-                        <div className="p-2 md:p-1.5">
-                          <FaShareSquare className="w-4 h-4" />
-                        </div>
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-            ))}
-            <div ref={chatEndRef} className="h-8" />
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+              <div ref={chatEndRef} className="h-8" />
             </>
           )}
         </div>

@@ -38,14 +38,14 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
   const [showConfetti, setShowConfetti] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
   const [showSkipModal, setShowSkipModal] = useState(false)
-  const [isNavigating, setIsNavigating] = useState(false)
+  const [isAnimating, setIsAnimating] = useState(false)
   const [elementFound, setElementFound] = useState(true)
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // ✅ FIXED: Start tutorial when prop changes with safety checks
   useEffect(() => {
     if (isFirstTime && typeof window !== 'undefined' && typeof document !== 'undefined') {
-      console.log('🚀 Starting enhanced interactive tour')
+      console.log('🚀 Starting dashboard tour')
       setCurrentStep(0)
       setTimeout(() => {
         try {
@@ -104,12 +104,12 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
     }
   }, [])
 
-  // 🚀 ENHANCED TUTORIAL STEPS
+  // 🚀 DASHBOARD-ONLY TUTORIAL STEPS - NO NAVIGATION
   const tutorialSteps: TutorialStep[] = [
     {
       id: 'welcome',
-      title: 'Welcome to Your Power Tour! 🎯',
-      content: 'Ready to discover Growfly\'s incredible features? Navigate at your own pace or use auto-mode!',
+      title: 'Quick Dashboard Tour! 🎯',
+      content: 'Let me show you what each area of Growfly does, right from here!',
       icon: <Sparkles className="w-5 h-5 text-emerald-400" />,
       celebration: true,
       priority: 1
@@ -117,86 +117,79 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
     {
       id: 'dashboard-features',
       title: 'AI Command Center 🚀',
-      content: 'Your creativity hub - upload images, chat with AI, get instant results, and download everything.',
+      content: 'You\'re here now! Upload images, chat with AI, get instant results. Your main creativity hub.',
       icon: <Zap className="w-5 h-5 text-blue-400" />,
-      route: '/dashboard',
-      target: 'main, .main-content, [data-tour="dashboard-main"], .chat-interface, body',
+      target: '[href="/dashboard"], a[href*="dashboard"], nav a:contains("Dashboard"), .nav-item:first-child',
       proTip: 'Upload any file type - images, PDFs, documents - and ask AI to analyze them!',
       priority: 1
     },
     {
       id: 'saved-responses',
       title: 'Content Treasure Vault 💎',
-      content: 'Every brilliant AI response auto-saves here. Build your personal content empire and never lose an idea.',
+      content: 'Click here to see every AI response you\'ve ever saved. Your personal content library.',
       icon: <BookOpen className="w-5 h-5 text-amber-400" />,
-      route: '/saved',
-      target: 'h1, h2, .heading, [class*="heading"], [class*="title"], main, body',
-      proTip: 'Create templates, organize by campaigns, and build your content library!',
+      target: '[href="/saved"], a[href*="saved"], nav a:contains("Saved"), [data-nav="saved-responses"]',
+      proTip: 'Never lose a brilliant idea - everything auto-saves here!',
       priority: 2
     },
     {
       id: 'gallery',
       title: 'Visual Creativity Studio 🎨',
-      content: 'All your AI-generated images organized beautifully. Your visual brand library grows automatically.',
+      content: 'Your AI-generated images live here. Perfect for building visual brand libraries.',
       icon: <Image className="w-5 h-5 text-purple-400" />,
-      route: '/gallery',
-      target: 'h1, h2, .heading, [class*="heading"], [class*="title"], main, body',
+      target: '[href="/gallery"], a[href*="gallery"], nav a:contains("Gallery"), [data-nav="gallery"]',
       proTip: 'Visual content gets 94% more engagement than text alone!',
       priority: 2
     },
     {
       id: 'collab-zone',
-      title: 'Team Collaboration Magic 🤝',
-      content: 'Share AI responses instantly with your team. Real-time collaboration that makes teams unstoppable.',
+      title: 'Team Collaboration Hub 🤝',
+      content: 'Share AI responses with your team instantly. Where collaboration magic happens.',
       icon: <Users className="w-5 h-5 text-indigo-400" />,
-      route: '/collab-zone',
-      target: 'h1, h2, .heading, [class*="heading"], [class*="title"], main, body',
-      proTip: 'Teams using collaborative AI are 3x more productive than solo workers!',
-      priority: 2
-    },
-    {
-      id: 'trusted-partners',
-      title: 'Expert Human Network 💼',
-      content: 'Coming soon: Connect with verified professionals to polish your AI work to perfection.',
-      icon: <Crown className="w-5 h-5 text-yellow-400" />,
-      route: '/trusted-partners',
-      target: 'h1, h2, .heading, [class*="heading"], [class*="title"], main, body',
-      proTip: 'AI creativity + human expertise = unstoppable business results!',
-      priority: 3
-    },
-    {
-      id: 'brand-settings',
-      title: 'AI Personality Lab 🧬',
-      content: 'Train your AI to sound exactly like you. Set your tone, style, and brand voice for authentic results.',
-      icon: <Settings className="w-5 h-5 text-slate-400" />,
-      route: '/brand-settings',
-      target: 'h1, h2, .heading, [class*="heading"], [class*="title"], main, body',
-      proTip: 'Brands with consistent voice see 23% more revenue growth!',
+      target: '[href="/collab-zone"], a[href*="collab"], nav a:contains("Collab"), [data-nav="collab-zone"]',
+      proTip: 'Teams using collaborative AI are 3x more productive!',
       priority: 2
     },
     {
       id: 'education-hub',
       title: 'AI Mastery Academy 🎓',
-      content: 'Master cutting-edge AI strategies and growth techniques that top entrepreneurs use to dominate.',
+      content: 'Learn advanced AI strategies and growth techniques from experts.',
       icon: <Lightbulb className="w-5 h-5 text-yellow-400" />,
-      route: '/nerd-mode',
-      target: 'h1, h2, .heading, [class*="heading"], [class*="title"], main, body',
-      proTip: 'AI-savvy companies grow 5x faster than their competitors!',
+      target: '[href="/nerd-mode"], a[href*="education"], nav a:contains("Education"), [data-nav="education-hub"]',
+      proTip: 'AI-savvy companies grow 5x faster than competitors!',
       priority: 2
     },
     {
+      id: 'brand-settings',
+      title: 'AI Personality Lab 🧬',
+      content: 'Train your AI to sound exactly like you and your brand voice.',
+      icon: <Settings className="w-5 h-5 text-slate-400" />,
+      target: '[href="/brand-settings"], a[href*="brand"], nav a:contains("Brand"), [data-nav="brand-settings"]',
+      proTip: 'Consistent brand voice increases revenue by 23%!',
+      priority: 2
+    },
+    {
+      id: 'trusted-partners',
+      title: 'Expert Network 💼',
+      content: 'Coming soon: Professional services to polish your AI work to perfection.',
+      icon: <Crown className="w-5 h-5 text-yellow-400" />,
+      target: '[href="/trusted-partners"], a[href*="partner"], nav a:contains("Partner"), [data-nav="trusted-partners"]',
+      proTip: 'AI + human expertise = unstoppable results!',
+      priority: 3
+    },
+    {
       id: 'finale',
-      title: 'You\'re Ready to Dominate! 🏆',
-      content: 'Congratulations! You now have AI superpowers that 99% of businesses don\'t even know exist. Time to create magic!',
+      title: 'Ready to Create Magic! 🏆',
+      content: 'You now know where everything is! Start by asking AI anything or uploading an image.',
       icon: <Rocket className="w-5 h-5 text-emerald-400" />,
-      proTip: 'Replay this tour anytime from Settings → Tutorial',
+      proTip: 'Click Continue to start creating amazing content!',
       celebration: true,
       priority: 1
     }
   ]
 
   const startTutorial = () => {
-    console.log('🎯 Starting enhanced interactive tour...')
+    console.log('🎯 Starting dashboard tour...')
     setIsActive(true)
     setCurrentStep(0)
     setElementFound(true)
@@ -204,18 +197,18 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
     playSound('start')
   }
 
-  // Enhanced element finding with safe access and better error recovery
+  // Enhanced sidebar element finding
   const findTargetElement = useCallback((step: TutorialStep): HTMLElement | null => {
     if (!step.target || typeof document === 'undefined') return null
     
     try {
       const selectors = step.target.split(', ').map(s => s.trim()).filter(Boolean)
-      console.log(`🔍 Searching for elements with selectors:`, selectors)
+      console.log(`🔍 Searching for sidebar elements with selectors:`, selectors)
       
-      // Sort selectors by priority (more specific first)
+      // Sort selectors by priority (href selectors first for navigation)
       const prioritizedSelectors = selectors.sort((a, b) => {
-        const aScore = (a.includes('[data-') ? 10 : 0) + (a.includes('href') ? 5 : 0)
-        const bScore = (b.includes('[data-') ? 10 : 0) + (b.includes('href') ? 5 : 0)
+        const aScore = (a.includes('href') ? 10 : 0) + (a.includes('[data-') ? 5 : 0)
+        const bScore = (b.includes('href') ? 10 : 0) + (b.includes('[data-') ? 5 : 0)
         return bScore - aScore
       })
       
@@ -227,7 +220,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
               element.getBoundingClientRect &&
               element.getBoundingClientRect().width > 0 && 
               element.getBoundingClientRect().height > 0) {
-            console.log(`✅ Found element with selector: ${selector}`, element)
+            console.log(`✅ Found sidebar element with selector: ${selector}`, element)
             return element
           } else if (element) {
             console.log(`⚠️ Found element but not visible with selector: ${selector}`)
@@ -238,7 +231,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
         }
       }
       
-      console.log(`❌ No valid elements found for:`, step.target)
+      console.log(`❌ No valid sidebar elements found for:`, step.target)
       return null
     } catch (error) {
       console.log('❌ Error in findTargetElement:', error)
@@ -249,7 +242,6 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
   const updateCurrentStep = async (step: TutorialStep) => {
     try {
       setIsAnimating(true)
-      setIsNavigating(false)
       setElementFound(true)
       
       // Clear any existing timeouts
@@ -257,34 +249,17 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
         clearTimeout(retryTimeoutRef.current)
       }
       
-      // Navigate to route if specified
-      if (step.route && pathname !== step.route) {
-        console.log(`🧭 Navigating to ${step.route}`)
-        setIsNavigating(true)
-        playSound('navigate')
-        
-        try {
-          router.push(step.route)
-          await new Promise(resolve => setTimeout(resolve, 2500)) // Increased wait time for better stability
-        } catch (error) {
-          console.log('❌ Navigation error:', error)
-          playSound('error')
-        }
-        
-        setIsNavigating(false)
-      }
-      
-      // Enhanced element finding with retry logic
+      // No navigation - stay on dashboard and find sidebar elements
       if (step.target) {
         let retryCount = 0
-        const maxRetries = 4
+        const maxRetries = 3
         
         const attemptFind = () => {
           try {
             const element = findTargetElement(step)
             
             if (element) {
-              console.log(`✅ Found target element on attempt ${retryCount + 1}:`, element)
+              console.log(`✅ Found sidebar element on attempt ${retryCount + 1}:`, element)
               const rect = element.getBoundingClientRect()
               
               // Validate rect
@@ -292,7 +267,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
                 setTargetRect(rect)
                 setElementFound(true)
                 
-                // Smooth scroll with enhanced options
+                // Smooth scroll to element
                 try {
                   element.scrollIntoView({ 
                     behavior: 'smooth', 
@@ -300,15 +275,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
                     inline: 'center'
                   })
                 } catch (scrollError) {
-                  try {
-                    window.scrollTo({
-                      top: Math.max(0, element.offsetTop - window.innerHeight / 2),
-                      left: Math.max(0, element.offsetLeft - window.innerWidth / 2),
-                      behavior: 'smooth'
-                    })
-                  } catch (fallbackScrollError) {
-                    console.log('❌ Scroll error:', fallbackScrollError)
-                  }
+                  console.log('❌ Scroll error:', scrollError)
                 }
                 
                 playSound('success')
@@ -318,37 +285,37 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
             }
             
             retryCount++
-            console.log(`🎯 Target element not found (attempt ${retryCount}/${maxRetries}):`, step.target)
+            console.log(`🎯 Sidebar element not found (attempt ${retryCount}/${maxRetries}):`, step.target)
             
             if (retryCount < maxRetries) {
-              retryTimeoutRef.current = setTimeout(attemptFind, 1000 * retryCount) // Exponential backoff
+              retryTimeoutRef.current = setTimeout(attemptFind, 500 * retryCount) // Shorter delays since no navigation
               return false
             } else {
-              console.log('❌ Max retries reached, showing tutorial without target highlight')
+              console.log('❌ Max retries reached, showing tutorial centered')
               setTargetRect(null)
               setElementFound(false)
-              setIsAnimating(false) // Make sure tutorial still shows
+              setIsAnimating(false)
               return true // Continue tutorial even without element
             }
           } catch (findError) {
             console.log('❌ Error in attemptFind:', findError)
             retryCount++
             if (retryCount < maxRetries) {
-              retryTimeoutRef.current = setTimeout(attemptFind, 1000 * retryCount)
+              retryTimeoutRef.current = setTimeout(attemptFind, 500 * retryCount)
             } else {
               console.log('❌ Giving up on element finding, showing tutorial centered')
               setTargetRect(null)
               setElementFound(false)
-              setIsAnimating(false) // Always continue tutorial
+              setIsAnimating(false)
             }
             return false
           }
         }
         
-        // Start finding with initial delay
-        setTimeout(attemptFind, 1200) // Increased delay for page stability
+        // Start finding immediately since we're on dashboard
+        setTimeout(attemptFind, 300)
         
-        // Safety timeout - always show tutorial after 8 seconds
+        // Safety timeout - always show tutorial after 3 seconds
         setTimeout(() => {
           if (isAnimating) {
             console.log('🔒 Safety timeout: forcing tutorial to show')
@@ -356,7 +323,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
             setElementFound(false)
             setIsAnimating(false)
           }
-        }, 8000)
+        }, 3000)
       } else {
         setTargetRect(null)
         setElementFound(true)
@@ -373,8 +340,8 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
   const currentStepData = tutorialSteps[currentStep]
   const progress = ((currentStep + 1) / tutorialSteps.length) * 100
   const hasTarget = currentStepData.target && targetRect && elementFound
-  const canGoBack = currentStep > 0 && !isAnimating && !isNavigating
-  const canGoForward = !isAnimating && !isNavigating
+  const canGoBack = currentStep > 0 && !isAnimating
+  const canGoForward = !isAnimating
 
   // FIXED: Enhanced positioning with proper null checks
   const getTooltipPosition = useCallback(() => {
@@ -480,7 +447,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
   }, [targetRect, hasTarget])
 
   const nextStep = useCallback(() => {
-    if (!isActive || isAnimating || isNavigating) return
+    if (!isActive || isAnimating) return
     
     console.log(`✅ Advancing from step ${currentStep}`)
     playSound('step')
@@ -504,20 +471,20 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
         closeTutorial()
       }
     }, 400)
-  }, [currentStep, isActive, isAnimating, isNavigating])
+  }, [currentStep, isActive, isAnimating])
 
   const prevStep = useCallback(() => {
-    if (currentStep > 0 && !isAnimating && !isNavigating) {
+    if (currentStep > 0 && !isAnimating) {
       const prevStepIndex = currentStep - 1
       console.log(`⬅️ Moving back to step ${prevStepIndex}`)
       setCurrentStep(prevStepIndex)
       updateCurrentStep(tutorialSteps[prevStepIndex])
       playSound('step')
     }
-  }, [currentStep, isAnimating, isNavigating])
+  }, [currentStep, isAnimating])
 
   const closeTutorial = useCallback(() => {
-    console.log('✅ Closing enhanced tour')
+    console.log('✅ Closing dashboard tour')
     setShowConfetti(true)
     playSound('complete')
     
@@ -653,18 +620,12 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
                     <div className="flex items-center gap-2 text-xs text-slate-600">
                       <div className="flex items-center gap-1">
                         <Play className="w-3 h-3" />
-                        <span>Interactive Tour</span>
+                        <span>Dashboard Tour</span>
                       </div>
-                      {isNavigating && (
-                        <>
-                          <span>•</span>
-                          <span className="text-blue-600 font-medium animate-pulse">Navigating...</span>
-                        </>
-                      )}
                       {!elementFound && (
                         <>
                           <span>•</span>
-                          <span className="text-amber-600 font-medium">Showing centered</span>
+                          <span className="text-blue-600 font-medium">Showing overview</span>
                         </>
                       )}
                     </div>
