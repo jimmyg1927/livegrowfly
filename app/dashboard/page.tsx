@@ -1687,7 +1687,7 @@ function DashboardContent() {
       )}
 
       {/* Content Area - Proper sidebar spacing */}
-      <div className="flex-1 overflow-hidden ml-0 md:ml-60 lg:ml-64" data-tour="dashboard">
+      <div className="flex-1 overflow-hidden ml-0 md:ml-60 lg:ml-64" data-tour="dashboard-main">
         <div ref={containerRef} className="h-full overflow-y-auto pb-80 pl-2 pr-4">
 
         {/* Prompt Limit Warning */}
@@ -2175,6 +2175,7 @@ function DashboardContent() {
                     }
                   }}
                   disabled={isLoading || isStreaming || isAtPromptLimit}
+                  data-tour="chat-input"
                 />
               </div>
 

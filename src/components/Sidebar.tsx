@@ -19,7 +19,7 @@ import {
 } from 'react-icons/hi'
 import { FaImages } from 'react-icons/fa'
 
-// ✅ REMOVED: Complex image gallery component - now just simple link
+// ✅ UPDATED: Gallery component with data-nav attribute
 const SimpleImageGallery: React.FC<{
   isCollapsed: boolean
 }> = ({ isCollapsed }) => {
@@ -28,6 +28,7 @@ const SimpleImageGallery: React.FC<{
     return (
       <Link
         href="/gallery"
+        data-nav="gallery"
         className="group relative flex items-center justify-center w-full px-3 py-2.5 text-white/90 hover:text-white hover:bg-white/10 hover:shadow-md rounded-xl transition-all duration-200 text-sm font-medium"
         title="Image Gallery"
       >
@@ -45,6 +46,7 @@ const SimpleImageGallery: React.FC<{
   return (
     <Link
       href="/gallery"
+      data-nav="gallery"
       className="group relative flex items-center gap-3 w-full px-3 py-2.5 text-white/90 hover:text-white hover:bg-white/10 hover:shadow-md rounded-xl transition-all duration-200 text-sm font-medium"
     >
       <FaImages className="h-5 w-5 flex-shrink-0" />
@@ -53,26 +55,26 @@ const SimpleImageGallery: React.FC<{
   )
 }
 
-// ✅ UPDATED: Reordered navigation - removed Recent Chats
+// ✅ UPDATED: Navigation items with data-nav attributes
 const navItems = [
-  { name: 'Dashboard', href: '/dashboard', icon: HiOutlineHome },
-  { name: 'Collab Zone', href: '/collab-zone', icon: HiOutlineUserGroup },
-  { name: 'Saved Responses', href: '/saved', icon: HiOutlineDocumentText },
-  { name: 'Wishlist', href: '/wishlist', icon: HiOutlineHeart },
+  { name: 'Dashboard', href: '/dashboard', icon: HiOutlineHome, dataNa: 'dashboard' },
+  { name: 'Collab Zone', href: '/collab-zone', icon: HiOutlineUserGroup, dataNa: 'collab-zone' },
+  { name: 'Saved Responses', href: '/saved', icon: HiOutlineDocumentText, dataNa: 'saved-responses' },
+  { name: 'Wishlist', href: '/wishlist', icon: HiOutlineHeart, dataNa: 'wishlist' },
 ]
 
 // Secondary features - less frequently used
 const secondaryItems = [
-  { name: 'Education Hub', href: '/nerd-mode', icon: HiOutlineLightBulb },
-  { name: 'Refer a Friend', href: '/refer', icon: HiOutlineUserAdd },
-  { name: 'Change Plan', href: '/change-plan', icon: HiOutlineCurrencyPound },
+  { name: 'Education Hub', href: '/nerd-mode', icon: HiOutlineLightBulb, dataNa: 'education-hub' },
+  { name: 'Refer a Friend', href: '/refer', icon: HiOutlineUserAdd, dataNa: 'refer' },
+  { name: 'Change Plan', href: '/change-plan', icon: HiOutlineCurrencyPound, dataNa: 'change-plan' },
 ]
 
 // Settings group - typically accessed less often
 const settingsItems = [
-  { name: 'Settings', href: '/settings', icon: HiOutlineCog },
-  { name: 'Brand Settings', href: '/brand-settings', icon: HiOutlineAdjustments },
-  { name: 'Trusted Partners', href: '/trusted-partners', icon: HiOutlineShieldCheck },
+  { name: 'Settings', href: '/settings', icon: HiOutlineCog, dataNa: 'settings' },
+  { name: 'Brand Settings', href: '/brand-settings', icon: HiOutlineAdjustments, dataNa: 'brand-settings' },
+  { name: 'Trusted Partners', href: '/trusted-partners', icon: HiOutlineShieldCheck, dataNa: 'trusted-partners' },
 ]
 
 export default function Sidebar() {
@@ -111,6 +113,7 @@ export default function Sidebar() {
           <Link
             key={item.name}
             href={item.href}
+            data-nav={item.dataNa}
             className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium ${
               isActive
                 ? 'bg-white text-[#0f172a] shadow-lg font-semibold'
@@ -136,9 +139,12 @@ export default function Sidebar() {
   )
 
   return (
-    <div className={`bg-gradient-to-b from-[#0f172a] via-[#1e3a8a] to-[#1e40af] text-white flex flex-col py-5 min-h-screen shadow-2xl transition-all duration-300 ${
-      isCollapsed ? 'w-16' : 'w-16 sm:w-56'
-    }`}>
+    <div 
+      data-sidebar
+      className={`bg-gradient-to-b from-[#0f172a] via-[#1e3a8a] to-[#1e40af] text-white flex flex-col py-5 min-h-screen shadow-2xl transition-all duration-300 ${
+        isCollapsed ? 'w-16' : 'w-16 sm:w-56'
+      }`}
+    >
       
       {/* Logo Section */}
       <div className="mb-6 w-full flex justify-center relative group">

@@ -99,78 +99,68 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
     }
   }, [])
 
-  // 🚀 INTERACTIVE TUTORIAL STEPS
+  // 🚀 INTERACTIVE TUTORIAL STEPS - IMPROVED ORDER
   const tutorialSteps: TutorialStep[] = [
     {
       id: 'welcome',
       title: 'Welcome to Your Interactive Tour! 🎯',
       content: 'Ready for a hands-on journey? I\'ll guide you through Growfly\'s most powerful features step by step. You\'ll actually use each feature as we explore together!',
       icon: <Sparkles className="w-6 h-6 text-emerald-400" />,
-      actionText: 'Let\'s start exploring your new superpower!',
+      actionText: 'Let\'s start with your AI command center!',
       proTip: 'This interactive tour takes 3 minutes and will make you a Growfly expert!',
       celebration: true
     },
     {
-      id: 'sidebar-navigation',
-      title: 'Your Command Center 🎛️',
-      content: 'This sidebar is your mission control! Each section unlocks different superpowers. Let\'s explore them one by one.',
-      icon: <Navigation className="w-6 h-6 text-blue-400" />,
-      target: '[data-sidebar]', // Target the entire sidebar
+      id: 'dashboard-features',
+      title: 'Your AI Command Center 🚀',
+      content: 'This is where the magic happens! Upload images, ask questions, download results, and have conversations with AI that understands your business. Let\'s explore what you can do here.',
+      icon: <Zap className="w-6 h-6 text-blue-400" />,
+      route: '/dashboard',
+      target: '[data-tour="dashboard-main"], .chat-interface, [data-tour="chat-area"]',
       action: 'observe',
-      actionText: 'Look at all these powerful features waiting for you!',
-      proTip: 'Each icon represents a different way to grow your business'
+      actionText: 'Try asking: "Create a social media post" or upload an image for analysis!',
+      proTip: 'You can upload any file type - images, PDFs, documents - and ask AI to analyze them!'
     },
     {
-      id: 'collab-zone-nav',
-      title: 'Team Collaboration Magic ✨',
-      content: 'Let\'s visit your collaboration headquarters! Click "Collab Zone" in the sidebar to see where teams become unstoppable.',
-      icon: <Users className="w-6 h-6 text-indigo-400" />,
-      route: '/collab-zone',
-      target: '[href="/collab-zone"], [data-nav="collab-zone"]',
+      id: 'chat-interaction',
+      title: 'Start Your First Conversation 💬',
+      content: 'Click in the message box below and try asking AI anything! Upload an image, ask for business advice, or request content creation.',
+      icon: <MessageCircle className="w-6 h-6 text-emerald-400" />,
+      target: '[data-tour="chat-input"], input[placeholder*="message"], textarea[placeholder*="message"], [data-tour="message-input"]',
       action: 'click',
       waitForUser: true,
-      actionText: 'Click "Collab Zone" in the sidebar now!',
-      proTip: 'Teams using collaborative AI are 3x more productive!'
-    },
-    {
-      id: 'collab-features',
-      title: 'Collaboration Superpowers 🤝',
-      content: 'Here\'s where magic happens! Share AI responses with your team, get feedback in real-time, and build collective brilliance.',
-      icon: <Heart className="w-6 h-6 text-pink-400" />,
-      target: '[data-tour="collab-features"]',
-      action: 'observe',
-      actionText: 'This is where teams become unstoppable!',
-      proTip: 'Share any AI response instantly with one click'
+      actionText: 'Click in the message box and try: "Create a social media campaign for my business"',
+      proTip: 'The more specific you are, the more amazing your results will be!'
     },
     {
       id: 'saved-responses-nav',
       title: 'Your Content Treasure Vault 💎',
-      content: 'Time to see your digital gold mine! Click "Saved Responses" to discover your growing content library.',
+      content: 'Now let\'s see where all your brilliant AI responses get saved! Click "Saved Responses" to discover your growing content library.',
       icon: <BookOpen className="w-6 h-6 text-amber-400" />,
-      route: '/saved-responses',
-      target: '[href="/saved-responses"], [data-nav="saved-responses"]',
+      route: '/saved',
+      target: '[href="/saved"], [data-nav="saved-responses"], a:contains("Saved Responses")',
       action: 'click',
       waitForUser: true,
       actionText: 'Click "Saved Responses" in the sidebar!',
-      proTip: 'Every brilliant response becomes a reusable template'
+      proTip: 'Every brilliant response becomes a reusable template - never lose a great idea again!'
     },
     {
       id: 'saved-features',
       title: 'Your Content Empire 📚',
-      content: 'Every amazing AI response you generate gets saved here. Build templates, organize by campaigns, and never lose a great idea again!',
-      icon: <Target className="w-6 h-6 text-green-400" />,
-      target: '[data-tour="saved-content"]',
+      content: 'Every amazing AI response you generate gets saved here automatically. Build templates, organize by campaigns, and create your own content library!',
+      icon: <Heart className="w-6 h-6 text-pink-400" />,
+      target: '[data-tour="saved-content"], [data-tour="responses-grid"], .saved-responses-container',
       action: 'observe',
       actionText: 'Your content library grows with every interaction!',
-      proTip: 'Smart entrepreneurs save everything - you never know when you\'ll need that perfect headline'
+      proTip: 'Smart entrepreneurs save everything - you never know when you\'ll need that perfect headline again'
     },
     {
       id: 'gallery-nav',
       title: 'Visual Creativity Hub 🎨',
-      content: 'Ready to see your creative gallery? Click "Gallery" to explore your AI-generated visual masterpieces!',
+      content: 'Ready to see your creative gallery? Click "Gallery" to explore where all your AI-generated visual masterpieces live!',
       icon: <Palette className="w-6 h-6 text-purple-400" />,
       route: '/gallery',
-      target: '[href="/gallery"], [data-nav="gallery"]',
+      target: '[href="/gallery"], [data-nav="gallery"], a:contains("Gallery")',
       action: 'click',
       waitForUser: true,
       actionText: 'Click "Gallery" to see your creative workspace!',
@@ -181,10 +171,54 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
       title: 'Creative Powerhouse 🖼️',
       content: 'Every image you create with AI becomes part of your growing visual brand library. Organize by campaigns and watch your creativity compound!',
       icon: <Image className="w-6 h-6 text-cyan-400" />,
-      target: '[data-tour="gallery-grid"]',
+      target: '[data-tour="gallery-grid"], [data-tour="image-grid"], .gallery-container',
       action: 'observe',
       actionText: 'Your visual empire starts here!',
       proTip: 'Generate multiple styles of the same concept to find what works best'
+    },
+    {
+      id: 'collab-zone-nav',
+      title: 'Team Collaboration Magic ✨',
+      content: 'Time to see your collaboration headquarters! Click "Collab Zone" to discover where teams become unstoppable.',
+      icon: <Users className="w-6 h-6 text-indigo-400" />,
+      route: '/collab-zone',
+      target: '[href="/collab-zone"], [data-nav="collab-zone"], a:contains("Collab Zone")',
+      action: 'click',
+      waitForUser: true,
+      actionText: 'Click "Collab Zone" in the sidebar now!',
+      proTip: 'Teams using collaborative AI are 3x more productive!'
+    },
+    {
+      id: 'collab-features',
+      title: 'Collaboration Superpowers 🤝',
+      content: 'Here\'s where magic happens! Share AI responses with your team, get feedback in real-time, and build collective brilliance. Perfect for agencies and teams!',
+      icon: <Target className="w-6 h-6 text-green-400" />,
+      target: '[data-tour="collab-features"], [data-tour="collaboration-area"], .collab-container',
+      action: 'observe',
+      actionText: 'This is where teams become unstoppable!',
+      proTip: 'Share any AI response instantly with one click'
+    },
+    {
+      id: 'trusted-partners-nav',
+      title: 'Human + AI Powerhouse 💼',
+      content: 'Let\'s check out the future of work! Click "Trusted Partners" to see where AI creativity meets human expertise.',
+      icon: <Handshake className="w-6 h-6 text-green-400" />,
+      route: '/trusted-partners',
+      target: '[href="/trusted-partners"], [data-nav="trusted-partners"], a:contains("Trusted Partners")',
+      action: 'click',
+      waitForUser: true,
+      actionText: 'Click "Trusted Partners" to see what\'s coming!',
+      proTip: 'The perfect fusion of AI efficiency and human polish - coming soon!'
+    },
+    {
+      id: 'trusted-partners-features',
+      title: 'The Future of Work 🔮',
+      content: 'Coming soon: Connect with verified professionals who can take your AI-generated work to the final mile. Think AI + expert = unstoppable results!',
+      icon: <Crown className="w-6 h-6 text-yellow-400" />,
+      target: '[data-tour="partners-area"], [data-tour="coming-soon"], .partners-container',
+      action: 'observe',
+      actionText: 'Early access members get 50% off when we launch!',
+      proTip: 'Join the waitlist now for exclusive early access and special pricing'
     },
     {
       id: 'brand-settings-nav',
@@ -192,7 +226,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
       content: 'Let\'s fine-tune your AI assistant! Click "Brand Settings" to teach Growfly your unique voice and style.',
       icon: <Settings className="w-6 h-6 text-slate-400" />,
       route: '/brand-settings',
-      target: '[href="/brand-settings"], [data-nav="brand-settings"]',
+      target: '[href="/brand-settings"], [data-nav="brand-settings"], a:contains("Brand Settings")',
       action: 'click',
       waitForUser: true,
       actionText: 'Click "Brand Settings" to personalize your AI!',
@@ -203,39 +237,38 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
       title: 'AI Personality Training 🎭',
       content: 'This is where you train your AI to sound exactly like YOU. Set your tone, style, and business personality for authentic results every time.',
       icon: <Brain className="w-6 h-6 text-orange-400" />,
-      target: '[data-tour="brand-voice"]',
+      target: '[data-tour="brand-voice"], [data-tour="brand-settings"], .brand-settings-container',
       action: 'observe',
       actionText: 'Make every AI response authentically YOU!',
       proTip: 'Brands with consistent voice see 23% more revenue'
     },
     {
-      id: 'back-to-dashboard',
-      title: 'Back to Mission Control 🚀',
-      content: 'Let\'s return to your AI command center! Click "Dashboard" to see where the magic begins.',
-      icon: <Zap className="w-6 h-6 text-blue-400" />,
-      route: '/dashboard',
-      target: '[href="/dashboard"], [data-nav="dashboard"]',
+      id: 'education-hub-nav',
+      title: 'AI Mastery Academy 🎓',
+      content: 'Ready to level up? Click "Education Hub" to access cutting-edge strategies and become an AI expert!',
+      icon: <Lightbulb className="w-6 h-6 text-yellow-400" />,
+      route: '/nerd-mode',
+      target: '[href="/nerd-mode"], [data-nav="education-hub"], a:contains("Education Hub")',
       action: 'click',
       waitForUser: true,
-      actionText: 'Click "Dashboard" to return to your AI workspace!',
-      proTip: 'This is where every great idea starts'
+      actionText: 'Click "Education Hub" to unlock advanced strategies!',
+      proTip: 'Companies using AI strategically grow 5x faster than competitors!'
     },
     {
-      id: 'chat-interface',
-      title: 'Your AI Conversation Partner 💬',
-      content: 'This is where conversations become conversions! Type anything and watch Growfly understand your business like a human expert.',
-      icon: <MessageCircle className="w-6 h-6 text-emerald-400" />,
-      target: '[data-tour="chat-input"], input[placeholder*="message"], textarea[placeholder*="message"]',
-      action: 'click',
-      waitForUser: true,
-      actionText: 'Click in the message box and try asking: "Create a social media post"',
-      proTip: 'The more specific you are, the more amazing your results!'
+      id: 'education-features',
+      title: 'Become an AI Expert 🧠',
+      content: 'Access proven frameworks, insider techniques, and cutting-edge strategies that top entrepreneurs use to 10x their results with AI!',
+      icon: <Trophy className="w-6 h-6 text-amber-400" />,
+      target: '[data-tour="education-content"], [data-tour="learning-area"], .education-container',
+      action: 'observe',
+      actionText: 'From prompt engineering to growth hacking - master it all!',
+      proTip: 'Complete one tutorial this week and watch your results transform'
     },
     {
       id: 'finale',
       title: 'You\'re Ready to Dominate! 🏆',
       content: 'Congratulations! You\'ve mastered Growfly\'s core features. You\'re now equipped with AI superpowers that 99% of businesses don\'t even know exist!',
-      icon: <Trophy className="w-6 h-6 text-yellow-400" />,
+      icon: <Rocket className="w-6 h-6 text-emerald-400" />,
       actionText: 'Start creating amazing content right now!',
       proTip: 'Remember: You can replay this tour anytime from Settings → Tutorial',
       celebration: true
@@ -259,32 +292,79 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
     if (step.route && pathname !== step.route) {
       console.log(`🧭 Navigating to ${step.route}`)
       playSound('navigate')
-      router.push(step.route)
-      
-      // Wait for navigation to complete
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      try {
+        router.push(step.route)
+        // Wait for navigation to complete
+        await new Promise(resolve => setTimeout(resolve, 1500))
+      } catch (error) {
+        console.log('❌ Navigation error:', error)
+        // Continue anyway - don't quit tutorial
+      }
     }
     
-    // Find and highlight target element
+    // Find and highlight target element with retry logic
     if (step.target) {
-      setTimeout(() => {
-        const element = document.querySelector(step.target!) as HTMLElement
+      let retryCount = 0
+      const maxRetries = 3
+      
+      const findElement = () => {
+        // Try multiple selectors for better compatibility
+        const selectors = step.target!.split(', ')
+        let element: HTMLElement | null = null
+        
+        for (const selector of selectors) {
+          try {
+            element = document.querySelector(selector.trim()) as HTMLElement
+            if (element) break
+          } catch (error) {
+            console.log(`❌ Selector error for ${selector}:`, error)
+          }
+        }
+        
         if (element) {
+          console.log(`✅ Found target element:`, element)
           const rect = element.getBoundingClientRect()
           setTargetRect(rect)
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          
+          // Smooth scroll with fallback
+          try {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          } catch (error) {
+            console.log('❌ Scroll error:', error)
+            // Fallback scroll
+            window.scrollTo({
+              top: element.offsetTop - window.innerHeight / 2,
+              behavior: 'smooth'
+            })
+          }
           
           // Add interactive pulse animation
           element.style.animation = 'tutorial-interactive-pulse 2s infinite'
           setTimeout(() => {
-            if (element.style) element.style.animation = ''
+            if (element && element.style) element.style.animation = ''
           }, 6000)
+          
+          setIsAnimating(false)
+          return true
         } else {
-          console.log('🎯 Target element not found:', step.target)
-          setTargetRect(null)
+          console.log(`🎯 Target element not found (attempt ${retryCount + 1}):`, step.target)
+          retryCount++
+          
+          if (retryCount < maxRetries) {
+            // Retry after a short delay
+            setTimeout(findElement, 1000)
+            return false
+          } else {
+            console.log('❌ Max retries reached, continuing without target highlight')
+            setTargetRect(null)
+            setIsAnimating(false)
+            return true
+          }
         }
-        setIsAnimating(false)
-      }, 500)
+      }
+      
+      // Start element finding with delay
+      setTimeout(findElement, 500)
     } else {
       setTargetRect(null)
       setIsAnimating(false)
@@ -302,12 +382,36 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
   }
 
   const setupUserInteractionListener = (step: TutorialStep) => {
+    let listenerActive = true
+    
     const handleUserAction = (event: Event) => {
-      const target = event.target as HTMLElement
-      const stepElement = document.querySelector(step.target!)
+      if (!listenerActive) return
       
-      if (stepElement && (stepElement.contains(target) || stepElement === target)) {
+      const target = event.target as HTMLElement
+      
+      // Try multiple selectors for better compatibility
+      const selectors = step.target!.split(', ')
+      let stepElement: HTMLElement | null = null
+      
+      for (const selector of selectors) {
+        try {
+          stepElement = document.querySelector(selector.trim()) as HTMLElement
+          if (stepElement) break
+        } catch (error) {
+          console.log(`❌ Selector error in listener for ${selector}:`, error)
+        }
+      }
+      
+      // Check if user clicked the target element or its children
+      const isTargetClick = stepElement && (
+        stepElement.contains(target) || 
+        stepElement === target ||
+        target.closest(step.target!) // Try closest match as fallback
+      )
+      
+      if (isTargetClick) {
         console.log('✅ User completed required action!')
+        listenerActive = false // Prevent multiple triggers
         setUserActionCompleted(true)
         setIsWaitingForUser(false)
         playSound('step')
@@ -315,33 +419,60 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
         // Remove listener
         document.removeEventListener('click', handleUserAction)
         
-        // Auto-advance after user action
+        // Auto-advance after user action with delay
         setTimeout(() => {
-          nextStep()
+          if (isActive) { // Only advance if tutorial is still active
+            nextStep()
+          }
         }, 1500)
       }
     }
     
     // Add click listener for user actions
-    document.addEventListener('click', handleUserAction)
+    document.addEventListener('click', handleUserAction, { passive: true })
     
-    // Cleanup after 30 seconds if no action
-    setTimeout(() => {
-      document.removeEventListener('click', handleUserAction)
-      if (isWaitingForUser) {
-        console.log('⏱️ User action timeout, auto-advancing')
-        setUserActionCompleted(true)
-        setIsWaitingForUser(false)
+    // Cleanup after 45 seconds if no action (increased timeout)
+    const timeoutId = setTimeout(() => {
+      if (listenerActive) {
+        console.log('⏱️ User action timeout, auto-advancing (this is normal)')
+        listenerActive = false
+        document.removeEventListener('click', handleUserAction)
+        
+        // Don't quit tutorial, just advance
+        if (isWaitingForUser && isActive) {
+          setUserActionCompleted(true)
+          setIsWaitingForUser(false)
+          setTimeout(() => {
+            if (isActive) { // Double-check tutorial is still active
+              nextStep()
+            }
+          }, 500)
+        }
       }
-    }, 30000)
+    }, 45000)
+    
+    // Store cleanup function for manual cleanup if needed
+    return () => {
+      listenerActive = false
+      document.removeEventListener('click', handleUserAction)
+      clearTimeout(timeoutId)
+    }
   }
 
   const nextStep = () => {
+    // Safety check - don't advance if tutorial isn't active
+    if (!isActive) {
+      console.log('❌ Tutorial not active, not advancing')
+      return
+    }
+    
     if (isWaitingForUser && !userActionCompleted) {
+      console.log('⏳ Still waiting for user action, not advancing yet')
       // Don't advance if waiting for user action
       return
     }
     
+    console.log(`✅ Advancing from step ${currentStep} to ${currentStep + 1}`)
     playSound('step')
     
     if (tutorialSteps[currentStep].celebration) {
@@ -351,13 +482,21 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
     }
     
     setTimeout(() => {
+      // Double-check tutorial is still active before advancing
+      if (!isActive) {
+        console.log('❌ Tutorial became inactive during advance, stopping')
+        return
+      }
+      
       if (currentStep < tutorialSteps.length - 1) {
         const nextStepIndex = currentStep + 1
+        console.log(`🎯 Moving to step ${nextStepIndex}: ${tutorialSteps[nextStepIndex].title}`)
         setCurrentStep(nextStepIndex)
         setUserActionCompleted(false)
         setIsWaitingForUser(false)
         updateCurrentStep(tutorialSteps[nextStepIndex])
       } else {
+        console.log('🎉 Tutorial completed, closing')
         closeTutorial()
       }
     }, 500)
