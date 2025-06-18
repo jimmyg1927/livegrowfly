@@ -302,6 +302,48 @@ export default function SettingsPage() {
     return { hoursUntilMidnight, daysUntilNextMonth }
   }
 
+  // ✅ FIXED: Enhanced tutorial button handler
+  const handleStartTutorial = () => {
+    console.log('🎯 Tutorial button clicked in settings')
+    
+    try {
+      // Method 1: Custom event dispatch
+      const event = new CustomEvent('startGrowflyTour', { 
+        bubbles: true,
+        detail: { source: 'settings', timestamp: Date.now() }
+      })
+      
+      console.log('🎯 Dispatching custom event:', event)
+      const dispatched = window.dispatchEvent(event)
+      console.log('🎯 Event dispatched successfully:', dispatched)
+      
+      // Method 2: Try multiple approaches with delays
+      setTimeout(() => {
+        // Try localStorage approach
+        console.log('🎯 Trying localStorage approach')
+        localStorage.setItem('force-tutorial-start', 'true')
+        
+        // Try URL hash approach  
+        console.log('🎯 Trying URL hash approach')
+        
+        // Navigate to dashboard with tutorial trigger
+        if (!window.location.pathname.includes('/dashboard')) {
+          console.log('🎯 Navigating to dashboard with tutorial trigger')
+          router.push('/dashboard?tutorial=start')
+        } else {
+          // If already on dashboard, try to trigger directly
+          console.log('🎯 Already on dashboard, triggering tutorial')
+          window.location.href = '/dashboard?tutorial=start'
+        }
+      }, 100)
+      
+    } catch (error) {
+      console.error('🎯 Error starting tutorial:', error)
+      // Fallback: direct navigation
+      router.push('/dashboard?tutorial=start')
+    }
+  }
+
   if (loading || !user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-50 dark:from-slate-900 dark:via-blue-900 dark:to-slate-900 flex items-center justify-center">
@@ -480,7 +522,7 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* Tutorial Section */}
+          {/* ✅ FIXED: Enhanced Tutorial Section */}
           <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-xl border border-gray-200 dark:border-slate-700">
             <div className="flex items-center mb-6">
               <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mr-4">
@@ -515,7 +557,7 @@ export default function SettingsPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => window.dispatchEvent(new CustomEvent('startGrowflyTour'))}
+                  onClick={handleStartTutorial}
                   className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -525,6 +567,47 @@ export default function SettingsPage() {
                 </button>
               </div>
             </div>
+
+            {/* ✅ ADDED: Debug section for development */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-700">
+                <h4 className="text-sm font-semibold text-yellow-800 dark:text-yellow-300 mb-2">🔧 Tutorial Debug (Development Only)</h4>
+                <div className="text-xs text-yellow-700 dark:text-yellow-400 space-y-1">
+                  <div>Tutorial completed: {localStorage.getItem('growfly-tutorial-completed') || 'false'}</div>
+                  <div>Onboarding flag: {sessionStorage.getItem('justCompletedOnboarding') || 'false'}</div>
+                  <div>Force tutorial flag: {localStorage.getItem('force-tutorial-start') || 'false'}</div>
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={() => {
+                      localStorage.removeItem('growfly-tutorial-completed')
+                      sessionStorage.setItem('justCompletedOnboarding', 'true')
+                      alert('Flags reset! Navigate to dashboard to test new user flow.')
+                    }}
+                    className="text-xs bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded"
+                  >
+                    Reset as New User
+                  </button>
+                  <button
+                    onClick={() => {
+                      console.log('🎯 Force tutorial test from debug panel')
+                      window.dispatchEvent(new CustomEvent('startGrowflyTour', { detail: { force: true } }))
+                    }}
+                    className="text-xs bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-200 px-2 py-1 rounded"
+                  >
+                    Force Event Test
+                  </button>
+                  <button
+                    onClick={() => {
+                      router.push('/dashboard?tutorial=start')
+                    }}
+                    className="text-xs bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded"
+                  >
+                    Direct Navigation Test
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
           
           {/* Account Information */}

@@ -188,6 +188,10 @@ export default function OnboardingClient() {
           ? '🎉 Welcome to Growfly! You have 40 prompts to get started!' 
           : '🎉 Welcome to Growfly!'
         toast.success(welcomeMessage)
+        
+        // ✅ ADDED: Set tutorial trigger for new users
+        sessionStorage.setItem('justCompletedOnboarding', 'true')
+        
         router.push('/dashboard')
       } else {
         // For paid plans, redirect to Stripe
@@ -201,6 +205,8 @@ export default function OnboardingClient() {
         })
         const { url } = await stripeRes.json()
         if (url) {
+          // ✅ ADDED: Set tutorial trigger for paid plan users too
+          sessionStorage.setItem('justCompletedOnboarding', 'true')
           window.location.href = url
         } else {
           throw new Error('Stripe session failed.')

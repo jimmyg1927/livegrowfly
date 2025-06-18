@@ -37,26 +37,15 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
   const [userInteracted, setUserInteracted] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
 
-  // Listen for custom event from settings page
+  // ✅ FIXED: Respond to isFirstTime prop changes properly
   useEffect(() => {
-    const handleStartTour = () => {
-      setTimeout(() => startTutorial(), 500)
-      playSound('start')
-    }
-
-    window.addEventListener('startGrowflyTour', handleStartTour)
-    
-    return () => {
-      window.removeEventListener('startGrowflyTour', handleStartTour)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (isFirstTime) {
+    console.log('🎯 Tutorial isFirstTime changed:', isFirstTime, 'isActive:', isActive)
+    if (isFirstTime && !isActive) {
+      console.log('🚀 Starting tutorial from prop change')
       setTimeout(() => {
         startTutorial()
         playSound('welcome')
-      }, 1000)
+      }, 500)
     }
   }, [isFirstTime])
 
@@ -227,6 +216,7 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
   ]
 
   const startTutorial = () => {
+    console.log('🎯 Starting tutorial...')
     setCurrentStep(0)
     setIsActive(true)
     setStepCompleted(false)
@@ -257,6 +247,7 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
           if (element.style) element.style.animation = ''
         }, 4000)
       } else {
+        console.log('🎯 Target element not found:', step.target)
         setTargetRect(null)
       }
       setIsAnimating(false)
@@ -296,7 +287,9 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
     }
   }
 
+  // ✅ FIXED: Close tutorial properly
   const closeTutorial = () => {
+    console.log('✅ Closing tutorial')
     setShowConfetti(true)
     playSound('complete')
     
@@ -304,9 +297,13 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
       setIsActive(false)
       setTargetRect(null)
       setShowConfetti(false)
-      localStorage.setItem('growfly-tutorial-completed', 'true')
-      if (onComplete) onComplete()
-    }, 2000)
+      
+      // Call the parent's onComplete callback
+      if (onComplete) {
+        console.log('🎯 Calling onComplete callback')
+        onComplete()
+      }
+    }, 1000)
   }
 
   const skipTutorial = () => {
@@ -315,7 +312,13 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
     }
   }
 
-  if (!isActive) return null
+  // ✅ FIXED: Add debug logging to render
+  console.log('🎯 Tutorial render state:', { isActive, isFirstTime, currentStep, targetRect: !!targetRect })
+
+  if (!isActive) {
+    console.log('🎯 Tutorial not active, not rendering')
+    return null
+  }
 
   const currentStepData = tutorialSteps[currentStep]
   const isCenter = currentStepData.placement === 'center'
@@ -417,7 +420,7 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
 
         {/* Enhanced Tooltip */}
         <div 
-          className={`absolute bg-white rounded-3xl shadow-2xl max-w-lg w-[450px] z-10 transform transition-all duration-500 ${
+          className={`absolute bg-white rounded-3xl shadow-2xl max-w-lg w-[450px] z-10 transform transition-all duration-500 tutorial-tooltip ${
             isAnimating ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
           } ${stepCompleted ? 'scale-105' : ''}`}
           style={getTooltipPosition()}
