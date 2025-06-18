@@ -38,7 +38,6 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
   const [showConfetti, setShowConfetti] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
   const [showSkipModal, setShowSkipModal] = useState(false)
-  const [isAnimating, setIsAnimating] = useState(false)
   const [elementFound, setElementFound] = useState(true)
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
