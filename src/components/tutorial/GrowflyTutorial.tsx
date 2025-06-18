@@ -116,99 +116,99 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
     },
     {
       id: 'dashboard',
-      target: '[data-tour="dashboard"]',
+      target: 'body', // ✅ Use body for center placement until data-tour elements are added
       title: 'Your AI Command Center',
       content: 'This is mission control for your business growth! Here, you can have natural conversations with AI that knows YOUR brand, upload any file type for instant analysis, and generate content that sounds authentically you.',
       icon: <div className="relative"><Zap className="w-6 h-6 text-blue-400" /></div>,
-      placement: 'bottom',
+      placement: 'center', // ✅ Center it for now
       actionText: 'Try asking: "Create a social media campaign for my new product launch"',
       proTip: 'Pro tip: The more specific you are, the more amazing your results will be!',
       challenge: 'Challenge: Upload a document and ask Growfly to summarize it in your brand voice'
     },
     {
       id: 'saved-responses',
-      target: '[data-tour="saved-responses"]',
+      target: 'body',
       title: 'Your Digital Treasure Vault',
       content: 'Every brilliant response becomes a reusable asset! Save your best AI-generated content here and build an ever-growing library of winning templates, copy, and ideas that you can customize and reuse infinitely.',
       icon: <div className="relative"><Heart className="w-6 h-6 text-pink-400" /></div>,
-      placement: 'right',
+      placement: 'center',
       actionText: 'Build your content empire, one response at a time',
       proTip: 'Smart entrepreneurs save everything - you never know when you\'ll need that perfect headline again!',
       challenge: 'Goal: Create your first template library this week'
     },
     {
       id: 'collab-zone',
-      target: '[data-tour="collab-zone"]',
+      target: 'body',
       title: 'Team Collaboration Magic',
       content: 'Transform solo work into team brilliance! Share AI responses instantly with your team, collaborate in real-time, provide feedback, and download polished final versions. Turn individual insights into collective genius.',
       icon: <div className="relative"><Users className="w-6 h-6 text-indigo-400" /></div>,
-      placement: 'right',
+      placement: 'center',
       actionText: 'Perfect for agencies, marketing teams, and content creators',
       proTip: 'Teams using collaborative AI are 3x more productive than solo workers!',
       challenge: 'Next step: Invite your first team member and share a response'
     },
     {
       id: 'gallery',
-      target: '[data-tour="gallery"]',
+      target: 'body',
       title: 'Your Creative Gallery',
       content: 'Every visual you create becomes part of your growing creative portfolio! Browse stunning AI-generated artwork, organize by campaigns, and watch your visual brand library expand with every creation.',
       icon: <div className="relative"><Image className="w-6 h-6 text-purple-400" /></div>,
-      placement: 'right',
+      placement: 'center',
       actionText: 'From social media graphics to presentation visuals - all in one place',
       proTip: 'Visual content gets 94% more engagement than text alone!',
       challenge: 'Try this: Generate 5 different styles of the same concept'
     },
     {
       id: 'education-hub',
-      target: '[data-tour="education-hub"]',
+      target: 'body',
       title: 'AI Mastery Academy',
       content: 'Level up from AI beginner to business growth expert! Access cutting-edge strategies, proven frameworks, and insider techniques that top entrepreneurs use to 10x their results with AI.',
       icon: <div className="relative"><BookOpen className="w-6 h-6 text-amber-400" /></div>,
-      placement: 'right',
+      placement: 'center',
       actionText: 'From prompt engineering to growth hacking - master it all',
       proTip: 'Companies using AI strategically grow 5x faster than competitors!',
       challenge: 'This week: Complete one advanced tutorial and implement the strategy'
     },
     {
       id: 'wishlist',
-      target: '[data-tour="wishlist"]',
+      target: 'body',
       title: 'Shape Growfly\'s Future',
       content: 'Your ideas drive our innovation! This isn\'t just a suggestion box - it\'s where game-changing features are born. Our development team prioritizes the most-loved ideas from power users like you.',
       icon: <div className="relative"><Lightbulb className="w-6 h-6 text-yellow-400" /></div>,
-      placement: 'right',
+      placement: 'center',
       actionText: 'Your breakthrough idea could become reality within weeks',
       proTip: 'Users who actively suggest features get early access to new releases!',
       challenge: 'Mission: Submit your first feature idea and vote on others'
     },
     {
       id: 'trusted-partners',
-      target: '[data-tour="trusted-partners"]',
+      target: 'body',
       title: 'Human + AI Powerhouse',
       content: 'Coming soon: The perfect fusion of AI efficiency and human expertise! Connect with verified professionals who can take your AI-generated work to the final mile. Think AI + expert = unstoppable results.',
       icon: <div className="relative"><Handshake className="w-6 h-6 text-green-400" /></div>,
-      placement: 'right',
+      placement: 'center',
       actionText: 'The future of work: AI creativity + human polish',
       proTip: 'Early access list members get 50% off professional services when we launch!',
       challenge: 'Be ready: Join the waitlist for exclusive early access'
     },
     {
       id: 'brand-settings',
-      target: '[data-tour="brand-settings"]',
+      target: 'body',
       title: 'Your Brand DNA Lab',
       content: 'This is where the magic begins! Fine-tune how Growfly understands your unique voice, style, and business personality. The more it knows about you, the more it becomes your perfect AI business partner.',
       icon: <div className="relative"><Settings className="w-6 h-6 text-slate-400" /></div>,
-      placement: 'right',
+      placement: 'center',
       actionText: 'Make every AI response sound authentically YOU',
       proTip: 'Brands with consistent voice across all content see 23% more revenue!',
       challenge: 'Action item: Spend 5 minutes perfecting your brand voice settings'
     },
     {
       id: 'xp-system',
-      target: '[data-tour="xp-system"]',
+      target: 'body',
       title: 'Level Up & Get Rewarded',
       content: 'Every interaction makes you stronger! Earn XP, unlock achievements, and climb the leaderboards. Top performers get exclusive rewards: gift cards, VIP event access, networking opportunities, and surprise bonuses!',
       icon: <div className="relative"><Trophy className="w-6 h-6 text-orange-400" /></div>,
-      placement: 'left',
+      placement: 'center',
       actionText: 'Gaming meets business growth - achieve while you succeed',
       proTip: 'Power users in the top 10% get monthly surprise rewards!',
       challenge: 'Your first goal: Reach level 5 this week by engaging daily'
@@ -355,6 +355,7 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
 
   // ✅ COMPLETELY FIXED: Perfect positioning that prevents scrolling issues
   const getTooltipPosition = () => {
+    // Always center if it's a center placement OR if target element is missing
     if (isCenter || !targetRect) {
       return {
         position: 'fixed' as const,
