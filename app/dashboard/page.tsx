@@ -2236,8 +2236,8 @@ function DashboardContent() {
           <div className="text-xs space-y-1">
             <div>showTutorial: {showTutorial.toString()}</div>
             <div>forceTutorial: {forceTutorial.toString()}</div>
-            <div>isFirstTime: {isFirstTime.toString()}</div>
             <div>hasCompleted: {localStorage.getItem('growfly-tutorial-completed') || 'false'}</div>
+            <div>justCompleted: {sessionStorage.getItem('justCompletedOnboarding') || 'false'}</div>
           </div>
           <button
             onClick={() => {
