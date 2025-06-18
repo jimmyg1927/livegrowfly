@@ -370,6 +370,12 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
     }
   }
 
+  const currentStepData = tutorialSteps[currentStep]
+  const progress = ((currentStep + 1) / tutorialSteps.length) * 100
+  const hasTarget = currentStepData.target && targetRect && elementFound
+  const canGoBack = currentStep > 0 && !isAnimating && !isNavigating
+  const canGoForward = !isAnimating && !isNavigating
+
   // FIXED: Enhanced positioning with proper null checks
   const getTooltipPosition = useCallback(() => {
     const tooltipWidth = 360
@@ -561,12 +567,6 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
   }, [])
 
   if (!isActive) return null
-
-  const currentStepData = tutorialSteps[currentStep]
-  const progress = ((currentStep + 1) / tutorialSteps.length) * 100
-  const hasTarget = currentStepData.target && targetRect && elementFound
-  const canGoBack = currentStep > 0 && !isAnimating && !isNavigating
-  const canGoForward = !isAnimating && !isNavigating
 
   return (
     <>
