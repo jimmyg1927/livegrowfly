@@ -1597,11 +1597,11 @@ function DashboardContent() {
 
       {/* Content Area - Proper sidebar spacing */}
       <div className="flex-1 overflow-hidden ml-0 md:ml-60 lg:ml-64" data-tour="dashboard-main">
-        <div ref={containerRef} className="h-full overflow-y-auto pb-80 pl-2 pr-4">
+        <div ref={containerRef} className="h-full overflow-y-auto pb-80 px-4 pt-4">
 
         {/* Prompt Limit Warning */}
         {isAtPromptLimit && (
-          <div className="mr-4 mt-4 ml-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
+          <div className="mt-4 mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
             <button 
               onClick={dismissError}
               className="absolute top-2 right-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200"
@@ -1633,7 +1633,7 @@ function DashboardContent() {
 
         {/* Error Message */}
         {error && (
-          <div className="mr-4 mt-4 ml-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
+          <div className="mt-4 mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
             <button 
               onClick={dismissError}
               className="absolute top-2 right-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200"
@@ -1655,10 +1655,10 @@ function DashboardContent() {
         )}
 
         {/* Chat Messages - Traditional Chat Layout */}
-        <div className="space-y-3 min-h-0 flex-1 px-4">
+        <div className="space-y-3 min-h-0 flex-1 pt-6">
           {messages.length === 0 ? (
-            <div className="flex items-center justify-center h-full min-h-[50vh]">
-              <div className="text-center max-w-2xl px-4">
+            <div className="flex items-center justify-center h-full min-h-[50vh] pt-8">
+              <div className="text-center max-w-2xl">
                 <div className="mb-6">
                   <div className="text-6xl md:text-8xl mb-4 animate-bounce">👋</div>
                   <h3 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-3">
@@ -1702,7 +1702,7 @@ function DashboardContent() {
               {messages.map((msg, index) => (
                 <div
                   key={msg.id}
-                  className={`flex mb-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  className={`flex mb-3 w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   onMouseEnter={() => setHoveredMessageId(msg.id)}
                   onMouseLeave={() => setHoveredMessageId(null)}
                 >
@@ -1710,8 +1710,8 @@ function DashboardContent() {
                   <div
                     className={`relative rounded-2xl shadow-sm transition-all duration-200 ${
                       msg.role === 'user'
-                        ? 'bg-blue-600 text-white max-w-[85%] sm:max-w-[75%] p-4'
-                        : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-white max-w-[85%] sm:max-w-[75%] p-4'
+                        ? 'bg-blue-600 text-white max-w-[75%] sm:max-w-[65%] p-4'
+                        : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-white max-w-[90%] sm:max-w-[80%] p-4'
                     }`}
                   >
                     {/* Display uploaded files for user messages */}

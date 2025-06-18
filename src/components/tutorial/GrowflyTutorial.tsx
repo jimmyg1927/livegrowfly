@@ -342,10 +342,10 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
   const canGoBack = currentStep > 0 && !isAnimating
   const canGoForward = !isAnimating
 
-  // FIXED: Enhanced positioning with proper null checks
+  // FIXED: Enhanced positioning to prevent cut-off
   const getTooltipPosition = useCallback(() => {
     const tooltipWidth = 360
-    const tooltipHeight = 320
+    const tooltipHeight = 280 // Reduced height to prevent cut-off
     const viewportWidth = window.innerWidth
     const viewportHeight = window.innerHeight
     const padding = 24
@@ -360,7 +360,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
         transform: 'translate(-50%, -50%)',
         zIndex: 1000,
         width: `${Math.min(tooltipWidth, viewportWidth - padding * 2)}px`,
-        maxHeight: `${viewportHeight - padding * 2}px`,
+        maxHeight: `${Math.min(tooltipHeight, viewportHeight - padding * 2)}px`,
       }
     }
 
@@ -375,73 +375,59 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
         transform: 'translate(-50%, -50%)',
         zIndex: 1000,
         width: `${Math.min(tooltipWidth, viewportWidth - padding * 2)}px`,
-        maxHeight: `${viewportHeight - padding * 2}px`,
+        maxHeight: `${Math.min(tooltipHeight, viewportHeight - padding * 2)}px`,
       }
     }
 
-    // Desktop positioning strategies
+    // Desktop positioning strategies - prioritize positions that keep modal in view
     const strategies = [
-      // Strategy 1: Right side
+      // Strategy 1: Right side (preferred for sidebar)
       {
-        top: rect.top + rect.height / 2 - tooltipHeight / 2,
+        top: Math.min(rect.top, viewportHeight - tooltipHeight - padding),
         left: rect.right + padding,
         score: rect.right + padding + tooltipWidth <= viewportWidth - padding ? 10 : 0
       },
-      // Strategy 2: Left side
+      // Strategy 2: Center right
       {
-        top: rect.top + rect.height / 2 - tooltipHeight / 2,
-        left: rect.left - padding - tooltipWidth,
-        score: rect.left - padding - tooltipWidth >= padding ? 9 : 0
+        top: Math.max(padding, Math.min(rect.top + rect.height / 2 - tooltipHeight / 2, viewportHeight - tooltipHeight - padding)),
+        left: rect.right + padding,
+        score: rect.right + padding + tooltipWidth <= viewportWidth - padding ? 9 : 0
       },
-      // Strategy 3: Bottom center
+      // Strategy 3: Above target
       {
-        top: rect.bottom + padding,
-        left: rect.left + rect.width / 2 - tooltipWidth / 2,
-        score: rect.bottom + padding + tooltipHeight <= viewportHeight - padding ? 8 : 0
+        top: Math.max(padding, rect.top - tooltipHeight - padding),
+        left: Math.max(padding, Math.min(rect.left + rect.width / 2 - tooltipWidth / 2, viewportWidth - tooltipWidth - padding)),
+        score: rect.top - tooltipHeight - padding >= padding ? 8 : 0
       },
-      // Strategy 4: Top center
+      // Strategy 4: Below target
       {
-        top: rect.top - padding - tooltipHeight,
-        left: rect.left + rect.width / 2 - tooltipWidth / 2,
-        score: rect.top - padding - tooltipHeight >= padding ? 7 : 0
+        top: Math.min(rect.bottom + padding, viewportHeight - tooltipHeight - padding),
+        left: Math.max(padding, Math.min(rect.left + rect.width / 2 - tooltipWidth / 2, viewportWidth - tooltipWidth - padding)),
+        score: rect.bottom + padding + tooltipHeight <= viewportHeight - padding ? 7 : 0
       },
-      // Strategy 5: Bottom right
+      // Strategy 5: Center screen (safe fallback)
       {
-        top: rect.bottom + padding,
-        left: rect.right - tooltipWidth,
-        score: rect.bottom + padding + tooltipHeight <= viewportHeight - padding && 
-               rect.right - tooltipWidth >= padding ? 6 : 0
+        top: Math.max(padding, (viewportHeight - tooltipHeight) / 2),
+        left: Math.max(padding, (viewportWidth - tooltipWidth) / 2),
+        score: 1 // Always available as fallback
       }
     ]
 
-    // Find best strategy
+    // Find best strategy that keeps modal in viewport
     const bestStrategy = strategies
       .filter(s => s.score > 0)
       .sort((a, b) => b.score - a.score)[0]
 
-    if (bestStrategy) {
-      const finalTop = Math.max(padding, Math.min(bestStrategy.top, viewportHeight - tooltipHeight - padding))
-      const finalLeft = Math.max(padding, Math.min(bestStrategy.left, viewportWidth - tooltipWidth - padding))
-      
-      return {
-        position: 'fixed' as const,
-        top: `${finalTop}px`,
-        left: `${finalLeft}px`,
-        zIndex: 1000,
-        width: `${tooltipWidth}px`,
-        maxHeight: `${viewportHeight - padding * 2}px`,
-      }
-    }
-
-    // Fallback to center
+    const finalTop = Math.max(padding, Math.min(bestStrategy.top, viewportHeight - tooltipHeight - padding))
+    const finalLeft = Math.max(padding, Math.min(bestStrategy.left, viewportWidth - tooltipWidth - padding))
+    
     return {
       position: 'fixed' as const,
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
+      top: `${finalTop}px`,
+      left: `${finalLeft}px`,
       zIndex: 1000,
       width: `${Math.min(tooltipWidth, viewportWidth - padding * 2)}px`,
-      maxHeight: `${viewportHeight - padding * 2}px`,
+      maxHeight: `${Math.min(tooltipHeight, viewportHeight - padding * 2)}px`,
     }
   }, [targetRect, hasTarget])
 
@@ -605,15 +591,15 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
             <div className="absolute inset-0 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200" />
 
             {/* Content */}
-            <div className="relative p-6">
+            <div className="relative p-5">
               {/* Clean header */}
-              <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center shadow-sm border border-blue-100">
+                  <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center shadow-sm border border-blue-100">
                     {currentStepData.icon}
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-slate-800 leading-tight mb-1">
+                    <h3 className="text-md font-bold text-slate-800 leading-tight mb-1">
                       {currentStepData.title}
                     </h3>
                     <div className="flex items-center gap-2 text-xs text-slate-600">
@@ -643,20 +629,20 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
               </div>
 
               {/* Enhanced content */}
-              <div className="space-y-4 mb-6">
+              <div className="space-y-3 mb-4">
                 <p className="text-slate-700 text-sm leading-relaxed font-medium">
                   {currentStepData.content}
                 </p>
                 
                 {currentStepData.proTip && (
-                  <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 shadow-sm">
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">
-                        <Brain className="w-4 h-4 text-white" strokeWidth={2.5} />
+                  <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 shadow-sm">
+                    <div className="flex items-start gap-2">
+                      <div className="w-6 h-6 bg-amber-500 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0 mt-0.5">
+                        <Brain className="w-3 h-3 text-white" strokeWidth={2.5} />
                       </div>
                       <div>
-                        <div className="font-semibold text-amber-800 text-sm mb-1">💡 Pro Insight</div>
-                        <p className="text-amber-700 text-sm font-medium leading-relaxed">
+                        <div className="font-semibold text-amber-800 text-xs mb-1">💡 Pro Insight</div>
+                        <p className="text-amber-700 text-xs font-medium leading-relaxed">
                           {currentStepData.proTip}
                         </p>
                       </div>
@@ -666,14 +652,14 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
               </div>
 
               {/* Clean progress */}
-              <div className="mb-6">
+              <div className="mb-4">
                 <div className="flex justify-between text-xs font-semibold mb-2">
                   <span className="text-slate-600">Step {currentStep + 1} of {tutorialSteps.length}</span>
                   <span className="text-blue-600">
                     {Math.round(progress)}% Complete
                   </span>
                 </div>
-                <div className="relative w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div className="relative w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
                   <div 
                     className="absolute inset-0 bg-blue-500 rounded-full transition-all duration-1000 ease-out"
                     style={{ width: `${progress}%` }}
@@ -686,7 +672,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleSkipClick}
-                    className="px-4 py-2 text-slate-600 hover:text-slate-800 text-xs font-semibold bg-slate-100 hover:bg-slate-200 rounded-full transition-all duration-200 shadow-sm border border-slate-300"
+                    className="px-3 py-1.5 text-slate-600 hover:text-slate-800 text-xs font-semibold bg-slate-100 hover:bg-slate-200 rounded-full transition-all duration-200 shadow-sm border border-slate-300"
                   >
                     Skip Tour
                   </button>
@@ -694,7 +680,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
                   {canGoBack && (
                     <button
                       onClick={prevStep}
-                      className="group flex items-center gap-1 px-3 py-2 text-slate-700 hover:text-slate-900 text-xs font-semibold bg-white hover:bg-slate-50 rounded-full transition-all duration-200 shadow-sm border border-slate-300"
+                      className="group flex items-center gap-1 px-2 py-1.5 text-slate-700 hover:text-slate-900 text-xs font-semibold bg-white hover:bg-slate-50 rounded-full transition-all duration-200 shadow-sm border border-slate-300"
                     >
                       <ChevronLeft className="w-3 h-3 transition-transform duration-200 group-hover:-translate-x-0.5" strokeWidth={2.5} />
                       Back
@@ -705,7 +691,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
                 <button
                   onClick={nextStep}
                   disabled={!canGoForward}
-                  className={`group flex items-center gap-2 px-6 py-2 text-white text-xs font-bold rounded-full transition-all duration-200 shadow-lg border ${
+                  className={`group flex items-center gap-2 px-4 py-1.5 text-white text-xs font-bold rounded-full transition-all duration-200 shadow-lg border ${
                     !canGoForward 
                       ? 'bg-slate-400 cursor-not-allowed opacity-60 border-slate-300' 
                       : 'bg-blue-600 hover:bg-blue-700 border-blue-500 hover:shadow-xl hover:scale-105'
@@ -713,13 +699,13 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
                 >
                   {currentStep === tutorialSteps.length - 1 ? (
                     <>
-                      <Rocket className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" strokeWidth={2.5} />
+                      <Rocket className="w-3 h-3 transition-transform duration-200 group-hover:scale-110" strokeWidth={2.5} />
                       <span>Get Started!</span>
                     </>
                   ) : (
                     <>
                       <span>Continue</span>
-                      <ChevronRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" strokeWidth={2.5} />
+                      <ChevronRight className="w-3 h-3 transition-transform duration-200 group-hover:translate-x-0.5" strokeWidth={2.5} />
                     </>
                   )}
                 </button>
@@ -733,19 +719,19 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
       {showSkipModal && (
         <div className="fixed inset-0 bg-slate-900/80 z-[1200] flex items-center justify-center backdrop-blur-xl p-4">
           <div className="relative max-w-md w-full">
-            <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200 p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center shadow-sm border border-blue-100">
-                  <Sparkles className="w-5 h-5 text-blue-500" strokeWidth={2} />
+            <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200 p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center shadow-sm border border-blue-100">
+                  <Sparkles className="w-4 h-4 text-blue-500" strokeWidth={2} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-800">Skip Interactive Tour?</h3>
+                  <h3 className="text-md font-bold text-slate-800">Skip Dashboard Tour?</h3>
                   <p className="text-xs text-slate-600 font-medium">You can always restart it later</p>
                 </div>
               </div>
               
-              <p className="text-slate-700 text-sm mb-6 leading-relaxed font-medium">
-                This interactive tour reveals powerful features that could
+              <p className="text-slate-700 text-sm mb-4 leading-relaxed font-medium">
+                This dashboard tour reveals powerful features that could
                 <span className="font-bold text-slate-800"> save you hours</span> and 
                 <span className="font-bold text-slate-800"> boost your productivity</span> dramatically.
               </p>
@@ -753,13 +739,13 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
               <div className="flex gap-3">
                 <button
                   onClick={confirmSkip}
-                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-800 py-3 px-4 rounded-full text-sm font-semibold transition-all duration-200 shadow-sm border border-slate-300"
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-800 py-2 px-3 rounded-full text-sm font-semibold transition-all duration-200 shadow-sm border border-slate-300"
                 >
                   Skip
                 </button>
                 <button
                   onClick={cancelSkip}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-full text-sm font-bold transition-all duration-200 shadow-lg border border-blue-500"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-full text-sm font-bold transition-all duration-200 shadow-lg border border-blue-500"
                 >
                   Continue Tour
                 </button>
