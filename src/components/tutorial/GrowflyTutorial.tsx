@@ -747,4 +747,4 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
   )
 }
 
-export default GrowflyTutoriall
+export default GrowflyTutorial
