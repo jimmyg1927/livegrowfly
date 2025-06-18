@@ -6,7 +6,7 @@ import {
   Sparkles, Zap, Users, Heart, Lightbulb, Trophy, Handshake, Settings, 
   Image, BookOpen, X, ChevronRight, ChevronLeft, Star, Rocket, 
   Target, Brain, Palette, MessageCircle, Gift, Crown, Wand2, Play,
-  ArrowDown, MousePointer, Eye, Navigation, FastForward, Pause
+  ArrowDown, MousePointer, Eye, Navigation
 } from 'lucide-react'
 
 interface GrowflyTutorialProps {
@@ -40,8 +40,6 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
   const [showSkipModal, setShowSkipModal] = useState(false)
   const [isNavigating, setIsNavigating] = useState(false)
   const [elementFound, setElementFound] = useState(true)
-  const [autoMode, setAutoMode] = useState(false)
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // ✅ FIXED: Start tutorial when prop changes with safety checks
@@ -62,20 +60,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
     }
   }, [isFirstTime])
 
-  // Auto-mode functionality
-  useEffect(() => {
-    if (!autoMode || !isActive || isAnimating || isNavigating) return
-    
-    timeoutRef.current = setTimeout(() => {
-      nextStep()
-    }, 3500)
-    
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-    }
-  }, [currentStep, autoMode, isActive, isAnimating, isNavigating])
+  // Remove auto-mode functionality
 
   // Enhanced sound effects
   const playSound = useCallback((type: 'start' | 'step' | 'complete' | 'welcome' | 'celebration' | 'navigate' | 'error' | 'success') => {
@@ -135,7 +120,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
       content: 'Your creativity hub - upload images, chat with AI, get instant results, and download everything.',
       icon: <Zap className="w-5 h-5 text-blue-400" />,
       route: '/dashboard',
-      target: '[data-tour="dashboard-main"], .chat-interface, [data-tour="chat-area"], main, .main-content',
+      target: 'main, .main-content, [data-tour="dashboard-main"], .chat-interface, body',
       proTip: 'Upload any file type - images, PDFs, documents - and ask AI to analyze them!',
       priority: 1
     },
@@ -145,7 +130,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
       content: 'Every brilliant AI response auto-saves here. Build your personal content empire and never lose an idea.',
       icon: <BookOpen className="w-5 h-5 text-amber-400" />,
       route: '/saved',
-      target: '[href="/saved"], [data-nav="saved-responses"], a[href*="saved"], nav a:contains("Saved")',
+      target: 'main, .main-content, [data-tour="saved-content"], .saved-responses-container, body',
       proTip: 'Create templates, organize by campaigns, and build your content library!',
       priority: 2
     },
@@ -275,7 +260,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
         
         try {
           router.push(step.route)
-          await new Promise(resolve => setTimeout(resolve, 1800)) // Increased wait time
+          await new Promise(resolve => setTimeout(resolve, 2500)) // Increased wait time for better stability
         } catch (error) {
           console.log('❌ Navigation error:', error)
           playSound('error')
@@ -356,7 +341,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
         }
         
         // Start finding with initial delay
-        setTimeout(attemptFind, 800)
+        setTimeout(attemptFind, 1200) // Increased delay for page stability
       } else {
         setTargetRect(null)
         setElementFound(true)
@@ -516,18 +501,12 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
     }
   }, [currentStep, isAnimating, isNavigating])
 
-  const toggleAutoMode = useCallback(() => {
-    setAutoMode(!autoMode)
-    playSound(autoMode ? 'step' : 'success')
-  }, [autoMode])
-
   const closeTutorial = useCallback(() => {
     console.log('✅ Closing enhanced tour')
     setShowConfetti(true)
     playSound('complete')
     
     // Clear all timeouts
-    if (timeoutRef.current) clearTimeout(timeoutRef.current)
     if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current)
     
     setTimeout(() => {
@@ -535,7 +514,6 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
       setTargetRect(null)
       setShowConfetti(false)
       setCurrentStep(0)
-      setAutoMode(false)
       setElementFound(true)
       
       if (onComplete) {
@@ -561,7 +539,6 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current)
       if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current)
     }
   }, [])
@@ -597,44 +574,38 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
       {/* 🎨 Enhanced overlay with perfect spotlight */}
       <div className="fixed inset-0 z-[999] transition-all duration-500">
         
-        {/* FIXED: Perfect spotlight effect with null checks */}
+        {/* FIXED: Clean spotlight effect with null checks */}
         {hasTarget && targetRect && targetRect.width > 0 && targetRect.height > 0 && (
           <>
-            {/* Subtle gradient overlay */}
+            {/* Subtle overlay */}
             <div 
-              className="absolute inset-0 transition-all duration-1000 ease-out"
+              className="absolute inset-0 transition-all duration-700 ease-out"
               style={{
-                background: `radial-gradient(ellipse ${targetRect.width + 80}px ${targetRect.height + 80}px at ${targetRect.left + targetRect.width/2}px ${targetRect.top + targetRect.height/2}px, transparent 0%, transparent 40%, rgba(15, 23, 42, 0.3) 80%)`
+                background: `radial-gradient(ellipse ${targetRect.width + 60}px ${targetRect.height + 60}px at ${targetRect.left + targetRect.width/2}px ${targetRect.top + targetRect.height/2}px, transparent 0%, transparent 30%, rgba(15, 23, 42, 0.4) 70%)`
               }}
             />
             
-            {/* Animated highlight ring */}
+            {/* Clean highlight border */}
             <div 
-              className="absolute rounded-2xl transition-all duration-1000 ease-out"
+              className="absolute border-3 border-blue-500 rounded-xl transition-all duration-700 ease-out"
               style={{
-                top: targetRect.top - 6,
-                left: targetRect.left - 6,
-                width: targetRect.width + 12,
-                height: targetRect.height + 12,
-                background: 'linear-gradient(45deg, #3b82f6, #8b5cf6, #10b981, #3b82f6)',
-                backgroundSize: '200% 200%',
-                animation: 'gradient-flow 3s ease infinite, tutorial-bright-pulse 2s infinite',
-                padding: '2px',
-                boxShadow: '0 0 30px rgba(59, 130, 246, 0.6), 0 0 60px rgba(139, 92, 246, 0.4)',
+                top: targetRect.top - 4,
+                left: targetRect.left - 4,
+                width: targetRect.width + 8,
+                height: targetRect.height + 8,
+                boxShadow: '0 0 20px rgba(59, 130, 246, 0.5), 0 0 40px rgba(59, 130, 246, 0.2)',
+                animation: 'tutorial-clean-pulse 2s infinite',
               }}
-            >
-              <div className="w-full h-full bg-transparent rounded-2xl" />
-            </div>
+            />
             
-            {/* Inner glow */}
+            {/* Inner highlight */}
             <div 
-              className="absolute border-2 border-white/70 rounded-2xl transition-all duration-1000 ease-out"
+              className="absolute border-2 border-white/80 rounded-xl transition-all duration-700 ease-out"
               style={{
                 top: targetRect.top - 2,
                 left: targetRect.left - 2,
                 width: targetRect.width + 4,
                 height: targetRect.height + 4,
-                boxShadow: 'inset 0 0 20px rgba(255, 255, 255, 0.4)',
               }}
             />
           </>
@@ -649,31 +620,19 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
           onClick={(e) => e.stopPropagation()}
         >
           <div className="relative w-full">
-            {/* Premium glassmorphic background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/98 via-white/95 to-white/98 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/40" />
-            
-            {/* Animated gradient border */}
-            <div className="absolute inset-0 rounded-3xl p-0.5" style={{
-              background: 'linear-gradient(45deg, #3b82f6, #8b5cf6, #10b981, #f59e0b, #3b82f6)',
-              backgroundSize: '200% 200%',
-              animation: 'gradient-flow 6s ease infinite'
-            }}>
-              <div className="w-full h-full bg-gradient-to-br from-white/98 via-white/95 to-white/98 rounded-3xl" />
-            </div>
+            {/* Clean glassmorphic background */}
+            <div className="absolute inset-0 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200" />
 
             {/* Content */}
             <div className="relative p-6">
-              {/* Enhanced header */}
+              {/* Clean header */}
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/30 via-purple-500/30 to-emerald-500/30 rounded-2xl animate-pulse" />
-                    <div className="relative w-12 h-12 bg-gradient-to-br from-blue-50 via-purple-50 to-emerald-50 rounded-2xl flex items-center justify-center shadow-xl border border-white/60">
-                      {currentStepData.icon}
-                    </div>
+                  <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center shadow-sm border border-blue-100">
+                    {currentStepData.icon}
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold bg-gradient-to-r from-slate-800 via-blue-600 to-purple-600 bg-clip-text text-transparent leading-tight mb-1">
+                    <h3 className="text-lg font-bold text-slate-800 leading-tight mb-1">
                       {currentStepData.title}
                     </h3>
                     <div className="flex items-center gap-2 text-xs text-slate-600">
@@ -698,22 +657,9 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  {/* Auto mode toggle */}
-                  <button
-                    onClick={toggleAutoMode}
-                    className={`group relative p-2 rounded-full transition-all duration-300 shadow-lg border border-white/40 ${
-                      autoMode 
-                        ? 'bg-gradient-to-br from-green-500 to-emerald-500 text-white' 
-                        : 'bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600 hover:from-slate-200 hover:to-slate-300'
-                    }`}
-                    title={autoMode ? 'Auto mode ON' : 'Auto mode OFF'}
-                  >
-                    {autoMode ? <FastForward className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
-                  </button>
-                  
                   <button 
                     onClick={handleSkipClick}
-                    className="group relative w-8 h-8 bg-gradient-to-br from-slate-100 to-slate-200 hover:from-slate-200 hover:to-slate-300 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border border-white/40 hover:shadow-xl hover:scale-105"
+                    className="group relative w-8 h-8 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm border border-slate-300 hover:shadow-md hover:scale-105"
                     title="Skip tour"
                   >
                     <X className="w-4 h-4 text-slate-600 group-hover:text-slate-800 transition-colors duration-200" strokeWidth={2} />
@@ -728,10 +674,9 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
                 </p>
                 
                 {currentStepData.proTip && (
-                  <div className="relative overflow-hidden p-4 bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-50 rounded-2xl border border-amber-200/60 shadow-sm">
-                    <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-yellow-500/5 to-amber-500/5" />
-                    <div className="relative flex items-start gap-3">
-                      <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                  <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">
                         <Brain className="w-4 h-4 text-white" strokeWidth={2.5} />
                       </div>
                       <div>
@@ -745,35 +690,28 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
                 )}
               </div>
 
-              {/* Enhanced progress */}
+              {/* Clean progress */}
               <div className="mb-6">
                 <div className="flex justify-between text-xs font-semibold mb-2">
                   <span className="text-slate-600">Step {currentStep + 1} of {tutorialSteps.length}</span>
-                  <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-emerald-600 bg-clip-text text-transparent">
+                  <span className="text-blue-600">
                     {Math.round(progress)}% Complete
                   </span>
                 </div>
-                <div className="relative w-full h-2 bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200 rounded-full overflow-hidden shadow-inner">
+                <div className="relative w-full h-2 bg-slate-200 rounded-full overflow-hidden">
                   <div 
-                    className="absolute inset-0 rounded-full transition-all duration-1000 ease-out shadow-lg"
-                    style={{ 
-                      width: `${progress}%`,
-                      background: 'linear-gradient(45deg, #3b82f6, #8b5cf6, #10b981)',
-                      backgroundSize: '200% 200%',
-                      animation: 'gradient-flow 3s ease infinite'
-                    }}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-white/30 to-transparent rounded-full" />
-                  </div>
+                    className="absolute inset-0 bg-blue-500 rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: `${progress}%` }}
+                  />
                 </div>
               </div>
 
-              {/* Enhanced navigation */}
+              {/* Clean navigation */}
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleSkipClick}
-                    className="px-4 py-2 text-slate-600 hover:text-slate-800 text-xs font-semibold bg-gradient-to-br from-slate-100 to-slate-200 hover:from-slate-200 hover:to-slate-300 rounded-full transition-all duration-300 shadow-lg border border-white/40 hover:shadow-xl hover:scale-105"
+                    className="px-4 py-2 text-slate-600 hover:text-slate-800 text-xs font-semibold bg-slate-100 hover:bg-slate-200 rounded-full transition-all duration-200 shadow-sm border border-slate-300"
                   >
                     Skip Tour
                   </button>
@@ -781,7 +719,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
                   {canGoBack && (
                     <button
                       onClick={prevStep}
-                      className="group flex items-center gap-1 px-3 py-2 text-slate-700 hover:text-slate-900 text-xs font-semibold bg-gradient-to-br from-white to-slate-50 hover:from-slate-50 hover:to-slate-100 rounded-full transition-all duration-300 shadow-lg border border-white/60 hover:shadow-xl hover:scale-105"
+                      className="group flex items-center gap-1 px-3 py-2 text-slate-700 hover:text-slate-900 text-xs font-semibold bg-white hover:bg-slate-50 rounded-full transition-all duration-200 shadow-sm border border-slate-300"
                     >
                       <ChevronLeft className="w-3 h-3 transition-transform duration-200 group-hover:-translate-x-0.5" strokeWidth={2.5} />
                       Back
@@ -792,21 +730,20 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
                 <button
                   onClick={nextStep}
                   disabled={!canGoForward}
-                  className={`group relative flex items-center gap-2 px-6 py-2 text-white text-xs font-bold rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl border border-white/20 ${
+                  className={`group flex items-center gap-2 px-6 py-2 text-white text-xs font-bold rounded-full transition-all duration-200 shadow-lg border ${
                     !canGoForward 
-                      ? 'bg-gradient-to-br from-slate-400 to-slate-500 cursor-not-allowed opacity-60' 
-                      : 'bg-gradient-to-br from-blue-600 via-purple-600 to-emerald-600 hover:from-blue-700 hover:via-purple-700 hover:to-emerald-700 hover:scale-105'
+                      ? 'bg-slate-400 cursor-not-allowed opacity-60 border-slate-300' 
+                      : 'bg-blue-600 hover:bg-blue-700 border-blue-500 hover:shadow-xl hover:scale-105'
                   }`}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-full" />
                   {currentStep === tutorialSteps.length - 1 ? (
                     <>
                       <Rocket className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" strokeWidth={2.5} />
-                      <span className="relative z-10">Get Started!</span>
+                      <span>Get Started!</span>
                     </>
                   ) : (
                     <>
-                      <span className="relative z-10">Continue</span>
+                      <span>Continue</span>
                       <ChevronRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" strokeWidth={2.5} />
                     </>
                   )}
@@ -817,27 +754,17 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
         </div>
       </div>
 
-      {/* Enhanced skip confirmation modal */}
+      {/* Clean skip confirmation modal */}
       {showSkipModal && (
-        <div className="fixed inset-0 bg-slate-900/80 z-[1200] flex items-center justify-center backdrop-blur-2xl p-4">
+        <div className="fixed inset-0 bg-slate-900/80 z-[1200] flex items-center justify-center backdrop-blur-xl p-4">
           <div className="relative max-w-md w-full">
-            <div className="absolute inset-0 bg-gradient-to-br from-white/98 via-white/95 to-white/98 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/40" />
-            
-            <div className="absolute inset-0 rounded-3xl p-0.5" style={{
-              background: 'linear-gradient(45deg, #3b82f6, #8b5cf6, #10b981, #3b82f6)',
-              backgroundSize: '200% 200%',
-              animation: 'gradient-flow 4s ease infinite'
-            }}>
-              <div className="w-full h-full bg-gradient-to-br from-white/98 via-white/95 to-white/98 rounded-3xl" />
-            </div>
-
-            <div className="relative p-6">
+            <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200 p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-50 via-purple-50 to-emerald-50 rounded-2xl flex items-center justify-center shadow-lg border border-white/60">
+                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center shadow-sm border border-blue-100">
                   <Sparkles className="w-5 h-5 text-blue-500" strokeWidth={2} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold bg-gradient-to-r from-slate-800 via-blue-600 to-purple-600 bg-clip-text text-transparent">Skip Interactive Tour?</h3>
+                  <h3 className="text-lg font-bold text-slate-800">Skip Interactive Tour?</h3>
                   <p className="text-xs text-slate-600 font-medium">You can always restart it later</p>
                 </div>
               </div>
@@ -851,16 +778,15 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
               <div className="flex gap-3">
                 <button
                   onClick={confirmSkip}
-                  className="flex-1 bg-gradient-to-br from-slate-100 to-slate-200 hover:from-slate-200 hover:to-slate-300 text-slate-700 hover:text-slate-800 py-3 px-4 rounded-full text-sm font-semibold transition-all duration-300 shadow-lg border border-white/40 hover:shadow-xl hover:scale-105"
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-800 py-3 px-4 rounded-full text-sm font-semibold transition-all duration-200 shadow-sm border border-slate-300"
                 >
                   Skip
                 </button>
                 <button
                   onClick={cancelSkip}
-                  className="flex-1 bg-gradient-to-br from-blue-600 via-purple-600 to-emerald-600 hover:from-blue-700 hover:via-purple-700 hover:to-emerald-700 text-white py-3 px-4 rounded-full text-sm font-bold transition-all duration-300 shadow-xl hover:shadow-2xl border border-white/20 relative overflow-hidden hover:scale-105"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-full text-sm font-bold transition-all duration-200 shadow-lg border border-blue-500"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-full" />
-                  <span className="relative z-10">Continue Tour</span>
+                  Continue Tour
                 </button>
               </div>
             </div>
@@ -868,25 +794,16 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
         </div>
       )}
 
-      {/* Enhanced CSS animations */}
+      {/* Clean CSS animations */}
       <style jsx global>{`
-        @keyframes tutorial-bright-pulse {
+        @keyframes tutorial-clean-pulse {
           0%, 100% { 
+            border-color: #3b82f6;
             transform: scale(1);
-            filter: brightness(1);
           }
           50% { 
+            border-color: #1d4ed8;
             transform: scale(1.01);
-            filter: brightness(1.1);
-          }
-        }
-        
-        @keyframes gradient-flow {
-          0%, 100% { 
-            background-position: 0% 50%; 
-          }
-          50% { 
-            background-position: 100% 50%; 
           }
         }
         
