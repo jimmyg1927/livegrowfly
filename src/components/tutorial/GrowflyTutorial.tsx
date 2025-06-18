@@ -1,12 +1,12 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { 
   Sparkles, Zap, Users, Heart, Lightbulb, Trophy, Handshake, Settings, 
-  Image, BookOpen, X, ChevronRight, Star, Rocket, 
+  Image, BookOpen, X, ChevronRight, ChevronLeft, Star, Rocket, 
   Target, Brain, Palette, MessageCircle, Gift, Crown, Wand2, Play,
-  ArrowDown, MousePointer, Eye, Navigation
+  ArrowDown, MousePointer, Eye, Navigation, FastForward, Pause
 } from 'lucide-react'
 
 interface GrowflyTutorialProps {
@@ -23,6 +23,7 @@ interface TutorialStep {
   target?: string
   proTip?: string
   celebration?: boolean
+  priority?: number // For element finding priority
 }
 
 const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({ 
@@ -37,23 +38,43 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
   const [showConfetti, setShowConfetti] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
   const [showSkipModal, setShowSkipModal] = useState(false)
+  const [isNavigating, setIsNavigating] = useState(false)
+  const [elementFound, setElementFound] = useState(true)
+  const [autoMode, setAutoMode] = useState(false)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // ✅ Start tutorial when prop changes
   useEffect(() => {
     if (isFirstTime) {
-      console.log('🚀 Starting quick visual tour')
+      console.log('🚀 Starting enhanced interactive tour')
       setCurrentStep(0)
       setTimeout(() => {
         startTutorial()
         playSound('welcome')
-      }, 500)
+      }, 300)
     } else if (!isFirstTime && isActive) {
       setIsActive(false)
     }
   }, [isFirstTime])
 
-  // Sound effects
-  const playSound = useCallback((type: 'start' | 'step' | 'complete' | 'welcome' | 'celebration' | 'navigate') => {
+  // Auto-mode functionality
+  useEffect(() => {
+    if (!autoMode || !isActive || isAnimating || isNavigating) return
+    
+    timeoutRef.current = setTimeout(() => {
+      nextStep()
+    }, 3500)
+    
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [currentStep, autoMode, isActive, isAnimating, isNavigating])
+
+  // Enhanced sound effects
+  const playSound = useCallback((type: 'start' | 'step' | 'complete' | 'welcome' | 'celebration' | 'navigate' | 'error' | 'success') => {
     if (typeof window === 'undefined') return
     
     try {
@@ -70,7 +91,9 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
         complete: [523.25, 659.25, 783.99],
         welcome: [440, 523.25, 659.25],
         celebration: [523.25, 659.25, 783.99, 1046.50],
-        navigate: [659.25, 783.99]
+        navigate: [659.25, 783.99],
+        error: [200, 150],
+        success: [659.25, 783.99, 1046.50]
       }
       
       const freq = frequencies[type]
@@ -82,249 +105,243 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
         })
       }
       
-      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime)
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3)
+      gainNode.gain.setValueAtTime(0.08, audioContext.currentTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4)
       
       oscillator.start()
-      oscillator.stop(audioContext.currentTime + 0.3)
+      oscillator.stop(audioContext.currentTime + 0.4)
     } catch (error) {
       console.log('Audio not available')
     }
   }, [])
 
-  // 🚀 STREAMLINED TUTORIAL STEPS - QUICK & INFORMATIVE
+  // 🚀 ENHANCED TUTORIAL STEPS
   const tutorialSteps: TutorialStep[] = [
     {
       id: 'welcome',
-      title: 'Quick 30-Second Tour! 🎯',
-      content: 'Let me show you Growfly\'s power zones. This will take just 30 seconds!',
+      title: 'Welcome to Your Power Tour! 🎯',
+      content: 'Ready to discover Growfly\'s incredible features? Navigate at your own pace or use auto-mode!',
       icon: <Sparkles className="w-5 h-5 text-emerald-400" />,
-      celebration: true
+      celebration: true,
+      priority: 1
     },
     {
       id: 'dashboard-features',
       title: 'AI Command Center 🚀',
-      content: 'Upload images, chat with AI, get instant results. Your creativity hub.',
+      content: 'Your creativity hub - upload images, chat with AI, get instant results, and download everything.',
       icon: <Zap className="w-5 h-5 text-blue-400" />,
       route: '/dashboard',
-      target: '[data-tour="dashboard-main"], .chat-interface, [data-tour="chat-area"]',
-      proTip: 'Upload any file type and ask AI to analyze it!'
+      target: '[data-tour="dashboard-main"], .chat-interface, [data-tour="chat-area"], main, .main-content',
+      proTip: 'Upload any file type - images, PDFs, documents - and ask AI to analyze them!',
+      priority: 1
     },
     {
       id: 'saved-responses',
-      title: 'Content Vault 💎',
-      content: 'Every AI response auto-saves here. Build your content library.',
+      title: 'Content Treasure Vault 💎',
+      content: 'Every brilliant AI response auto-saves here. Build your personal content empire and never lose an idea.',
       icon: <BookOpen className="w-5 h-5 text-amber-400" />,
       route: '/saved',
-      target: '[href="/saved"], [data-nav="saved-responses"]',
-      proTip: 'Never lose a brilliant idea again'
+      target: '[href="/saved"], [data-nav="saved-responses"], a[href*="saved"], nav a:contains("Saved")',
+      proTip: 'Create templates, organize by campaigns, and build your content library!',
+      priority: 2
     },
     {
       id: 'gallery',
-      title: 'Visual Gallery 🎨',
-      content: 'All your AI-generated images organized and ready to use.',
+      title: 'Visual Creativity Studio 🎨',
+      content: 'All your AI-generated images organized beautifully. Your visual brand library grows automatically.',
       icon: <Image className="w-5 h-5 text-purple-400" />,
       route: '/gallery',
-      target: '[href="/gallery"], [data-nav="gallery"]',
-      proTip: 'Visual content gets 94% more engagement'
+      target: '[href="/gallery"], [data-nav="gallery"], a[href*="gallery"], nav a:contains("Gallery")',
+      proTip: 'Visual content gets 94% more engagement than text alone!',
+      priority: 2
     },
     {
       id: 'collab-zone',
-      title: 'Team Hub 🤝',
-      content: 'Share AI responses with your team and collaborate instantly.',
+      title: 'Team Collaboration Magic 🤝',
+      content: 'Share AI responses instantly with your team. Real-time collaboration that makes teams unstoppable.',
       icon: <Users className="w-5 h-5 text-indigo-400" />,
       route: '/collab-zone',
-      target: '[href="/collab-zone"], [data-nav="collab-zone"]',
-      proTip: 'Teams using AI are 3x more productive'
+      target: '[href="/collab-zone"], [data-nav="collab-zone"], a[href*="collab"], nav a:contains("Collab")',
+      proTip: 'Teams using collaborative AI are 3x more productive than solo workers!',
+      priority: 2
     },
     {
       id: 'trusted-partners',
-      title: 'Expert Network 💼',
-      content: 'Coming soon: Professional services to polish your AI work.',
+      title: 'Expert Human Network 💼',
+      content: 'Coming soon: Connect with verified professionals to polish your AI work to perfection.',
       icon: <Crown className="w-5 h-5 text-yellow-400" />,
       route: '/trusted-partners',
-      target: '[href="/trusted-partners"], [data-nav="trusted-partners"]',
-      proTip: 'AI + human expertise = unstoppable results'
+      target: '[href="/trusted-partners"], [data-nav="trusted-partners"], a[href*="partner"], nav a:contains("Partner")',
+      proTip: 'AI creativity + human expertise = unstoppable business results!',
+      priority: 3
     },
     {
       id: 'brand-settings',
-      title: 'Brand DNA 🧬',
-      content: 'Train AI to sound exactly like you and your brand.',
+      title: 'AI Personality Lab 🧬',
+      content: 'Train your AI to sound exactly like you. Set your tone, style, and brand voice for authentic results.',
       icon: <Settings className="w-5 h-5 text-slate-400" />,
       route: '/brand-settings',
-      target: '[href="/brand-settings"], [data-nav="brand-settings"]',
-      proTip: 'Consistent voice = 23% more revenue'
+      target: '[href="/brand-settings"], [data-nav="brand-settings"], a[href*="brand"], a[href*="settings"], nav a:contains("Brand")',
+      proTip: 'Brands with consistent voice see 23% more revenue growth!',
+      priority: 2
     },
     {
       id: 'education-hub',
-      title: 'AI Academy 🎓',
-      content: 'Master advanced AI strategies and growth techniques.',
+      title: 'AI Mastery Academy 🎓',
+      content: 'Master cutting-edge AI strategies and growth techniques that top entrepreneurs use to dominate.',
       icon: <Lightbulb className="w-5 h-5 text-yellow-400" />,
       route: '/nerd-mode',
-      target: '[href="/nerd-mode"], [data-nav="education-hub"]',
-      proTip: 'AI-savvy companies grow 5x faster'
+      target: '[href="/nerd-mode"], [data-nav="education-hub"], a[href*="education"], a[href*="nerd"], nav a:contains("Education")',
+      proTip: 'AI-savvy companies grow 5x faster than their competitors!',
+      priority: 2
     },
     {
       id: 'finale',
-      title: 'Ready to Dominate! 🏆',
-      content: 'You\'re now equipped with AI superpowers. Start creating!',
+      title: 'You\'re Ready to Dominate! 🏆',
+      content: 'Congratulations! You now have AI superpowers that 99% of businesses don\'t even know exist. Time to create magic!',
       icon: <Rocket className="w-5 h-5 text-emerald-400" />,
-      proTip: 'Replay this tour anytime from Settings',
-      celebration: true
+      proTip: 'Replay this tour anytime from Settings → Tutorial',
+      celebration: true,
+      priority: 1
     }
   ]
 
   const startTutorial = () => {
-    console.log('🎯 Starting visual tour...')
+    console.log('🎯 Starting enhanced interactive tour...')
     setIsActive(true)
     setCurrentStep(0)
+    setElementFound(true)
     updateCurrentStep(tutorialSteps[0])
     playSound('start')
   }
 
+  // Enhanced element finding with intelligent retry
+  const findTargetElement = useCallback((step: TutorialStep): HTMLElement | null => {
+    if (!step.target) return null
+    
+    const selectors = step.target.split(', ').map(s => s.trim())
+    
+    // Sort selectors by priority (more specific first)
+    const prioritizedSelectors = selectors.sort((a, b) => {
+      const aScore = (a.includes('[data-') ? 10 : 0) + (a.includes('href') ? 5 : 0)
+      const bScore = (b.includes('[data-') ? 10 : 0) + (b.includes('href') ? 5 : 0)
+      return bScore - aScore
+    })
+    
+    for (const selector of prioritizedSelectors) {
+      try {
+        const element = document.querySelector(selector) as HTMLElement
+        if (element && 
+            element.offsetParent !== null && 
+            element.getBoundingClientRect().width > 0 && 
+            element.getBoundingClientRect().height > 0) {
+          return element
+        }
+      } catch (error) {
+        console.log(`❌ Selector error for ${selector}:`, error)
+      }
+    }
+    
+    return null
+  }, [])
+
   const updateCurrentStep = async (step: TutorialStep) => {
     setIsAnimating(true)
+    setIsNavigating(false)
+    setElementFound(true)
+    
+    // Clear any existing timeouts
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current)
+    }
     
     // Navigate to route if specified
     if (step.route && pathname !== step.route) {
       console.log(`🧭 Navigating to ${step.route}`)
+      setIsNavigating(true)
       playSound('navigate')
+      
       try {
         router.push(step.route)
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        await new Promise(resolve => setTimeout(resolve, 1800)) // Increased wait time
       } catch (error) {
         console.log('❌ Navigation error:', error)
+        playSound('error')
       }
+      
+      setIsNavigating(false)
     }
     
-    // Find and highlight target element
+    // Enhanced element finding with retry logic
     if (step.target) {
-      setTimeout(() => {
-        const selectors = step.target!.split(', ')
-        let element: HTMLElement | null = null
-        
-        for (const selector of selectors) {
-          try {
-            element = document.querySelector(selector.trim()) as HTMLElement
-            if (element) break
-          } catch (error) {
-            console.log(`❌ Selector error for ${selector}:`, error)
-          }
-        }
+      let retryCount = 0
+      const maxRetries = 4
+      
+      const attemptFind = () => {
+        const element = findTargetElement(step)
         
         if (element) {
-          console.log(`✅ Found target element:`, element)
+          console.log(`✅ Found target element on attempt ${retryCount + 1}:`, element)
           const rect = element.getBoundingClientRect()
           setTargetRect(rect)
+          setElementFound(true)
           
+          // Smooth scroll with enhanced options
           try {
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            element.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center',
+              inline: 'center'
+            })
           } catch (error) {
             window.scrollTo({
-              top: element.offsetTop - window.innerHeight / 2,
+              top: Math.max(0, element.offsetTop - window.innerHeight / 2),
+              left: Math.max(0, element.offsetLeft - window.innerWidth / 2),
               behavior: 'smooth'
             })
           }
+          
+          playSound('success')
+          setIsAnimating(false)
+          return true
         } else {
-          console.log(`🎯 Target element not found:`, step.target)
-          setTargetRect(null)
+          retryCount++
+          console.log(`🎯 Target element not found (attempt ${retryCount}/${maxRetries}):`, step.target)
+          
+          if (retryCount < maxRetries) {
+            retryTimeoutRef.current = setTimeout(attemptFind, 1000 * retryCount) // Exponential backoff
+            return false
+          } else {
+            console.log('❌ Max retries reached, continuing without target highlight')
+            setTargetRect(null)
+            setElementFound(false)
+            playSound('error')
+            setIsAnimating(false)
+            return false
+          }
         }
-        
-        setIsAnimating(false)
-      }, 300)
+      }
+      
+      // Start finding with initial delay
+      setTimeout(attemptFind, 800)
     } else {
       setTargetRect(null)
+      setElementFound(true)
       setIsAnimating(false)
     }
   }
 
-  // Auto-advance every 4 seconds
-  useEffect(() => {
-    if (!isActive || isAnimating) return
-    
-    const timer = setTimeout(() => {
-      nextStep()
-    }, 4000)
-    
-    return () => clearTimeout(timer)
-  }, [currentStep, isActive, isAnimating])
-
-  const nextStep = () => {
-    if (!isActive) return
-    
-    console.log(`✅ Auto-advancing from step ${currentStep}`)
-    playSound('step')
-    
-    if (tutorialSteps[currentStep].celebration) {
-      setShowConfetti(true)
-      playSound('celebration')
-      setTimeout(() => setShowConfetti(false), 2000)
-    }
-    
-    setTimeout(() => {
-      if (!isActive) return
-      
-      if (currentStep < tutorialSteps.length - 1) {
-        const nextStepIndex = currentStep + 1
-        console.log(`🎯 Moving to step ${nextStepIndex}`)
-        setCurrentStep(nextStepIndex)
-        updateCurrentStep(tutorialSteps[nextStepIndex])
-      } else {
-        console.log('🎉 Tour completed')
-        closeTutorial()
-      }
-    }, 300)
-  }
-
-  const closeTutorial = () => {
-    console.log('✅ Closing tour')
-    setShowConfetti(true)
-    playSound('complete')
-    
-    setTimeout(() => {
-      setIsActive(false)
-      setTargetRect(null)
-      setShowConfetti(false)
-      setCurrentStep(0)
-      
-      if (onComplete) {
-        console.log('🎯 Calling onComplete callback')
-        onComplete()
-      }
-    }, 1000)
-  }
-
-  const handleSkipClick = () => {
-    setShowSkipModal(true)
-  }
-
-  const confirmSkip = () => {
-    setShowSkipModal(false)
-    closeTutorial()
-  }
-
-  const cancelSkip = () => {
-    setShowSkipModal(false)
-  }
-
-  if (!isActive) {
-    return null
-  }
-
-  const currentStepData = tutorialSteps[currentStep]
-  const progress = ((currentStep + 1) / tutorialSteps.length) * 100
-  const hasTarget = currentStepData.target && targetRect
-
-  // FIXED: Better positioning logic to prevent cut-off
-  const getTooltipPosition = () => {
-    const tooltipWidth = 320
-    const tooltipHeight = 280
+  // Enhanced positioning with multiple strategies
+  const getTooltipPosition = useCallback(() => {
+    const tooltipWidth = 360
+    const tooltipHeight = 320
     const viewportWidth = window.innerWidth
     const viewportHeight = window.innerHeight
-    const padding = 20
+    const padding = 24
+    const mobileBreakpoint = 1024
 
-    if (!hasTarget || viewportWidth < 768) {
-      // Center on mobile or no target
+    // Mobile-first approach
+    if (viewportWidth < mobileBreakpoint || !hasTarget) {
       return {
         position: 'fixed' as const,
         top: '50%',
@@ -332,167 +349,341 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
         transform: 'translate(-50%, -50%)',
         zIndex: 1000,
         width: `${Math.min(tooltipWidth, viewportWidth - padding * 2)}px`,
+        maxHeight: `${viewportHeight - padding * 2}px`,
       }
     }
 
-    // Smart positioning for desktop
-    let top = targetRect!.top + (targetRect!.height / 2) - (tooltipHeight / 2)
-    let left = targetRect!.right + padding
+    // Desktop positioning strategies
+    const rect = targetRect!
+    const strategies = [
+      // Strategy 1: Right side
+      {
+        top: rect.top + rect.height / 2 - tooltipHeight / 2,
+        left: rect.right + padding,
+        score: rect.right + padding + tooltipWidth <= viewportWidth - padding ? 10 : 0
+      },
+      // Strategy 2: Left side
+      {
+        top: rect.top + rect.height / 2 - tooltipHeight / 2,
+        left: rect.left - padding - tooltipWidth,
+        score: rect.left - padding - tooltipWidth >= padding ? 9 : 0
+      },
+      // Strategy 3: Bottom center
+      {
+        top: rect.bottom + padding,
+        left: rect.left + rect.width / 2 - tooltipWidth / 2,
+        score: rect.bottom + padding + tooltipHeight <= viewportHeight - padding ? 8 : 0
+      },
+      // Strategy 4: Top center
+      {
+        top: rect.top - padding - tooltipHeight,
+        left: rect.left + rect.width / 2 - tooltipWidth / 2,
+        score: rect.top - padding - tooltipHeight >= padding ? 7 : 0
+      },
+      // Strategy 5: Bottom right
+      {
+        top: rect.bottom + padding,
+        left: rect.right - tooltipWidth,
+        score: rect.bottom + padding + tooltipHeight <= viewportHeight - padding && 
+               rect.right - tooltipWidth >= padding ? 6 : 0
+      }
+    ]
 
-    // Try right side first
-    if (left + tooltipWidth > viewportWidth - padding) {
-      // Try left side
-      left = targetRect!.left - padding - tooltipWidth
+    // Find best strategy
+    const bestStrategy = strategies
+      .filter(s => s.score > 0)
+      .sort((a, b) => b.score - a.score)[0]
+
+    if (bestStrategy) {
+      const finalTop = Math.max(padding, Math.min(bestStrategy.top, viewportHeight - tooltipHeight - padding))
+      const finalLeft = Math.max(padding, Math.min(bestStrategy.left, viewportWidth - tooltipWidth - padding))
+      
+      return {
+        position: 'fixed' as const,
+        top: `${finalTop}px`,
+        left: `${finalLeft}px`,
+        zIndex: 1000,
+        width: `${tooltipWidth}px`,
+        maxHeight: `${viewportHeight - padding * 2}px`,
+      }
     }
 
-    // If still doesn't fit, position below
-    if (left < padding) {
-      top = targetRect!.bottom + padding
-      left = Math.max(padding, Math.min(
-        targetRect!.left + (targetRect!.width / 2) - (tooltipWidth / 2),
-        viewportWidth - tooltipWidth - padding
-      ))
-    }
-
-    // Ensure within viewport bounds
-    top = Math.max(padding, Math.min(top, viewportHeight - tooltipHeight - padding))
-
+    // Fallback to center
     return {
       position: 'fixed' as const,
-      top: `${top}px`,
-      left: `${left}px`,
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
       zIndex: 1000,
-      width: `${tooltipWidth}px`,
+      width: `${Math.min(tooltipWidth, viewportWidth - padding * 2)}px`,
+      maxHeight: `${viewportHeight - padding * 2}px`,
     }
-  }
+  }, [targetRect])
+
+  const nextStep = useCallback(() => {
+    if (!isActive || isAnimating || isNavigating) return
+    
+    console.log(`✅ Advancing from step ${currentStep}`)
+    playSound('step')
+    
+    if (tutorialSteps[currentStep].celebration) {
+      setShowConfetti(true)
+      playSound('celebration')
+      setTimeout(() => setShowConfetti(false), 3000)
+    }
+    
+    setTimeout(() => {
+      if (!isActive) return
+      
+      if (currentStep < tutorialSteps.length - 1) {
+        const nextStepIndex = currentStep + 1
+        console.log(`🎯 Moving to step ${nextStepIndex}: ${tutorialSteps[nextStepIndex].title}`)
+        setCurrentStep(nextStepIndex)
+        updateCurrentStep(tutorialSteps[nextStepIndex])
+      } else {
+        console.log('🎉 Tour completed')
+        closeTutorial()
+      }
+    }, 400)
+  }, [currentStep, isActive, isAnimating, isNavigating])
+
+  const prevStep = useCallback(() => {
+    if (currentStep > 0 && !isAnimating && !isNavigating) {
+      const prevStepIndex = currentStep - 1
+      console.log(`⬅️ Moving back to step ${prevStepIndex}`)
+      setCurrentStep(prevStepIndex)
+      updateCurrentStep(tutorialSteps[prevStepIndex])
+      playSound('step')
+    }
+  }, [currentStep, isAnimating, isNavigating])
+
+  const toggleAutoMode = useCallback(() => {
+    setAutoMode(!autoMode)
+    playSound(autoMode ? 'step' : 'success')
+  }, [autoMode])
+
+  const closeTutorial = useCallback(() => {
+    console.log('✅ Closing enhanced tour')
+    setShowConfetti(true)
+    playSound('complete')
+    
+    // Clear all timeouts
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current)
+    
+    setTimeout(() => {
+      setIsActive(false)
+      setTargetRect(null)
+      setShowConfetti(false)
+      setCurrentStep(0)
+      setAutoMode(false)
+      setElementFound(true)
+      
+      if (onComplete) {
+        console.log('🎯 Calling onComplete callback')
+        onComplete()
+      }
+    }, 1500)
+  }, [onComplete])
+
+  const handleSkipClick = useCallback(() => {
+    setShowSkipModal(true)
+  }, [])
+
+  const confirmSkip = useCallback(() => {
+    setShowSkipModal(false)
+    closeTutorial()
+  }, [closeTutorial])
+
+  const cancelSkip = useCallback(() => {
+    setShowSkipModal(false)
+  }, [])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current)
+    }
+  }, [])
+
+  if (!isActive) return null
+
+  const currentStepData = tutorialSteps[currentStep]
+  const progress = ((currentStep + 1) / tutorialSteps.length) * 100
+  const hasTarget = currentStepData.target && targetRect && elementFound
+  const canGoBack = currentStep > 0 && !isAnimating && !isNavigating
+  const canGoForward = !isAnimating && !isNavigating
 
   return (
     <>
-      {/* ✨ Celebration particles */}
+      {/* ✨ Enhanced celebration particles */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none z-[1100] overflow-hidden">
-          {[...Array(30)].map((_, i) => (
+          {[...Array(50)].map((_, i) => (
             <div
               key={i}
-              className="absolute"
+              className="absolute animate-pulse"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 2}s`,
-                animationDuration: `${2 + Math.random() * 1}s`,
-                animation: 'sparkle-float 2s ease-out forwards'
+                animationDelay: `${Math.random() * 3}s`,
+                animationDuration: `${3 + Math.random() * 2}s`,
+                animation: 'sparkle-float 4s ease-out forwards'
               }}
             >
-              <div className={`text-xl transform rotate-${Math.floor(Math.random() * 360)} opacity-90`}>
-                {['🎯', '⚡', '🚀', '💎', '🌟', '✨'][Math.floor(Math.random() * 6)]}
+              <div className={`text-2xl transform opacity-90`} 
+                   style={{ rotate: `${Math.random() * 360}deg` }}>
+                {['🎯', '⚡', '🚀', '💎', '🌟', '🎊', '🔥', '✨', '🏆', '🎨'][Math.floor(Math.random() * 10)]}
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* 🎨 FIXED: Bright spotlight effect */}
-      <div className="fixed inset-0 z-[999]">
+      {/* 🎨 Enhanced overlay with perfect spotlight */}
+      <div className="fixed inset-0 z-[999] transition-all duration-500">
         
-        {/* FIXED: Crystal clear spotlight - bright and readable */}
+        {/* Perfect spotlight effect */}
         {hasTarget && (
           <>
-            {/* Subtle dark overlay for non-highlighted areas */}
+            {/* Subtle gradient overlay */}
             <div 
-              className="absolute inset-0 transition-all duration-700 ease-out"
+              className="absolute inset-0 transition-all duration-1000 ease-out"
               style={{
-                background: `radial-gradient(ellipse ${targetRect!.width + 60}px ${targetRect!.height + 60}px at ${targetRect!.left + targetRect!.width/2}px ${targetRect!.top + targetRect!.height/2}px, transparent 0%, transparent 30%, rgba(15, 23, 42, 0.4) 70%)`
+                background: `radial-gradient(ellipse ${targetRect!.width + 80}px ${targetRect!.height + 80}px at ${targetRect!.left + targetRect!.width/2}px ${targetRect!.top + targetRect!.height/2}px, transparent 0%, transparent 40%, rgba(15, 23, 42, 0.3) 80%)`
               }}
             />
             
-            {/* Bright, animated border */}
+            {/* Animated highlight ring */}
             <div 
-              className="absolute border-3 rounded-xl transition-all duration-700 ease-out"
+              className="absolute rounded-2xl transition-all duration-1000 ease-out"
               style={{
-                top: targetRect!.top - 4,
-                left: targetRect!.left - 4,
-                width: targetRect!.width + 8,
-                height: targetRect!.height + 8,
-                borderColor: '#3b82f6',
-                boxShadow: '0 0 20px rgba(59, 130, 246, 0.8), 0 0 40px rgba(59, 130, 246, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.1)',
-                animation: 'tutorial-bright-pulse 2s infinite',
+                top: targetRect!.top - 6,
+                left: targetRect!.left - 6,
+                width: targetRect!.width + 12,
+                height: targetRect!.height + 12,
+                background: 'linear-gradient(45deg, #3b82f6, #8b5cf6, #10b981, #3b82f6)',
+                backgroundSize: '200% 200%',
+                animation: 'gradient-flow 3s ease infinite, tutorial-bright-pulse 2s infinite',
+                padding: '2px',
+                boxShadow: '0 0 30px rgba(59, 130, 246, 0.6), 0 0 60px rgba(139, 92, 246, 0.4)',
               }}
-            />
+            >
+              <div className="w-full h-full bg-transparent rounded-2xl" />
+            </div>
             
-            {/* Clean spotlight ring */}
+            {/* Inner glow */}
             <div 
-              className="absolute border-2 border-white/60 rounded-xl transition-all duration-700 ease-out"
+              className="absolute border-2 border-white/70 rounded-2xl transition-all duration-1000 ease-out"
               style={{
                 top: targetRect!.top - 2,
                 left: targetRect!.left - 2,
                 width: targetRect!.width + 4,
                 height: targetRect!.height + 4,
-                boxShadow: 'inset 0 0 10px rgba(255, 255, 255, 0.3)',
+                boxShadow: 'inset 0 0 20px rgba(255, 255, 255, 0.4)',
               }}
             />
           </>
         )}
 
-        {/* 🚀 FIXED: Compact tutorial tooltip */}
+        {/* Enhanced tutorial modal */}
         <div 
-          className={`absolute transition-all duration-300 ease-out ${
-            isAnimating ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
+          className={`absolute transition-all duration-500 ease-out ${
+            isAnimating ? 'scale-95 opacity-0 translate-y-2' : 'scale-100 opacity-100 translate-y-0'
           }`}
           style={getTooltipPosition()}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="relative w-full">
-            {/* Glassmorphic background */}
-            <div className="absolute inset-0 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30" />
+            {/* Premium glassmorphic background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/98 via-white/95 to-white/98 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/40" />
             
-            {/* Gradient border */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-emerald-500/20 rounded-2xl p-0.5">
-              <div className="w-full h-full bg-white/95 rounded-2xl" />
+            {/* Animated gradient border */}
+            <div className="absolute inset-0 rounded-3xl p-0.5" style={{
+              background: 'linear-gradient(45deg, #3b82f6, #8b5cf6, #10b981, #f59e0b, #3b82f6)',
+              backgroundSize: '200% 200%',
+              animation: 'gradient-flow 6s ease infinite'
+            }}>
+              <div className="w-full h-full bg-gradient-to-br from-white/98 via-white/95 to-white/98 rounded-3xl" />
             </div>
 
             {/* Content */}
-            <div className="relative p-4">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl flex items-center justify-center shadow-md border border-white/40">
-                    {currentStepData.icon}
+            <div className="relative p-6">
+              {/* Enhanced header */}
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/30 via-purple-500/30 to-emerald-500/30 rounded-2xl animate-pulse" />
+                    <div className="relative w-12 h-12 bg-gradient-to-br from-blue-50 via-purple-50 to-emerald-50 rounded-2xl flex items-center justify-center shadow-xl border border-white/60">
+                      {currentStepData.icon}
+                    </div>
                   </div>
                   <div>
-                    <h3 className="text-md font-bold bg-gradient-to-r from-slate-800 to-blue-600 bg-clip-text text-transparent leading-tight">
+                    <h3 className="text-lg font-bold bg-gradient-to-r from-slate-800 via-blue-600 to-purple-600 bg-clip-text text-transparent leading-tight mb-1">
                       {currentStepData.title}
                     </h3>
-                    <div className="flex items-center gap-1 text-xs text-slate-500">
-                      <Eye className="w-3 h-3" />
-                      <span>Visual Tour</span>
+                    <div className="flex items-center gap-2 text-xs text-slate-600">
+                      <div className="flex items-center gap-1">
+                        <Play className="w-3 h-3" />
+                        <span>Interactive Tour</span>
+                      </div>
+                      {isNavigating && (
+                        <>
+                          <span>•</span>
+                          <span className="text-blue-600 font-medium animate-pulse">Navigating...</span>
+                        </>
+                      )}
+                      {!elementFound && (
+                        <>
+                          <span>•</span>
+                          <span className="text-amber-600 font-medium">Element not found</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
                 
-                <button 
-                  onClick={handleSkipClick}
-                  className="w-6 h-6 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center transition-all duration-200 shadow-sm border border-white/40"
-                  title="Skip tour"
-                >
-                  <X className="w-3 h-3 text-slate-600" strokeWidth={2} />
-                </button>
+                <div className="flex items-center gap-2">
+                  {/* Auto mode toggle */}
+                  <button
+                    onClick={toggleAutoMode}
+                    className={`group relative p-2 rounded-full transition-all duration-300 shadow-lg border border-white/40 ${
+                      autoMode 
+                        ? 'bg-gradient-to-br from-green-500 to-emerald-500 text-white' 
+                        : 'bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600 hover:from-slate-200 hover:to-slate-300'
+                    }`}
+                    title={autoMode ? 'Auto mode ON' : 'Auto mode OFF'}
+                  >
+                    {autoMode ? <FastForward className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+                  </button>
+                  
+                  <button 
+                    onClick={handleSkipClick}
+                    className="group relative w-8 h-8 bg-gradient-to-br from-slate-100 to-slate-200 hover:from-slate-200 hover:to-slate-300 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border border-white/40 hover:shadow-xl hover:scale-105"
+                    title="Skip tour"
+                  >
+                    <X className="w-4 h-4 text-slate-600 group-hover:text-slate-800 transition-colors duration-200" strokeWidth={2} />
+                  </button>
+                </div>
               </div>
 
-              {/* Content */}
-              <div className="space-y-3 mb-4">
+              {/* Enhanced content */}
+              <div className="space-y-4 mb-6">
                 <p className="text-slate-700 text-sm leading-relaxed font-medium">
                   {currentStepData.content}
                 </p>
                 
                 {currentStepData.proTip && (
-                  <div className="relative p-2 bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl border border-amber-200/50 shadow-sm">
-                    <div className="flex items-start gap-2">
-                      <div className="w-5 h-5 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0 mt-0.5">
-                        <Brain className="w-2.5 h-2.5 text-white" strokeWidth={2.5} />
+                  <div className="relative overflow-hidden p-4 bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-50 rounded-2xl border border-amber-200/60 shadow-sm">
+                    <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-yellow-500/5 to-amber-500/5" />
+                    <div className="relative flex items-start gap-3">
+                      <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                        <Brain className="w-4 h-4 text-white" strokeWidth={2.5} />
                       </div>
                       <div>
-                        <div className="font-semibold text-amber-800 text-xs mb-0.5">💡 Pro Tip</div>
-                        <p className="text-amber-700 text-xs font-medium leading-relaxed">
+                        <div className="font-semibold text-amber-800 text-sm mb-1">💡 Pro Insight</div>
+                        <p className="text-amber-700 text-sm font-medium leading-relaxed">
                           {currentStepData.proTip}
                         </p>
                       </div>
@@ -501,44 +692,69 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
                 )}
               </div>
 
-              {/* Progress */}
-              <div className="mb-4">
-                <div className="flex justify-between text-xs font-semibold mb-1">
+              {/* Enhanced progress */}
+              <div className="mb-6">
+                <div className="flex justify-between text-xs font-semibold mb-2">
                   <span className="text-slate-600">Step {currentStep + 1} of {tutorialSteps.length}</span>
-                  <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    {Math.round(progress)}%
+                  <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-emerald-600 bg-clip-text text-transparent">
+                    {Math.round(progress)}% Complete
                   </span>
                 </div>
-                <div className="relative w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                <div className="relative w-full h-2 bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200 rounded-full overflow-hidden shadow-inner">
                   <div 
-                    className="absolute inset-0 bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500 rounded-full transition-all duration-700 ease-out"
-                    style={{ width: `${progress}%` }}
-                  />
+                    className="absolute inset-0 rounded-full transition-all duration-1000 ease-out shadow-lg"
+                    style={{ 
+                      width: `${progress}%`,
+                      background: 'linear-gradient(45deg, #3b82f6, #8b5cf6, #10b981)',
+                      backgroundSize: '200% 200%',
+                      animation: 'gradient-flow 3s ease infinite'
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/30 to-transparent rounded-full" />
+                  </div>
                 </div>
               </div>
 
-              {/* Navigation */}
+              {/* Enhanced navigation */}
               <div className="flex justify-between items-center">
-                <button
-                  onClick={handleSkipClick}
-                  className="px-3 py-1 text-slate-600 hover:text-slate-800 text-xs font-semibold bg-slate-100 hover:bg-slate-200 rounded-lg transition-all duration-200 shadow-sm border border-white/40"
-                >
-                  Skip
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleSkipClick}
+                    className="px-4 py-2 text-slate-600 hover:text-slate-800 text-xs font-semibold bg-gradient-to-br from-slate-100 to-slate-200 hover:from-slate-200 hover:to-slate-300 rounded-full transition-all duration-300 shadow-lg border border-white/40 hover:shadow-xl hover:scale-105"
+                  >
+                    Skip Tour
+                  </button>
+                  
+                  {canGoBack && (
+                    <button
+                      onClick={prevStep}
+                      className="group flex items-center gap-1 px-3 py-2 text-slate-700 hover:text-slate-900 text-xs font-semibold bg-gradient-to-br from-white to-slate-50 hover:from-slate-50 hover:to-slate-100 rounded-full transition-all duration-300 shadow-lg border border-white/60 hover:shadow-xl hover:scale-105"
+                    >
+                      <ChevronLeft className="w-3 h-3 transition-transform duration-200 group-hover:-translate-x-0.5" strokeWidth={2.5} />
+                      Back
+                    </button>
+                  )}
+                </div>
                 
                 <button
                   onClick={nextStep}
-                  className="group flex items-center gap-1 px-4 py-1 text-white text-xs font-bold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl border border-white/20 bg-gradient-to-r from-blue-600 via-purple-600 to-emerald-600 hover:from-blue-700 hover:via-purple-700 hover:to-emerald-700"
+                  disabled={!canGoForward}
+                  className={`group relative flex items-center gap-2 px-6 py-2 text-white text-xs font-bold rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl border border-white/20 ${
+                    !canGoForward 
+                      ? 'bg-gradient-to-br from-slate-400 to-slate-500 cursor-not-allowed opacity-60' 
+                      : 'bg-gradient-to-br from-blue-600 via-purple-600 to-emerald-600 hover:from-blue-700 hover:via-purple-700 hover:to-emerald-700 hover:scale-105'
+                  }`}
                 >
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-full" />
                   {currentStep === tutorialSteps.length - 1 ? (
                     <>
-                      <Rocket className="w-3 h-3" strokeWidth={2.5} />
-                      <span>Start!</span>
+                      <Rocket className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" strokeWidth={2.5} />
+                      <span className="relative z-10">Get Started!</span>
                     </>
                   ) : (
                     <>
-                      <span>Continue</span>
-                      <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform duration-200" strokeWidth={2.5} />
+                      <span className="relative z-10">Continue</span>
+                      <ChevronRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" strokeWidth={2.5} />
                     </>
                   )}
                 </button>
@@ -548,39 +764,50 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
         </div>
       </div>
 
-      {/* Skip confirmation modal */}
+      {/* Enhanced skip confirmation modal */}
       {showSkipModal && (
-        <div className="fixed inset-0 bg-slate-900/80 z-[1200] flex items-center justify-center backdrop-blur-xl p-4">
-          <div className="relative max-w-sm w-full">
-            <div className="absolute inset-0 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30" />
+        <div className="fixed inset-0 bg-slate-900/80 z-[1200] flex items-center justify-center backdrop-blur-2xl p-4">
+          <div className="relative max-w-md w-full">
+            <div className="absolute inset-0 bg-gradient-to-br from-white/98 via-white/95 to-white/98 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/40" />
             
-            <div className="relative p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl flex items-center justify-center shadow-md border border-white/40">
-                  <Sparkles className="w-4 h-4 text-blue-500" strokeWidth={2} />
+            <div className="absolute inset-0 rounded-3xl p-0.5" style={{
+              background: 'linear-gradient(45deg, #3b82f6, #8b5cf6, #10b981, #3b82f6)',
+              backgroundSize: '200% 200%',
+              animation: 'gradient-flow 4s ease infinite'
+            }}>
+              <div className="w-full h-full bg-gradient-to-br from-white/98 via-white/95 to-white/98 rounded-3xl" />
+            </div>
+
+            <div className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-50 via-purple-50 to-emerald-50 rounded-2xl flex items-center justify-center shadow-lg border border-white/60">
+                  <Sparkles className="w-5 h-5 text-blue-500" strokeWidth={2} />
                 </div>
                 <div>
-                  <h3 className="text-md font-bold bg-gradient-to-r from-slate-800 to-blue-600 bg-clip-text text-transparent">Skip Tour?</h3>
-                  <p className="text-xs text-slate-600">Just 30 seconds left</p>
+                  <h3 className="text-lg font-bold bg-gradient-to-r from-slate-800 via-blue-600 to-purple-600 bg-clip-text text-transparent">Skip Interactive Tour?</h3>
+                  <p className="text-xs text-slate-600 font-medium">You can always restart it later</p>
                 </div>
               </div>
               
-              <p className="text-slate-700 text-sm mb-4 leading-relaxed">
-                This quick tour shows you powerful features that could save you hours.
+              <p className="text-slate-700 text-sm mb-6 leading-relaxed font-medium">
+                This interactive tour reveals powerful features that could
+                <span className="font-bold text-slate-800"> save you hours</span> and 
+                <span className="font-bold text-slate-800"> boost your productivity</span> dramatically.
               </p>
               
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 <button
                   onClick={confirmSkip}
-                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-3 rounded-lg text-sm font-semibold transition-all duration-200 shadow-sm border border-white/40"
+                  className="flex-1 bg-gradient-to-br from-slate-100 to-slate-200 hover:from-slate-200 hover:to-slate-300 text-slate-700 hover:text-slate-800 py-3 px-4 rounded-full text-sm font-semibold transition-all duration-300 shadow-lg border border-white/40 hover:shadow-xl hover:scale-105"
                 >
                   Skip
                 </button>
                 <button
                   onClick={cancelSkip}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 px-3 rounded-lg text-sm font-bold transition-all duration-200 shadow-lg border border-white/20"
+                  className="flex-1 bg-gradient-to-br from-blue-600 via-purple-600 to-emerald-600 hover:from-blue-700 hover:via-purple-700 hover:to-emerald-700 text-white py-3 px-4 rounded-full text-sm font-bold transition-all duration-300 shadow-xl hover:shadow-2xl border border-white/20 relative overflow-hidden hover:scale-105"
                 >
-                  Continue
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-full" />
+                  <span className="relative z-10">Continue Tour</span>
                 </button>
               </div>
             </div>
@@ -588,16 +815,25 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
         </div>
       )}
 
-      {/* FIXED: Enhanced CSS animations */}
+      {/* Enhanced CSS animations */}
       <style jsx global>{`
         @keyframes tutorial-bright-pulse {
           0%, 100% { 
-            border-color: #3b82f6;
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.8), 0 0 40px rgba(59, 130, 246, 0.4);
+            transform: scale(1);
+            filter: brightness(1);
           }
           50% { 
-            border-color: #8b5cf6;
-            box-shadow: 0 0 25px rgba(139, 92, 246, 0.9), 0 0 50px rgba(139, 92, 246, 0.5);
+            transform: scale(1.01);
+            filter: brightness(1.1);
+          }
+        }
+        
+        @keyframes gradient-flow {
+          0%, 100% { 
+            background-position: 0% 50%; 
+          }
+          50% { 
+            background-position: 100% 50%; 
           }
         }
         
@@ -606,13 +842,17 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
             transform: translateY(0px) rotate(0deg) scale(0.8);
             opacity: 1;
           }
+          50% {
+            transform: translateY(-60px) rotate(180deg) scale(1.2);
+            opacity: 0.8;
+          }
           100% { 
-            transform: translateY(-80px) rotate(360deg) scale(0.3);
+            transform: translateY(-150px) rotate(360deg) scale(0.4);
             opacity: 0;
           }
         }
         
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
           .tutorial-modal {
             max-width: 95vw !important;
             width: 95vw !important;
