@@ -36,7 +36,6 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
   // Initialize tutorial
   useEffect(() => {
     if (isFirstTime) {
-      // Ensure DOM is ready
       setTimeout(() => {
         document.body.style.overflow = 'hidden'
         document.body.style.userSelect = 'none'
@@ -61,7 +60,7 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
     {
       id: 'welcome',
       title: 'Welcome to Growfly',
-      content: 'Your intelligent AI assistant is ready to transform how you work. Let\'s explore the key features that will boost your productivity.',
+      content: 'Your intelligent AI assistant is ready to transform how you work. Let us explore the key features that will boost your productivity.',
       icon: <Sparkles className="w-6 h-6" />,
       explanation: 'This quick tour will show you exactly how to use each section effectively.'
     },
@@ -107,18 +106,17 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
     },
     {
       id: 'complete',
-      title: 'You\'re Ready to Go!',
+      title: 'You are Ready to Go!',
       content: 'Your AI assistant is now ready to help you create amazing content and boost your productivity. Start exploring!',
       icon: <CheckCircle className="w-6 h-6" />,
       explanation: 'Begin with any section that interests you most. Your AI-powered journey starts now!'
     }
   ]
 
-  // Bulletproof element finder with multiple strategies
+  // Enhanced element finder with multiple strategies
   const findTargetElement = useCallback((targetId: string): HTMLElement | null => {
     if (!targetId) return null
 
-    // Strategy 1: Direct href matching (most reliable)
     const hrefSelectors = [
       `a[href="/${targetId}"]`,
       `a[href*="/${targetId}"]`,
@@ -137,7 +135,6 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
       } catch {}
     }
 
-    // Strategy 2: Text content matching
     const textSelectors = ['a', 'button', 'nav a', '.sidebar a', '[role="menuitem"]']
     const searchTexts = {
       'dashboard': ['Dashboard', 'dashboard'],
@@ -164,7 +161,6 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
       } catch {}
     }
 
-    // Strategy 3: Data attributes and classes
     const attributeSelectors = [
       `[data-testid*="${targetId}"]`,
       `[data-page="${targetId}"]`,
@@ -198,7 +194,6 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
       const element = findTargetElement(step.target!)
       
       if (element) {
-        // Double-check element is still visible
         setTimeout(() => {
           if (element.offsetParent) {
             const rect = element.getBoundingClientRect()
@@ -206,7 +201,6 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
               setTargetRect(rect)
               setElementFound(true)
               
-              // Gentle scroll to element
               element.scrollIntoView({ 
                 behavior: 'smooth', 
                 block: 'center',
@@ -216,7 +210,6 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
             }
           }
           
-          // Element became invisible, retry
           attempts++
           if (attempts < maxAttempts) {
             setTimeout(findAndSetTarget, 300)
@@ -237,23 +230,21 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
       }
     }
 
-    // Start finding after a brief delay
     setTimeout(findAndSetTarget, 150)
 
-    // Set up observer for DOM changes (throttled for performance)
     if (observerRef.current) observerRef.current.disconnect()
     
-    if (attempts < 3) { // Only observe for first few attempts
+    if (attempts < 3) {
       observerRef.current = new MutationObserver(() => {
         if (!elementFound && attempts < maxAttempts) {
-          setTimeout(findAndSetTarget, 100) // Throttled
+          setTimeout(findAndSetTarget, 100)
         }
       })
 
       observerRef.current.observe(document.body, {
         childList: true,
-        subtree: false, // Reduced scope for performance
-        attributes: false // Disable attribute watching for performance
+        subtree: false,
+        attributes: false
       })
     }
   }, [findTargetElement, elementFound])
@@ -274,26 +265,23 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
   const isWelcomeStep = currentStepData.id === 'welcome'
   const isCompleteStep = currentStepData.id === 'complete'
   const hasTarget = currentStepData.target && targetRect && elementFound
-  const isMobile = window.innerWidth < 768
+  const isMobile = typeof window !== 'undefined' ? window.innerWidth < 768 : false
 
-  // Bulletproof positioning system
+  // Smart positioning that ensures visibility
   const getModalPosition = useCallback(() => {
-    const vw = window.innerWidth
-    const vh = window.innerHeight
-    const isMobile = vw < 768
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 1200
+    const vh = typeof window !== 'undefined' ? window.innerHeight : 800
+    const isMobileView = vw < 768
     const isSmallMobile = vw < 400
     
-    // Responsive sizing
-    const baseWidth = isSmallMobile ? 340 : isMobile ? 380 : 440
-    const baseHeight = isSmallMobile ? 280 : isMobile ? 300 : 320
-    const padding = isSmallMobile ? 16 : isMobile ? 18 : 20
+    const baseWidth = isSmallMobile ? 340 : isMobileView ? 380 : 440
+    const baseHeight = isSmallMobile ? 280 : isMobileView ? 300 : 320
+    const padding = isSmallMobile ? 16 : isMobileView ? 18 : 20
 
-    // Ensure minimum viable size with better mobile handling
     const modalWidth = Math.min(baseWidth, vw - padding * 2)
     const modalHeight = Math.min(baseHeight, vh - padding * 2)
 
-    // Welcome/Complete or no target - center with animation
-    if (isWelcomeStep || isCompleteStep || !hasTarget || !targetRect) {
+    if (isWelcomeStep || isCompleteStep || !hasTarget) {
       return {
         position: 'fixed' as const,
         top: '50%',
@@ -305,41 +293,46 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
       }
     }
 
-    // Calculate optimal position relative to target
+    if (!targetRect) {
+      return {
+        position: 'fixed' as const,
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: `${modalWidth}px`,
+        maxHeight: `${modalHeight}px`,
+        zIndex: 1001
+      }
+    }
+
     const targetCenterX = targetRect.left + targetRect.width / 2
     const targetCenterY = targetRect.top + targetRect.height / 2
 
-    // Position strategies in order of preference
     const strategies = [
-      // Right of target (ideal for sidebar navigation)
       {
         name: 'right',
         top: Math.max(padding, Math.min(targetCenterY - modalHeight / 2, vh - modalHeight - padding)),
         left: targetRect.right + 20,
         isValid: () => targetRect.right + 20 + modalWidth <= vw - padding
       },
-      // Left of target
       {
         name: 'left',
         top: Math.max(padding, Math.min(targetCenterY - modalHeight / 2, vh - modalHeight - padding)),
         left: targetRect.left - modalWidth - 20,
         isValid: () => targetRect.left - modalWidth - 20 >= padding
       },
-      // Below target
       {
         name: 'below',
         top: Math.min(targetRect.bottom + 20, vh - modalHeight - padding),
         left: Math.max(padding, Math.min(targetCenterX - modalWidth / 2, vw - modalWidth - padding)),
         isValid: () => targetRect.bottom + 20 + modalHeight <= vh - padding
       },
-      // Above target
       {
         name: 'above',
         top: Math.max(padding, targetRect.top - modalHeight - 20),
         left: Math.max(padding, Math.min(targetCenterX - modalWidth / 2, vw - modalWidth - padding)),
         isValid: () => targetRect.top - modalHeight - 20 >= padding
       },
-      // Fallback: center screen
       {
         name: 'center',
         top: Math.max(padding, (vh - modalHeight) / 2),
@@ -348,7 +341,6 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
       }
     ]
 
-    // Find first valid strategy
     const strategy = strategies.find(s => s.isValid()) || strategies[strategies.length - 1]
 
     return {
@@ -361,7 +353,6 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
     }
   }, [targetRect, hasTarget, isWelcomeStep, isCompleteStep])
 
-  // Navigation functions
   const nextStep = useCallback(() => {
     if (isLastStep) {
       closeTutorial()
@@ -398,7 +389,6 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
     if (!isActive) return
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Prevent default browser shortcuts during tutorial
       if (['Space', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(e.code)) {
         e.preventDefault()
       }
@@ -426,31 +416,31 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
 
   return (
     <>
-      {/* Main Overlay Container */}
       <div className="fixed inset-0 z-50 select-none">
         
-        {/* Welcome/Complete: Premium Animated Background */}
         {(isWelcomeStep || isCompleteStep) && (
           <div className="absolute inset-0">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800" />
             <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-blue-500/20 to-purple-600/30 animate-pulse" />
             <div className="absolute inset-0 opacity-30">
-              <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-bounce" style={{ animationDuration: '6s' }} />
-              <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-purple-300/20 rounded-full blur-2xl animate-bounce" style={{ animationDuration: '8s', animationDelay: '2s' }} />
+              <div 
+                className="absolute top-1/4 left-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-bounce" 
+                style={{ animationDuration: '6s' }} 
+              />
+              <div 
+                className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-purple-300/20 rounded-full blur-2xl animate-bounce" 
+                style={{ animationDuration: '8s', animationDelay: '2s' }} 
+              />
             </div>
           </div>
         )}
         
-        {/* Navigation Steps: Enhanced Spotlight System */}
         {!isWelcomeStep && !isCompleteStep && (
           <>
-            {/* Base dark overlay */}
             <div className="absolute inset-0 bg-black/75 transition-all duration-500" />
             
-            {/* Spotlight and highlighting */}
             {hasTarget && targetRect && (
               <>
-                {/* Main spotlight effect */}
                 <div 
                   className="absolute inset-0 pointer-events-none transition-all duration-700 ease-out"
                   style={{
@@ -458,7 +448,6 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
                   }}
                 />
                 
-                {/* Animated gradient border - simplified for performance */}
                 <div 
                   className="absolute pointer-events-none transition-all duration-700 ease-out"
                   style={{
@@ -479,7 +468,6 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
                   />
                 </div>
                 
-                {/* Inner glow ring */}
                 <div 
                   className="absolute pointer-events-none transition-all duration-700 ease-out"
                   style={{
@@ -494,7 +482,6 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
                   }}
                 />
                 
-                {/* Subtle inner highlight */}
                 <div 
                   className="absolute pointer-events-none transition-all duration-700 ease-out"
                   style={{
@@ -512,30 +499,30 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
           </>
         )}
 
-        {/* Tutorial Modal */}
         <div 
           style={getModalPosition()}
           className={`transition-all duration-500 ease-out ${
             isAnimating ? 'scale-95 opacity-80' : 'scale-100 opacity-100'
           }`}
         >
-          <div className={`rounded-2xl shadow-2xl overflow-hidden border-2 backdrop-fallback ${
-            isWelcomeStep || isCompleteStep 
-              ? 'bg-white/98 border-white/30 shadow-white/20' 
-              : 'bg-white border-gray-200'
-          }`} style={{ 
-            backdropFilter: 'blur(12px)', 
-            WebkitBackdropFilter: 'blur(12px)' 
-          }}>
+          <div 
+            className={`rounded-2xl shadow-2xl overflow-hidden border-2 backdrop-fallback ${
+              isWelcomeStep || isCompleteStep 
+                ? 'bg-white/98 border-white/30 shadow-white/20' 
+                : 'bg-white border-gray-200'
+            }`} 
+            style={{ 
+              backdropFilter: 'blur(12px)', 
+              WebkitBackdropFilter: 'blur(12px)' 
+            }}
+          >
             
-            {/* Header Section */}
             <div className={`relative overflow-hidden ${
               isWelcomeStep || isCompleteStep 
                 ? 'bg-gradient-to-r from-white/20 to-white/10 border-b border-white/20' 
                 : 'bg-gradient-to-r from-gray-50 to-white border-b border-gray-100'
             }`}>
               
-              {/* Animated background for special steps */}
               {(isWelcomeStep || isCompleteStep) && (
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/5 to-pink-500/10 animate-gradient-x" />
               )}
@@ -579,7 +566,6 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
               </div>
             </div>
 
-            {/* Content Section */}
             <div className="p-6">
               <div className="mb-6">
                 <p className={`text-base leading-relaxed mb-4 ${
@@ -597,7 +583,6 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
                 )}
               </div>
 
-              {/* Progress Section */}
               <div className="mb-2">
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-sm font-semibold text-gray-600">Tutorial Progress</span>
@@ -618,7 +603,6 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
               </div>
             </div>
 
-            {/* Footer Section */}
             <div className={`p-6 border-t-2 ${
               isWelcomeStep || isCompleteStep 
                 ? 'border-white/20 bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-sm' 
@@ -673,7 +657,6 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
         </div>
       </div>
 
-      {/* Skip Confirmation Modal */}
       {showSkipModal && (
         <div className="fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all duration-300 scale-100 border-2 border-gray-200">
@@ -706,21 +689,20 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
         </div>
       )}
 
-      {/* Enhanced CSS Animations */}
       <style jsx global>{`
         @keyframes gradient-border {
-          0%, 100% { background-position: 0% 50% }
-          50% { background-position: 100% 50% }
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
         }
         
         @keyframes gradient-flow {
-          0%, 100% { background-position: 0% 50% }
-          50% { background-position: 100% 50% }
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
         }
         
         @keyframes gradient-x {
-          0%, 100% { background-position: 0% 50% }
-          50% { background-position: 100% 50% }
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
         }
         
         @keyframes glow-pulse {
@@ -732,25 +714,9 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
           }
         }
         
-        /* Backdrop-blur fallback for older browsers */
-        @supports not (backdrop-filter: blur(12px)) {
-          .backdrop-fallback {
-            background-color: rgba(255, 255, 255, 0.98) !important;
-          }
-        }
-        
         .animate-gradient-x {
           background-size: 400% 400%;
           animation: gradient-x 8s ease infinite;
-        }
-        
-        /* Reduced motion preference */
-        @media (prefers-reduced-motion: reduce) {
-          * {
-            animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: 0.01ms !important;
-          }
         }
       `}</style>
     </>

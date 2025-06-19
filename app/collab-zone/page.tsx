@@ -50,7 +50,7 @@ const isValidToken = (token: string): boolean => {
   return jwtRegex.test(token)
 }
 
-// Main Document Header - Modern and Friendly
+// Main Document Header - Compact and Modern
 function DocumentHeader({ 
   activeDoc, 
   onSave, 
@@ -109,27 +109,27 @@ function DocumentHeader({
   }, [handleRename])
 
   return (
-    <header className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-gray-200/50 dark:border-slate-700/50 px-6 py-4 z-30 sticky top-0 shadow-sm">
+    <header className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-gray-200/50 dark:border-slate-700/50 px-4 py-2.5 z-30 sticky top-0 shadow-sm">
       <div className="flex items-center justify-between">
         {/* Left: Document Controls */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <button
             onClick={onToggleDocuments}
-            className={`p-2.5 rounded-xl transition-all duration-300 hover:scale-105 ${
+            className={`p-2 rounded-lg transition-all duration-200 hover:scale-105 ${
               showDocuments 
-                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/25'
+                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/25'
                 : 'text-gray-600 dark:text-gray-400 hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-50 dark:hover:from-slate-800 dark:hover:to-slate-700'
             }`}
           >
-            <FolderOpen className="w-5 h-5" />
+            <FolderOpen className="w-4 h-4" />
           </button>
 
-          <div className="h-8 w-px bg-gradient-to-b from-transparent via-gray-300 to-transparent dark:via-slate-600" />
+          <div className="h-6 w-px bg-gradient-to-b from-transparent via-gray-300 to-transparent dark:via-slate-600" />
 
           {activeDoc && (
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25">
-                <FileText className="w-5 h-5 text-white" />
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-lg flex items-center justify-center shadow-md shadow-blue-500/25">
+                <FileText className="w-4 h-4 text-white" />
               </div>
               
               {isRenaming ? (
@@ -138,28 +138,28 @@ function DocumentHeader({
                   onChange={(e) => setNewTitle(e.target.value)}
                   onBlur={handleRename}
                   onKeyDown={handleKeyDown}
-                  className="text-xl font-bold bg-transparent border-none outline-none text-gray-900 dark:text-white min-w-0 focus:text-blue-600 dark:focus:text-blue-400"
+                  className="text-lg font-bold bg-transparent border-none outline-none text-gray-900 dark:text-white min-w-0 focus:text-blue-600 dark:focus:text-blue-400"
                   autoFocus
                   maxLength={255}
                 />
               ) : (
                 <div className="min-w-0">
                   <h1 
-                    className="text-xl font-bold text-gray-900 dark:text-white cursor-pointer hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-blue-900/20 dark:hover:to-indigo-900/20 px-3 py-2 rounded-xl transition-all truncate hover:text-blue-600 dark:hover:text-blue-400"
+                    className="text-lg font-bold text-gray-900 dark:text-white cursor-pointer hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-blue-900/20 dark:hover:to-indigo-900/20 px-2 py-1 rounded-lg transition-all truncate hover:text-blue-600 dark:hover:text-blue-400"
                     onClick={startRename}
                   >
                     {activeDoc.title}
                   </h1>
-                  <div className="flex items-center gap-2 px-3">
-                    <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                  <div className="flex items-center gap-1.5 px-2">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                       {formatDistanceToNow(new Date(activeDoc.updatedAt), { addSuffix: true })}
                     </span>
                     {isAutoSaving && (
                       <>
                         <span className="text-gray-300 dark:text-gray-600">•</span>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full animate-pulse shadow-sm" />
-                          <span className="text-sm font-medium bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">Saving...</span>
+                        <div className="flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full animate-pulse shadow-sm" />
+                          <span className="text-xs font-medium bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">Saving...</span>
                         </div>
                       </>
                     )}
@@ -170,21 +170,21 @@ function DocumentHeader({
           )}
         </div>
 
-        {/* Right: Action Buttons */}
+        {/* Right: Action Buttons - More Compact */}
         {activeDoc && (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={onToggleComments}
-              className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300 text-sm font-semibold hover:scale-105 ${
+              className={`relative flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all duration-200 text-xs font-semibold hover:scale-105 ${
                 showComments
-                  ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/25'
+                  ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/25'
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-blue-900/20 dark:hover:to-indigo-900/20'
               }`}
             >
-              <MessageSquare className="w-4 h-4" />
+              <MessageSquare className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Comments</span>
               {commentsCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg animate-pulse">
+                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-sm animate-pulse">
                   {commentsCount}
                 </span>
               )}
@@ -192,9 +192,9 @@ function DocumentHeader({
 
             <button
               onClick={onFullscreen}
-              className="flex items-center gap-2 px-4 py-2.5 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:hover:from-slate-800 dark:hover:to-slate-700 transition-all duration-300 text-sm font-semibold hover:scale-105"
+              className="flex items-center gap-1.5 px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:hover:from-slate-800 dark:hover:to-slate-700 transition-all duration-200 text-xs font-semibold hover:scale-105"
             >
-              <Maximize2 className="w-4 h-4" />
+              <Maximize2 className="w-3.5 h-3.5" />
               <span className="hidden lg:inline">Focus</span>
             </button>
 
@@ -207,25 +207,25 @@ function DocumentHeader({
                   }
                 }
               }}
-              className="flex items-center gap-2 px-4 py-2.5 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:hover:from-slate-800 dark:hover:to-slate-700 transition-all duration-300 text-sm font-semibold hover:scale-105"
+              className="flex items-center gap-1.5 px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:hover:from-slate-800 dark:hover:to-slate-700 transition-all duration-200 text-xs font-semibold hover:scale-105"
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-3.5 h-3.5" />
               <span className="hidden lg:inline">Download</span>
             </button>
 
             <button
               onClick={onShare}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 text-sm font-semibold shadow-lg shadow-emerald-500/25 hover:scale-105"
+              className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg hover:from-emerald-600 hover:to-teal-700 transition-all duration-200 text-xs font-semibold shadow-md shadow-emerald-500/25 hover:scale-105"
             >
-              <Share2 className="w-4 h-4" />
+              <Share2 className="w-3.5 h-3.5" />
               <span>Share</span>
             </button>
 
             <button
               onClick={onSave}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 text-sm font-bold shadow-lg shadow-blue-500/25 hover:scale-105"
+              className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 text-xs font-bold shadow-md shadow-blue-500/25 hover:scale-105"
             >
-              <Save className="w-4 h-4" />
+              <Save className="w-3.5 h-3.5" />
               <span>Save</span>
             </button>
           </div>
@@ -235,7 +235,7 @@ function DocumentHeader({
   )
 }
 
-// Documents Sidebar - Modern Left Panel
+// Documents Sidebar - Compact Design
 function DocumentsSidebar({ 
   isVisible, 
   docs, 
@@ -286,53 +286,54 @@ function DocumentsSidebar({
       />
       
       <motion.div
-        initial={{ x: -320 }}
+        initial={{ x: -280 }}
         animate={{ x: 0 }}
-        exit={{ x: -320 }}
+        exit={{ x: -280 }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed left-0 top-0 bottom-0 w-80 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-r border-gray-200/50 dark:border-slate-700/50 z-50 flex flex-col shadow-2xl"
+        className="fixed left-0 top-0 bottom-0 w-70 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-r border-gray-200/50 dark:border-slate-700/50 z-50 flex flex-col shadow-2xl"
+        style={{ width: '280px' }}
       >
-        {/* Header */}
-        <div className="p-6 border-b border-gray-200/50 dark:border-slate-700/50 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-blue-900/10 dark:to-indigo-900/10">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                <FileText className="w-4 h-4 text-white" />
-              </div>
-              <h2 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">Documents</h2>
-            </div>
+        {/* Header - More Compact */}
+        <div className="p-4 border-b border-gray-200/50 dark:border-slate-700/50 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-blue-900/10 dark:to-indigo-900/10">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-md">
+                <FileText className="w-3.5 h-3.5 text-white" />
+              </div>
+              <h2 className="text-lg font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">Documents</h2>
+            </div>
+            <div className="flex items-center gap-1">
               <button
                 onClick={onNewDoc}
-                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 text-sm font-semibold shadow-lg shadow-blue-500/25 hover:scale-105"
+                className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 text-xs font-semibold shadow-md shadow-blue-500/25 hover:scale-105"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5" />
                 <span>New</span>
               </button>
               <button
                 onClick={onClose}
-                className="p-2.5 hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-50 dark:hover:from-slate-800 dark:hover:to-slate-700 rounded-xl transition-all duration-300 lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="p-2 hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-50 dark:hover:from-slate-800 dark:hover:to-slate-700 rounded-lg transition-all duration-200 lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
 
-          {/* Search */}
-          <div className="relative mb-6">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          {/* Search - More Compact */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
             <input
               type="text"
               placeholder="Search documents..."
               value={searchTerm}
               onChange={handleSearchChange}
-              className="w-full pl-12 pr-4 py-3 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm border border-gray-200/50 dark:border-slate-700/50 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 text-sm placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-300"
+              className="w-full pl-10 pr-3 py-2.5 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm border border-gray-200/50 dark:border-slate-700/50 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 text-xs placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
               maxLength={100}
             />
           </div>
 
-          {/* Tabs */}
-          <div className="flex gap-1 bg-gray-100/70 dark:bg-slate-800/70 backdrop-blur-sm rounded-xl p-1.5">
+          {/* Tabs - More Compact */}
+          <div className="flex gap-0.5 bg-gray-100/70 dark:bg-slate-800/70 backdrop-blur-sm rounded-lg p-1">
             {[
               { id: 'recent', label: 'Recent', icon: Clock },
               { id: 'shared', label: 'Shared', icon: Users },
@@ -341,87 +342,87 @@ function DocumentsSidebar({
               <button
                 key={id}
                 onClick={() => setActiveTab(id as any)}
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg font-semibold transition-all duration-300 text-xs ${
+                className={`flex-1 flex items-center justify-center gap-1 px-2 py-2 rounded-md font-semibold transition-all duration-200 text-xs ${
                   activeTab === id
-                    ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-md shadow-blue-500/10'
+                    ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm shadow-blue-500/10'
                     : 'text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white/50 dark:hover:bg-slate-700/50'
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="w-3 h-3" />
                 <span>{label}</span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Documents List */}
-        <div className="flex-1 overflow-y-auto p-4">
+        {/* Documents List - Much More Compact */}
+        <div className="flex-1 overflow-y-auto p-3">
           {filteredDocs.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <FileText className="w-8 h-8 text-blue-500 dark:text-blue-400" />
+            <div className="text-center py-8">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <FileText className="w-6 h-6 text-blue-500 dark:text-blue-400" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">No documents found</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">Create your first document to get started on your next project</p>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">No documents found</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 leading-relaxed">Create your first document to get started</p>
               <button
                 onClick={onNewDoc}
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 font-semibold shadow-lg shadow-blue-500/25 hover:scale-105"
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-semibold shadow-md shadow-blue-500/25 hover:scale-105 text-xs"
               >
                 Create Document
               </button>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-1.5">
               {filteredDocs.map((doc) => (
                 <motion.div
                   key={doc.id}
                   layout
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`group cursor-pointer p-4 rounded-xl border transition-all duration-300 hover:scale-[1.02] ${
+                  className={`group cursor-pointer p-2.5 rounded-lg border transition-all duration-200 hover:scale-[1.01] ${
                     activeDoc?.id === doc.id
-                      ? 'border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 dark:border-blue-800 shadow-lg shadow-blue-500/10'
-                      : 'border-gray-200/50 dark:border-slate-700/50 hover:border-blue-200 dark:hover:border-blue-800 hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-indigo-50/30 dark:hover:from-blue-900/10 dark:hover:to-indigo-900/10 hover:shadow-lg hover:shadow-blue-500/5'
+                      ? 'border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 dark:border-blue-800 shadow-sm shadow-blue-500/10'
+                      : 'border-gray-200/50 dark:border-slate-700/50 hover:border-blue-200 dark:hover:border-blue-800 hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-indigo-50/30 dark:hover:from-blue-900/10 dark:hover:to-indigo-900/10 hover:shadow-sm hover:shadow-blue-500/5'
                   }`}
                   onClick={() => onSelectDoc(doc)}
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                      <FileText className="w-4 h-4 text-white" />
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="w-6 h-6 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <FileText className="w-3 h-3 text-white" />
                     </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-all duration-300">
+                    <div className="opacity-0 group-hover:opacity-100 transition-all duration-200">
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
                           onDeleteDoc(doc.id)
                         }}
-                        className="p-2 hover:bg-gradient-to-r hover:from-red-100 hover:to-pink-100 dark:hover:from-red-900/30 dark:hover:to-pink-900/30 rounded-lg text-gray-400 hover:text-red-500 transition-all duration-300 hover:scale-110"
+                        className="p-1.5 hover:bg-gradient-to-r hover:from-red-100 hover:to-pink-100 dark:hover:from-red-900/30 dark:hover:to-pink-900/30 rounded-md text-gray-400 hover:text-red-500 transition-all duration-200 hover:scale-110"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3 h-3" />
                       </button>
                     </div>
                   </div>
 
-                  <h4 className="font-bold text-gray-900 dark:text-white mb-2 truncate">
+                  <h4 className="font-bold text-gray-900 dark:text-white mb-1 truncate text-sm">
                     {doc.title}
                   </h4>
                   
-                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-3 font-medium">
-                    <Clock className="w-3.5 h-3.5" />
+                  <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">
+                    <Clock className="w-3 h-3" />
                     <span>{formatDistanceToNow(new Date(doc.updatedAt), { addSuffix: true })}</span>
                     {doc.isShared && (
                       <>
                         <span className="text-gray-300 dark:text-gray-600">•</span>
-                        <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-lg">
-                          <Users className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                        <div className="flex items-center gap-1 px-1.5 py-0.5 bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-md">
+                          <Users className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
                           <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Shared</span>
                         </div>
                       </>
                     )}
                   </div>
 
-                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">
-                    {doc.content.replace(/<[^>]*>/g, '').substring(0, 80) || 'No content yet...'}
+                  <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">
+                    {doc.content.replace(/<[^>]*>/g, '').substring(0, 60) || 'No content yet...'}
                   </p>
                 </motion.div>
               ))}
@@ -429,13 +430,13 @@ function DocumentsSidebar({
           )}
         </div>
 
-        {/* Collapse Button */}
-        <div className="p-4 border-t border-gray-200/50 dark:border-slate-700/50">
+        {/* Collapse Button - More Compact */}
+        <div className="p-3 border-t border-gray-200/50 dark:border-slate-700/50">
           <button
             onClick={onClose}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 rounded-xl hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-50 dark:hover:from-slate-800 dark:hover:to-slate-700 transition-all duration-300 text-sm font-semibold"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 rounded-lg hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-50 dark:hover:from-slate-800 dark:hover:to-slate-700 transition-all duration-200 text-xs font-semibold"
           >
-            <Sidebar className="w-4 h-4" />
+            <Sidebar className="w-3.5 h-3.5" />
             <span>Collapse Sidebar</span>
           </button>
         </div>
@@ -444,7 +445,7 @@ function DocumentsSidebar({
   )
 }
 
-// Comments Sidebar - Modern Right Panel
+// Comments Sidebar - Narrower and More Compact
 function CommentsSidebar({ 
   isVisible, 
   comments, 
@@ -489,23 +490,24 @@ function CommentsSidebar({
       />
       
       <motion.div
-        initial={{ x: 320 }}
+        initial={{ x: 300 }}
         animate={{ x: 0 }}
-        exit={{ x: 320 }}
+        exit={{ x: 300 }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed right-0 top-0 bottom-0 w-80 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-l border-gray-200/50 dark:border-slate-700/50 z-50 flex flex-col shadow-2xl"
+        className="fixed right-0 top-0 bottom-0 w-75 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-l border-gray-200/50 dark:border-slate-700/50 z-50 flex flex-col shadow-2xl"
+        style={{ width: '300px' }}
       >
-        {/* Header */}
-        <div className="p-6 border-b border-gray-200/50 dark:border-slate-700/50 bg-gradient-to-r from-purple-50/50 to-pink-50/50 dark:from-purple-900/10 dark:to-pink-900/10">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
-                <MessageSquare className="w-5 h-5 text-white" />
+        {/* Header - More Compact */}
+        <div className="p-4 border-b border-gray-200/50 dark:border-slate-700/50 bg-gradient-to-r from-purple-50/50 to-pink-50/50 dark:from-purple-900/10 dark:to-pink-900/10">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center shadow-md">
+                <MessageSquare className="w-4 h-4 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">Comments</h3>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 text-purple-700 dark:text-purple-300 px-3 py-1 rounded-full font-semibold">
+                <h3 className="text-lg font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">Comments</h3>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-full font-semibold">
                     {docComments.length} {docComments.length === 1 ? 'comment' : 'comments'}
                   </span>
                 </div>
@@ -513,48 +515,48 @@ function CommentsSidebar({
             </div>
             <button
               onClick={onClose}
-              className="p-2.5 hover:bg-gradient-to-r hover:from-red-100 hover:to-pink-100 dark:hover:from-red-900/30 dark:hover:to-pink-900/30 rounded-xl transition-all duration-300 text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400 hover:scale-105"
+              className="p-2 hover:bg-gradient-to-r hover:from-red-100 hover:to-pink-100 dark:hover:from-red-900/30 dark:hover:to-pink-900/30 rounded-lg transition-all duration-200 text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400 hover:scale-105"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
           
           {/* Collapse Button */}
           <button
             onClick={onClose}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 rounded-xl hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 dark:hover:from-purple-900/20 dark:hover:to-pink-900/20 transition-all duration-300 text-sm font-semibold border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-600"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 dark:hover:from-purple-900/20 dark:hover:to-pink-900/20 transition-all duration-200 text-xs font-semibold border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-600"
           >
-            <PanelRightClose className="w-4 h-4" />
+            <PanelRightClose className="w-3.5 h-3.5" />
             <span>Collapse Comments</span>
           </button>
         </div>
 
-        {/* Comments List */}
-        <div className="flex-1 overflow-y-auto p-4">
+        {/* Comments List - More Compact */}
+        <div className="flex-1 overflow-y-auto p-3">
           {docComments.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <MessageSquare className="w-8 h-8 text-purple-500 dark:text-purple-400" />
+            <div className="text-center py-8">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <MessageSquare className="w-6 h-6 text-purple-500 dark:text-purple-400" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">No comments yet</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-6">Start a conversation by adding the first comment below</p>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">No comments yet</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-4">Start a conversation by adding the first comment below</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {docComments.map((comment) => (
                 <motion.div 
                   key={comment.id} 
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-gradient-to-r from-white to-gray-50/50 dark:from-slate-800 dark:to-slate-700/50 rounded-2xl p-4 border border-gray-200/50 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all duration-300"
+                  className="bg-gradient-to-r from-white to-gray-50/50 dark:from-slate-800 dark:to-slate-700/50 rounded-xl p-3 border border-gray-200/50 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all duration-200"
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">
                         {comment.author.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <div className="font-bold text-gray-900 dark:text-white">{comment.author}</div>
+                        <div className="font-bold text-gray-900 dark:text-white text-xs">{comment.author}</div>
                         <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                           {formatDistanceToNow(comment.timestamp, { addSuffix: true })}
                         </div>
@@ -562,27 +564,27 @@ function CommentsSidebar({
                     </div>
                     <button
                       onClick={() => onDeleteComment(comment.id)}
-                      className="p-2 hover:bg-gradient-to-r hover:from-red-100 hover:to-pink-100 dark:hover:from-red-900/30 dark:hover:to-pink-900/30 rounded-lg text-gray-400 hover:text-red-500 transition-all duration-300 hover:scale-110"
+                      className="p-1.5 hover:bg-gradient-to-r hover:from-red-100 hover:to-pink-100 dark:hover:from-red-900/30 dark:hover:to-pink-900/30 rounded-md text-gray-400 hover:text-red-500 transition-all duration-200 hover:scale-110"
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-3 h-3" />
                     </button>
                   </div>
                   
                   {comment.from !== comment.to && (
-                    <div className="mb-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border-l-4 border-blue-500">
+                    <div className="mb-2 p-2 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border-l-3 border-blue-500">
                       <p className="text-xs text-blue-700 dark:text-blue-300 font-semibold italic">
                         💬 Commented on text selection (position {comment.from}-{comment.to})
                       </p>
                     </div>
                   )}
                   
-                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed bg-gray-50/50 dark:bg-slate-900/30 rounded-xl p-3">
+                  <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed bg-gray-50/50 dark:bg-slate-900/30 rounded-lg p-2">
                     {comment.text}
                   </p>
 
                   {comment.resolved && (
-                    <div className="mt-3 flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs font-semibold bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-lg px-3 py-2">
-                      <CheckCircle className="w-4 h-4" />
+                    <div className="mt-2 flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs font-semibold bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-md px-2 py-1">
+                      <CheckCircle className="w-3 h-3" />
                       <span>✅ Resolved</span>
                     </div>
                   )}
@@ -592,25 +594,25 @@ function CommentsSidebar({
           )}
         </div>
 
-        {/* Add Comment */}
-        <div className="p-4 border-t border-gray-200/50 dark:border-slate-700/50 bg-gradient-to-r from-blue-50/30 to-indigo-50/30 dark:from-blue-900/10 dark:to-indigo-900/10">
-          <div className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm rounded-2xl p-4 border border-gray-200/50 dark:border-slate-700/50">
+        {/* Add Comment - More Compact */}
+        <div className="p-3 border-t border-gray-200/50 dark:border-slate-700/50 bg-gradient-to-r from-blue-50/30 to-indigo-50/30 dark:from-blue-900/10 dark:to-indigo-900/10">
+          <div className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm rounded-xl p-3 border border-gray-200/50 dark:border-slate-700/50">
             <textarea
               placeholder="Add a thoughtful comment..."
               value={newComment}
               onChange={handleCommentChange}
-              className="w-full p-4 border-0 bg-transparent text-gray-900 dark:text-white resize-none focus:outline-none text-sm placeholder-gray-500 dark:placeholder-gray-400 leading-relaxed"
-              rows={3}
+              className="w-full p-3 border-0 bg-transparent text-gray-900 dark:text-white resize-none focus:outline-none text-xs placeholder-gray-500 dark:placeholder-gray-400 leading-relaxed"
+              rows={2}
               maxLength={1000}
             />
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200/30 dark:border-slate-700/30">
+            <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-200/30 dark:border-slate-700/30">
               <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                {newComment.length}/1000 characters
+                {newComment.length}/1000
               </span>
               <button 
                 onClick={handleAddComment}
                 disabled={!newComment.trim()}
-                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-lg shadow-blue-500/25 hover:scale-105 disabled:transform-none"
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-md shadow-blue-500/25 hover:scale-105 disabled:transform-none text-xs"
               >
                 💬 Comment
               </button>
@@ -622,7 +624,7 @@ function CommentsSidebar({
   )
 }
 
-// Share Modal Component - Modern and Friendly
+// Share Modal Component - Slight Improvements
 function ShareModal({ isOpen, onClose, activeDoc, onShare }: {
   isOpen: boolean
   onClose: () => void
@@ -705,103 +707,103 @@ function ShareModal({ isOpen, onClose, activeDoc, onShare }: {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
         transition={{ duration: 0.3, type: "spring", damping: 25, stiffness: 300 }}
-        className="fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/50 dark:border-slate-700/50 p-8 w-full max-w-lg z-50"
+        className="fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 dark:border-slate-700/50 p-6 w-full max-w-md z-50"
       >
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
-              <Share2 className="w-6 h-6 text-white" />
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md shadow-blue-500/25">
+              <Share2 className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">Share Document</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Collaborate with others in real-time</p>
+              <h2 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">Share Document</h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Collaborate with others in real-time</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2.5 hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-50 dark:hover:from-slate-800 dark:hover:to-slate-700 rounded-xl transition-all duration-300 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:scale-105"
+            className="p-2 hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-50 dark:hover:from-slate-800 dark:hover:to-slate-700 rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:scale-105"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="space-y-8">
+        <div className="space-y-6">
           {/* Share Link */}
-          <div className="bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-blue-900/10 dark:to-indigo-900/10 rounded-2xl p-6 border border-blue-200/20 dark:border-blue-800/20">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                <Users className="w-4 h-4 text-white" />
+          <div className="bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-blue-900/10 dark:to-indigo-900/10 rounded-xl p-4 border border-blue-200/20 dark:border-blue-800/20">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                <Users className="w-3.5 h-3.5 text-white" />
               </div>
               <div>
-                <label className="block text-lg font-bold text-gray-900 dark:text-white">Anyone with the link</label>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Share this link to give access to your document</p>
+                <label className="block text-sm font-bold text-gray-900 dark:text-white">Anyone with the link</label>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Share this link to give access to your document</p>
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <input
                 type="text"
                 value={shareLink}
                 readOnly
-                className="flex-1 px-4 py-3 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm border border-gray-200/50 dark:border-slate-700/50 rounded-xl text-gray-900 dark:text-white focus:outline-none text-sm font-mono"
+                className="flex-1 px-3 py-2.5 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm border border-gray-200/50 dark:border-slate-700/50 rounded-lg text-gray-900 dark:text-white focus:outline-none text-xs font-mono"
                 placeholder={isLoading ? "✨ Generating magical link..." : "Share link will appear here"}
               />
               <button
                 onClick={copyToClipboard}
                 disabled={!shareLink}
-                className={`px-4 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 ${
+                className={`px-3 py-2.5 rounded-lg font-semibold transition-all duration-200 hover:scale-105 ${
                   copySuccess
-                    ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25'
-                    : 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-500/25'
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/25'
+                    : 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 shadow-md shadow-blue-500/25'
                 } disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none`}
               >
-                {copySuccess ? <CheckCircle className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                {copySuccess ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               </button>
             </div>
             {copySuccess && (
               <motion.p 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-sm text-emerald-600 dark:text-emerald-400 font-semibold mt-3 flex items-center gap-2"
+                className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-2 flex items-center gap-1"
               >
-                <CheckCircle className="w-4 h-4" />
+                <CheckCircle className="w-3 h-3" />
                 Link copied to clipboard!
               </motion.p>
             )}
           </div>
 
           {/* Email Share */}
-          <div className="bg-gradient-to-r from-purple-50/50 to-pink-50/50 dark:from-purple-900/10 dark:to-pink-900/10 rounded-2xl p-6 border border-purple-200/20 dark:border-purple-800/20">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
-                <MessageSquare className="w-4 h-4 text-white" />
+          <div className="bg-gradient-to-r from-purple-50/50 to-pink-50/50 dark:from-purple-900/10 dark:to-pink-900/10 rounded-xl p-4 border border-purple-200/20 dark:border-purple-800/20">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
+                <MessageSquare className="w-3.5 h-3.5 text-white" />
               </div>
               <div>
-                <label className="block text-lg font-bold text-gray-900 dark:text-white">Share with specific people</label>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Send a direct invitation via email</p>
+                <label className="block text-sm font-bold text-gray-900 dark:text-white">Share with specific people</label>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Send a direct invitation via email</p>
               </div>
             </div>
-            <form onSubmit={handleEmailShare} className="space-y-4">
+            <form onSubmit={handleEmailShare} className="space-y-3">
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter email address"
-                className="w-full px-4 py-3 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm border border-gray-200/50 dark:border-slate-700/50 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 text-sm transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
+                className="w-full px-3 py-2.5 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm border border-gray-200/50 dark:border-slate-700/50 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 text-xs transition-all duration-200 placeholder-gray-500 dark:placeholder-gray-400"
                 disabled={isLoading}
               />
               <button
                 type="submit"
                 disabled={!email.trim() || isLoading}
-                className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-lg shadow-purple-500/25 hover:scale-[1.02] disabled:transform-none"
+                className="w-full px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-md shadow-purple-500/25 hover:scale-[1.02] disabled:transform-none text-xs"
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     <span>Sending invitation...</span>
                   </div>
                 ) : (
                   <div className="flex items-center justify-center gap-2">
-                    <MessageSquare className="w-4 h-4" />
+                    <MessageSquare className="w-3.5 h-3.5" />
                     <span>Send Invitation</span>
                   </div>
                 )}
@@ -1313,8 +1315,8 @@ export default function GoogleDocsCollabZone() {
           showDocuments={showDocuments}
         />
         
-        <div className="flex-1 overflow-hidden p-8">
-          <div className="max-w-5xl mx-auto bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/50 dark:border-slate-700/50 h-full overflow-hidden">
+        <div className="flex-1 overflow-hidden p-6">
+          <div className="max-w-5xl mx-auto bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 dark:border-slate-700/50 h-full overflow-hidden">
             <Editor
               key={`fullscreen-${activeDoc.id}`}
               content={activeDoc.content}
@@ -1365,7 +1367,7 @@ export default function GoogleDocsCollabZone() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -50, scale: 0.9 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className={`fixed top-24 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl font-semibold shadow-2xl backdrop-blur-md ${
+            className={`fixed top-20 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-3 px-6 py-4 rounded-xl font-semibold shadow-2xl backdrop-blur-md ${
               statusMsg.type === 'success'
                 ? 'bg-gradient-to-r from-emerald-500/90 to-teal-600/90 text-white border border-emerald-400/50'
                 : 'bg-gradient-to-r from-red-500/90 to-pink-600/90 text-white border border-red-400/50'
@@ -1401,11 +1403,11 @@ export default function GoogleDocsCollabZone() {
           )}
         </AnimatePresence>
 
-        {/* Editor Area */}
+        {/* Editor Area - Reduced Margins */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {activeDoc ? (
-            <div className="flex-1 p-8 overflow-hidden">
-              <div className="max-w-4xl mx-auto bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/50 dark:border-slate-700/50 h-full overflow-hidden">
+            <div className="flex-1 p-4 overflow-hidden">
+              <div className="max-w-4xl mx-auto bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 dark:border-slate-700/50 h-full overflow-hidden">
                 <Editor
                   key={activeDoc.id}
                   content={activeDoc.content}
@@ -1422,15 +1424,15 @@ export default function GoogleDocsCollabZone() {
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.5, type: "spring", damping: 25, stiffness: 200 }}
-                  className="w-24 h-24 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-blue-500/25"
+                  className="w-20 h-20 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-blue-500/25"
                 >
-                  <FileText className="w-12 h-12 text-white" />
+                  <FileText className="w-10 h-10 text-white" />
                 </motion.div>
                 <motion.h2 
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.1, duration: 0.5 }}
-                  className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent mb-4"
+                  className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent mb-3"
                 >
                   Welcome to Collab Zone ✨
                 </motion.h2>
@@ -1438,7 +1440,7 @@ export default function GoogleDocsCollabZone() {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.2, duration: 0.5 }}
-                  className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed text-lg"
+                  className="text-gray-500 dark:text-gray-400 mb-6 leading-relaxed text-base"
                 >
                   Create beautiful documents and collaborate with your team in real-time. Your ideas deserve the perfect workspace.
                 </motion.p>
@@ -1446,20 +1448,20 @@ export default function GoogleDocsCollabZone() {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.3, duration: 0.5 }}
-                  className="flex flex-col sm:flex-row gap-4 justify-center"
+                  className="flex flex-col sm:flex-row gap-3 justify-center"
                 >
                   <button
                     onClick={handleNewDoc}
-                    className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 font-bold shadow-2xl shadow-blue-500/25 hover:scale-105"
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-bold shadow-xl shadow-blue-500/25 hover:scale-105 text-sm"
                   >
-                    <Plus className="w-5 h-5" />
+                    <Plus className="w-4 h-4" />
                     Create Document
                   </button>
                   <button
                     onClick={() => setShowDocuments(true)}
-                    className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-gray-100 to-gray-50 dark:from-slate-800 dark:to-slate-700 text-gray-700 dark:text-gray-300 rounded-2xl hover:from-gray-200 hover:to-gray-100 dark:hover:from-slate-700 dark:hover:to-slate-600 transition-all duration-300 font-bold border border-gray-200/50 dark:border-slate-600/50 hover:scale-105"
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-gray-100 to-gray-50 dark:from-slate-800 dark:to-slate-700 text-gray-700 dark:text-gray-300 rounded-xl hover:from-gray-200 hover:to-gray-100 dark:hover:from-slate-700 dark:hover:to-slate-600 transition-all duration-200 font-bold border border-gray-200/50 dark:border-slate-600/50 hover:scale-105 text-sm"
                   >
-                    <FileText className="w-5 h-5" />
+                    <FileText className="w-4 h-4" />
                     Browse Documents
                   </button>
                 </motion.div>
