@@ -996,9 +996,9 @@ function DashboardContent() {
       textareaRef.current.style.height = 'auto'
       
       const scrollHeight = textareaRef.current.scrollHeight
-      const lineHeight = 24
+      const lineHeight = 20
       const maxLines = 4
-      const maxHeight = lineHeight * maxLines
+      const maxHeight = lineHeight * maxLines + 16 // Add padding
       
       const newHeight = Math.min(scrollHeight, maxHeight)
       textareaRef.current.style.height = newHeight + 'px'
@@ -1596,8 +1596,8 @@ function DashboardContent() {
       )}
 
       {/* Content Area - Proper sidebar spacing */}
-      <div className="flex-1 overflow-hidden ml-0 md:ml-60 lg:ml-64" data-tour="dashboard-main">
-        <div ref={containerRef} className="h-full overflow-y-auto pb-80 px-4 pt-4">
+      <div className="flex-1 overflow-hidden ml-0 sm:ml-56" data-tour="dashboard-main">
+        <div ref={containerRef} className="h-full overflow-y-auto pb-80 pl-0 pr-4 pt-4">
 
         {/* Prompt Limit Warning */}
         {isAtPromptLimit && (
@@ -1960,7 +1960,7 @@ function DashboardContent() {
             </div>
           )}
           
-          <div className={`bg-white dark:bg-gray-800 shadow-lg rounded-2xl p-4 backdrop-blur-sm border border-gray-200 dark:border-gray-700 transition-all duration-200 ${shakeInput ? 'animate-pulse border-red-300 dark:border-red-700' : ''}`}>
+          <div className={`bg-white dark:bg-gray-800 shadow-lg rounded-xl p-3 backdrop-blur-sm border border-gray-200 dark:border-gray-700 transition-all duration-200 ${shakeInput ? 'animate-pulse border-red-300 dark:border-red-700' : ''}`}>
             <div className="flex items-end gap-2">
               
               {/* Upload Button - Enhanced Style */}
@@ -1972,14 +1972,14 @@ function DashboardContent() {
                   }
                 }}
                 disabled={isLoading || isStreaming || isAtPromptLimit}
-                className={`p-3 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 hover:from-blue-100 hover:to-blue-200 dark:hover:from-blue-800/30 dark:hover:to-blue-700/30 hover:border-blue-300 dark:hover:border-blue-700 hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-200 shadow-sm hover:shadow-lg ${
+                className={`p-2 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 hover:from-blue-100 hover:to-blue-200 dark:hover:from-blue-800/30 dark:hover:to-blue-700/30 hover:border-blue-300 dark:hover:border-blue-700 hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-200 shadow-sm hover:shadow-lg ${
                   isLoading || isStreaming || isAtPromptLimit
                     ? 'opacity-50 cursor-not-allowed'
                     : 'hover:scale-105 active:scale-95'
                 }`}
                 title="Upload files"
               >
-                <FaPaperclip className="w-5 h-5" />
+                <FaPaperclip className="w-4 h-4" />
               </button>
 
               {/* Image Button - Enhanced Style */}
@@ -1992,7 +1992,7 @@ function DashboardContent() {
                   }
                 }}
                 disabled={isAtPromptLimit}
-                className={`p-3 rounded-2xl bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border border-purple-200 dark:border-purple-800 flex items-center justify-center text-purple-600 dark:text-purple-400 hover:from-purple-100 hover:to-purple-200 dark:hover:from-purple-800/30 dark:hover:to-purple-700/30 hover:border-purple-300 dark:hover:border-purple-700 hover:text-purple-700 dark:hover:text-purple-300 transition-all duration-200 shadow-sm hover:shadow-lg ${
+                className={`p-2 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border border-purple-200 dark:border-purple-800 flex items-center justify-center text-purple-600 dark:text-purple-400 hover:from-purple-100 hover:to-purple-200 dark:hover:from-purple-800/30 dark:hover:to-purple-700/30 hover:border-purple-300 dark:hover:border-purple-700 hover:text-purple-700 dark:hover:text-purple-300 transition-all duration-200 shadow-sm hover:shadow-lg ${
                   (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0 && !isAtPromptLimit)
                     ? 'hover:scale-105 active:scale-95'
                     : 'opacity-50 cursor-not-allowed'
@@ -2000,7 +2000,7 @@ function DashboardContent() {
                 title="Generate image"
                 data-tour="gallery"
               >
-                <FaPalette className="w-5 h-5" />
+                <FaPalette className="w-4 h-4" />
               </button>
 
               {/* Textarea with Floating Label */}
@@ -2008,8 +2008,8 @@ function DashboardContent() {
                 <label 
                   className={`absolute left-3 transition-all duration-200 pointer-events-none ${
                     inputFocused || input.trim() 
-                      ? 'top-1 text-xs text-gray-500 dark:text-gray-400' 
-                      : 'top-3 text-sm text-gray-400 dark:text-gray-500'
+                      ? 'top-0.5 text-xs text-gray-500 dark:text-gray-400' 
+                      : 'top-2.5 text-sm text-gray-400 dark:text-gray-500'
                   }`}
                 >
                   Type your message…
@@ -2017,7 +2017,7 @@ function DashboardContent() {
                 <textarea
                   ref={textareaRef}
                   rows={1}
-                  className="w-full px-3 pt-6 pb-3 border-0 bg-transparent text-gray-900 dark:text-white resize-none text-sm min-h-[48px] max-h-[120px] transition-all duration-200 focus:outline-none placeholder-gray-400 dark:placeholder-gray-500"
+                  className="w-full px-3 pt-4 pb-2 border-0 bg-transparent text-gray-900 dark:text-white resize-none text-sm min-h-[40px] max-h-[100px] transition-all duration-200 focus:outline-none placeholder-gray-400 dark:placeholder-gray-500"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onFocus={() => setInputFocused(true)}
@@ -2040,7 +2040,7 @@ function DashboardContent() {
                   handleSubmit()
                 }}
                 disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || isAtPromptLimit}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white p-2.5 rounded-2xl shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:transform-none flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px]"
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white p-2 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:transform-none flex-shrink-0 flex items-center justify-center min-w-[40px] min-h-[40px]"
                 title="Send message"
               >
                 {isLoading || isStreaming ? (

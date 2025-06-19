@@ -154,7 +154,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
       title: 'AI Mastery Academy 🎓',
       content: 'Learn advanced AI strategies and growth techniques from experts.',
       icon: <Lightbulb className="w-5 h-5 text-yellow-400" />,
-      target: '[href="/nerd-mode"], a[href*="education"], nav a:contains("Education"), [data-nav="education-hub"]',
+      target: '[href="/education"], [href="/nerd-mode"], a[href*="education"], nav a:contains("Education Hub"), [data-nav="education-hub"]',
       proTip: 'AI-savvy companies grow 5x faster than competitors!',
       priority: 2
     },
