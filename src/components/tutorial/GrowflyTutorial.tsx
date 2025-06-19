@@ -260,64 +260,81 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
   const isLastStep = currentStep === tutorialSteps.length - 1
   const hasTarget = currentStepData.target && targetRect && elementFound
 
-  // Get tooltip position relative to highlighted element
+  // Get tooltip position - improved to stay on screen
   const getTooltipPosition = useCallback(() => {
-    const tooltipWidth = 480
-    const tooltipHeight = 420
+    const tooltipWidth = 520  // Slightly wider
+    const tooltipHeight = 360 // Much shorter
     const viewportWidth = window.innerWidth
     const viewportHeight = window.innerHeight
-    const padding = 24
+    const padding = 20
 
-    // Mobile or no target - center on screen
-    if (viewportWidth < 1024 || !targetRect || !hasTarget) {
+    // Always ensure modal fits in viewport
+    const actualWidth = Math.min(tooltipWidth, viewportWidth - padding * 2)
+    const actualHeight = Math.min(tooltipHeight, viewportHeight - padding * 2)
+
+    // Mobile or small screen - center
+    if (viewportWidth < 1200 || !targetRect || !hasTarget) {
       return {
         position: 'fixed' as const,
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
         zIndex: 1000,
-        width: `${Math.min(tooltipWidth, viewportWidth - padding * 2)}px`,
+        width: `${actualWidth}px`,
+        maxHeight: `${actualHeight}px`,
       }
     }
 
-    // Desktop positioning - prefer right side for sidebar elements
+    // Desktop positioning strategies
     const strategies = [
-      // Right of target
+      // Right of target (preferred for sidebar)
       {
-        top: Math.min(targetRect.top, viewportHeight - tooltipHeight - padding),
+        top: Math.max(padding, Math.min(targetRect.top, viewportHeight - actualHeight - padding)),
         left: targetRect.right + padding,
-        score: targetRect.right + padding + tooltipWidth <= viewportWidth - padding ? 10 : 0
+        valid: targetRect.right + padding + actualWidth <= viewportWidth - padding
       },
       // Left of target
       {
-        top: Math.min(targetRect.top, viewportHeight - tooltipHeight - padding),
-        left: targetRect.left - tooltipWidth - padding,
-        score: targetRect.left - tooltipWidth - padding >= padding ? 8 : 0
+        top: Math.max(padding, Math.min(targetRect.top, viewportHeight - actualHeight - padding)),
+        left: targetRect.left - actualWidth - padding,
+        valid: targetRect.left - actualWidth - padding >= padding
       },
-      // Below target
+      // Below target, centered
       {
-        top: Math.min(targetRect.bottom + padding, viewportHeight - tooltipHeight - padding),
-        left: Math.max(padding, Math.min(targetRect.left, viewportWidth - tooltipWidth - padding)),
-        score: targetRect.bottom + padding + tooltipHeight <= viewportHeight - padding ? 6 : 0
+        top: Math.min(targetRect.bottom + padding, viewportHeight - actualHeight - padding),
+        left: Math.max(padding, Math.min(
+          targetRect.left + targetRect.width/2 - actualWidth/2, 
+          viewportWidth - actualWidth - padding
+        )),
+        valid: targetRect.bottom + padding + actualHeight <= viewportHeight - padding
       },
-      // Center fallback
+      // Above target, centered
       {
-        top: (viewportHeight - tooltipHeight) / 2,
-        left: (viewportWidth - tooltipWidth) / 2,
-        score: 1
+        top: Math.max(padding, targetRect.top - actualHeight - padding),
+        left: Math.max(padding, Math.min(
+          targetRect.left + targetRect.width/2 - actualWidth/2, 
+          viewportWidth - actualWidth - padding
+        )),
+        valid: targetRect.top - actualHeight - padding >= padding
+      },
+      // Fallback: center screen
+      {
+        top: Math.max(padding, (viewportHeight - actualHeight) / 2),
+        left: Math.max(padding, (viewportWidth - actualWidth) / 2),
+        valid: true
       }
     ]
 
-    const bestStrategy = strategies
-      .filter(s => s.score > 0)
-      .sort((a, b) => b.score - a.score)[0]
+    // Find first valid strategy
+    const bestStrategy = strategies.find(s => s.valid) || strategies[strategies.length - 1]
     
     return {
       position: 'fixed' as const,
-      top: `${Math.max(padding, bestStrategy.top)}px`,
-      left: `${Math.max(padding, bestStrategy.left)}px`,
+      top: `${bestStrategy.top}px`,
+      left: `${bestStrategy.left}px`,
       zIndex: 1000,
-      width: `${Math.min(tooltipWidth, viewportWidth - padding * 2)}px`,
+      width: `${actualWidth}px`,
+      maxHeight: `${actualHeight}px`,
     }
   }, [targetRect, hasTarget])
 
@@ -446,18 +463,18 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
           aria-modal="true"
           aria-labelledby="tutorial-title"
         >
-          <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col max-h-[85vh]">
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-100 flex-shrink-0">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center border border-blue-100">
+          <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col" style={{ height: 'fit-content' }}>
+            {/* Compact Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-100 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center border border-blue-100">
                   {currentStepData.icon}
                 </div>
                 <div>
-                  <h2 id="tutorial-title" className="text-xl font-semibold text-gray-900 mb-1">
+                  <h2 id="tutorial-title" className="text-lg font-semibold text-gray-900">
                     {currentStepData.title}
                   </h2>
-                  <div className="flex items-center gap-3 text-sm text-gray-500">
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
                     <span>Step {currentStep + 1} of {tutorialSteps.length}</span>
                     <span>•</span>
                     <span>Growfly Tutorial</span>
@@ -466,31 +483,31 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
               </div>
               <button
                 onClick={handleSkip}
-                className="w-10 h-10 rounded-2xl hover:bg-gray-100 flex items-center justify-center transition-all duration-200 hover:scale-105"
+                className="w-8 h-8 rounded-xl hover:bg-gray-100 flex items-center justify-center transition-all duration-200"
                 aria-label="Skip tutorial"
               >
-                <X className="w-5 h-5 text-gray-400" />
+                <X className="w-4 h-4 text-gray-400" />
               </button>
             </div>
 
-            {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            {/* Compact Content */}
+            <div className="flex-1 p-4">
               {/* Main content */}
-              <div className="mb-6">
-                <p className="text-gray-700 leading-relaxed text-base mb-4">
+              <div className="mb-4">
+                <p className="text-gray-700 leading-relaxed text-sm mb-3">
                   {currentStepData.content}
                 </p>
 
-                {/* Feature highlights */}
+                {/* Compact feature highlights */}
                 {currentStepData.features && (
-                  <div className="mb-4">
-                    <div className="flex flex-wrap gap-2">
-                      {currentStepData.features.map((feature, index) => (
+                  <div className="mb-3">
+                    <div className="flex flex-wrap gap-1.5">
+                      {currentStepData.features.slice(0, 4).map((feature, index) => (
                         <span 
                           key={index}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-100"
+                          className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium border border-blue-100"
                         >
-                          <Star className="w-3 h-3" />
+                          <Star className="w-2.5 h-2.5" />
                           {feature}
                         </span>
                       ))}
@@ -498,16 +515,16 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
                   </div>
                 )}
 
-                {/* Pro tip */}
+                {/* Compact pro tip */}
                 {currentStepData.tip && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Lightbulb className="w-4 h-4 text-amber-600" />
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                    <div className="flex items-start gap-2">
+                      <div className="w-6 h-6 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Lightbulb className="w-3 h-3 text-amber-600" />
                       </div>
                       <div>
-                        <p className="font-medium text-amber-800 text-sm mb-1">Pro Tip</p>
-                        <p className="text-amber-700 text-sm leading-relaxed">
+                        <p className="font-medium text-amber-800 text-xs mb-1">Pro Tip</p>
+                        <p className="text-amber-700 text-xs leading-relaxed">
                           {currentStepData.tip}
                         </p>
                       </div>
@@ -516,39 +533,39 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
                 )}
               </div>
 
-              {/* Progress Bar */}
-              <div className="mb-6">
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-sm font-medium text-gray-600">Tutorial Progress</span>
-                  <span className="text-sm font-semibold text-blue-600">
+              {/* Compact Progress Bar */}
+              <div className="mb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-xs font-medium text-gray-600">Progress</span>
+                  <span className="text-xs font-semibold text-blue-600">
                     {Math.round(progress)}% Complete
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
+                <div className="w-full bg-gray-200 rounded-full h-2">
                   <div 
-                    className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500 ease-out"
+                    className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
               </div>
             </div>
 
-            {/* Fixed Navigation Footer */}
-            <div className="border-t border-gray-100 p-6 flex-shrink-0 bg-gray-50 rounded-b-3xl">
+            {/* Compact Navigation Footer */}
+            <div className="border-t border-gray-100 p-4 flex-shrink-0 bg-gray-50 rounded-b-3xl">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <button
                     onClick={handleSkip}
-                    className="text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors bg-white hover:bg-gray-100 px-4 py-2.5 rounded-2xl border border-gray-200"
+                    className="text-gray-500 hover:text-gray-700 text-xs font-medium transition-colors bg-white hover:bg-gray-100 px-3 py-2 rounded-xl border border-gray-200"
                   >
                     Skip tour
                   </button>
                   {currentStep > 0 && (
                     <button
                       onClick={prevStep}
-                      className="flex items-center gap-2 text-gray-600 hover:text-gray-800 text-sm font-medium transition-all duration-200 bg-white hover:bg-gray-100 px-4 py-2.5 rounded-2xl border border-gray-200 hover:scale-105"
+                      className="flex items-center gap-1 text-gray-600 hover:text-gray-800 text-xs font-medium transition-all duration-200 bg-white hover:bg-gray-100 px-3 py-2 rounded-xl border border-gray-200"
                     >
-                      <ChevronLeft className="w-4 h-4" />
+                      <ChevronLeft className="w-3 h-3" />
                       Back
                     </button>
                   )}
@@ -556,7 +573,7 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
                 
                 <button
                   onClick={nextStep}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105"
+                  className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl text-sm"
                 >
                   {isLastStep ? (
                     <>
@@ -576,32 +593,32 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
         </div>
       </div>
 
-      {/* Skip Confirmation Modal */}
+      {/* Compact Skip Confirmation Modal */}
       {showSkipModal && (
         <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center">
-                <X className="w-5 h-5 text-blue-600" />
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center">
+                <X className="w-4 h-4 text-blue-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-base font-semibold text-gray-900">
                 Skip Tutorial?
               </h3>
             </div>
-            <p className="text-gray-600 mb-6">
-              This tutorial shows you features that can significantly boost your business output. You can always restart it later from Settings.
+            <p className="text-gray-600 mb-5 text-sm">
+              This tutorial shows you features that can significantly boost your business output. You can restart it later from Settings.
             </p>
             
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <button
                 onClick={cancelSkip}
-                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 py-3 px-4 rounded-2xl font-medium transition-all duration-200 hover:scale-105"
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 py-2.5 px-3 rounded-xl font-medium transition-all duration-200 text-sm"
               >
                 Continue Tour
               </button>
               <button
                 onClick={confirmSkip}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-2xl font-medium transition-all duration-200 hover:scale-105"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-3 rounded-xl font-medium transition-all duration-200 text-sm"
               >
                 Skip
               </button>
