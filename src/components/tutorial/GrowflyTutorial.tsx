@@ -245,7 +245,8 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
             if (match) {
               const [, baseSelector, text] = match
               const elements = document.querySelectorAll(baseSelector)
-              for (const el of elements) {
+              // FIXED: Convert NodeList to Array before iterating
+              for (const el of Array.from(elements)) {
                 if (el.textContent?.includes(text)) {
                   const element = el as HTMLElement
                   if (element && 
