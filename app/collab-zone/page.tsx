@@ -444,7 +444,7 @@ function CommentsSidebar({
 }) {
   const [newComment, setNewComment] = useState('')
 
-  const handleCommentChange = useCallback((e: React.ChangeEvent<HTMLTextAreaArea>) => {
+  const handleCommentChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const sanitizedValue = sanitizeInput(e.target.value)
     if (sanitizedValue.length <= 1000) {
       setNewComment(sanitizedValue)
