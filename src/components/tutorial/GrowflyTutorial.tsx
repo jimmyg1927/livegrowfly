@@ -6,7 +6,8 @@ import {
   Sparkles, Zap, Users, Heart, Lightbulb, Trophy, Handshake, Settings, 
   Image, BookOpen, X, ChevronRight, ChevronLeft, Star, Rocket, 
   Target, Brain, Palette, MessageCircle, Gift, Crown, Wand2, Play,
-  ArrowDown, MousePointer, Eye, Navigation
+  ArrowDown, MousePointer, Eye, Navigation, Download, Share2, 
+  Edit3, FileText, TrendingUp, Layers, Zap as Lightning
 } from 'lucide-react'
 
 interface GrowflyTutorialProps {
@@ -23,7 +24,8 @@ interface TutorialStep {
   target?: string
   proTip?: string
   celebration?: boolean
-  priority?: number // For element finding priority
+  priority?: number
+  features?: string[]
 }
 
 const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({ 
@@ -41,10 +43,10 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
   const [elementFound, setElementFound] = useState(true)
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // ✅ FIXED: Start tutorial when prop changes with safety checks
+  // ✅ Start tutorial when prop changes with safety checks
   useEffect(() => {
     if (isFirstTime && typeof window !== 'undefined' && typeof document !== 'undefined') {
-      console.log('🚀 Starting dashboard tour')
+      console.log('🚀 Starting enhanced dashboard tour')
       setCurrentStep(0)
       setTimeout(() => {
         try {
@@ -58,8 +60,6 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
       setIsActive(false)
     }
   }, [isFirstTime])
-
-  // Remove auto-mode functionality
 
   // Enhanced sound effects
   const playSound = useCallback((type: 'start' | 'step' | 'complete' | 'welcome' | 'celebration' | 'navigate' | 'error' | 'success') => {
@@ -103,92 +103,101 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
     }
   }, [])
 
-  // 🚀 DASHBOARD-ONLY TUTORIAL STEPS - NO NAVIGATION
+  // 🚀 ENHANCED TUTORIAL STEPS - EXPANDED & IMPROVED
   const tutorialSteps: TutorialStep[] = [
     {
       id: 'welcome',
-      title: 'Quick Dashboard Tour! 🎯',
-      content: 'Let me show you what each area of Growfly does, right from here!',
-      icon: <Sparkles className="w-5 h-5 text-emerald-400" />,
+      title: 'Welcome to Your AI Empire! 🎯',
+      content: 'Ready to discover the most powerful AI content creation platform? This 2-minute tour will show you features that could revolutionize your entire workflow and save you 10+ hours per week!',
+      icon: <Sparkles className="w-6 h-6 text-emerald-400" />,
       celebration: true,
-      priority: 1
+      priority: 1,
+      features: ['AI Content Generation', 'Team Collaboration', 'Smart Organization', 'Professional Growth']
     },
     {
       id: 'dashboard-features',
-      title: 'AI Command Center 🚀',
-      content: 'You\'re here now! Upload images, chat with AI, get instant results. Your main creativity hub.',
-      icon: <Zap className="w-5 h-5 text-blue-400" />,
+      title: 'Dashboard 🚀',
+      content: 'This is your AI command center - the heart of your content empire! Upload any file type (images, PDFs, documents), chat with advanced AI models, generate stunning content, and download everything instantly. From blog posts to marketing campaigns, this is where magic happens.',
+      icon: <Zap className="w-6 h-6 text-blue-400" />,
       target: '[href="/dashboard"], a[href*="dashboard"], nav a:contains("Dashboard"), .nav-item:first-child',
-      proTip: 'Upload any file type - images, PDFs, documents - and ask AI to analyze them!',
-      priority: 1
+      proTip: 'Try uploading a photo and asking AI to create social media posts, or paste a URL for instant content analysis!',
+      priority: 1,
+      features: ['Multi-format uploads', 'AI conversations', 'Instant downloads', 'Content generation']
     },
     {
       id: 'saved-responses',
-      title: 'Content Treasure Vault 💎',
-      content: 'Click here to see every AI response you\'ve ever saved. Your personal content library.',
-      icon: <BookOpen className="w-5 h-5 text-amber-400" />,
-      target: '[href="/saved"], a[href*="saved"], nav a:contains("Saved"), [data-nav="saved-responses"]',
-      proTip: 'Never lose a brilliant idea - everything auto-saves here!',
-      priority: 2
+      title: 'Saved Responses 💎',
+      content: 'Your personal content treasure vault! Manually curate and save your favorite AI responses for future use. Create a growing library of templates, campaigns, and brilliant ideas. Pin your top performers, organize by projects, and never lose great content again. Build your content empire one save at a time!',
+      icon: <BookOpen className="w-6 h-6 text-amber-400" />,
+      target: '[href="/saved"], a[href*="saved"], nav a:contains("Saved Responses"), [data-nav="saved-responses"]',
+      proTip: 'Save responses strategically - create templates for different content types and campaigns for maximum efficiency!',
+      priority: 2,
+      features: ['Manual curation', 'Template building', 'Project organization', 'Content library']
     },
     {
       id: 'gallery',
-      title: 'Visual Creativity Studio 🎨',
-      content: 'Your AI-generated images live here. Perfect for building visual brand libraries.',
-      icon: <Image className="w-5 h-5 text-purple-400" />,
+      title: 'Gallery 🎨',
+      content: 'Your visual content powerhouse! Every AI-generated image becomes part of your growing brand library. Share directly to social media platforms with one click, download in multiple formats (PNG, JPG, SVG), organize by campaigns, and build a stunning visual brand presence that stands out.',
+      icon: <Image className="w-6 h-6 text-purple-400" />,
       target: '[href="/gallery"], a[href*="gallery"], nav a:contains("Gallery"), [data-nav="gallery"]',
-      proTip: 'Visual content gets 94% more engagement than text alone!',
-      priority: 2
+      proTip: 'Visual content gets 94% more engagement - use this to build a consistent visual brand across all platforms!',
+      priority: 2,
+      features: ['One-click social sharing', 'Multiple download formats', 'Campaign organization', 'Brand consistency']
     },
     {
       id: 'collab-zone',
-      title: 'Team Collaboration Hub 🤝',
-      content: 'Share AI responses with your team instantly. Where collaboration magic happens.',
-      icon: <Users className="w-5 h-5 text-indigo-400" />,
-      target: '[href="/collab-zone"], a[href*="collab"], nav a:contains("Collab"), [data-nav="collab-zone"]',
-      proTip: 'Teams using collaborative AI are 3x more productive!',
-      priority: 2
+      title: 'Collab Zone 🤝',
+      content: 'Team collaboration reimagined! Share your Growfly AI responses instantly with colleagues, collaboratively edit documents in real-time, download team projects together, and watch your collective creativity multiply. Perfect for agencies, marketing teams, and any business wanting to scale their content creation through teamwork.',
+      icon: <Users className="w-6 h-6 text-indigo-400" />,
+      target: '[href="/collab-zone"], a[href*="collab"], nav a:contains("Collab Zone"), [data-nav="collab-zone"]',
+      proTip: 'Teams using collaborative AI are 3x more productive - assign roles, share feedback, and create better content together!',
+      priority: 2,
+      features: ['Real-time collaboration', 'Document editing', 'Team downloads', 'Shared workspaces']
     },
     {
       id: 'education-hub',
-      title: 'AI Mastery Academy 🎓',
-      content: 'Learn advanced AI strategies and growth techniques from experts.',
-      icon: <Lightbulb className="w-5 h-5 text-yellow-400" />,
+      title: 'Education Hub 🎓',
+      content: 'Your AI mastery academy! Learn cutting-edge strategies, advanced prompting techniques, growth hacking methods, and industry secrets from top experts. Master the art of AI communication to 10x your results and stay ahead of 99% of businesses still struggling with basic content creation.',
+      icon: <Lightbulb className="w-6 h-6 text-yellow-400" />,
       target: '[href="/education"], [href="/nerd-mode"], a[href*="education"], nav a:contains("Education Hub"), [data-nav="education-hub"]',
-      proTip: 'AI-savvy companies grow 5x faster than competitors!',
-      priority: 2
+      proTip: 'Advanced AI strategies can 5x your content quality - invest 30 minutes learning here to save hours later!',
+      priority: 2,
+      features: ['Expert strategies', 'Advanced prompting', 'Growth techniques', 'Industry secrets']
     },
     {
       id: 'brand-settings',
-      title: 'AI Personality Lab 🧬',
-      content: 'Train your AI to sound exactly like you and your brand voice.',
-      icon: <Settings className="w-5 h-5 text-slate-400" />,
-      target: '[href="/brand-settings"], a[href*="brand"], nav a:contains("Brand"), [data-nav="brand-settings"]',
-      proTip: 'Consistent brand voice increases revenue by 23%!',
-      priority: 2
+      title: 'Brand Settings 🧬',
+      content: 'Your AI personality laboratory! Input detailed information about your business, brand voice, target audience, industry, and unique selling propositions. The more you tell Growfly about your business, the more personalized, accurate, and brand-aligned every AI response becomes. Transform generic AI into your personal brand assistant.',
+      icon: <Settings className="w-6 h-6 text-slate-600" />,
+      target: '[href="/brand-settings"], a[href*="brand"], nav a:contains("Brand Settings"), [data-nav="brand-settings"]',
+      proTip: 'Brands with consistent voice see 23% more revenue growth - spend 10 minutes here to revolutionize all your content!',
+      priority: 2,
+      features: ['Brand voice training', 'Audience targeting', 'Industry customization', 'Personalized responses']
     },
     {
       id: 'trusted-partners',
-      title: 'Expert Network 💼',
-      content: 'Coming soon: Professional services to polish your AI work to perfection.',
-      icon: <Crown className="w-5 h-5 text-yellow-400" />,
-      target: '[href="/trusted-partners"], a[href*="partner"], nav a:contains("Partner"), [data-nav="trusted-partners"]',
-      proTip: 'AI + human expertise = unstoppable results!',
-      priority: 3
+      title: 'Trusted Partners 💼',
+      content: 'The future of AI + human collaboration! Coming soon - when AI gets you 90% of the way there, our verified network of professional editors, designers, strategists, and specialists can polish your work to absolute perfection. The perfect fusion of AI efficiency with human expertise for enterprise-level results.',
+      icon: <Crown className="w-6 h-6 text-yellow-500" />,
+      target: '[href="/trusted-partners"], a[href*="trusted"], nav a:contains("Trusted Partners"), [data-nav="trusted-partners"]',
+      proTip: 'Early access members get 50% off professional services - join the waitlist for exclusive benefits!',
+      priority: 3,
+      features: ['Professional editors', 'Design specialists', 'Strategy experts', 'Enterprise polish']
     },
     {
       id: 'finale',
-      title: 'Ready to Create Magic! 🏆',
-      content: 'You now know where everything is! Start by asking AI anything or uploading an image.',
-      icon: <Rocket className="w-5 h-5 text-emerald-400" />,
-      proTip: 'Click Continue to start creating amazing content!',
+      title: 'Congratulations! You\'re Now AI-Powered! 🏆',
+      content: 'You\'ve just unlocked the secret to 10x content creation! You now have access to AI superpowers that 99% of businesses don\'t even know exist. Time to dominate your industry with lightning-fast, professional-grade content that converts and captivates your audience!',
+      icon: <Rocket className="w-6 h-6 text-emerald-400" />,
+      proTip: 'Start with a simple prompt like "Create a social media campaign for my business" and watch the magic happen!',
       celebration: true,
-      priority: 1
+      priority: 1,
+      features: ['AI Mastery Unlocked', 'Competitive Advantage', 'Content Superpowers', 'Industry Domination']
     }
   ]
 
   const startTutorial = () => {
-    console.log('🎯 Starting dashboard tour...')
+    console.log('🎯 Starting enhanced dashboard tour...')
     setIsActive(true)
     setCurrentStep(0)
     setElementFound(true)
@@ -196,7 +205,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
     playSound('start')
   }
 
-  // Enhanced sidebar element finding
+  // FIXED: Enhanced sidebar element finding with better targeting
   const findTargetElement = useCallback((step: TutorialStep): HTMLElement | null => {
     if (!step.target || typeof document === 'undefined') return null
     
@@ -204,25 +213,64 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
       const selectors = step.target.split(', ').map(s => s.trim()).filter(Boolean)
       console.log(`🔍 Searching for sidebar elements with selectors:`, selectors)
       
-      // Sort selectors by priority (href selectors first for navigation)
+      // Enhanced priority system for better targeting
       const prioritizedSelectors = selectors.sort((a, b) => {
-        const aScore = (a.includes('href') ? 10 : 0) + (a.includes('[data-') ? 5 : 0)
-        const bScore = (b.includes('href') ? 10 : 0) + (b.includes('[data-') ? 5 : 0)
+        let aScore = 0
+        let bScore = 0
+        
+        // Prioritize exact href matches
+        if (a.includes('href=')) aScore += 20
+        if (b.includes('href=')) bScore += 20
+        
+        // Prioritize data attributes
+        if (a.includes('[data-')) aScore += 15
+        if (b.includes('[data-')) bScore += 15
+        
+        // Prioritize contains matches
+        if (a.includes(':contains(')) aScore += 10
+        if (b.includes(':contains(')) bScore += 10
+        
+        // Prioritize specific hrefs
+        if (a.includes('href*=')) aScore += 5
+        if (b.includes('href*=')) bScore += 5
+        
         return bScore - aScore
       })
       
       for (const selector of prioritizedSelectors) {
         try {
-          const element = document.querySelector(selector) as HTMLElement
-          if (element && 
-              element.offsetParent !== null && 
-              element.getBoundingClientRect &&
-              element.getBoundingClientRect().width > 0 && 
-              element.getBoundingClientRect().height > 0) {
-            console.log(`✅ Found sidebar element with selector: ${selector}`, element)
-            return element
-          } else if (element) {
-            console.log(`⚠️ Found element but not visible with selector: ${selector}`)
+          // Handle :contains() pseudo-selector manually since it's not standard CSS
+          if (selector.includes(':contains(')) {
+            const match = selector.match(/(.+):contains\(["'](.+)["']\)/)
+            if (match) {
+              const [, baseSelector, text] = match
+              const elements = document.querySelectorAll(baseSelector)
+              for (const el of elements) {
+                if (el.textContent?.includes(text)) {
+                  const element = el as HTMLElement
+                  if (element && 
+                      element.offsetParent !== null && 
+                      element.getBoundingClientRect &&
+                      element.getBoundingClientRect().width > 0 && 
+                      element.getBoundingClientRect().height > 0) {
+                    console.log(`✅ Found sidebar element with contains selector: ${selector}`, element)
+                    return element
+                  }
+                }
+              }
+            }
+          } else {
+            const element = document.querySelector(selector) as HTMLElement
+            if (element && 
+                element.offsetParent !== null && 
+                element.getBoundingClientRect &&
+                element.getBoundingClientRect().width > 0 && 
+                element.getBoundingClientRect().height > 0) {
+              console.log(`✅ Found sidebar element with selector: ${selector}`, element)
+              return element
+            } else if (element) {
+              console.log(`⚠️ Found element but not visible with selector: ${selector}`)
+            }
           }
         } catch (selectorError) {
           console.log(`❌ Selector error for ${selector}:`, selectorError)
@@ -251,7 +299,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
       // No navigation - stay on dashboard and find sidebar elements
       if (step.target) {
         let retryCount = 0
-        const maxRetries = 3
+        const maxRetries = 4
         
         const attemptFind = () => {
           try {
@@ -287,7 +335,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
             console.log(`🎯 Sidebar element not found (attempt ${retryCount}/${maxRetries}):`, step.target)
             
             if (retryCount < maxRetries) {
-              retryTimeoutRef.current = setTimeout(attemptFind, 500 * retryCount) // Shorter delays since no navigation
+              retryTimeoutRef.current = setTimeout(attemptFind, 600 * retryCount) // Longer delays for better reliability
               return false
             } else {
               console.log('❌ Max retries reached, showing tutorial centered')
@@ -300,7 +348,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
             console.log('❌ Error in attemptFind:', findError)
             retryCount++
             if (retryCount < maxRetries) {
-              retryTimeoutRef.current = setTimeout(attemptFind, 500 * retryCount)
+              retryTimeoutRef.current = setTimeout(attemptFind, 600 * retryCount)
             } else {
               console.log('❌ Giving up on element finding, showing tutorial centered')
               setTargetRect(null)
@@ -312,9 +360,9 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
         }
         
         // Start finding immediately since we're on dashboard
-        setTimeout(attemptFind, 300)
+        setTimeout(attemptFind, 400)
         
-        // Safety timeout - always show tutorial after 3 seconds
+        // Safety timeout - always show tutorial after 5 seconds
         setTimeout(() => {
           if (isAnimating) {
             console.log('🔒 Safety timeout: forcing tutorial to show')
@@ -322,7 +370,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
             setElementFound(false)
             setIsAnimating(false)
           }
-        }, 3000)
+        }, 5000)
       } else {
         setTargetRect(null)
         setElementFound(true)
@@ -342,13 +390,13 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
   const canGoBack = currentStep > 0 && !isAnimating
   const canGoForward = !isAnimating
 
-  // FIXED: Enhanced positioning to prevent cut-off
+  // ENHANCED: Premium positioning with better design
   const getTooltipPosition = useCallback(() => {
-    const tooltipWidth = 360
-    const tooltipHeight = 280 // Reduced height to prevent cut-off
+    const tooltipWidth = 480
+    const tooltipHeight = 420
     const viewportWidth = window.innerWidth
     const viewportHeight = window.innerHeight
-    const padding = 24
+    const padding = 32
     const mobileBreakpoint = 1024
 
     // Mobile-first approach or no target - ALWAYS show tutorial
@@ -440,7 +488,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
     if (tutorialSteps[currentStep].celebration) {
       setShowConfetti(true)
       playSound('celebration')
-      setTimeout(() => setShowConfetti(false), 3000)
+      setTimeout(() => setShowConfetti(false), 4000)
     }
     
     setTimeout(() => {
@@ -455,7 +503,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
         console.log('🎉 Tour completed')
         closeTutorial()
       }
-    }, 400)
+    }, 500)
   }, [currentStep, isActive, isAnimating])
 
   const prevStep = useCallback(() => {
@@ -469,7 +517,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
   }, [currentStep, isAnimating])
 
   const closeTutorial = useCallback(() => {
-    console.log('✅ Closing dashboard tour')
+    console.log('✅ Closing enhanced dashboard tour')
     setShowConfetti(true)
     playSound('complete')
     
@@ -487,7 +535,7 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
         console.log('🎯 Calling onComplete callback')
         onComplete()
       }
-    }, 1500)
+    }, 2000)
   }, [onComplete])
 
   const handleSkipClick = useCallback(() => {
@@ -514,135 +562,185 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
 
   return (
     <>
-      {/* ✨ Enhanced celebration particles */}
+      {/* ✨ ENHANCED: Epic celebration particles */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none z-[1100] overflow-hidden">
-          {[...Array(50)].map((_, i) => (
+          {[...Array(80)].map((_, i) => (
             <div
               key={i}
               className="absolute animate-pulse"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 3}s`,
-                animationDuration: `${3 + Math.random() * 2}s`,
-                animation: 'sparkle-float 4s ease-out forwards'
+                animationDelay: `${Math.random() * 4}s`,
+                animationDuration: `${4 + Math.random() * 3}s`,
+                animation: 'epic-float 6s ease-out forwards'
               }}
             >
-              <div className={`text-2xl transform opacity-90`} 
+              <div className={`text-4xl transform opacity-90`} 
                    style={{ rotate: `${Math.random() * 360}deg` }}>
-                {['🎯', '⚡', '🚀', '💎', '🌟', '🎊', '🔥', '✨', '🏆', '🎨'][Math.floor(Math.random() * 10)]}
+                {['🎯', '⚡', '🚀', '💎', '🌟', '🎊', '🔥', '✨', '🏆', '🎨', '💡', '🎭', '🦄', '💫', '⭐'][Math.floor(Math.random() * 15)]}
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* 🎨 Enhanced overlay with perfect spotlight */}
-      <div className="fixed inset-0 z-[999] transition-all duration-500">
+      {/* 🎨 ENHANCED: Epic overlay with premium spotlight */}
+      <div className="fixed inset-0 z-[999] transition-all duration-700">
         
-        {/* FIXED: Clean spotlight effect with null checks */}
+        {/* ENHANCED: Premium spotlight effect with dynamic animations */}
         {hasTarget && targetRect && targetRect.width > 0 && targetRect.height > 0 && (
           <>
-            {/* Subtle overlay */}
+            {/* Dynamic premium gradient overlay */}
             <div 
-              className="absolute inset-0 transition-all duration-700 ease-out"
+              className="absolute inset-0 transition-all duration-1200 ease-out"
               style={{
-                background: `radial-gradient(ellipse ${targetRect.width + 60}px ${targetRect.height + 60}px at ${targetRect.left + targetRect.width/2}px ${targetRect.top + targetRect.height/2}px, transparent 0%, transparent 30%, rgba(15, 23, 42, 0.4) 70%)`
+                background: `radial-gradient(ellipse ${targetRect.width + 120}px ${targetRect.height + 120}px at ${targetRect.left + targetRect.width/2}px ${targetRect.top + targetRect.height/2}px, transparent 0%, transparent 20%, rgba(6, 17, 39, 0.7) 65%)`
               }}
             />
             
-            {/* Clean highlight border */}
+            {/* Epic animated tech border */}
             <div 
-              className="absolute border-3 border-blue-500 rounded-xl transition-all duration-700 ease-out"
+              className="absolute rounded-3xl transition-all duration-1200 ease-out"
+              style={{
+                top: targetRect.top - 12,
+                left: targetRect.left - 12,
+                width: targetRect.width + 24,
+                height: targetRect.height + 24,
+                background: 'linear-gradient(45deg, #3b82f6, #8b5cf6, #06b6d4, #10b981, #f59e0b, #ef4444, #3b82f6)',
+                backgroundSize: '400% 400%',
+                animation: 'epic-tech-flow 4s ease infinite',
+                padding: '4px',
+                boxShadow: '0 0 40px rgba(59, 130, 246, 0.9), 0 0 80px rgba(139, 92, 246, 0.5), 0 0 120px rgba(6, 182, 212, 0.3)',
+              }}
+            >
+              <div 
+                className="w-full h-full bg-transparent rounded-3xl"
+                style={{
+                  backdropFilter: 'blur(3px)',
+                  background: 'rgba(255, 255, 255, 0.08)'
+                }}
+              />
+            </div>
+            
+            {/* Premium inner glow ring */}
+            <div 
+              className="absolute border-3 border-white/90 rounded-3xl transition-all duration-1200 ease-out"
               style={{
                 top: targetRect.top - 4,
                 left: targetRect.left - 4,
                 width: targetRect.width + 8,
                 height: targetRect.height + 8,
-                boxShadow: '0 0 20px rgba(59, 130, 246, 0.5), 0 0 40px rgba(59, 130, 246, 0.2)',
-                animation: 'tutorial-clean-pulse 2s infinite',
-              }}
-            />
-            
-            {/* Inner highlight */}
-            <div 
-              className="absolute border-2 border-white/80 rounded-xl transition-all duration-700 ease-out"
-              style={{
-                top: targetRect.top - 2,
-                left: targetRect.left - 2,
-                width: targetRect.width + 4,
-                height: targetRect.height + 4,
+                boxShadow: 'inset 0 0 30px rgba(255, 255, 255, 0.4), 0 0 25px rgba(255, 255, 255, 0.3)',
+                animation: 'premium-glow 3s ease infinite'
               }}
             />
           </>
         )}
 
-        {/* Enhanced tutorial modal */}
+        {/* 🚀 ENHANCED: Premium tutorial modal with epic design */}
         <div 
-          className={`absolute transition-all duration-500 ease-out ${
-            isAnimating ? 'scale-95 opacity-0 translate-y-2' : 'scale-100 opacity-100 translate-y-0'
+          className={`absolute transition-all duration-700 ease-out ${
+            isAnimating ? 'scale-95 opacity-0 translate-y-4' : 'scale-100 opacity-100 translate-y-0'
           }`}
           style={getTooltipPosition()}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="relative w-full">
-            {/* Clean glassmorphic background */}
-            <div className="absolute inset-0 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200" />
+            {/* Epic glassmorphic background with animated gradient border */}
+            <div className="absolute inset-0 rounded-[2rem] p-1" style={{
+              background: 'linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4, #10b981, #f59e0b, #ef4444, #3b82f6)',
+              backgroundSize: '300% 300%',
+              animation: 'epic-gradient-shift 6s ease infinite'
+            }}>
+              <div className="w-full h-full bg-white/96 backdrop-blur-3xl rounded-[2rem] border border-white/40 shadow-2xl" />
+            </div>
 
             {/* Content */}
-            <div className="relative p-5">
-              {/* Clean header */}
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center shadow-sm border border-blue-100">
-                    {currentStepData.icon}
+            <div className="relative p-8">
+              {/* Epic enhanced header */}
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-start gap-5">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/30 via-purple-500/30 to-emerald-500/30 rounded-3xl animate-pulse" />
+                    <div className="relative w-16 h-16 bg-gradient-to-br from-blue-50 via-purple-50 to-emerald-50 rounded-3xl flex items-center justify-center shadow-2xl border border-white/60">
+                      <div className="relative">
+                        {currentStepData.icon}
+                        {currentStepData.celebration && (
+                          <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center animate-bounce">
+                            <Star className="w-3 h-3 text-white" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {currentStepData.celebration && (
+                      <div className="absolute -inset-2 bg-gradient-to-r from-yellow-400/20 to-orange-500/20 rounded-3xl animate-ping" />
+                    )}
                   </div>
-                  <div>
-                    <h3 className="text-md font-bold text-slate-800 leading-tight mb-1">
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-bold bg-gradient-to-r from-slate-800 via-blue-600 to-purple-600 bg-clip-text text-transparent leading-tight mb-2">
                       {currentStepData.title}
                     </h3>
-                    <div className="flex items-center gap-2 text-xs text-slate-600">
+                    <div className="flex items-center gap-3 text-sm text-slate-600 mb-3">
                       <div className="flex items-center gap-1">
-                        <Play className="w-3 h-3" />
-                        <span>Dashboard Tour</span>
+                        <Play className="w-4 h-4" />
+                        <span>Premium Tour</span>
                       </div>
                       {!elementFound && (
                         <>
                           <span>•</span>
-                          <span className="text-blue-600 font-medium">Showing overview</span>
+                          <span className="text-blue-600 font-medium">Overview Mode</span>
+                        </>
+                      )}
+                      {currentStepData.celebration && (
+                        <>
+                          <span>•</span>
+                          <span className="text-emerald-600 font-bold animate-pulse">🎉 Milestone!</span>
                         </>
                       )}
                     </div>
+                    {currentStepData.features && (
+                      <div className="flex flex-wrap gap-2">
+                        {currentStepData.features.map((feature, index) => (
+                          <span key={index} className="inline-flex items-center px-2 py-1 bg-gradient-to-r from-blue-50 to-purple-50 text-xs font-medium text-blue-700 rounded-full border border-blue-200/50">
+                            <Lightning className="w-3 h-3 mr-1" />
+                            {feature}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={handleSkipClick}
-                    className="group relative w-8 h-8 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm border border-slate-300 hover:shadow-md hover:scale-105"
-                    title="Skip tour"
-                  >
-                    <X className="w-4 h-4 text-slate-600 group-hover:text-slate-800 transition-colors duration-200" strokeWidth={2} />
-                  </button>
-                </div>
+                <button 
+                  onClick={handleSkipClick}
+                  className="group relative w-12 h-12 bg-gradient-to-br from-slate-100 to-slate-200 hover:from-slate-200 hover:to-slate-300 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl border border-white/70 hover:shadow-2xl hover:scale-110"
+                  title="Skip tour"
+                >
+                  <X className="w-6 h-6 text-slate-600 group-hover:text-slate-800 transition-colors duration-200" strokeWidth={2} />
+                </button>
               </div>
 
-              {/* Enhanced content */}
-              <div className="space-y-3 mb-4">
-                <p className="text-slate-700 text-sm leading-relaxed font-medium">
+              {/* Epic enhanced content */}
+              <div className="space-y-5 mb-7">
+                <p className="text-slate-700 text-lg leading-relaxed font-medium">
                   {currentStepData.content}
                 </p>
                 
                 {currentStepData.proTip && (
-                  <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 shadow-sm">
-                    <div className="flex items-start gap-2">
-                      <div className="w-6 h-6 bg-amber-500 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0 mt-0.5">
-                        <Brain className="w-3 h-3 text-white" strokeWidth={2.5} />
+                  <div className="relative overflow-hidden p-5 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 rounded-2xl border border-amber-200/70 shadow-lg">
+                    <div className="absolute inset-0 bg-gradient-to-br from-amber-500/8 via-yellow-500/8 to-orange-500/8" />
+                    <div className="relative flex items-start gap-4">
+                      <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center shadow-xl flex-shrink-0">
+                        <Brain className="w-5 h-5 text-white" strokeWidth={2.5} />
                       </div>
-                      <div>
-                        <div className="font-semibold text-amber-800 text-xs mb-1">💡 Pro Insight</div>
-                        <p className="text-amber-700 text-xs font-medium leading-relaxed">
+                      <div className="flex-1">
+                        <div className="font-bold text-amber-800 text-base mb-2 flex items-center gap-2">
+                          💡 Pro Insight
+                          <Star className="w-4 h-4 text-amber-600" />
+                        </div>
+                        <p className="text-amber-700 text-base font-medium leading-relaxed">
                           {currentStepData.proTip}
                         </p>
                       </div>
@@ -651,28 +749,36 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
                 )}
               </div>
 
-              {/* Clean progress */}
-              <div className="mb-4">
-                <div className="flex justify-between text-xs font-semibold mb-2">
-                  <span className="text-slate-600">Step {currentStep + 1} of {tutorialSteps.length}</span>
-                  <span className="text-blue-600">
+              {/* Epic enhanced progress with premium animation */}
+              <div className="mb-7">
+                <div className="flex justify-between text-base font-bold mb-4">
+                  <span className="text-slate-700">Step {currentStep + 1} of {tutorialSteps.length}</span>
+                  <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-emerald-600 bg-clip-text text-transparent">
                     {Math.round(progress)}% Complete
                   </span>
                 </div>
-                <div className="relative w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                <div className="relative w-full h-4 bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200 rounded-full overflow-hidden shadow-inner">
                   <div 
-                    className="absolute inset-0 bg-blue-500 rounded-full transition-all duration-1000 ease-out"
-                    style={{ width: `${progress}%` }}
-                  />
+                    className="absolute inset-0 rounded-full transition-all duration-1500 ease-out shadow-xl"
+                    style={{ 
+                      width: `${progress}%`,
+                      background: 'linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4, #10b981, #f59e0b)',
+                      backgroundSize: '300% 300%',
+                      animation: 'epic-gradient-shift 4s ease infinite'
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/40 to-transparent rounded-full" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent rounded-full" />
+                  </div>
                 </div>
               </div>
 
-              {/* Clean navigation */}
+              {/* Epic enhanced navigation */}
               <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-4">
                   <button
                     onClick={handleSkipClick}
-                    className="px-3 py-1.5 text-slate-600 hover:text-slate-800 text-xs font-semibold bg-slate-100 hover:bg-slate-200 rounded-full transition-all duration-200 shadow-sm border border-slate-300"
+                    className="px-6 py-3 text-slate-600 hover:text-slate-800 text-base font-bold bg-gradient-to-br from-slate-100 to-slate-200 hover:from-slate-200 hover:to-slate-300 rounded-full transition-all duration-300 shadow-xl border border-white/70 hover:shadow-2xl hover:scale-105"
                   >
                     Skip Tour
                   </button>
@@ -680,9 +786,9 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
                   {canGoBack && (
                     <button
                       onClick={prevStep}
-                      className="group flex items-center gap-1 px-2 py-1.5 text-slate-700 hover:text-slate-900 text-xs font-semibold bg-white hover:bg-slate-50 rounded-full transition-all duration-200 shadow-sm border border-slate-300"
+                      className="group flex items-center gap-2 px-5 py-3 text-slate-700 hover:text-slate-900 text-base font-bold bg-gradient-to-br from-white to-slate-50 hover:from-slate-50 hover:to-slate-100 rounded-full transition-all duration-300 shadow-xl border border-white/80 hover:shadow-2xl hover:scale-105"
                     >
-                      <ChevronLeft className="w-3 h-3 transition-transform duration-200 group-hover:-translate-x-0.5" strokeWidth={2.5} />
+                      <ChevronLeft className="w-5 h-5 transition-transform duration-200 group-hover:-translate-x-1" strokeWidth={2.5} />
                       Back
                     </button>
                   )}
@@ -691,21 +797,23 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
                 <button
                   onClick={nextStep}
                   disabled={!canGoForward}
-                  className={`group flex items-center gap-2 px-4 py-1.5 text-white text-xs font-bold rounded-full transition-all duration-200 shadow-lg border ${
+                  className={`group relative flex items-center gap-3 px-8 py-3 text-white text-base font-bold rounded-full transition-all duration-300 shadow-2xl hover:shadow-3xl border border-white/40 ${
                     !canGoForward 
-                      ? 'bg-slate-400 cursor-not-allowed opacity-60 border-slate-300' 
-                      : 'bg-blue-600 hover:bg-blue-700 border-blue-500 hover:shadow-xl hover:scale-105'
+                      ? 'bg-gradient-to-br from-slate-400 to-slate-500 cursor-not-allowed opacity-60' 
+                      : 'bg-gradient-to-br from-blue-600 via-purple-600 to-emerald-600 hover:from-blue-700 hover:via-purple-700 hover:to-emerald-700 hover:scale-110'
                   }`}
                 >
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent rounded-full" />
                   {currentStep === tutorialSteps.length - 1 ? (
                     <>
-                      <Rocket className="w-3 h-3 transition-transform duration-200 group-hover:scale-110" strokeWidth={2.5} />
-                      <span>Get Started!</span>
+                      <Rocket className="w-6 h-6 transition-transform duration-200 group-hover:scale-125 group-hover:rotate-12" strokeWidth={2.5} />
+                      <span className="relative z-10">Start Dominating!</span>
+                      <Lightning className="w-5 h-5 animate-pulse" />
                     </>
                   ) : (
                     <>
-                      <span>Continue</span>
-                      <ChevronRight className="w-3 h-3 transition-transform duration-200 group-hover:translate-x-0.5" strokeWidth={2.5} />
+                      <span className="relative z-10">Continue</span>
+                      <ChevronRight className="w-6 h-6 transition-transform duration-200 group-hover:translate-x-1" strokeWidth={2.5} />
                     </>
                   )}
                 </button>
@@ -715,39 +823,48 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
         </div>
       </div>
 
-      {/* Clean skip confirmation modal */}
+      {/* Epic enhanced skip confirmation modal */}
       {showSkipModal && (
-        <div className="fixed inset-0 bg-slate-900/80 z-[1200] flex items-center justify-center backdrop-blur-xl p-4">
-          <div className="relative max-w-md w-full">
-            <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200 p-5">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center shadow-sm border border-blue-100">
-                  <Sparkles className="w-4 h-4 text-blue-500" strokeWidth={2} />
+        <div className="fixed inset-0 bg-slate-900/95 z-[1200] flex items-center justify-center backdrop-blur-3xl p-4">
+          <div className="relative max-w-2xl w-full">
+            <div className="absolute inset-0 rounded-3xl p-1" style={{
+              background: 'linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4, #10b981)',
+              backgroundSize: '300% 300%',
+              animation: 'epic-gradient-shift 4s ease infinite'
+            }}>
+              <div className="w-full h-full bg-white/96 backdrop-blur-3xl rounded-3xl border border-white/40 shadow-2xl" />
+            </div>
+
+            <div className="relative p-8">
+              <div className="flex items-center gap-5 mb-6">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-50 via-purple-50 to-emerald-50 rounded-3xl flex items-center justify-center shadow-2xl border border-white/70">
+                  <Sparkles className="w-8 h-8 text-blue-500" strokeWidth={2} />
                 </div>
                 <div>
-                  <h3 className="text-md font-bold text-slate-800">Skip Dashboard Tour?</h3>
-                  <p className="text-xs text-slate-600 font-medium">You can always restart it later</p>
+                  <h3 className="text-2xl font-bold bg-gradient-to-r from-slate-800 via-blue-600 to-purple-600 bg-clip-text text-transparent">Skip This Epic Tour?</h3>
+                  <p className="text-base text-slate-600 font-medium">You can restart anytime from Settings → Tutorial</p>
                 </div>
               </div>
               
-              <p className="text-slate-700 text-sm mb-4 leading-relaxed font-medium">
-                This dashboard tour reveals powerful features that could
-                <span className="font-bold text-slate-800"> save you hours</span> and 
-                <span className="font-bold text-slate-800"> boost your productivity</span> dramatically.
+              <p className="text-slate-700 text-lg mb-8 leading-relaxed font-medium">
+                This premium tour reveals game-changing features that could
+                <span className="font-bold text-slate-800"> save you 10+ hours per week</span> and 
+                <span className="font-bold text-slate-800"> give you massive competitive advantages</span> in your industry.
               </p>
               
-              <div className="flex gap-3">
+              <div className="flex gap-5">
                 <button
                   onClick={confirmSkip}
-                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-800 py-2 px-3 rounded-full text-sm font-semibold transition-all duration-200 shadow-sm border border-slate-300"
+                  className="flex-1 bg-gradient-to-br from-slate-100 to-slate-200 hover:from-slate-200 hover:to-slate-300 text-slate-700 hover:text-slate-800 py-4 px-6 rounded-full text-base font-bold transition-all duration-300 shadow-xl border border-white/70 hover:shadow-2xl hover:scale-105"
                 >
                   Skip
                 </button>
                 <button
                   onClick={cancelSkip}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-full text-sm font-bold transition-all duration-200 shadow-lg border border-blue-500"
+                  className="flex-1 bg-gradient-to-br from-blue-600 via-purple-600 to-emerald-600 hover:from-blue-700 hover:via-purple-700 hover:to-emerald-700 text-white py-4 px-6 rounded-full text-base font-bold transition-all duration-300 shadow-2xl hover:shadow-3xl border border-white/40 relative overflow-hidden hover:scale-105"
                 >
-                  Continue Tour
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent rounded-full" />
+                  <span className="relative z-10">Continue Epic Tour</span>
                 </button>
               </div>
             </div>
@@ -755,30 +872,51 @@ const GrowflyInteractiveTutorial: React.FC<GrowflyTutorialProps> = ({
         </div>
       )}
 
-      {/* Clean CSS animations */}
+      {/* Epic CSS animations */}
       <style jsx global>{`
-        @keyframes tutorial-clean-pulse {
+        @keyframes epic-tech-flow {
           0%, 100% { 
-            border-color: #3b82f6;
+            background-position: 0% 50%;
             transform: scale(1);
           }
           50% { 
-            border-color: #1d4ed8;
-            transform: scale(1.01);
+            background-position: 100% 50%;
+            transform: scale(1.03);
           }
         }
         
-        @keyframes sparkle-float {
+        @keyframes epic-gradient-shift {
+          0%, 100% { 
+            background-position: 0% 50%; 
+          }
+          33% { 
+            background-position: 100% 0%; 
+          }
+          66% { 
+            background-position: 100% 100%; 
+          }
+        }
+        
+        @keyframes premium-glow {
+          0%, 100% { 
+            box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.4), 0 0 25px rgba(255, 255, 255, 0.3);
+          }
+          50% { 
+            box-shadow: inset 0 0 40px rgba(255, 255, 255, 0.6), 0 0 35px rgba(255, 255, 255, 0.5);
+          }
+        }
+        
+        @keyframes epic-float {
           0% { 
-            transform: translateY(0px) rotate(0deg) scale(0.8);
+            transform: translateY(0px) rotate(0deg) scale(0.6);
             opacity: 1;
           }
           50% {
-            transform: translateY(-60px) rotate(180deg) scale(1.2);
-            opacity: 0.8;
+            transform: translateY(-120px) rotate(180deg) scale(1.4);
+            opacity: 0.9;
           }
           100% { 
-            transform: translateY(-150px) rotate(360deg) scale(0.4);
+            transform: translateY(-300px) rotate(360deg) scale(0.2);
             opacity: 0;
           }
         }

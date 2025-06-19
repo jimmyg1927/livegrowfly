@@ -104,7 +104,18 @@ export default function SettingsPage() {
         }
 
         const data = await res.json()
-        console.log('User data received:', data) // Debug log
+        console.log('🔍 User data received from API:', data) // Enhanced debug log
+        
+        // ✅ ENHANCED: Check what usage fields are actually returned
+        console.log('📊 Usage fields check:', {
+          promptsUsed: data.promptsUsed,
+          promptLimit: data.promptLimit,
+          imagesGeneratedToday: data.imagesGeneratedToday,
+          imagesGeneratedThisMonth: data.imagesGeneratedThisMonth,
+          dailyImageLimit: data.dailyImageLimit,
+          monthlyImageLimit: data.monthlyImageLimit,
+          subscriptionType: data.subscriptionType
+        })
         
         setUser(data)
         setForm({
@@ -118,25 +129,49 @@ export default function SettingsPage() {
           confirmPassword: '',
         })
 
-        // ✅ NEW: Extract usage data directly from user response
+        // ✅ ENHANCED: Better usage data extraction with fallbacks
         if (data) {
-          const dailyImageLimit = data.dailyImageLimit || 2
-          const monthlyImageLimit = data.monthlyImageLimit || 10
-          const promptLimit = data.maxPromptLimit || data.promptLimit || 20
+          // Define subscription-based limits
+          const subscriptionType = (data.subscriptionType || 'free').toLowerCase()
+          const subscriptionLimits = {
+            free: { prompts: 20, dailyImages: 2, monthlyImages: 10 },
+            personal: { prompts: 400, dailyImages: 10, monthlyImages: 100 },
+            business: { prompts: 2000, dailyImages: 25, monthlyImages: 300 },
+            enterprise: { prompts: -1, dailyImages: -1, monthlyImages: -1 }
+          }
+          
+          const limits = subscriptionLimits[subscriptionType] || subscriptionLimits.free
+          
+          // Use API data if available, otherwise use test data that makes sense
+          const promptsUsed = data.promptsUsed ?? 0
+          const promptLimit = data.promptLimit ?? limits.prompts
+          const dailyImagesUsed = data.imagesGeneratedToday ?? 0
+          const monthlyImagesUsed = data.imagesGeneratedThisMonth ?? 0
+          const dailyImageLimit = data.dailyImageLimit ?? limits.dailyImages
+          const monthlyImageLimit = data.monthlyImageLimit ?? limits.monthlyImages
+
+          console.log('📈 Calculated usage data:', {
+            promptsUsed,
+            promptLimit,
+            dailyImagesUsed,
+            monthlyImagesUsed,
+            dailyImageLimit,
+            monthlyImageLimit
+          })
 
           setUsageData({
-            promptsUsed: data.promptsUsed || 0,
-            promptLimit: promptLimit,
-            maxPromptLimit: data.maxPromptLimit || promptLimit,
+            promptsUsed,
+            promptLimit,
+            maxPromptLimit: promptLimit,
             dailyImages: {
-              used: data.imagesGeneratedToday || 0,
+              used: dailyImagesUsed,
               limit: dailyImageLimit,
-              remaining: Math.max(0, dailyImageLimit - (data.imagesGeneratedToday || 0))
+              remaining: dailyImageLimit === -1 ? -1 : Math.max(0, dailyImageLimit - dailyImagesUsed)
             },
             monthlyImages: {
-              used: data.imagesGeneratedThisMonth || 0,
+              used: monthlyImagesUsed,
               limit: monthlyImageLimit,
-              remaining: Math.max(0, monthlyImageLimit - (data.imagesGeneratedThisMonth || 0))
+              remaining: monthlyImageLimit === -1 ? -1 : Math.max(0, monthlyImageLimit - monthlyImagesUsed)
             },
             subscriptionName: data.subscriptionType || 'Free'
           })
@@ -524,45 +559,45 @@ export default function SettingsPage() {
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Account Information</h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Email (Read Only) */}
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-900 dark:text-white">
+              <div className="space-y-3">
+                <label className="block text-base font-semibold text-gray-900 dark:text-white">
                   Email Address
                 </label>
                 <input 
                   type="email" 
                   disabled 
                   value={user.email} 
-                  className="w-full bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 rounded-xl p-4 border border-gray-200 dark:border-slate-600 cursor-not-allowed"
+                  className="w-full bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 rounded-xl p-5 border border-gray-200 dark:border-slate-600 cursor-not-allowed text-base"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400">Email cannot be changed</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Email cannot be changed</p>
               </div>
 
               {/* Subscription Plan */}
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-900 dark:text-white">
+              <div className="space-y-3">
+                <label className="block text-base font-semibold text-gray-900 dark:text-white">
                   Current Plan
                 </label>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   <input 
                     type="text" 
                     disabled 
                     value={user.subscriptionType || 'Free'} 
-                    className="flex-1 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 rounded-xl p-4 border border-gray-200 dark:border-slate-600 cursor-not-allowed capitalize"
+                    className="flex-1 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 rounded-xl p-5 border border-gray-200 dark:border-slate-600 cursor-not-allowed capitalize text-base"
                   />
                   <Link 
                     href="/change-plan"
-                    className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
+                    className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-4 rounded-xl text-sm font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
                   >
-                    Upgrade <ArrowUpRight className="w-4 h-4" />
+                    Upgrade <ArrowUpRight className="w-5 h-5" />
                   </Link>
                 </div>
               </div>
 
               {/* Name */}
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-900 dark:text-white">
+              <div className="space-y-3">
+                <label className="block text-base font-semibold text-gray-900 dark:text-white">
                   Full Name
                 </label>
                 <input 
@@ -570,13 +605,13 @@ export default function SettingsPage() {
                   value={form.name} 
                   onChange={handleChange} 
                   placeholder="Enter your full name"
-                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-5 text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
                 />
               </div>
 
               {/* LinkedIn */}
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-900 dark:text-white">
+              <div className="space-y-3">
+                <label className="block text-base font-semibold text-gray-900 dark:text-white">
                   LinkedIn Profile
                 </label>
                 <input 
@@ -584,16 +619,16 @@ export default function SettingsPage() {
                   value={form.linkedIn} 
                   onChange={handleChange} 
                   placeholder="https://linkedin.com/in/yourprofile"
-                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-5 text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
                 />
-                <p className="text-xs text-blue-600 dark:text-blue-400">
+                <p className="text-sm text-blue-600 dark:text-blue-400">
                   💡 Adding your LinkedIn helps us provide better networking suggestions
                 </p>
               </div>
 
               {/* Job Title */}
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-900 dark:text-white">
+              <div className="space-y-3">
+                <label className="block text-base font-semibold text-gray-900 dark:text-white">
                   Job Title
                 </label>
                 <input 
@@ -601,13 +636,13 @@ export default function SettingsPage() {
                   value={form.jobTitle} 
                   onChange={handleChange} 
                   placeholder="e.g. Marketing Manager"
-                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-5 text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
                 />
               </div>
 
               {/* Industry */}
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-900 dark:text-white">
+              <div className="space-y-3">
+                <label className="block text-base font-semibold text-gray-900 dark:text-white">
                   Industry
                 </label>
                 <input 
@@ -615,37 +650,37 @@ export default function SettingsPage() {
                   value={form.industry} 
                   onChange={handleChange} 
                   placeholder="e.g. Technology, Healthcare, Finance"
-                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-5 text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
                 />
               </div>
 
               {/* About You */}
-              <div className="md:col-span-2 space-y-2">
-                <label className="block text-sm font-semibold text-gray-900 dark:text-white">
+              <div className="md:col-span-2 space-y-3">
+                <label className="block text-base font-semibold text-gray-900 dark:text-white">
                   About You
                 </label>
                 <textarea 
                   name="narrative" 
-                  rows={4} 
+                  rows={5} 
                   value={form.narrative} 
                   onChange={handleChange} 
                   placeholder="Tell us about yourself, your background, and what you do..."
-                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-4 resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-5 text-base resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
                 />
               </div>
 
               {/* Goals */}
-              <div className="md:col-span-2 space-y-2">
-                <label className="block text-sm font-semibold text-gray-900 dark:text-white">
+              <div className="md:col-span-2 space-y-3">
+                <label className="block text-base font-semibold text-gray-900 dark:text-white">
                   What do you aim to get from using Growfly?
                 </label>
                 <textarea
                   name="goals"
-                  rows={4}
+                  rows={5}
                   placeholder="This helps us tailor your experience and provide better recommendations..."
                   value={form.goals}
                   onChange={handleChange}
-                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-4 resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-5 text-base resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
                 />
               </div>
             </div>
@@ -662,10 +697,10 @@ export default function SettingsPage() {
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Security Settings</h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* New Password */}
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-900 dark:text-white">
+              <div className="space-y-3">
+                <label className="block text-base font-semibold text-gray-900 dark:text-white">
                   New Password
                 </label>
                 <input
@@ -674,10 +709,10 @@ export default function SettingsPage() {
                   value={form.password}
                   onChange={handleChange}
                   placeholder="Leave blank to keep current password"
-                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-5 text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
                 />
                 {form.password && (
-                  <p className={`text-xs font-medium ${
+                  <p className={`text-sm font-medium ${
                     passwordStrength === 'Strong' ? 'text-green-600 dark:text-green-400' :
                     passwordStrength === 'Moderate' ? 'text-yellow-600 dark:text-yellow-400' :
                     'text-red-600 dark:text-red-400'
@@ -688,8 +723,8 @@ export default function SettingsPage() {
               </div>
 
               {/* Confirm Password */}
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-900 dark:text-white">
+              <div className="space-y-3">
+                <label className="block text-base font-semibold text-gray-900 dark:text-white">
                   Confirm New Password
                 </label>
                 <input
@@ -698,39 +733,39 @@ export default function SettingsPage() {
                   value={form.confirmPassword}
                   onChange={handleChange}
                   placeholder="Confirm your new password"
-                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-5 text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
                 />
               </div>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-6 pt-6">
             <button
               type="button"
               onClick={handleSubmit}
               disabled={saving}
-              className={`inline-flex items-center gap-3 px-8 py-4 rounded-2xl text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
+              className={`inline-flex items-center gap-3 px-10 py-5 rounded-2xl text-base font-bold transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
                 saveSuccess 
-                  ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white' 
-                  : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
+                  ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-emerald-200 dark:shadow-emerald-900/30' 
+                  : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-blue-200 dark:shadow-blue-900/30'
               }`}
             >
               {saving ? (
                 <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <Loader2 className="h-6 w-6 animate-spin" />
                   Saving Changes...
                 </>
               ) : saveSuccess ? (
                 <>
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                   Changes Saved!
                 </>
               ) : (
                 <>
-                  <Save className="h-5 w-5" />
+                  <Save className="h-6 w-6" />
                   Save Changes
                 </>
               )}
@@ -739,119 +774,174 @@ export default function SettingsPage() {
             <button
               type="button"
               onClick={handleBillingPortal}
-              className="inline-flex items-center gap-3 bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 dark:hover:bg-gray-600 text-white px-6 py-4 rounded-2xl text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="inline-flex items-center gap-3 bg-gradient-to-r from-slate-700 to-gray-800 dark:from-gray-700 dark:to-slate-600 hover:from-slate-800 hover:to-gray-900 dark:hover:from-gray-600 dark:hover:to-slate-500 text-white px-8 py-5 rounded-2xl text-base font-bold transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105"
             >
-              <CreditCard className="h-5 w-5" />
+              <CreditCard className="h-6 w-6" />
               Manage Billing & Invoices
-              <ExternalLink className="h-4 w-4" />
+              <ExternalLink className="h-5 w-5" />
             </button>
           </div>
 
           {/* Success Message */}
           {saveSuccess && (
-            <div className="mt-6 p-4 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-xl border border-green-200 dark:border-green-800">
-              <div className="flex items-center justify-center">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Your settings have been updated successfully!
+            <div className="mt-8 p-6 bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/30 dark:to-green-900/30 text-emerald-800 dark:text-emerald-300 rounded-2xl border border-emerald-200 dark:border-emerald-800 shadow-lg">
+              <div className="flex items-center justify-center gap-3">
+                <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span className="font-semibold text-lg">Your settings have been updated successfully!</span>
               </div>
             </div>
           )}
 
-          {/* ✅ NEW: Small collapsible usage section at bottom */}
+          {/* ✅ ENHANCED: Small collapsible usage section with better design */}
           {usageData && (
-            <div className="bg-gray-50 dark:bg-slate-800/50 rounded-xl border border-gray-200 dark:border-slate-700">
+            <div className="bg-gradient-to-r from-gray-50 to-slate-50 dark:from-slate-800/50 dark:to-slate-700/50 rounded-2xl border border-gray-200 dark:border-slate-600 shadow-sm overflow-hidden">
               <button
                 onClick={() => setShowUsageDetails(!showUsageDetails)}
-                className="w-full p-4 flex items-center justify-between text-left hover:bg-gray-100 dark:hover:bg-slate-700/50 transition-colors rounded-xl"
+                className="w-full p-5 flex items-center justify-between text-left hover:bg-gradient-to-r hover:from-gray-100 hover:to-slate-100 dark:hover:from-slate-700/70 dark:hover:to-slate-600/70 transition-all duration-200"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-r from-gray-500 to-slate-600 rounded-lg flex items-center justify-center">
-                    <BarChart3 className="w-4 h-4 text-white" />
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <BarChart3 className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Usage Details</h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                    <h3 className="text-base font-bold text-gray-900 dark:text-white">Usage Overview</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
                       {usageData.promptLimit === -1 ? 'Unlimited' : `${usageData.promptsUsed}/${usageData.promptLimit}`} prompts • 
                       {usageData.dailyImages.limit === -1 ? ' Unlimited' : ` ${usageData.dailyImages.remaining}/${usageData.dailyImages.limit}`} images today
                     </p>
                   </div>
                 </div>
-                <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${showUsageDetails ? 'rotate-180' : ''}`} />
+                
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      {user.subscriptionType || 'Free'} Plan
+                    </div>
+                    <div className="text-sm font-bold text-gray-900 dark:text-white">
+                      {showUsageDetails ? 'Hide Details' : 'View Details'}
+                    </div>
+                  </div>
+                  <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${showUsageDetails ? 'rotate-180' : ''}`} />
+                </div>
               </button>
 
               {showUsageDetails && (
-                <div className="px-4 pb-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    {/* Compact Prompt Usage */}
-                    <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-gray-200 dark:border-slate-700">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-gray-700 dark:text-gray-300">💬 Chat Prompts</span>
-                        <span className="font-bold text-gray-900 dark:text-white text-xs">
+                <div className="px-5 pb-5 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+                    {/* Enhanced Prompt Usage Card */}
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-700 shadow-sm">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                            <span className="text-white text-sm font-bold">💬</span>
+                          </div>
+                          <span className="font-semibold text-blue-800 dark:text-blue-300">Chat Prompts</span>
+                        </div>
+                        <span className="font-bold text-blue-900 dark:text-blue-200 text-lg">
                           {usageData.promptsUsed}/{usageData.promptLimit === -1 ? '∞' : usageData.promptLimit}
                         </span>
                       </div>
                       
-                      {usageData.promptLimit !== -1 && (
-                        <div className="relative w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-                          <div 
-                            className={`absolute top-0 left-0 h-full bg-gradient-to-r ${getPromptUsageColor()} rounded-full transition-all duration-300 ease-out`}
-                            style={{ width: `${Math.min(getPromptUsagePercentage(), 100)}%` }}
-                          />
-                        </div>
-                      )}
-                      
-                      {usageData.promptLimit === -1 && (
-                        <div className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-                          <Sparkles className="w-3 h-3" />
-                          Unlimited available
+                      {usageData.promptLimit !== -1 ? (
+                        <>
+                          <div className="relative w-full h-3 bg-blue-200 dark:bg-blue-800 rounded-full overflow-hidden mb-2">
+                            <div 
+                              className={`absolute top-0 left-0 h-full bg-gradient-to-r ${getPromptUsageColor()} rounded-full transition-all duration-500 ease-out shadow-sm`}
+                              style={{ width: `${Math.min(getPromptUsagePercentage(), 100)}%` }}
+                            />
+                          </div>
+                          <div className="flex justify-between text-xs text-blue-700 dark:text-blue-300">
+                            <span>{usageData.promptLimit - usageData.promptsUsed} remaining</span>
+                            <span>{getPromptUsagePercentage().toFixed(1)}% used</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-2 font-medium">
+                          <Sparkles className="w-4 h-4" />
+                          Unlimited prompts available
                         </div>
                       )}
                     </div>
 
-                    {/* Compact Image Usage */}
-                    <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-gray-200 dark:border-slate-700">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-gray-700 dark:text-gray-300">🎨 Images Today</span>
-                        <span className="font-bold text-gray-900 dark:text-white text-xs">
+                    {/* Enhanced Image Usage Card */}
+                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-700 shadow-sm">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
+                            <Palette className="w-4 h-4 text-white" />
+                          </div>
+                          <span className="font-semibold text-purple-800 dark:text-purple-300">Images Today</span>
+                        </div>
+                        <span className="font-bold text-purple-900 dark:text-purple-200 text-lg">
                           {usageData.dailyImages.remaining}/{usageData.dailyImages.limit === -1 ? '∞' : usageData.dailyImages.limit}
                         </span>
                       </div>
                       
-                      {usageData.dailyImages.limit !== -1 && (
-                        <div className="relative w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-                          <div 
-                            className={`absolute top-0 left-0 h-full bg-gradient-to-r ${getImageUsageColor()} rounded-full transition-all duration-300 ease-out`}
-                            style={{ width: `${Math.min(getImageUsagePercentage(), 100)}%` }}
-                          />
-                        </div>
-                      )}
-                      
-                      {usageData.dailyImages.limit === -1 && (
-                        <div className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-                          <Sparkles className="w-3 h-3" />
-                          Unlimited available
+                      {usageData.dailyImages.limit !== -1 ? (
+                        <>
+                          <div className="relative w-full h-3 bg-purple-200 dark:bg-purple-800 rounded-full overflow-hidden mb-2">
+                            <div 
+                              className={`absolute top-0 left-0 h-full bg-gradient-to-r ${getImageUsageColor()} rounded-full transition-all duration-500 ease-out shadow-sm`}
+                              style={{ width: `${Math.min(getImageUsagePercentage(), 100)}%` }}
+                            />
+                          </div>
+                          <div className="flex justify-between text-xs text-purple-700 dark:text-purple-300">
+                            <span>{usageData.dailyImages.used} used today</span>
+                            <span>Resets in {getTimeUntilMidnight()}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-2 font-medium">
+                          <Sparkles className="w-4 h-4" />
+                          Unlimited images available
                         </div>
                       )}
                     </div>
                   </div>
 
-                  {/* Small upgrade prompt */}
-                  <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                  {/* Enhanced upgrade prompt */}
+                  <div className="mt-5 p-4 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-xl border border-indigo-200 dark:border-indigo-700">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300">Need more capacity?</h4>
-                        <p className="text-xs text-blue-600 dark:text-blue-400">Upgrade for higher limits and unlimited access.</p>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-lg flex items-center justify-center">
+                          <ArrowUpRight className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-indigo-800 dark:text-indigo-300">Need more capacity?</h4>
+                          <p className="text-sm text-indigo-600 dark:text-indigo-400">Upgrade for higher limits and unlimited access.</p>
+                        </div>
                       </div>
                       <Link 
                         href="/change-plan"
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 shadow hover:shadow-md"
+                        className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl text-sm font-bold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                       >
-                        Upgrade
+                        Upgrade Plan
                       </Link>
                     </div>
                   </div>
+
+                  {/* ✅ DEBUGGING: Show API response in development */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <div className="mt-5 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-700">
+                      <h4 className="text-sm font-bold text-yellow-800 dark:text-yellow-300 mb-2">🔍 API Debug Info</h4>
+                      <div className="text-xs text-yellow-700 dark:text-yellow-400 space-y-1">
+                        <div><strong>API Endpoint:</strong> /api/user/settings</div>
+                        <div><strong>promptsUsed from API:</strong> {user.promptsUsed ?? 'undefined'}</div>
+                        <div><strong>promptLimit from API:</strong> {user.promptLimit ?? 'undefined'}</div>
+                        <div><strong>imagesGeneratedToday:</strong> {user.imagesGeneratedToday ?? 'undefined'}</div>
+                        <div><strong>subscriptionType:</strong> {user.subscriptionType ?? 'undefined'}</div>
+                        <div className="mt-2 p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded text-xs">
+                          <strong>Issue:</strong> If values show 'undefined', your API isn't returning usage fields from the database.
+                          <br />
+                          <strong>Fix:</strong> Update your /api/user/settings endpoint to include: promptsUsed, promptLimit, imagesGeneratedToday, etc.
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

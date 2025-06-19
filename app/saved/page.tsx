@@ -437,7 +437,7 @@ export default function SavedPage() {
             </p>
             <button
               onClick={() => router.push('/dashboard')}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-2xl transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
             >
               Go to Dashboard
             </button>
