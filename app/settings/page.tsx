@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Save, ExternalLink, CreditCard, ArrowUpRight, BarChart3, Palette } from 'lucide-react'
+import { Loader2, Save, ExternalLink, CreditCard, ArrowUpRight, BarChart3, Palette, Play, BookOpen, Sparkles, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 
 // Mock constants for artifact
@@ -18,13 +18,23 @@ interface UserProfile {
   subscriptionType?: string
   stripeCustomerId?: string
   goals?: string
+  // ✅ NEW: Usage fields from API
   promptsUsed?: number
+  promptLimit?: number
+  maxPromptLimit?: number
+  imagesGeneratedToday?: number
+  imagesGeneratedThisMonth?: number
+  dailyImageLimit?: number
+  monthlyImageLimit?: number
+  lastImageGeneratedDate?: string
+  lastImageResetDate?: string
 }
 
-// ✅ NEW: Usage interface for tracking
+// ✅ SIMPLIFIED: Usage interface based on API response
 interface UsageData {
   promptsUsed: number
   promptLimit: number
+  maxPromptLimit: number
   dailyImages: {
     used: number
     limit: number
@@ -42,13 +52,14 @@ const PROMPT_LIMITS: Record<string, number> = {
   free: 20,
   personal: 400,
   business: 2000,
+  enterprise: -1, // unlimited
 }
 
 export default function SettingsPage() {
   const router = useRouter()
   const [token, setToken] = useState<string | null>(null)
   const [user, setUser] = useState<UserProfile | null>(null)
-  const [usageData, setUsageData] = useState<UsageData | null>(null) // ✅ NEW: Usage state
+  const [usageData, setUsageData] = useState<UsageData | null>(null)
   const [form, setForm] = useState({
     name: '',
     linkedIn: '',
@@ -63,6 +74,9 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [passwordStrength, setPasswordStrength] = useState('')
+  const [usageLoading, setUsageLoading] = useState(true)
+  const [usageError, setUsageError] = useState<string | null>(null)
+  const [showUsageDetails, setShowUsageDetails] = useState(false) // ✅ NEW: Collapsible state
 
   useEffect(() => {
     const storedToken = localStorage.getItem('growfly_jwt')
@@ -78,7 +92,6 @@ export default function SettingsPage() {
 
     const fetchUserData = async () => {
       try {
-        // Use the same endpoint as brand settings for consistency
         const res = await fetch(`${API_BASE_URL}/api/user/settings`, {
           headers: { 
             'Authorization': `Bearer ${token}`,
@@ -91,6 +104,8 @@ export default function SettingsPage() {
         }
 
         const data = await res.json()
+        console.log('User data received:', data) // Debug log
+        
         setUser(data)
         setForm({
           name: data.name || '',
@@ -102,6 +117,31 @@ export default function SettingsPage() {
           password: '',
           confirmPassword: '',
         })
+
+        // ✅ NEW: Extract usage data directly from user response
+        if (data) {
+          const dailyImageLimit = data.dailyImageLimit || 2
+          const monthlyImageLimit = data.monthlyImageLimit || 10
+          const promptLimit = data.maxPromptLimit || data.promptLimit || 20
+
+          setUsageData({
+            promptsUsed: data.promptsUsed || 0,
+            promptLimit: promptLimit,
+            maxPromptLimit: data.maxPromptLimit || promptLimit,
+            dailyImages: {
+              used: data.imagesGeneratedToday || 0,
+              limit: dailyImageLimit,
+              remaining: Math.max(0, dailyImageLimit - (data.imagesGeneratedToday || 0))
+            },
+            monthlyImages: {
+              used: data.imagesGeneratedThisMonth || 0,
+              limit: monthlyImageLimit,
+              remaining: Math.max(0, monthlyImageLimit - (data.imagesGeneratedThisMonth || 0))
+            },
+            subscriptionName: data.subscriptionType || 'Free'
+          })
+          setUsageLoading(false)
+        }
       } catch (error) {
         console.error('Error fetching user data:', error)
         router.push('/login')
@@ -113,65 +153,21 @@ export default function SettingsPage() {
     fetchUserData()
   }, [token, router])
 
-  // ✅ NEW: Fetch usage data
-  useEffect(() => {
-    if (!token || !user) return
+  const getTimeUntilMidnight = () => {
+    const now = new Date()
+    const tomorrow = new Date(now)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    tomorrow.setHours(0, 0, 0, 0)
+    const hours = Math.ceil((tomorrow.getTime() - now.getTime()) / (1000 * 60 * 60))
+    return `${hours} hours`
+  }
 
-    const fetchUsageData = async () => {
-      try {
-        // Fetch prompt usage from user data
-        const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || 'free'] || 20
-        const promptsUsed = user?.promptsUsed ?? 0
-
-        // Fetch image usage
-        const imageRes = await fetch(`${API_BASE_URL}/api/dalle/usage`, {
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        })
-
-        let imageUsage = {
-          dailyImages: { used: 0, limit: 2, remaining: 2 },
-          monthlyImages: { used: 0, limit: 10, remaining: 10 }
-        }
-
-        if (imageRes.ok) {
-          const imageData = await imageRes.json()
-          if (imageData && imageData.dailyImages && imageData.monthlyImages) {
-            imageUsage = {
-              dailyImages: imageData.dailyImages,
-              monthlyImages: imageData.monthlyImages
-            }
-          }
-        }
-
-        setUsageData({
-          promptsUsed,
-          promptLimit,
-          dailyImages: imageUsage.dailyImages,
-          monthlyImages: imageUsage.monthlyImages,
-          subscriptionName: user?.subscriptionType || 'Free'
-        })
-
-      } catch (error) {
-        console.error('Error fetching usage data:', error)
-        // Set fallback data
-        const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || 'free'] || 20
-        const promptsUsed = user?.promptsUsed ?? 0
-        
-        setUsageData({
-          promptsUsed,
-          promptLimit,
-          dailyImages: { used: 0, limit: 2, remaining: 2 },
-          monthlyImages: { used: 0, limit: 10, remaining: 10 },
-          subscriptionName: user?.subscriptionType || 'Free'
-        })
-      }
-    }
-
-    fetchUsageData()
-  }, [token, user])
+  const getTimeUntilNextMonth = () => {
+    const now = new Date()
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+    const days = Math.ceil((nextMonth.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    return `${days} days`
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -262,13 +258,14 @@ export default function SettingsPage() {
     }
   }
 
-  // ✅ NEW: Helper functions for usage display
+  // ✅ ENHANCED: Better usage calculation functions
   const getPromptUsagePercentage = () => {
-    if (!usageData) return 0
+    if (!usageData || usageData.promptLimit === -1) return 0
     return Math.min(100, (usageData.promptsUsed / usageData.promptLimit) * 100)
   }
 
   const getPromptUsageColor = () => {
+    if (!usageData || usageData.promptLimit === -1) return 'from-green-500 to-emerald-600'
     const percentage = getPromptUsagePercentage()
     if (percentage >= 90) return 'from-red-500 to-red-600'
     if (percentage >= 70) return 'from-yellow-500 to-orange-500'
@@ -284,63 +281,62 @@ export default function SettingsPage() {
     if (!usageData) return 'from-purple-500 to-blue-500'
     const remaining = usageData.dailyImages.remaining
     if (remaining <= 0) return 'from-red-500 to-red-600'
-    if (remaining <= 2) return 'from-orange-500 to-red-500'
+    if (remaining <= 1) return 'from-orange-500 to-red-500'
     return 'from-purple-500 to-blue-500'
   }
 
-  const getResetInfo = () => {
-    const now = new Date()
-    const tomorrow = new Date(now)
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    tomorrow.setHours(0, 0, 0, 0)
-    
-    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-    
-    const hoursUntilMidnight = Math.ceil((tomorrow.getTime() - now.getTime()) / (1000 * 60 * 60))
-    const daysUntilNextMonth = Math.ceil((nextMonth.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-    
-    return { hoursUntilMidnight, daysUntilNextMonth }
-  }
-
-  // ✅ FIXED: Enhanced tutorial button handler
+  // ✅ ENHANCED: Better tutorial handler
   const handleStartTutorial = () => {
-    console.log('🎯 Tutorial button clicked in settings')
+    console.log('🎯 Starting Growfly tutorial from settings')
     
     try {
-      // Method 1: Custom event dispatch
-      const event = new CustomEvent('startGrowflyTour', { 
-        bubbles: true,
-        detail: { source: 'settings', timestamp: Date.now() }
-      })
-      
-      console.log('🎯 Dispatching custom event:', event)
-      const dispatched = window.dispatchEvent(event)
-      console.log('🎯 Event dispatched successfully:', dispatched)
-      
-      // Method 2: Try multiple approaches with delays
+      // Multiple approaches to ensure tutorial starts
+      const startTutorial = () => {
+        // Method 1: Custom event
+        window.dispatchEvent(new CustomEvent('startGrowflyTour', { 
+          bubbles: true,
+          detail: { 
+            source: 'settings', 
+            force: true, 
+            timestamp: Date.now() 
+          }
+        }))
+
+        // Method 2: Global function call
+        if (typeof (window as any).startGrowflyTour === 'function') {
+          (window as any).startGrowflyTour({ source: 'settings', force: true })
+        }
+
+        // Method 3: Tour library direct call
+        if (typeof (window as any).driver !== 'undefined') {
+          (window as any).driver.drive()
+        }
+      }
+
+      // Try immediate start
+      startTutorial()
+
+      // Set localStorage flags
+      localStorage.setItem('force-tutorial-start', 'true')
+      localStorage.removeItem('growfly-tutorial-completed')
+      sessionStorage.setItem('tutorial-source', 'settings')
+
+      // Navigate to dashboard with tutorial parameter
       setTimeout(() => {
-        // Try localStorage approach
-        console.log('🎯 Trying localStorage approach')
-        localStorage.setItem('force-tutorial-start', 'true')
-        
-        // Try URL hash approach  
-        console.log('🎯 Trying URL hash approach')
-        
-        // Navigate to dashboard with tutorial trigger
-        if (!window.location.pathname.includes('/dashboard')) {
-          console.log('🎯 Navigating to dashboard with tutorial trigger')
-          router.push('/dashboard?tutorial=start')
+        if (window.location.pathname.includes('/dashboard')) {
+          // Already on dashboard, try to trigger again
+          startTutorial()
+          window.location.reload()
         } else {
-          // If already on dashboard, try to trigger directly
-          console.log('🎯 Already on dashboard, triggering tutorial')
-          window.location.href = '/dashboard?tutorial=start'
+          // Navigate to dashboard
+          router.push('/dashboard?tutorial=start&source=settings')
         }
       }, 100)
-      
+
     } catch (error) {
-      console.error('🎯 Error starting tutorial:', error)
-      // Fallback: direct navigation
-      router.push('/dashboard?tutorial=start')
+      console.error('Error starting tutorial:', error)
+      // Fallback navigation
+      router.push('/dashboard?tutorial=start&source=settings')
     }
   }
 
@@ -355,255 +351,162 @@ export default function SettingsPage() {
     )
   }
 
-  const resetInfo = getResetInfo()
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-50 dark:from-slate-900 dark:via-blue-900 dark:to-slate-900 px-4 py-8">
       <div className="max-w-5xl mx-auto">
         
-        {/* Header */}
-        <div className="flex items-center justify-between mb-12">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Account Settings</h1>
-            <p className="text-gray-600 dark:text-gray-400">Manage your profile and account preferences</p>
-          </div>
-          <Link 
-            href="/dashboard" 
-            className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
-          >
-            ← Back to Dashboard
-          </Link>
+        {/* ✅ FIXED: Header without back button */}
+        <div className="mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Account Settings</h1>
+          <p className="text-gray-600 dark:text-gray-400">Manage your profile and account preferences</p>
         </div>
 
         <div className="space-y-8">
           
-          {/* ✅ NEW: Usage & Limits Section */}
-          {usageData && (
-            <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-xl border border-gray-200 dark:border-slate-700">
-              <div className="flex items-center mb-6">
-                <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center mr-4">
-                  <BarChart3 className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Usage & Limits</h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Track your current plan usage and limits</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Prompt Usage */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                      💬 Chat Prompts
-                    </h3>
-                    <Link 
-                      href="/change-plan"
-                      className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
-                    >
-                      Upgrade Plan
-                    </Link>
-                  </div>
-                  
-                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-700">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {usageData.subscriptionName} Plan
-                      </span>
-                      <span className="text-lg font-bold text-gray-900 dark:text-white">
-                        {usageData.promptsUsed}/{usageData.promptLimit === -1 ? '∞' : usageData.promptLimit}
-                      </span>
-                    </div>
-                    
-                    <div className="relative w-full h-3 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden mb-2">
-                      <div 
-                        className={`absolute top-0 left-0 h-full bg-gradient-to-r ${getPromptUsageColor()} rounded-full transition-all duration-300 ease-out`}
-                        style={{ width: `${Math.min(getPromptUsagePercentage(), 100)}%` }}
-                      />
-                    </div>
-                    
-                    <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
-                      <span>{usageData.promptLimit - usageData.promptsUsed} remaining</span>
-                      <span>{getPromptUsagePercentage().toFixed(1)}% used</span>
-                    </div>
-                    
-                    {usageData.promptsUsed >= usageData.promptLimit * 0.9 && (
-                      <div className="mt-2 text-xs text-orange-600 dark:text-orange-400">
-                        ⚠️ You're approaching your limit. Consider upgrading for unlimited prompts.
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Image Usage */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                      <Palette className="w-5 h-5 text-purple-500" />
-                      Image Generation
-                    </h3>
-                    <Link 
-                      href="/change-plan"
-                      className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-1 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
-                    >
-                      Upgrade Plan
-                    </Link>
-                  </div>
-                  
-                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-700">
-                    <div className="space-y-3">
-                      {/* Daily Images */}
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Daily Images</span>
-                          <span className="text-sm font-bold text-gray-900 dark:text-white">
-                            {usageData.dailyImages.remaining}/{usageData.dailyImages.limit === -1 ? '∞' : usageData.dailyImages.limit}
-                          </span>
-                        </div>
-                        
-                        <div className="relative w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-                          <div 
-                            className={`absolute top-0 left-0 h-full bg-gradient-to-r ${getImageUsageColor()} rounded-full transition-all duration-300 ease-out`}
-                            style={{ width: `${Math.min(getImageUsagePercentage(), 100)}%` }}
-                          />
-                        </div>
-                        
-                        {usageData.dailyImages.remaining <= 0 && (
-                          <div className="text-xs text-red-500 mt-1">
-                            Resets in {resetInfo.hoursUntilMidnight} hours
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Monthly Images */}
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Monthly Images</span>
-                          <span className="text-sm font-bold text-gray-900 dark:text-white">
-                            {usageData.monthlyImages.remaining}/{usageData.monthlyImages.limit === -1 ? '∞' : usageData.monthlyImages.limit}
-                          </span>
-                        </div>
-                        
-                        <div className="relative w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-                          <div 
-                            className={`absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-300 ease-out`}
-                            style={{ 
-                              width: `${usageData.monthlyImages.limit === -1 ? 20 : Math.min((usageData.monthlyImages.used / usageData.monthlyImages.limit) * 100, 100)}%` 
-                            }}
-                          />
-                        </div>
-                        
-                        {usageData.monthlyImages.remaining <= 2 && usageData.monthlyImages.limit !== -1 && (
-                          <div className="text-xs text-orange-500 mt-1">
-                            Resets in {resetInfo.daysUntilNextMonth} days
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Upgrade Prompt */}
-              <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-semibold text-blue-800 dark:text-blue-300">Need more capacity?</h4>
-                    <p className="text-sm text-blue-600 dark:text-blue-400">Upgrade your plan for higher limits and unlimited access.</p>
-                  </div>
-                  <Link 
-                    href="/change-plan"
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
-                  >
-                    View Plans
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ✅ FIXED: Enhanced Tutorial Section */}
+          {/* ✅ ENHANCED: Improved Tutorial Section */}
           <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-xl border border-gray-200 dark:border-slate-700">
             <div className="flex items-center mb-6">
               <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mr-4">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
+                <BookOpen className="w-6 h-6 text-white" />
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Getting Started</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Need a refresher on how Growfly works?</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Master Growfly with our interactive tour</p>
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-6 border border-purple-200 dark:border-purple-700">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-purple-800 dark:text-purple-300 mb-2">Take the Growfly Tour</h3>
-                  <p className="text-purple-600 dark:text-purple-400 text-sm mb-4">
-                    Discover all the powerful features that make Growfly unique to your business. 
-                    Perfect for new users or as a refresher on our latest updates!
-                  </p>
-                  <div className="flex items-center gap-2 text-xs text-purple-500 dark:text-purple-400">
-                    <span>🚀</span>
-                    <span>Interactive tour of all features</span>
-                    <span>•</span>
-                    <span>📱</span>
-                    <span>Takes about 2 minutes</span>
-                    <span>•</span>
-                    <span>✨</span>
-                    <span>Learn pro tips & tricks</span>
+            <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-purple-900/20 dark:via-pink-900/20 dark:to-blue-900/20 rounded-2xl p-8 border border-purple-200 dark:border-purple-700 relative overflow-hidden">
+              {/* Background decoration */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-200/30 to-pink-200/30 dark:from-purple-700/20 dark:to-pink-700/20 rounded-full -translate-y-16 translate-x-16"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-blue-200/30 to-purple-200/30 dark:from-blue-700/20 dark:to-purple-700/20 rounded-full translate-y-12 -translate-x-12"></div>
+              
+              <div className="relative">
+                <div className="flex items-start justify-between gap-6">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                        <Play className="w-5 h-5 text-white" />
+                      </div>
+                      <h3 className="text-xl font-bold text-purple-800 dark:text-purple-300">Take the Growfly Tour</h3>
+                    </div>
+                    
+                    <p className="text-purple-700 dark:text-purple-300 mb-6 leading-relaxed">
+                      Discover powerful features designed specifically for your business growth. 
+                      Our interactive tour shows you exactly how to maximize your results with Growfly.
+                    </p>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                      <div className="flex items-center gap-2 text-sm text-purple-600 dark:text-purple-400">
+                        <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                          <span className="text-xs font-bold">🚀</span>
+                        </div>
+                        <span>Interactive walkthrough</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 text-sm text-purple-600 dark:text-purple-400">
+                        <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                          <span className="text-xs font-bold">⏱️</span>
+                        </div>
+                        <span>Just 2-3 minutes</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 text-sm text-purple-600 dark:text-purple-400">
+                        <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                          <span className="text-xs font-bold">💡</span>
+                        </div>
+                        <span>Pro tips included</span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <button
+                        type="button"
+                        onClick={handleStartTutorial}
+                        className="group bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-3"
+                      >
+                        <Play className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                        Start Interactive Tour
+                        <Sparkles className="w-4 h-4 opacity-75" />
+                      </button>
+                      
+                      <Link
+                        href="/dashboard"
+                        className="group bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 text-purple-700 dark:text-purple-300 border-2 border-purple-200 dark:border-purple-700 px-6 py-4 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2"
+                      >
+                        Skip to Dashboard
+                        <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                      </Link>
+                    </div>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleStartTutorial}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
-                  </svg>
-                  Start Tour
-                </button>
+
+                {/* Tutorial completion status */}
+                {localStorage.getItem('growfly-tutorial-completed') === 'true' && (
+                  <div className="mt-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-700">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                        <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-green-800 dark:text-green-300">Tour Completed!</h4>
+                        <p className="text-sm text-green-600 dark:text-green-400">Great job! You can retake the tour anytime to refresh your knowledge.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* ✅ ADDED: Debug section for development */}
+            {/* ✅ ENHANCED: Development debug section */}
             {process.env.NODE_ENV === 'development' && (
-              <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-700">
-                <h4 className="text-sm font-semibold text-yellow-800 dark:text-yellow-300 mb-2">🔧 Tutorial Debug (Development Only)</h4>
-                <div className="text-xs text-yellow-700 dark:text-yellow-400 space-y-1">
-                  <div>Tutorial completed: {localStorage.getItem('growfly-tutorial-completed') || 'false'}</div>
-                  <div>Onboarding flag: {sessionStorage.getItem('justCompletedOnboarding') || 'false'}</div>
-                  <div>Force tutorial flag: {localStorage.getItem('force-tutorial-start') || 'false'}</div>
+              <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-700">
+                <h4 className="text-sm font-semibold text-yellow-800 dark:text-yellow-300 mb-3">🔧 Tutorial Debug (Development)</h4>
+                <div className="text-xs text-yellow-700 dark:text-yellow-400 space-y-2 mb-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>Tutorial completed: <code className="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">{localStorage.getItem('growfly-tutorial-completed') || 'false'}</code></div>
+                    <div>Onboarding flag: <code className="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">{sessionStorage.getItem('justCompletedOnboarding') || 'false'}</code></div>
+                    <div>Force tutorial: <code className="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">{localStorage.getItem('force-tutorial-start') || 'false'}</code></div>
+                    <div>Tutorial source: <code className="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">{sessionStorage.getItem('tutorial-source') || 'none'}</code></div>
+                  </div>
                 </div>
-                <div className="flex gap-2 mt-3">
+                <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => {
                       localStorage.removeItem('growfly-tutorial-completed')
                       sessionStorage.setItem('justCompletedOnboarding', 'true')
+                      localStorage.removeItem('force-tutorial-start')
                       alert('Flags reset! Navigate to dashboard to test new user flow.')
                     }}
-                    className="text-xs bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded"
+                    className="text-xs bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 px-3 py-1 rounded-lg hover:bg-yellow-300 dark:hover:bg-yellow-700 transition-colors"
                   >
                     Reset as New User
                   </button>
                   <button
                     onClick={() => {
-                      console.log('🎯 Force tutorial test from debug panel')
-                      window.dispatchEvent(new CustomEvent('startGrowflyTour', { detail: { force: true } }))
+                      console.log('🎯 Testing force tutorial event')
+                      window.dispatchEvent(new CustomEvent('startGrowflyTour', { detail: { force: true, source: 'debug' } }))
                     }}
-                    className="text-xs bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-200 px-2 py-1 rounded"
+                    className="text-xs bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-200 px-3 py-1 rounded-lg hover:bg-purple-300 dark:hover:bg-purple-700 transition-colors"
                   >
-                    Force Event Test
+                    Test Event Trigger
+                  </button>
+                  <button
+                    onClick={() => router.push('/dashboard?tutorial=start&debug=true')}
+                    className="text-xs bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-lg hover:bg-blue-300 dark:hover:bg-blue-700 transition-colors"
+                  >
+                    Direct Navigation
                   </button>
                   <button
                     onClick={() => {
-                      router.push('/dashboard?tutorial=start')
+                      localStorage.setItem('growfly-tutorial-completed', 'true')
+                      alert('Tutorial marked as completed')
+                      window.location.reload()
                     }}
-                    className="text-xs bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded"
+                    className="text-xs bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 px-3 py-1 rounded-lg hover:bg-green-300 dark:hover:bg-green-700 transition-colors"
                   >
-                    Direct Navigation Test
+                    Mark Completed
                   </button>
                 </div>
               </div>
@@ -853,6 +756,104 @@ export default function SettingsPage() {
                 </svg>
                 Your settings have been updated successfully!
               </div>
+            </div>
+          )}
+
+          {/* ✅ NEW: Small collapsible usage section at bottom */}
+          {usageData && (
+            <div className="bg-gray-50 dark:bg-slate-800/50 rounded-xl border border-gray-200 dark:border-slate-700">
+              <button
+                onClick={() => setShowUsageDetails(!showUsageDetails)}
+                className="w-full p-4 flex items-center justify-between text-left hover:bg-gray-100 dark:hover:bg-slate-700/50 transition-colors rounded-xl"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gradient-to-r from-gray-500 to-slate-600 rounded-lg flex items-center justify-center">
+                    <BarChart3 className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Usage Details</h3>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      {usageData.promptLimit === -1 ? 'Unlimited' : `${usageData.promptsUsed}/${usageData.promptLimit}`} prompts • 
+                      {usageData.dailyImages.limit === -1 ? ' Unlimited' : ` ${usageData.dailyImages.remaining}/${usageData.dailyImages.limit}`} images today
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${showUsageDetails ? 'rotate-180' : ''}`} />
+              </button>
+
+              {showUsageDetails && (
+                <div className="px-4 pb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    {/* Compact Prompt Usage */}
+                    <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-gray-200 dark:border-slate-700">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium text-gray-700 dark:text-gray-300">💬 Chat Prompts</span>
+                        <span className="font-bold text-gray-900 dark:text-white text-xs">
+                          {usageData.promptsUsed}/{usageData.promptLimit === -1 ? '∞' : usageData.promptLimit}
+                        </span>
+                      </div>
+                      
+                      {usageData.promptLimit !== -1 && (
+                        <div className="relative w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                          <div 
+                            className={`absolute top-0 left-0 h-full bg-gradient-to-r ${getPromptUsageColor()} rounded-full transition-all duration-300 ease-out`}
+                            style={{ width: `${Math.min(getPromptUsagePercentage(), 100)}%` }}
+                          />
+                        </div>
+                      )}
+                      
+                      {usageData.promptLimit === -1 && (
+                        <div className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                          <Sparkles className="w-3 h-3" />
+                          Unlimited available
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Compact Image Usage */}
+                    <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-gray-200 dark:border-slate-700">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium text-gray-700 dark:text-gray-300">🎨 Images Today</span>
+                        <span className="font-bold text-gray-900 dark:text-white text-xs">
+                          {usageData.dailyImages.remaining}/{usageData.dailyImages.limit === -1 ? '∞' : usageData.dailyImages.limit}
+                        </span>
+                      </div>
+                      
+                      {usageData.dailyImages.limit !== -1 && (
+                        <div className="relative w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                          <div 
+                            className={`absolute top-0 left-0 h-full bg-gradient-to-r ${getImageUsageColor()} rounded-full transition-all duration-300 ease-out`}
+                            style={{ width: `${Math.min(getImageUsagePercentage(), 100)}%` }}
+                          />
+                        </div>
+                      )}
+                      
+                      {usageData.dailyImages.limit === -1 && (
+                        <div className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                          <Sparkles className="w-3 h-3" />
+                          Unlimited available
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Small upgrade prompt */}
+                  <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300">Need more capacity?</h4>
+                        <p className="text-xs text-blue-600 dark:text-blue-400">Upgrade for higher limits and unlimited access.</p>
+                      </div>
+                      <Link 
+                        href="/change-plan"
+                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 shadow hover:shadow-md"
+                      >
+                        Upgrade
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
