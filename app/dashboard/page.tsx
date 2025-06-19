@@ -990,15 +990,13 @@ function DashboardContent() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  // Auto-resize textarea
+  // Auto-resize textarea - simplified for modern input
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = '36px' // Reset to minimum
       
       const scrollHeight = textareaRef.current.scrollHeight
-      const lineHeight = 20
-      const maxLines = 4
-      const maxHeight = lineHeight * maxLines + 16 // Add padding
+      const maxHeight = 96 // 4 lines max
       
       const newHeight = Math.min(scrollHeight, maxHeight)
       textareaRef.current.style.height = newHeight + 'px'
@@ -1901,57 +1899,62 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* File Upload Preview - Above Input Card */}
+      {/* File Upload Preview - Modern Compact Style */}
       {uploadedFiles.length > 0 && (
-        <div className="fixed bottom-28 left-4 right-4 md:left-60 lg:left-64 z-30">
+        <div className="fixed bottom-16 left-4 right-4 sm:left-60 z-30">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur p-3 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-between shadow-lg">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <div className="flex items-center gap-2 overflow-x-auto">
-                  {uploadedFiles.map((file) => (
-                    <div key={file.id} className="relative flex-shrink-0">
-                      <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 rounded-lg p-2 border border-gray-200 dark:border-gray-600">
-                        {file.type.startsWith('image/') && file.preview ? (
-                          <img src={file.preview} alt={file.name} className="w-10 h-10 object-cover rounded" />
-                        ) : file.type === 'application/pdf' ? (
-                          <FaFilePdf className="w-10 h-10 text-red-500 p-2" />
-                        ) : file.type.includes('sheet') || file.type.includes('excel') ? (
-                          <FaFileExcel className="w-10 h-10 text-green-500 p-2" />
-                        ) : (
-                          <FaFileAlt className="w-10 h-10 text-gray-500 p-2" />
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-medium text-gray-900 dark:text-white truncate max-w-[100px]">{file.name}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{(file.size / 1024).toFixed(1)}KB</p>
+            <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-700 p-2 shadow-lg">
+              <div className="flex items-center gap-2 overflow-x-auto">
+                {uploadedFiles.map((file) => (
+                  <div key={file.id} className="relative flex-shrink-0 group">
+                    <div className="relative bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden">
+                      {file.type.startsWith('image/') && file.preview ? (
+                        <img 
+                          src={file.preview} 
+                          alt={file.name} 
+                          className="w-12 h-12 object-cover" 
+                        />
+                      ) : (
+                        <div className="w-12 h-12 flex items-center justify-center">
+                          {file.type === 'application/pdf' ? (
+                            <FaFilePdf className="w-6 h-6 text-red-500" />
+                          ) : file.type.includes('sheet') || file.type.includes('excel') ? (
+                            <FaFileExcel className="w-6 h-6 text-green-500" />
+                          ) : (
+                            <FaFileAlt className="w-6 h-6 text-gray-500" />
+                          )}
                         </div>
-                        <button
-                          onClick={() => removeFile(file.id)}
-                          className="text-gray-400 hover:text-red-500 p-1"
-                        >
-                          <FaTimes className="w-3 h-3" />
-                        </button>
-                      </div>
+                      )}
+                      <button
+                        onClick={() => removeFile(file.id)}
+                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        ×
+                      </button>
                     </div>
-                  ))}
-                </div>
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs px-1 py-0.5 rounded-b-lg truncate opacity-0 group-hover:opacity-100 transition-opacity">
+                      {file.name.split('.')[0].substring(0, 8)}...
+                    </div>
+                  </div>
+                ))}
+                <button
+                  onClick={() => setUploadedFiles([])}
+                  className="text-xs text-gray-500 dark:text-gray-400 hover:text-red-500 px-2 py-1 rounded transition-colors flex-shrink-0"
+                >
+                  Clear all
+                </button>
               </div>
-              <button
-                onClick={() => setUploadedFiles([])}
-                className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 font-medium ml-3 flex-shrink-0"
-              >
-                Clear All
-              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Floating Input Section - Modern Card Design */}
-      <div className="fixed bottom-4 left-4 right-4 md:left-60 lg:left-64 z-20 pb-safe">
+      {/* Modern Single-Line Input */}
+      <div className="fixed bottom-4 left-4 right-4 sm:left-60 z-20">
         <div className="max-w-4xl mx-auto">
           {/* Inline Error Messages */}
           {error && (
-            <div className="mb-3 text-sm text-red-600 dark:text-red-400 flex items-center gap-1 bg-red-50 dark:bg-red-900/20 p-2 rounded-lg border border-red-200 dark:border-red-800">
+            <div className="mb-2 text-sm text-red-600 dark:text-red-400 flex items-center gap-1 bg-red-50 dark:bg-red-900/20 p-2 rounded-lg border border-red-200 dark:border-red-800">
               <span>⚠️</span>
               <span>{error}</span>
               <button onClick={dismissError} className="ml-auto text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-300">
@@ -1960,64 +1963,59 @@ function DashboardContent() {
             </div>
           )}
           
-          <div className={`bg-white dark:bg-gray-800 shadow-lg rounded-xl p-3 backdrop-blur-sm border border-gray-200 dark:border-gray-700 transition-all duration-200 ${shakeInput ? 'animate-pulse border-red-300 dark:border-red-700' : ''}`}>
-            <div className="flex items-end gap-2">
+          <div className={`bg-white dark:bg-gray-800 shadow-xl rounded-full border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:shadow-2xl ${
+            shakeInput ? 'animate-pulse border-red-300 dark:border-red-700' : ''
+          } ${input.trim() || uploadedFiles.length > 0 ? 'rounded-2xl' : 'rounded-full'}`}>
+            <div className="flex items-end gap-2 p-2">
               
-              {/* Upload Button - Enhanced Style */}
-              <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  if (!isLoading && !isStreaming && fileInputRef.current) {
-                    fileInputRef.current.click()
-                  }
-                }}
-                disabled={isLoading || isStreaming || isAtPromptLimit}
-                className={`p-2 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 hover:from-blue-100 hover:to-blue-200 dark:hover:from-blue-800/30 dark:hover:to-blue-700/30 hover:border-blue-300 dark:hover:border-blue-700 hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-200 shadow-sm hover:shadow-lg ${
-                  isLoading || isStreaming || isAtPromptLimit
-                    ? 'opacity-50 cursor-not-allowed'
-                    : 'hover:scale-105 active:scale-95'
-                }`}
-                title="Upload files"
-              >
-                <FaPaperclip className="w-4 h-4" />
-              </button>
-
-              {/* Image Button - Enhanced Style */}
-              <button
-                onClick={() => {
-                  if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
-                    setShowImageModal(true)
-                  } else {
-                    router.push('/change-plan')
-                  }
-                }}
-                disabled={isAtPromptLimit}
-                className={`p-2 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border border-purple-200 dark:border-purple-800 flex items-center justify-center text-purple-600 dark:text-purple-400 hover:from-purple-100 hover:to-purple-200 dark:hover:from-purple-800/30 dark:hover:to-purple-700/30 hover:border-purple-300 dark:hover:border-purple-700 hover:text-purple-700 dark:hover:text-purple-300 transition-all duration-200 shadow-sm hover:shadow-lg ${
-                  (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0 && !isAtPromptLimit)
-                    ? 'hover:scale-105 active:scale-95'
-                    : 'opacity-50 cursor-not-allowed'
-                }`}
-                title="Generate image"
-                data-tour="gallery"
-              >
-                <FaPalette className="w-4 h-4" />
-              </button>
-
-              {/* Textarea with Floating Label */}
-              <div className="flex-1 relative">
-                <label 
-                  className={`absolute left-3 transition-all duration-200 pointer-events-none ${
-                    inputFocused || input.trim() 
-                      ? 'top-0.5 text-xs text-gray-500 dark:text-gray-400' 
-                      : 'top-2.5 text-sm text-gray-400 dark:text-gray-500'
+              {/* Action Buttons */}
+              <div className="flex gap-1 flex-shrink-0">
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    if (!isLoading && !isStreaming && fileInputRef.current) {
+                      fileInputRef.current.click()
+                    }
+                  }}
+                  disabled={isLoading || isStreaming || isAtPromptLimit}
+                  className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 ${
+                    isLoading || isStreaming || isAtPromptLimit
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'hover:scale-110 active:scale-95'
                   }`}
+                  title="Upload files"
                 >
-                  Type your message…
-                </label>
+                  <FaPaperclip className="w-4 h-4" />
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
+                      setShowImageModal(true)
+                    } else {
+                      router.push('/change-plan')
+                    }
+                  }}
+                  disabled={isAtPromptLimit}
+                  className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-all duration-200 ${
+                    (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0 && !isAtPromptLimit)
+                      ? 'hover:scale-110 active:scale-95'
+                      : 'opacity-50 cursor-not-allowed'
+                  }`}
+                  title="Generate image"
+                  data-tour="gallery"
+                >
+                  <FaPalette className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Text Input */}
+              <div className="flex-1 relative min-h-[36px] flex items-center">
                 <textarea
                   ref={textareaRef}
                   rows={1}
-                  className="w-full px-3 pt-4 pb-2 border-0 bg-transparent text-gray-900 dark:text-white resize-none text-sm min-h-[40px] max-h-[100px] transition-all duration-200 focus:outline-none placeholder-gray-400 dark:placeholder-gray-500"
+                  placeholder="Type your message..."
+                  className="w-full px-3 py-2 border-0 bg-transparent text-gray-900 dark:text-white resize-none text-sm focus:outline-none placeholder-gray-400 dark:placeholder-gray-500 leading-tight"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onFocus={() => setInputFocused(true)}
@@ -2030,24 +2028,29 @@ function DashboardContent() {
                   }}
                   disabled={isLoading || isStreaming || isAtPromptLimit}
                   data-tour="chat-input"
+                  style={{ maxHeight: '96px', minHeight: '36px' }}
                 />
               </div>
 
-              {/* Send Button - Enhanced Style */}
+              {/* Send Button */}
               <button
                 onClick={(e) => {
                   e.preventDefault()
                   handleSubmit()
                 }}
                 disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || isAtPromptLimit}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white p-2 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:transform-none flex-shrink-0 flex items-center justify-center min-w-[40px] min-h-[40px]"
+                className={`p-2 rounded-full transition-all duration-200 flex-shrink-0 flex items-center justify-center min-w-[36px] min-h-[36px] ${
+                  (!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || isAtPromptLimit
+                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95'
+                }`}
                 title="Send message"
               >
                 {isLoading || isStreaming ? (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
                 ) : (
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                   </svg>
                 )}
               </button>
