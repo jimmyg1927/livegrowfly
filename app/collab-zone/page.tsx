@@ -497,7 +497,7 @@ function CommentsSidebar({
       >
         {/* Header */}
         <div className="p-6 border-b border-gray-200/50 dark:border-slate-700/50 bg-gradient-to-r from-purple-50/50 to-pink-50/50 dark:from-purple-900/10 dark:to-pink-900/10">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
                 <MessageSquare className="w-5 h-5 text-white" />
@@ -513,11 +513,20 @@ function CommentsSidebar({
             </div>
             <button
               onClick={onClose}
-              className="p-2.5 hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-50 dark:hover:from-slate-800 dark:hover:to-slate-700 rounded-xl transition-all duration-300 lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="p-2.5 hover:bg-gradient-to-r hover:from-red-100 hover:to-pink-100 dark:hover:from-red-900/30 dark:hover:to-pink-900/30 rounded-xl transition-all duration-300 text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400 hover:scale-105"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
           </div>
+          
+          {/* Collapse Button */}
+          <button
+            onClick={onClose}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 rounded-xl hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 dark:hover:from-purple-900/20 dark:hover:to-pink-900/20 transition-all duration-300 text-sm font-semibold border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-600"
+          >
+            <PanelRightClose className="w-4 h-4" />
+            <span>Collapse Comments</span>
+          </button>
         </div>
 
         {/* Comments List */}

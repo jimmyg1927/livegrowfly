@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { 
   X, ChevronRight, ChevronLeft, Zap, BookOpen, Image, 
-  Users, Settings, Play, CheckCircle, Lightbulb
+  Users, Settings, Play, CheckCircle, Sparkles, ArrowRight, Heart
 } from 'lucide-react'
 
 interface GrowflyTutorialProps {
@@ -17,7 +17,7 @@ interface TutorialStep {
   content: string
   icon: React.ReactNode
   target?: string
-  tip?: string
+  explanation?: string
 }
 
 const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({ 
@@ -28,139 +28,161 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
   const [currentStep, setCurrentStep] = useState(0)
   const [showSkipModal, setShowSkipModal] = useState(false)
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null)
+  const [isAnimating, setIsAnimating] = useState(false)
   const [elementFound, setElementFound] = useState(true)
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const observerRef = useRef<MutationObserver | null>(null)
 
-  // Start tutorial when prop changes
+  // Initialize tutorial
   useEffect(() => {
     if (isFirstTime) {
-      setIsActive(true)
-      setCurrentStep(0)
-      // Lock body scroll
-      document.body.style.overflow = 'hidden'
+      // Ensure DOM is ready
+      setTimeout(() => {
+        document.body.style.overflow = 'hidden'
+        document.body.style.userSelect = 'none'
+        setIsActive(true)
+        setCurrentStep(0)
+      }, 100)
     }
   }, [isFirstTime])
 
-  // Cleanup scroll lock when tutorial ends
+  // Cleanup
   useEffect(() => {
-    if (!isActive) {
-      document.body.style.overflow = ''
-    }
     return () => {
       document.body.style.overflow = ''
+      document.body.style.userSelect = ''
+      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current)
+      if (observerRef.current) observerRef.current.disconnect()
     }
-  }, [isActive])
+  }, [])
 
-  // Enhanced tutorial steps with UK English and cleaner design
+  // Tutorial steps with bulletproof targeting
   const tutorialSteps: TutorialStep[] = [
     {
       id: 'welcome',
       title: 'Welcome to Growfly',
-      content: 'Growfly is your perfect bespoke AI assistant designed to help you and your business dramatically increase output and efficiency. Let\'s explore how Growfly can transform your workflow in just 2 minutes.',
-      icon: <Play className="w-6 h-6 text-white" />
+      content: 'Your intelligent AI assistant is ready to transform how you work. Let\'s explore the key features that will boost your productivity.',
+      icon: <Sparkles className="w-6 h-6" />,
+      explanation: 'This quick tour will show you exactly how to use each section effectively.'
     },
     {
       id: 'dashboard',
-      title: 'Dashboard - Your AI Command Centre',
-      content: 'This is your central hub for AI-powered productivity. Upload any file type, engage in intelligent conversations with your AI assistant, and generate high-quality outputs instantly. Everything is designed to amplify your business capabilities.',
-      icon: <Zap className="w-5 h-5 text-blue-600" />,
-      target: '[href="/dashboard"], a[href*="dashboard"], nav a[aria-current="page"], .sidebar a:first-child',
-      tip: 'Start by uploading a document or image and ask Growfly to analyse it and suggest improvements or create related content.'
+      title: 'Dashboard',
+      content: 'Your central workspace for AI conversations, file uploads, and content generation.',
+      icon: <Zap className="w-5 h-5" />,
+      target: 'dashboard',
+      explanation: 'Start conversations, upload files, and generate content here. This is your main workspace.'
+    },
+    {
+      id: 'collab-zone',
+      title: 'Collab Zone',
+      content: 'Collaborate with team members and share AI-generated insights across your organisation.',
+      icon: <Users className="w-5 h-5" />,
+      target: 'collab-zone',
+      explanation: 'Work together on projects and share knowledge with your team members.'
     },
     {
       id: 'saved-responses',
-      title: 'Saved Responses - Your Knowledge Base',
-      content: 'Build your personal library of AI-generated insights, templates, and solutions. Save your best outputs to create repeatable processes that scale your business efficiency and maintain consistency across projects.',
-      icon: <BookOpen className="w-5 h-5 text-blue-600" />,
-      target: '[href="/saved"], [href="/saved-responses"], a[href*="saved"], nav a:contains("Saved")',
-      tip: 'Organise saved responses by project type or business function to quickly access proven templates.'
+      title: 'Saved Responses',
+      content: 'Your personal library of AI outputs, templates, and reusable content.',
+      icon: <BookOpen className="w-5 h-5" />,
+      target: 'saved-responses',
+      explanation: 'Save your best outputs as templates to maintain consistency and speed up future work.'
+    },
+    {
+      id: 'wishlist',
+      title: 'Wishlist',
+      content: 'Keep track of ideas, inspiration, and future projects you want to explore.',
+      icon: <Heart className="w-5 h-5" />,
+      target: 'wishlist',
+      explanation: 'Never lose a brilliant idea again. Store inspiration for future projects here.'
     },
     {
       id: 'gallery',
-      title: 'Gallery - Visual Asset Hub',
-      content: 'Your centralised visual content library where all AI-generated images are automatically organised. Download in multiple formats, share directly to platforms, and maintain brand consistency across all your visual communications.',
-      icon: <Image className="w-5 h-5 text-blue-600" />,
-      target: '[href="/gallery"], a[href*="gallery"], nav a:contains("Gallery")',
-      tip: 'Use consistent visual themes and prompts to build a cohesive brand image library over time.'
-    },
-    {
-      id: 'collaboration',
-      title: 'Collaboration - Team Productivity Hub',
-      content: 'Multiply your team\'s output by sharing AI insights, collaborating on projects in real-time, and building collective knowledge. Perfect for businesses looking to scale their operations through intelligent collaboration.',
-      icon: <Users className="w-5 h-5 text-blue-600" />,
-      target: '[href="/collab-zone"], [href="/collaboration"], a[href*="collab"], nav a:contains("Collab")',
-      tip: 'Create dedicated workspaces for different teams or projects to maintain focus and organisation.'
-    },
-    {
-      id: 'settings',
-      title: 'Brand Settings - Personalise Your AI',
-      content: 'Train Growfly to understand your unique business voice, target market, and industry specifics. The more you customise these settings, the more your AI assistant becomes an extension of your business expertise.',
-      icon: <Settings className="w-5 h-5 text-blue-600" />,
-      target: '[href="/brand-settings"], a[href*="brand"], nav a:contains("Brand"), nav a:contains("Settings")',
-      tip: 'Invest time in detailed brand settings - this transforms generic AI into your personal business consultant.'
+      title: 'Gallery',
+      content: 'Browse, organise, and manage all your AI-generated images and visual content.',
+      icon: <Image className="w-5 h-5" />,
+      target: 'gallery',
+      explanation: 'All your visual content in one organised space. Download, share, and manage images easily.'
     },
     {
       id: 'complete',
-      title: 'Ready to Amplify Your Business',
-      content: 'You\'re now equipped to leverage Growfly\'s full potential. Your bespoke AI assistant is ready to help you increase output, streamline operations, and achieve better business results. Start with any task and watch your productivity soar!',
-      icon: <CheckCircle className="w-6 h-6 text-white" />
+      title: 'You\'re Ready to Go!',
+      content: 'Your AI assistant is now ready to help you create amazing content and boost your productivity. Start exploring!',
+      icon: <CheckCircle className="w-6 h-6" />,
+      explanation: 'Begin with any section that interests you most. Your AI-powered journey starts now!'
     }
   ]
 
-  // Enhanced element finding with better targeting
-  const findTargetElement = useCallback((step: TutorialStep): HTMLElement | null => {
-    if (!step.target || typeof document === 'undefined') return null
-    
-    try {
-      const selectors = step.target.split(', ').map(s => s.trim()).filter(Boolean)
-      
-      // Prioritise exact matches first
-      const prioritisedSelectors = selectors.sort((a, b) => {
-        if (a.includes('href="/') && !b.includes('href="/')) return -1
-        if (!a.includes('href="/') && b.includes('href="/')) return 1
-        return 0
-      })
-      
-      for (const selector of prioritisedSelectors) {
-        try {
-          // Handle :contains() pseudo-selector
-          if (selector.includes(':contains(')) {
-            const match = selector.match(/(.+):contains\(["'](.+)["']\)/)
-            if (match) {
-              const [, baseSelector, text] = match
-              const elements = document.querySelectorAll(baseSelector)
-              for (const el of Array.from(elements)) {
-                if (el.textContent?.trim().includes(text.trim())) {
-                  const element = el as HTMLElement
-                  if (element?.offsetParent !== null && 
-                      element.getBoundingClientRect().width > 0 &&
-                      element.getBoundingClientRect().height > 0 &&
-                      !element.hidden) {
-                    return element
-                  }
-                }
-              }
-            }
-          } else {
-            const element = document.querySelector(selector) as HTMLElement
-            if (element?.offsetParent !== null && 
-                element.getBoundingClientRect().width > 0 &&
-                element.getBoundingClientRect().height > 0 &&
-                !element.hidden) {
-              return element
-            }
-          }
-        } catch (selectorError) {
-          continue
-        }
-      }
-      
-      return null
-    } catch (error) {
-      return null
+  // Bulletproof element finder with multiple strategies
+  const findTargetElement = useCallback((targetId: string): HTMLElement | null => {
+    if (!targetId) return null
+
+    // Strategy 1: Direct href matching (most reliable)
+    const hrefSelectors = [
+      `a[href="/${targetId}"]`,
+      `a[href*="/${targetId}"]`,
+      `[href="/${targetId}"]`,
+      `[href*="/${targetId}"]`
+    ]
+
+    for (const selector of hrefSelectors) {
+      try {
+        const elements = Array.from(document.querySelectorAll(selector)) as HTMLElement[]
+        const visibleElement = elements.find(el => {
+          const rect = el.getBoundingClientRect()
+          return rect.width > 0 && rect.height > 0 && el.offsetParent !== null
+        })
+        if (visibleElement) return visibleElement
+      } catch {}
     }
+
+    // Strategy 2: Text content matching
+    const textSelectors = ['a', 'button', 'nav a', '.sidebar a', '[role="menuitem"]']
+    const searchTexts = {
+      'dashboard': ['Dashboard', 'dashboard'],
+      'collab-zone': ['Collab Zone', 'Collab', 'Collaboration'],
+      'saved-responses': ['Saved Responses', 'Saved', 'saved'],
+      'wishlist': ['Wishlist', 'wishlist'],
+      'gallery': ['Gallery', 'gallery']
+    }
+
+    const textsToSearch = searchTexts[targetId as keyof typeof searchTexts] || []
+    
+    for (const selector of textSelectors) {
+      try {
+        const elements = Array.from(document.querySelectorAll(selector)) as HTMLElement[]
+        for (const text of textsToSearch) {
+          const element = elements.find(el => {
+            const hasText = el.textContent?.trim().toLowerCase().includes(text.toLowerCase())
+            const rect = el.getBoundingClientRect()
+            const isVisible = rect.width > 0 && rect.height > 0 && el.offsetParent !== null
+            return hasText && isVisible
+          })
+          if (element) return element
+        }
+      } catch {}
+    }
+
+    // Strategy 3: Data attributes and classes
+    const attributeSelectors = [
+      `[data-testid*="${targetId}"]`,
+      `[data-page="${targetId}"]`,
+      `[class*="${targetId}"]`,
+      `[id*="${targetId}"]`
+    ]
+
+    for (const selector of attributeSelectors) {
+      try {
+        const element = document.querySelector(selector) as HTMLElement
+        if (element?.offsetParent) return element
+      } catch {}
+    }
+
+    return null
   }, [])
 
+  // Enhanced target element updater with observer
   const updateTargetElement = useCallback((step: TutorialStep) => {
     if (!step.target) {
       setTargetRect(null)
@@ -168,163 +190,178 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
       return
     }
 
-    let retryCount = 0
-    const maxRetries = 4
+    setElementFound(false)
+    let attempts = 0
+    const maxAttempts = 8
 
-    const attemptFind = () => {
-      try {
-        const element = findTargetElement(step)
-        
-        if (element) {
-          setTimeout(() => {
+    const findAndSetTarget = () => {
+      const element = findTargetElement(step.target!)
+      
+      if (element) {
+        // Double-check element is still visible
+        setTimeout(() => {
+          if (element.offsetParent) {
             const rect = element.getBoundingClientRect()
-            
-            if (rect && 
-                rect.width > 0 && 
-                rect.height > 0 && 
-                rect.top >= 0 && 
-                rect.left >= 0 &&
-                rect.top < window.innerHeight &&
-                rect.left < window.innerWidth) {
-              
+            if (rect.width > 0 && rect.height > 0) {
               setTargetRect(rect)
               setElementFound(true)
               
-              // Smooth scroll to element
+              // Gentle scroll to element
               element.scrollIntoView({ 
                 behavior: 'smooth', 
                 block: 'center',
                 inline: 'nearest'
               })
-              return true
+              return
             }
-          }, 100)
-          return true
-        }
-        
-        retryCount++
-        
-        if (retryCount < maxRetries) {
-          retryTimeoutRef.current = setTimeout(attemptFind, 300 + (retryCount * 200))
-          return false
-        } else {
-          setTargetRect(null)
-          setElementFound(false)
-          return true
-        }
-      } catch (error) {
-        retryCount++
-        if (retryCount < maxRetries) {
-          retryTimeoutRef.current = setTimeout(attemptFind, 300 + (retryCount * 200))
-        } else {
-          setTargetRect(null)
-          setElementFound(false)
-        }
-        return false
+          }
+          
+          // Element became invisible, retry
+          attempts++
+          if (attempts < maxAttempts) {
+            setTimeout(findAndSetTarget, 300)
+          } else {
+            setTargetRect(null)
+            setElementFound(false)
+          }
+        }, 100)
+        return
+      }
+      
+      attempts++
+      if (attempts < maxAttempts) {
+        setTimeout(findAndSetTarget, 200 + (attempts * 100))
+      } else {
+        setTargetRect(null)
+        setElementFound(false)
       }
     }
 
-    setTimeout(attemptFind, 150)
-  }, [findTargetElement])
+    // Start finding after a brief delay
+    setTimeout(findAndSetTarget, 150)
 
-  // Update target element when step changes
+    // Set up observer for DOM changes (throttled for performance)
+    if (observerRef.current) observerRef.current.disconnect()
+    
+    if (attempts < 3) { // Only observe for first few attempts
+      observerRef.current = new MutationObserver(() => {
+        if (!elementFound && attempts < maxAttempts) {
+          setTimeout(findAndSetTarget, 100) // Throttled
+        }
+      })
+
+      observerRef.current.observe(document.body, {
+        childList: true,
+        subtree: false, // Reduced scope for performance
+        attributes: false // Disable attribute watching for performance
+      })
+    }
+  }, [findTargetElement, elementFound])
+
+  // Update target when step changes
   useEffect(() => {
     if (isActive) {
+      setIsAnimating(true)
       updateTargetElement(tutorialSteps[currentStep])
+      setTimeout(() => setIsAnimating(false), 400)
     }
   }, [currentStep, isActive, updateTargetElement])
 
   const currentStepData = tutorialSteps[currentStep]
   const progress = ((currentStep + 1) / tutorialSteps.length) * 100
-  const isLastStep = currentStep === tutorialSteps.length - 1
   const isFirstStep = currentStep === 0
+  const isLastStep = currentStep === tutorialSteps.length - 1
   const isWelcomeStep = currentStepData.id === 'welcome'
   const isCompleteStep = currentStepData.id === 'complete'
   const hasTarget = currentStepData.target && targetRect && elementFound
+  const isMobile = window.innerWidth < 768
 
-  // Improved tooltip positioning with better viewport handling
-  const getTooltipPosition = useCallback(() => {
-    const tooltipWidth = 520
-    const tooltipHeight = 320 // Reduced height
-    const viewportWidth = window.innerWidth
-    const viewportHeight = window.innerHeight
-    const padding = 20
+  // Bulletproof positioning system
+  const getModalPosition = useCallback(() => {
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    const isMobile = vw < 768
+    const isSmallMobile = vw < 400
+    
+    // Responsive sizing
+    const baseWidth = isSmallMobile ? 340 : isMobile ? 380 : 440
+    const baseHeight = isSmallMobile ? 280 : isMobile ? 300 : 320
+    const padding = isSmallMobile ? 16 : isMobile ? 18 : 20
 
-    // Ensure modal fits in viewport with safe margins
-    const actualWidth = Math.min(tooltipWidth, viewportWidth - padding * 2)
-    const actualHeight = Math.min(tooltipHeight, viewportHeight - padding * 2)
+    // Ensure minimum viable size with better mobile handling
+    const modalWidth = Math.min(baseWidth, vw - padding * 2)
+    const modalHeight = Math.min(baseHeight, vh - padding * 2)
 
-    // Welcome and complete steps - always centre
-    if (isWelcomeStep || isCompleteStep || viewportWidth < 1200 || !targetRect || !hasTarget) {
+    // Welcome/Complete or no target - center with animation
+    if (isWelcomeStep || isCompleteStep || !hasTarget || !targetRect) {
       return {
         position: 'fixed' as const,
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        zIndex: 1000,
-        width: `${actualWidth}px`,
-        maxHeight: `${actualHeight}px`,
+        width: `${modalWidth}px`,
+        maxHeight: `${modalHeight}px`,
+        zIndex: 1001
       }
     }
 
-    // Desktop positioning with better viewport awareness
+    // Calculate optimal position relative to target
+    const targetCenterX = targetRect.left + targetRect.width / 2
+    const targetCenterY = targetRect.top + targetRect.height / 2
+
+    // Position strategies in order of preference
     const strategies = [
-      // Right of target (preferred for sidebar)
+      // Right of target (ideal for sidebar navigation)
       {
-        top: Math.max(padding, Math.min(
-          targetRect.top + (targetRect.height / 2) - (actualHeight / 2), 
-          viewportHeight - actualHeight - padding
-        )),
-        left: targetRect.right + padding,
-        valid: targetRect.right + padding + actualWidth <= viewportWidth - padding
+        name: 'right',
+        top: Math.max(padding, Math.min(targetCenterY - modalHeight / 2, vh - modalHeight - padding)),
+        left: targetRect.right + 20,
+        isValid: () => targetRect.right + 20 + modalWidth <= vw - padding
       },
       // Left of target
       {
-        top: Math.max(padding, Math.min(
-          targetRect.top + (targetRect.height / 2) - (actualHeight / 2), 
-          viewportHeight - actualHeight - padding
-        )),
-        left: targetRect.left - actualWidth - padding,
-        valid: targetRect.left - actualWidth - padding >= padding
+        name: 'left',
+        top: Math.max(padding, Math.min(targetCenterY - modalHeight / 2, vh - modalHeight - padding)),
+        left: targetRect.left - modalWidth - 20,
+        isValid: () => targetRect.left - modalWidth - 20 >= padding
       },
-      // Below target, centred
+      // Below target
       {
-        top: Math.min(targetRect.bottom + padding, viewportHeight - actualHeight - padding),
-        left: Math.max(padding, Math.min(
-          targetRect.left + targetRect.width/2 - actualWidth/2, 
-          viewportWidth - actualWidth - padding
-        )),
-        valid: targetRect.bottom + padding + actualHeight <= viewportHeight - padding
+        name: 'below',
+        top: Math.min(targetRect.bottom + 20, vh - modalHeight - padding),
+        left: Math.max(padding, Math.min(targetCenterX - modalWidth / 2, vw - modalWidth - padding)),
+        isValid: () => targetRect.bottom + 20 + modalHeight <= vh - padding
       },
-      // Above target, centred
+      // Above target
       {
-        top: Math.max(padding, targetRect.top - actualHeight - padding),
-        left: Math.max(padding, Math.min(
-          targetRect.left + targetRect.width/2 - actualWidth/2, 
-          viewportWidth - actualWidth - padding
-        )),
-        valid: targetRect.top - actualHeight - padding >= padding
+        name: 'above',
+        top: Math.max(padding, targetRect.top - modalHeight - 20),
+        left: Math.max(padding, Math.min(targetCenterX - modalWidth / 2, vw - modalWidth - padding)),
+        isValid: () => targetRect.top - modalHeight - 20 >= padding
       },
-      // Fallback: centre screen with safe margins
+      // Fallback: center screen
       {
-        top: Math.max(padding, (viewportHeight - actualHeight) / 2),
-        left: Math.max(padding, (viewportWidth - actualWidth) / 2),
-        valid: true
+        name: 'center',
+        top: Math.max(padding, (vh - modalHeight) / 2),
+        left: Math.max(padding, (vw - modalWidth) / 2),
+        isValid: () => true
       }
     ]
 
-    const bestStrategy = strategies.find(s => s.valid) || strategies[strategies.length - 1]
-    
+    // Find first valid strategy
+    const strategy = strategies.find(s => s.isValid()) || strategies[strategies.length - 1]
+
     return {
       position: 'fixed' as const,
-      top: `${bestStrategy.top}px`,
-      left: `${bestStrategy.left}px`,
-      zIndex: 1000,
-      width: `${actualWidth}px`,
-      maxHeight: `${actualHeight}px`,
+      top: `${strategy.top}px`,
+      left: `${strategy.left}px`,
+      width: `${modalWidth}px`,
+      maxHeight: `${modalHeight}px`,
+      zIndex: 1001
     }
   }, [targetRect, hasTarget, isWelcomeStep, isCompleteStep])
 
+  // Navigation functions
   const nextStep = useCallback(() => {
     if (isLastStep) {
       closeTutorial()
@@ -343,270 +380,269 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
     setIsActive(false)
     setCurrentStep(0)
     setTargetRect(null)
-    document.body.style.overflow = '' // Restore scroll
+    document.body.style.overflow = ''
+    document.body.style.userSelect = ''
     if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current)
+    if (observerRef.current) observerRef.current.disconnect()
     onComplete?.()
   }, [onComplete])
 
-  const handleSkip = useCallback(() => {
-    setShowSkipModal(true)
-  }, [])
-
+  const handleSkip = useCallback(() => setShowSkipModal(true), [])
   const confirmSkip = useCallback(() => {
     setShowSkipModal(false)
     closeTutorial()
   }, [closeTutorial])
 
-  const cancelSkip = useCallback(() => {
-    setShowSkipModal(false)
-  }, [])
-
-  // Handle keyboard navigation
+  // Keyboard navigation
   useEffect(() => {
+    if (!isActive) return
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isActive) return
-      
-      switch (e.key) {
+      // Prevent default browser shortcuts during tutorial
+      if (['Space', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(e.code)) {
+        e.preventDefault()
+      }
+
+      switch (e.code) {
         case 'Escape':
           handleSkip()
           break
         case 'ArrowRight':
-        case ' ':
+        case 'Space':
         case 'Enter':
-          e.preventDefault()
           nextStep()
           break
         case 'ArrowLeft':
-          e.preventDefault()
           prevStep()
           break
       }
     }
 
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
+    document.addEventListener('keydown', handleKeyDown, { capture: true })
+    return () => document.removeEventListener('keydown', handleKeyDown, { capture: true })
   }, [isActive, nextStep, prevStep, handleSkip])
-
-  // Cleanup
-  useEffect(() => {
-    return () => {
-      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current)
-      document.body.style.overflow = ''
-    }
-  }, [])
 
   if (!isActive) return null
 
   return (
     <>
-      {/* Enhanced Overlay System */}
-      <div className="fixed inset-0 z-50 transition-all duration-500">
+      {/* Main Overlay Container */}
+      <div className="fixed inset-0 z-50 select-none">
         
-        {/* Welcome/Complete Step: Full Opaque Blue Background */}
+        {/* Welcome/Complete: Premium Animated Background */}
         {(isWelcomeStep || isCompleteStep) && (
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 transition-all duration-700" />
+          <div className="absolute inset-0">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-blue-500/20 to-purple-600/30 animate-pulse" />
+            <div className="absolute inset-0 opacity-30">
+              <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-bounce" style={{ animationDuration: '6s' }} />
+              <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-purple-300/20 rounded-full blur-2xl animate-bounce" style={{ animationDuration: '8s', animationDelay: '2s' }} />
+            </div>
+          </div>
         )}
         
-        {/* Other Steps: Spotlight effect for highlighted elements */}
-        {!isWelcomeStep && !isCompleteStep && hasTarget && targetRect && (
+        {/* Navigation Steps: Enhanced Spotlight System */}
+        {!isWelcomeStep && !isCompleteStep && (
           <>
-            {/* Dark overlay with precise spotlight cutout */}
-            <div 
-              className="absolute inset-0 transition-all duration-700 pointer-events-none"
-              style={{
-                background: `radial-gradient(ellipse ${Math.round(targetRect.width + 60)}px ${Math.round(targetRect.height + 60)}px at ${Math.round(targetRect.left + targetRect.width/2)}px ${Math.round(targetRect.top + targetRect.height/2)}px, transparent 0%, transparent 15%, rgba(0, 0, 0, 0.75) 65%)`
-              }}
-            />
+            {/* Base dark overlay */}
+            <div className="absolute inset-0 bg-black/75 transition-all duration-500" />
             
-            {/* Animated blue border around target */}
-            <div 
-              className="absolute transition-all duration-700 pointer-events-none"
-              style={{
-                top: Math.round(targetRect.top - 6),
-                left: Math.round(targetRect.left - 6),
-                width: Math.round(targetRect.width + 12),
-                height: Math.round(targetRect.height + 12),
-                border: '3px solid #3B82F6',
-                borderRadius: '16px',
-                boxShadow: '0 0 0 1px rgba(59, 130, 246, 0.3), 0 0 20px rgba(59, 130, 246, 0.4)',
-                animation: 'glow-pulse 2s ease-in-out infinite alternate'
-              }}
-            />
-            
-            {/* Inner highlight */}
-            <div 
-              className="absolute transition-all duration-700 pointer-events-none"
-              style={{
-                top: Math.round(targetRect.top - 2),
-                left: Math.round(targetRect.left - 2),
-                width: Math.round(targetRect.width + 4),
-                height: Math.round(targetRect.height + 4),
-                border: '1px solid rgba(255, 255, 255, 0.6)',
-                borderRadius: '12px',
-                background: 'rgba(255, 255, 255, 0.05)'
-              }}
-            />
+            {/* Spotlight and highlighting */}
+            {hasTarget && targetRect && (
+              <>
+                {/* Main spotlight effect */}
+                <div 
+                  className="absolute inset-0 pointer-events-none transition-all duration-700 ease-out"
+                  style={{
+                    background: `radial-gradient(ellipse ${Math.max(targetRect.width + 100, 200)}px ${Math.max(targetRect.height + 100, 200)}px at ${targetRect.left + targetRect.width/2}px ${targetRect.top + targetRect.height/2}px, transparent 0%, transparent 25%, rgba(0, 0, 0, 0.85) 70%)`
+                  }}
+                />
+                
+                {/* Animated gradient border - simplified for performance */}
+                <div 
+                  className="absolute pointer-events-none transition-all duration-700 ease-out"
+                  style={{
+                    top: targetRect.top - (isMobile ? 8 : 12),
+                    left: targetRect.left - (isMobile ? 8 : 12),
+                    width: targetRect.width + (isMobile ? 16 : 24),
+                    height: targetRect.height + (isMobile ? 16 : 24),
+                    borderRadius: isMobile ? '12px' : '16px',
+                    background: isMobile ? '#3B82F6' : 'linear-gradient(45deg, #3B82F6, #8B5CF6, #EC4899, #3B82F6)',
+                    backgroundSize: isMobile ? '100% 100%' : '400% 400%',
+                    padding: '3px',
+                    animation: isMobile ? 'none' : 'gradient-border 4s ease infinite'
+                  }}
+                >
+                  <div 
+                    className="w-full h-full bg-transparent rounded-xl"
+                    style={{ borderRadius: isMobile ? '9px' : '12px' }}
+                  />
+                </div>
+                
+                {/* Inner glow ring */}
+                <div 
+                  className="absolute pointer-events-none transition-all duration-700 ease-out"
+                  style={{
+                    top: targetRect.top - 6,
+                    left: targetRect.left - 6,
+                    width: targetRect.width + 12,
+                    height: targetRect.height + 12,
+                    borderRadius: '12px',
+                    border: '2px solid rgba(255, 255, 255, 0.6)',
+                    boxShadow: '0 0 30px rgba(59, 130, 246, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.1)',
+                    animation: 'glow-pulse 2s ease-in-out infinite alternate'
+                  }}
+                />
+                
+                {/* Subtle inner highlight */}
+                <div 
+                  className="absolute pointer-events-none transition-all duration-700 ease-out"
+                  style={{
+                    top: targetRect.top - 2,
+                    left: targetRect.left - 2,
+                    width: targetRect.width + 4,
+                    height: targetRect.height + 4,
+                    borderRadius: '8px',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)'
+                  }}
+                />
+              </>
+            )}
           </>
-        )}
-
-        {/* Other Steps: Standard dark overlay when no target */}
-        {!isWelcomeStep && !isCompleteStep && (!hasTarget || !targetRect) && (
-          <div className="absolute inset-0 bg-black/60 transition-all duration-700" />
         )}
 
         {/* Tutorial Modal */}
         <div 
-          style={getTooltipPosition()}
-          className="transition-all duration-500"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="tutorial-title"
+          style={getModalPosition()}
+          className={`transition-all duration-500 ease-out ${
+            isAnimating ? 'scale-95 opacity-80' : 'scale-100 opacity-100'
+          }`}
         >
-          <div className={`rounded-3xl shadow-2xl border flex flex-col overflow-hidden ${
+          <div className={`rounded-2xl shadow-2xl overflow-hidden border-2 backdrop-fallback ${
             isWelcomeStep || isCompleteStep 
-              ? 'bg-white/95 backdrop-blur-sm border-white/20' 
-              : 'bg-white border-gray-100'
-          }`} style={{ height: 'fit-content', maxHeight: '100%' }}>
+              ? 'bg-white/98 border-white/30 shadow-white/20' 
+              : 'bg-white border-gray-200'
+          }`} style={{ 
+            backdropFilter: 'blur(12px)', 
+            WebkitBackdropFilter: 'blur(12px)' 
+          }}>
             
-            {/* Header */}
-            <div className={`flex items-center justify-between p-5 border-b flex-shrink-0 ${
+            {/* Header Section */}
+            <div className={`relative overflow-hidden ${
               isWelcomeStep || isCompleteStep 
-                ? 'border-white/20 bg-white/50' 
-                : 'border-gray-100'
+                ? 'bg-gradient-to-r from-white/20 to-white/10 border-b border-white/20' 
+                : 'bg-gradient-to-r from-gray-50 to-white border-b border-gray-100'
             }`}>
-              <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center border ${
-                  isWelcomeStep || isCompleteStep
-                    ? 'bg-white/20 border-white/30 backdrop-blur-sm'
-                    : 'bg-blue-50 border-blue-100'
-                }`}>
-                  {currentStepData.icon}
-                </div>
-                <div>
-                  <h2 id="tutorial-title" className={`text-xl font-semibold ${
-                    isWelcomeStep || isCompleteStep ? 'text-white' : 'text-gray-900'
-                  }`}>
-                    {currentStepData.title}
-                  </h2>
-                  <div className={`flex items-center gap-2 text-sm ${
-                    isWelcomeStep || isCompleteStep ? 'text-white/80' : 'text-gray-500'
-                  }`}>
-                    <span>Step {currentStep + 1} of {tutorialSteps.length}</span>
-                    <span>•</span>
-                    <span>Growfly Tutorial</span>
+              
+              {/* Animated background for special steps */}
+              {(isWelcomeStep || isCompleteStep) && (
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/5 to-pink-500/10 animate-gradient-x" />
+              )}
+              
+              <div className="relative z-10 p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 shadow-lg ${
+                      isWelcomeStep || isCompleteStep
+                        ? 'bg-white/20 border-white/40 text-white backdrop-blur-sm shadow-white/20'
+                        : 'bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200 text-blue-600'
+                    }`}>
+                      {currentStepData.icon}
+                    </div>
+                    <div>
+                      <h3 className={`text-xl font-bold tracking-tight ${
+                        isWelcomeStep || isCompleteStep ? 'text-white' : 'text-gray-900'
+                      }`}>
+                        {currentStepData.title}
+                      </h3>
+                      <p className={`text-sm font-medium ${
+                        isWelcomeStep || isCompleteStep ? 'text-white/80' : 'text-gray-500'
+                      }`}>
+                        Step {currentStep + 1} of {tutorialSteps.length} • Growfly Tutorial
+                      </p>
+                    </div>
                   </div>
+                  
+                  <button
+                    onClick={handleSkip}
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105 ${
+                      isWelcomeStep || isCompleteStep
+                        ? 'hover:bg-white/20 text-white/70 hover:text-white'
+                        : 'hover:bg-gray-100 text-gray-400 hover:text-gray-600'
+                    }`}
+                    aria-label="Skip tutorial"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
-              <button
-                onClick={handleSkip}
-                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 ${
-                  isWelcomeStep || isCompleteStep
-                    ? 'hover:bg-white/20 text-white/70 hover:text-white'
-                    : 'hover:bg-gray-100 text-gray-400 hover:text-gray-600'
-                }`}
-                aria-label="Skip tutorial"
-              >
-                <X className="w-5 h-5" />
-              </button>
             </div>
 
-            {/* Content */}
-            <div className="flex-1 p-5 overflow-y-auto">
-              <div className="mb-5">
-                <p className={`leading-relaxed mb-4 ${
-                  isWelcomeStep || isCompleteStep ? 'text-white/90' : 'text-gray-700'
+            {/* Content Section */}
+            <div className="p-6">
+              <div className="mb-6">
+                <p className={`text-base leading-relaxed mb-4 ${
+                  isWelcomeStep || isCompleteStep ? 'text-gray-700' : 'text-gray-700'
                 }`}>
                   {currentStepData.content}
                 </p>
 
-                {/* Pro tip */}
-                {currentStepData.tip && (
-                  <div className={`rounded-xl p-4 ${
-                    isWelcomeStep || isCompleteStep
-                      ? 'bg-white/20 border border-white/30 backdrop-blur-sm'
-                      : 'bg-amber-50 border border-amber-200'
-                  }`}>
-                    <div className="flex items-start gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                        isWelcomeStep || isCompleteStep
-                          ? 'bg-white/20'
-                          : 'bg-amber-100'
-                      }`}>
-                        <Lightbulb className={`w-4 h-4 ${
-                          isWelcomeStep || isCompleteStep ? 'text-white' : 'text-amber-600'
-                        }`} />
-                      </div>
-                      <div>
-                        <p className={`font-medium text-sm mb-1 ${
-                          isWelcomeStep || isCompleteStep ? 'text-white' : 'text-amber-800'
-                        }`}>
-                          Pro Tip
-                        </p>
-                        <p className={`text-sm leading-relaxed ${
-                          isWelcomeStep || isCompleteStep ? 'text-white/90' : 'text-amber-700'
-                        }`}>
-                          {currentStepData.tip}
-                        </p>
-                      </div>
-                    </div>
+                {currentStepData.explanation && (
+                  <div className="p-4 rounded-xl border-2 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+                    <p className="text-blue-800 text-sm font-medium leading-relaxed">
+                      💡 {currentStepData.explanation}
+                    </p>
                   </div>
                 )}
               </div>
 
-              {/* Progress Bar */}
-              <div className="mb-1">
+              {/* Progress Section */}
+              <div className="mb-2">
                 <div className="flex justify-between items-center mb-3">
-                  <span className={`text-sm font-medium ${
-                    isWelcomeStep || isCompleteStep ? 'text-white/80' : 'text-gray-600'
-                  }`}>
-                    Progress
-                  </span>
-                  <span className={`text-sm font-semibold ${
-                    isWelcomeStep || isCompleteStep ? 'text-white' : 'text-blue-600'
-                  }`}>
+                  <span className="text-sm font-semibold text-gray-600">Tutorial Progress</span>
+                  <span className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
                     {Math.round(progress)}% Complete
                   </span>
                 </div>
-                <div className={`w-full rounded-full h-2 ${
-                  isWelcomeStep || isCompleteStep ? 'bg-white/20' : 'bg-gray-200'
-                }`}>
+                <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
                   <div 
-                    className={`h-2 rounded-full transition-all duration-500 ease-out ${
-                      isWelcomeStep || isCompleteStep 
-                        ? 'bg-gradient-to-r from-white to-white/80' 
-                        : 'bg-gradient-to-r from-blue-500 to-blue-600'
-                    }`}
-                    style={{ width: `${progress}%` }}
+                    className="h-3 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full transition-all duration-700 ease-out shadow-sm"
+                    style={{ 
+                      width: `${progress}%`,
+                      backgroundSize: '200% 100%',
+                      animation: progress < 100 ? 'gradient-flow 3s ease infinite' : 'none'
+                    }}
                   />
                 </div>
               </div>
             </div>
 
-            {/* Navigation Footer */}
-            <div className={`border-t p-5 flex-shrink-0 ${
+            {/* Footer Section */}
+            <div className={`p-6 border-t-2 ${
               isWelcomeStep || isCompleteStep 
-                ? 'border-white/20 bg-white/30 backdrop-blur-sm' 
-                : 'border-gray-100 bg-gray-50'
+                ? 'border-white/20 bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-sm' 
+                : 'border-gray-100 bg-gradient-to-r from-gray-50 to-white'
             }`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <button
                     onClick={handleSkip}
-                    className={`text-sm font-medium transition-colors px-4 py-2.5 rounded-xl border ${
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 hover:scale-105 ${
                       isWelcomeStep || isCompleteStep
-                        ? 'text-white/80 hover:text-white bg-white/10 hover:bg-white/20 border-white/30'
-                        : 'text-gray-500 hover:text-gray-700 bg-white hover:bg-gray-100 border-gray-200'
+                        ? 'text-white/80 hover:text-white bg-white/10 hover:bg-white/20'
+                        : 'text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-50 border border-gray-200'
                     }`}
                   >
-                    Skip tour
+                    Skip Tour
                   </button>
-                  {currentStep > 0 && (
+                  {!isFirstStep && (
                     <button
                       onClick={prevStep}
-                      className={`flex items-center gap-2 text-sm font-medium transition-all duration-200 px-4 py-2.5 rounded-xl border ${
+                      className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 hover:scale-105 ${
                         isWelcomeStep || isCompleteStep
-                          ? 'text-white/80 hover:text-white bg-white/10 hover:bg-white/20 border-white/30'
-                          : 'text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-100 border-gray-200'
+                          ? 'text-white/80 hover:text-white bg-white/10 hover:bg-white/20'
+                          : 'text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
                       <ChevronLeft className="w-4 h-4" />
@@ -617,21 +653,17 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
                 
                 <button
                   onClick={nextStep}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl ${
-                    isWelcomeStep || isCompleteStep
-                      ? 'bg-white text-blue-600 hover:bg-white/90'
-                      : 'bg-blue-600 hover:bg-blue-700 text-white'
-                  }`}
+                  className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
                 >
                   {isLastStep ? (
                     <>
                       <CheckCircle className="w-5 h-5" />
-                      Get Started
+                      Start Exploring
                     </>
                   ) : (
                     <>
                       Continue
-                      <ChevronRight className="w-5 h-5" />
+                      <ArrowRight className="w-5 h-5" />
                     </>
                   )}
                 </button>
@@ -643,46 +675,81 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
 
       {/* Skip Confirmation Modal */}
       {showSkipModal && (
-        <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-                <X className="w-5 h-5 text-blue-600" />
+        <div className="fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all duration-300 scale-100 border-2 border-gray-200">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-orange-200">
+                <X className="w-8 h-8 text-orange-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Skip Tutorial?
-              </h3>
-            </div>
-            <p className="text-gray-600 mb-6">
-              This tutorial shows you features that can significantly boost your business output. You can restart it later from Settings.
-            </p>
-            
-            <div className="flex gap-3">
-              <button
-                onClick={cancelSkip}
-                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 py-3 px-4 rounded-xl font-medium transition-all duration-200"
-              >
-                Continue Tour
-              </button>
-              <button
-                onClick={confirmSkip}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-xl font-medium transition-all duration-200"
-              >
-                Skip
-              </button>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Skip Tutorial?</h3>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                This quick tour shows you exactly how to use Growfly's key features effectively. 
+                You can restart it anytime from your settings.
+              </p>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowSkipModal(false)}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 py-3 px-4 rounded-xl font-semibold transition-all duration-200 hover:scale-105"
+                >
+                  Continue Tour
+                </button>
+                <button
+                  onClick={confirmSkip}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-200 hover:scale-105 shadow-lg"
+                >
+                  Skip Tutorial
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* CSS for glow animation */}
+      {/* Enhanced CSS Animations */}
       <style jsx global>{`
+        @keyframes gradient-border {
+          0%, 100% { background-position: 0% 50% }
+          50% { background-position: 100% 50% }
+        }
+        
+        @keyframes gradient-flow {
+          0%, 100% { background-position: 0% 50% }
+          50% { background-position: 100% 50% }
+        }
+        
+        @keyframes gradient-x {
+          0%, 100% { background-position: 0% 50% }
+          50% { background-position: 100% 50% }
+        }
+        
         @keyframes glow-pulse {
           0% { 
-            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.3), 0 0 20px rgba(59, 130, 246, 0.4);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.1);
           }
           100% { 
-            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5), 0 0 30px rgba(59, 130, 246, 0.6);
+            box-shadow: 0 0 40px rgba(59, 130, 246, 0.7), inset 0 0 30px rgba(255, 255, 255, 0.2);
+          }
+        }
+        
+        /* Backdrop-blur fallback for older browsers */
+        @supports not (backdrop-filter: blur(12px)) {
+          .backdrop-fallback {
+            background-color: rgba(255, 255, 255, 0.98) !important;
+          }
+        }
+        
+        .animate-gradient-x {
+          background-size: 400% 400%;
+          animation: gradient-x 8s ease infinite;
+        }
+        
+        /* Reduced motion preference */
+        @media (prefers-reduced-motion: reduce) {
+          * {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
           }
         }
       `}</style>
