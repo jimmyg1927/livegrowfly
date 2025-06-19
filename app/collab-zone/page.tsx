@@ -198,169 +198,6 @@ function GoogleDocsHeader({
   )
 }
 
-// Share Modal Component
-function ShareModal({ isOpen, onClose, activeDoc, onShare }: {
-  isOpen: boolean
-  onClose: () => void
-  activeDoc: Doc | null
-  onShare: (email?: string) => Promise<void>
-}) {
-  const [email, setEmail] = useState('')
-  const [shareLink, setShareLink] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [copySuccess, setCopySuccess] = useState(false)
-
-  const generateShareLink = useCallback(async () => {
-    if (!activeDoc) return
-    
-    setIsLoading(true)
-    try {
-      await onShare() // This will generate the link
-      const link = `${window.location.origin}/collab-zone?doc=${activeDoc.id}`
-      setShareLink(link)
-    } catch (error) {
-      console.error('Failed to generate share link:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [activeDoc, onShare])
-
-  const handleEmailShare = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!email.trim()) return
-    
-    setIsLoading(true)
-    try {
-      await onShare(email.trim())
-      setEmail('')
-      onClose()
-    } catch (error) {
-      console.error('Failed to share with email:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [email, onShare, onClose])
-
-  const copyToClipboard = useCallback(async () => {
-    if (!shareLink) return
-    
-    try {
-      await navigator.clipboard.writeText(shareLink)
-      setCopySuccess(true)
-      setTimeout(() => setCopySuccess(false), 2000)
-    } catch (error) {
-      console.error('Failed to copy to clipboard:', error)
-    }
-  }, [shareLink])
-
-  useEffect(() => {
-    if (isOpen && activeDoc) {
-      generateShareLink()
-    }
-  }, [isOpen, activeDoc, generateShareLink])
-
-  useEffect(() => {
-    if (!isOpen) {
-      setEmail('')
-      setShareLink('')
-      setCopySuccess(false)
-    }
-  }, [isOpen])
-
-  if (!isOpen || !activeDoc) return null
-
-  return (
-    <>
-      {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
-        onClick={onClose}
-      />
-      
-      {/* Modal */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.2 }}
-        className="fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-200/50 dark:border-slate-700/50 p-8 w-full max-w-md z-50"
-      >
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-            <Share2 className="w-6 h-6" />
-            Share Document
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-2xl transition-all duration-200"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="space-y-6">
-          {/* Share Link */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Anyone with the link
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={shareLink}
-                readOnly
-                className="flex-1 px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                placeholder={isLoading ? "Generating link..." : "Share link will appear here"}
-              />
-              <button
-                onClick={copyToClipboard}
-                disabled={!shareLink}
-                className={`px-4 py-3 rounded-2xl font-medium text-sm transition-all duration-200 ${
-                  copySuccess
-                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                    : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                {copySuccess ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              </button>
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              Anyone with this link can view and edit the document
-            </p>
-          </div>
-
-          {/* Email Share */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Share with specific people
-            </label>
-            <form onSubmit={handleEmailShare} className="space-y-3">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter email address"
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={isLoading}
-              />
-              <button
-                type="submit"
-                disabled={!email.trim() || isLoading}
-                className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 disabled:opacity-50 font-medium shadow-lg disabled:cursor-not-allowed"
-              >
-                {isLoading ? 'Sharing...' : 'Send Invitation'}
-              </button>
-            </form>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              They'll receive access to collaborate on this document
-            </p>
-          </div>
-        </div>
-      </motion.div>
-    </>
-  )
-}
-
 // Bottom Document Drawer
 function DocumentDrawer({ 
   isOpen, 
@@ -575,23 +412,9 @@ function BottomTabBar({ activeDoc, onToggleDrawer, onNewDoc }: {
           </button>
           
           {activeDoc && (
-            <div className={`hidden sm:flex items-center gap-2 px-3 py-2 rounded-2xl ${
-              isAutoSaving 
-                ? 'bg-yellow-50 dark:bg-yellow-900/20' 
-                : 'bg-blue-50 dark:bg-blue-900/20'
-            }`}>
-              <div className={`w-2 h-2 rounded-full ${
-                isAutoSaving 
-                  ? 'bg-yellow-500 animate-pulse' 
-                  : 'bg-green-500 animate-pulse'
-              }`}></div>
-              <span className={`text-sm font-medium ${
-                isAutoSaving 
-                  ? 'text-yellow-700 dark:text-yellow-300' 
-                  : 'text-blue-700 dark:text-blue-300'
-              }`}>
-                {isAutoSaving ? 'Saving...' : 'Auto-saved'}
-              </span>
+            <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-2xl">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Auto-saved</span>
             </div>
           )}
         </div>
@@ -618,6 +441,169 @@ function BottomTabBar({ activeDoc, onToggleDrawer, onNewDoc }: {
         </div>
       </div>
     </div>
+  )
+}
+
+// Share Modal Component
+function ShareModal({ isOpen, onClose, activeDoc, onShare }: {
+  isOpen: boolean
+  onClose: () => void
+  activeDoc: Doc | null
+  onShare: (email?: string) => Promise<void>
+}) {
+  const [email, setEmail] = useState('')
+  const [shareLink, setShareLink] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [copySuccess, setCopySuccess] = useState(false)
+
+  const generateShareLink = useCallback(async () => {
+    if (!activeDoc) return
+    
+    setIsLoading(true)
+    try {
+      await onShare() // This will generate the link
+      const link = `${window.location.origin}/collab-zone?doc=${activeDoc.id}`
+      setShareLink(link)
+    } catch (error) {
+      console.error('Failed to generate share link:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [activeDoc, onShare])
+
+  const handleEmailShare = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email.trim()) return
+    
+    setIsLoading(true)
+    try {
+      await onShare(email.trim())
+      setEmail('')
+      onClose()
+    } catch (error) {
+      console.error('Failed to share with email:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [email, onShare, onClose])
+
+  const copyToClipboard = useCallback(async () => {
+    if (!shareLink) return
+    
+    try {
+      await navigator.clipboard.writeText(shareLink)
+      setCopySuccess(true)
+      setTimeout(() => setCopySuccess(false), 2000)
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error)
+    }
+  }, [shareLink])
+
+  useEffect(() => {
+    if (isOpen && activeDoc) {
+      generateShareLink()
+    }
+  }, [isOpen, activeDoc, generateShareLink])
+
+  useEffect(() => {
+    if (!isOpen) {
+      setEmail('')
+      setShareLink('')
+      setCopySuccess(false)
+    }
+  }, [isOpen])
+
+  if (!isOpen || !activeDoc) return null
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+        onClick={onClose}
+      />
+      
+      {/* Modal */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.2 }}
+        className="fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-200/50 dark:border-slate-700/50 p-8 w-full max-w-md z-50"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+            <Share2 className="w-6 h-6" />
+            Share Document
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-2xl transition-all duration-200"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="space-y-6">
+          {/* Share Link */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Anyone with the link
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={shareLink}
+                readOnly
+                className="flex-1 px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                placeholder={isLoading ? "Generating link..." : "Share link will appear here"}
+              />
+              <button
+                onClick={copyToClipboard}
+                disabled={!shareLink}
+                className={`px-4 py-3 rounded-2xl font-medium text-sm transition-all duration-200 ${
+                  copySuccess
+                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                    : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {copySuccess ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              Anyone with this link can view and edit the document
+            </p>
+          </div>
+
+          {/* Email Share */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Share with specific people
+            </label>
+            <form onSubmit={handleEmailShare} className="space-y-3">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter email address"
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={isLoading}
+              />
+              <button
+                type="submit"
+                disabled={!email.trim() || isLoading}
+                className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 disabled:opacity-50 font-medium shadow-lg disabled:cursor-not-allowed"
+              >
+                {isLoading ? 'Sharing...' : 'Send Invitation'}
+              </button>
+            </form>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              They'll receive access to collaborate on this document
+            </p>
+          </div>
+        </div>
+      </motion.div>
+    </>
   )
 }
 
@@ -764,47 +750,6 @@ export default function GoogleDocsCollabZone() {
   // Comments state
   const [comments, setComments] = useState<Comment[]>([])
 
-  // Auto-save functionality
-  const autoSave = useCallback(async (doc: Doc) => {
-    const token = localStorage.getItem('growfly_jwt')
-    if (!token || !isValidToken(token)) return
-
-    setIsAutoSaving(true)
-    try {
-      const res = await fetch(`${API_URL}/api/collab/${doc.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          content: sanitizeInput(doc.content),
-          title: sanitizeInput(doc.title),
-        }),
-      })
-      
-      if (res.ok) {
-        const updated = await res.json()
-        setDocs(prev => prev.map(d => d.id === updated.id ? updated : d))
-      }
-    } catch (error) {
-      console.error('Auto-save failed:', error)
-    } finally {
-      setIsAutoSaving(false)
-    }
-  }, [])
-
-  // Auto-save effect
-  useEffect(() => {
-    if (!activeDoc) return
-
-    const timeoutId = setTimeout(() => {
-      autoSave(activeDoc)
-    }, 2000) // Auto-save after 2 seconds of inactivity
-
-    return () => clearTimeout(timeoutId)
-  }, [activeDoc?.content, autoSave])
-
   // Load comments from backend
   const loadComments = useCallback(async (docId: string, token: string) => {
     try {
@@ -898,6 +843,47 @@ export default function GoogleDocsCollabZone() {
     }
   }, [router, showStatus])
 
+  // Auto-save functionality
+  const autoSave = useCallback(async (doc: Doc) => {
+    const token = localStorage.getItem('growfly_jwt')
+    if (!token || !isValidToken(token)) return
+
+    setIsAutoSaving(true)
+    try {
+      const res = await fetch(`${API_URL}/api/collab/${doc.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          content: sanitizeInput(doc.content),
+          title: sanitizeInput(doc.title),
+        }),
+      })
+      
+      if (res.ok) {
+        const updated = await res.json()
+        setDocs(prev => prev.map(d => d.id === updated.id ? updated : d))
+      }
+    } catch (error) {
+      console.error('Auto-save failed:', error)
+    } finally {
+      setIsAutoSaving(false)
+    }
+  }, [])
+
+  // Auto-save effect
+  useEffect(() => {
+    if (!activeDoc) return
+
+    const timeoutId = setTimeout(() => {
+      autoSave(activeDoc)
+    }, 2000) // Auto-save after 2 seconds of inactivity
+
+    return () => clearTimeout(timeoutId)
+  }, [activeDoc?.content, autoSave])
+
   const showStatus = useCallback((type: 'success' | 'error', text: string) => {
     setStatusMsg({ type, text })
     setTimeout(() => setStatusMsg(null), 3000)
@@ -952,25 +938,6 @@ export default function GoogleDocsCollabZone() {
       setLoading(false)
     }
   }, [router, activeDoc, showStatus])
-
-  useEffect(() => {
-    const token = localStorage.getItem('growfly_jwt')
-    if (!token) {
-      router.push('/login')
-      return
-    }
-
-    // Check if accessing a shared document
-    const urlParams = new URLSearchParams(window.location.search)
-    const sharedDocId = urlParams.get('doc')
-    
-    if (sharedDocId) {
-      handleSharedDocumentAccess(sharedDocId, token)
-    } else {
-      loadDocuments(token)
-      loadSharedDocuments(token)
-    }
-  }, [router, loadDocuments, handleSharedDocumentAccess, loadSharedDocuments])
 
   const handleNewDoc = useCallback(async () => {
     const token = localStorage.getItem('growfly_jwt')
@@ -1095,48 +1062,6 @@ export default function GoogleDocsCollabZone() {
     }
   }, [activeDoc, docs, router, showStatus])
 
-  const handleAddComment = useCallback(async (text: string, from: number = 0, to: number = 0) => {
-    if (!activeDoc) return
-    
-    // Save to backend first
-    const savedComment = await saveCommentToBackend(activeDoc.id, text, from, to)
-    if (savedComment) {
-      // Add to local state
-      const comment: Comment = {
-        id: savedComment.id,
-        text: sanitizeInput(text),
-        author: 'You',
-        timestamp: new Date(),
-        from,
-        to,
-        resolved: false,
-        documentId: activeDoc.id,
-        isRead: false
-      }
-      
-      setComments(prev => [...prev, comment])
-      showStatus('success', '💬 Comment added!')
-    }
-  }, [activeDoc, saveCommentToBackend, showStatus])
-
-  const handleDeleteComment = useCallback(async (commentId: string) => {
-    const success = await deleteCommentFromBackend(commentId)
-    if (success) {
-      setComments(prev => prev.filter(c => c.id !== commentId))
-      showStatus('success', '🗑️ Comment deleted')
-    }
-  }, [deleteCommentFromBackend, showStatus])
-
-  // Load comments when active document changes
-  useEffect(() => {
-    if (activeDoc) {
-      const token = localStorage.getItem('growfly_jwt')
-      if (token && isValidToken(token)) {
-        loadComments(activeDoc.id, token)
-      }
-    }
-  }, [activeDoc, loadComments])
-
   const handleShare = useCallback(async (email?: string) => {
     if (!activeDoc) return
     
@@ -1211,35 +1136,65 @@ export default function GoogleDocsCollabZone() {
     }
   }, [router, showStatus])
 
-  const loadSharedDocuments = useCallback(async (token: string) => {
-    try {
-      const res = await fetch(`${API_URL}/api/collab/shared`, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-      
-      if (res.ok) {
-        const sharedDocs = await res.json()
-        // Add shared docs to the docs list with isShared flag
-        const sharedDocsWithFlag = sharedDocs.map((doc: any) => ({
-          ...doc,
-          isShared: true
-        }))
-        setDocs(prev => {
-          const ownedDocs = prev.filter(d => !d.isShared)
-          return [...ownedDocs, ...sharedDocsWithFlag]
-        })
+  const handleAddComment = useCallback(async (text: string, from: number = 0, to: number = 0) => {
+    if (!activeDoc) return
+    
+    // Save to backend first
+    const savedComment = await saveCommentToBackend(activeDoc.id, text, from, to)
+    if (savedComment) {
+      // Add to local state
+      const comment: Comment = {
+        id: savedComment.id,
+        text: sanitizeInput(text),
+        author: 'You',
+        timestamp: new Date(),
+        from,
+        to,
+        resolved: false,
+        documentId: activeDoc.id,
+        isRead: false
       }
-    } catch (error) {
-      console.error('Failed to load shared documents:', error)
+      
+      setComments(prev => [...prev, comment])
+      showStatus('success', '💬 Comment added!')
     }
-  }, [])
+  }, [activeDoc, saveCommentToBackend, showStatus])
 
-  const handleDeleteComment = useCallback((commentId: string) => {
-    setComments(prev => prev.filter(c => c.id !== commentId))
-  }, [])
+  const handleDeleteComment = useCallback(async (commentId: string) => {
+    const success = await deleteCommentFromBackend(commentId)
+    if (success) {
+      setComments(prev => prev.filter(c => c.id !== commentId))
+      showStatus('success', '🗑️ Comment deleted')
+    }
+  }, [deleteCommentFromBackend, showStatus])
+
+  // Load comments when active document changes
+  useEffect(() => {
+    if (activeDoc) {
+      const token = localStorage.getItem('growfly_jwt')
+      if (token && isValidToken(token)) {
+        loadComments(activeDoc.id, token)
+      }
+    }
+  }, [activeDoc, loadComments])
+
+  useEffect(() => {
+    const token = localStorage.getItem('growfly_jwt')
+    if (!token) {
+      router.push('/login')
+      return
+    }
+
+    // Check if accessing a shared document
+    const urlParams = new URLSearchParams(window.location.search)
+    const sharedDocId = urlParams.get('doc')
+    
+    if (sharedDocId) {
+      handleSharedDocumentAccess(sharedDocId, token)
+    } else {
+      loadDocuments(token)
+    }
+  }, [router, loadDocuments, handleSharedDocumentAccess])
 
   const unreadCommentsCount = comments.filter(c => c.documentId === activeDoc?.id && !c.isRead).length
 
