@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { 
   X, ChevronRight, ChevronLeft, Zap, BookOpen, Image, 
   Users, Settings, Play, CheckCircle, Lightbulb, Star,
@@ -29,6 +29,9 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
   const [isActive, setIsActive] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
   const [showSkipModal, setShowSkipModal] = useState(false)
+  const [targetRect, setTargetRect] = useState<DOMRect | null>(null)
+  const [elementFound, setElementFound] = useState(true)
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Start tutorial when prop changes
   useEffect(() => {
@@ -38,72 +41,226 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
     }
   }, [isFirstTime])
 
-  // Comprehensive but focused tutorial steps
+  // Enhanced tutorial steps with better copy
   const tutorialSteps: TutorialStep[] = [
     {
       id: 'welcome',
       title: 'Welcome to Growfly',
-      content: 'Growfly is your AI-powered content creation workspace. We\'ll show you the key features that will streamline your content workflow and boost your productivity.',
+      content: 'Growfly is your perfect bespoke AI assistant designed to help you and your business dramatically increase output and efficiency. Let\'s explore how Growfly can transform your workflow in just 2 minutes.',
       icon: <Play className="w-5 h-5 text-blue-600" />,
-      features: ['AI Content Generation', 'Team Collaboration', 'Asset Management', 'Brand Consistency']
+      features: ['Bespoke AI Assistant', 'Increased Business Output', 'Workflow Transformation', 'Efficiency Optimization']
     },
     {
       id: 'dashboard',
-      title: 'Dashboard - Your Command Center',
-      content: 'This is where the magic happens. Upload any file type (images, PDFs, documents), have conversations with advanced AI models, and generate professional content instantly. Everything you create can be downloaded in multiple formats.',
+      title: 'Dashboard - Your AI Command Center',
+      content: 'This is your central hub for AI-powered productivity. Upload any file type, engage in intelligent conversations with your AI assistant, and generate high-quality outputs instantly. Everything is designed to amplify your business capabilities.',
       icon: <Zap className="w-5 h-5 text-blue-600" />,
-      target: '[href="/dashboard"]',
-      features: ['Multi-format uploads', 'AI conversations', 'Instant downloads', 'Content generation'],
-      tip: 'Try uploading an image and asking AI to create social media posts from it, or paste a URL for instant content analysis.'
+      target: '[href="/dashboard"], a[href*="dashboard"], nav a:contains("Dashboard")',
+      features: ['Multi-format uploads', 'Intelligent conversations', 'Instant outputs', 'Business amplification'],
+      tip: 'Start by uploading a document or image and ask Growfly to analyze it and suggest improvements or create related content.'
     },
     {
       id: 'saved-responses',
-      title: 'Saved Responses - Your Content Library',
-      content: 'Build your personal content vault by saving your best AI responses. Create templates for different content types, organize by projects, and never lose great ideas again. Perfect for building repeatable workflows.',
+      title: 'Saved Responses - Your Knowledge Base',
+      content: 'Build your personal library of AI-generated insights, templates, and solutions. Save your best outputs to create repeatable processes that scale your business efficiency and maintain consistency across projects.',
       icon: <BookOpen className="w-5 h-5 text-blue-600" />,
-      target: '[href="/saved"]',
-      features: ['Template creation', 'Project organization', 'Content reuse', 'Search & filter'],
-      tip: 'Save responses strategically to build templates for emails, social posts, and marketing copy.'
+      target: '[href="/saved"], a[href*="saved"], nav a:contains("Saved")',
+      features: ['Knowledge library', 'Template creation', 'Process scaling', 'Consistency maintenance'],
+      tip: 'Organize saved responses by project type or business function to quickly access proven templates.'
     },
     {
       id: 'gallery',
-      title: 'Gallery - Visual Asset Manager',
-      content: 'Every AI-generated image is automatically saved here. Download in multiple formats (PNG, JPG, SVG), share directly to social platforms, and organize by campaigns to maintain brand consistency.',
+      title: 'Gallery - Visual Asset Hub',
+      content: 'Your centralized visual content library where all AI-generated images are automatically organized. Download in multiple formats, share directly to platforms, and maintain brand consistency across all your visual communications.',
       icon: <Image className="w-5 h-5 text-blue-600" />,
-      target: '[href="/gallery"]',
-      features: ['Auto-save images', 'Multiple formats', 'Social sharing', 'Campaign organization'],
-      tip: 'Use the gallery to maintain visual brand consistency across all your marketing materials.'
+      target: '[href="/gallery"], a[href*="gallery"], nav a:contains("Gallery")',
+      features: ['Auto-organized visuals', 'Multiple formats', 'Direct sharing', 'Brand consistency'],
+      tip: 'Use consistent visual themes and prompts to build a cohesive brand image library over time.'
     },
     {
       id: 'collaboration',
-      title: 'Collaboration - Teamwork Made Easy',
-      content: 'Share AI responses with team members, collaborate on documents in real-time, and work together on content projects. Perfect for agencies, marketing teams, and any business scaling content creation.',
+      title: 'Collaboration - Team Productivity Hub',
+      content: 'Multiply your team\'s output by sharing AI insights, collaborating on projects in real-time, and building collective knowledge. Perfect for businesses looking to scale their operations through intelligent collaboration.',
       icon: <Users className="w-5 h-5 text-blue-600" />,
-      target: '[href="/collab-zone"]',
-      features: ['Real-time sharing', 'Team workspaces', 'Collaborative editing', 'Project management'],
-      tip: 'Set up team workspaces for different clients or projects to keep everything organized.'
+      target: '[href="/collab-zone"], a[href*="collab"], nav a:contains("Collab")',
+      features: ['Team multiplication', 'Real-time collaboration', 'Collective knowledge', 'Operational scaling'],
+      tip: 'Create dedicated workspaces for different teams or projects to maintain focus and organization.'
     },
     {
       id: 'settings',
       title: 'Brand Settings - Personalize Your AI',
-      content: 'Train the AI to understand your brand voice, target audience, and industry specifics. The more information you provide, the more personalized and on-brand your AI responses become.',
+      content: 'Train Growfly to understand your unique business voice, target market, and industry specifics. The more you customize these settings, the more your AI assistant becomes an extension of your business expertise.',
       icon: <Settings className="w-5 h-5 text-blue-600" />,
-      target: '[href="/brand-settings"]',
-      features: ['Brand voice training', 'Audience targeting', 'Industry customization', 'Tone preferences'],
-      tip: 'Spend a few minutes setting up your brand profile - it dramatically improves response quality.'
+      target: '[href="/brand-settings"], a[href*="brand"], nav a:contains("Brand"), nav a:contains("Settings")',
+      features: ['Business voice training', 'Market targeting', 'Industry expertise', 'AI personalization'],
+      tip: 'Invest time in detailed brand settings - this transforms generic AI into your personal business consultant.'
     },
     {
       id: 'complete',
-      title: 'Ready to Create Amazing Content',
-      content: 'You now have everything you need to create professional, on-brand content with AI assistance. Start with a simple prompt and explore the features as you go. Welcome to the future of content creation!',
+      title: 'Ready to Amplify Your Business',
+      content: 'You\'re now equipped to leverage Growfly\'s full potential. Your bespoke AI assistant is ready to help you increase output, streamline operations, and achieve better business results. Start with any task and watch your productivity soar!',
       icon: <CheckCircle className="w-5 h-5 text-green-600" />,
-      features: ['Content mastery', 'Time savings', 'Professional results', 'Competitive advantage']
+      features: ['Business amplification', 'Increased output', 'Streamlined operations', 'Better results']
     }
   ]
+
+  // Enhanced element finding with better targeting
+  const findTargetElement = useCallback((step: TutorialStep): HTMLElement | null => {
+    if (!step.target || typeof document === 'undefined') return null
+    
+    try {
+      const selectors = step.target.split(', ').map(s => s.trim()).filter(Boolean)
+      
+      for (const selector of selectors) {
+        try {
+          // Handle :contains() pseudo-selector
+          if (selector.includes(':contains(')) {
+            const match = selector.match(/(.+):contains\(["'](.+)["']\)/)
+            if (match) {
+              const [, baseSelector, text] = match
+              const elements = document.querySelectorAll(baseSelector)
+              for (const el of Array.from(elements)) {
+                if (el.textContent?.includes(text)) {
+                  const element = el as HTMLElement
+                  if (element?.offsetParent !== null && 
+                      element.getBoundingClientRect().width > 0) {
+                    return element
+                  }
+                }
+              }
+            }
+          } else {
+            const element = document.querySelector(selector) as HTMLElement
+            if (element?.offsetParent !== null && 
+                element.getBoundingClientRect().width > 0) {
+              return element
+            }
+          }
+        } catch (selectorError) {
+          continue
+        }
+      }
+      return null
+    } catch (error) {
+      return null
+    }
+  }, [])
+
+  const updateTargetElement = useCallback((step: TutorialStep) => {
+    if (!step.target) {
+      setTargetRect(null)
+      setElementFound(true)
+      return
+    }
+
+    let retryCount = 0
+    const maxRetries = 3
+
+    const attemptFind = () => {
+      const element = findTargetElement(step)
+      
+      if (element) {
+        const rect = element.getBoundingClientRect()
+        if (rect.width > 0 && rect.height > 0) {
+          setTargetRect(rect)
+          setElementFound(true)
+          
+          // Smooth scroll to element
+          element.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'center'
+          })
+          return true
+        }
+      }
+      
+      retryCount++
+      if (retryCount < maxRetries) {
+        retryTimeoutRef.current = setTimeout(attemptFind, 500)
+        return false
+      } else {
+        setTargetRect(null)
+        setElementFound(false)
+        return true
+      }
+    }
+
+    setTimeout(attemptFind, 200)
+  }, [findTargetElement])
+
+  // Update target element when step changes
+  useEffect(() => {
+    if (isActive) {
+      updateTargetElement(tutorialSteps[currentStep])
+    }
+  }, [currentStep, isActive, updateTargetElement])
 
   const currentStepData = tutorialSteps[currentStep]
   const progress = ((currentStep + 1) / tutorialSteps.length) * 100
   const isLastStep = currentStep === tutorialSteps.length - 1
+  const hasTarget = currentStepData.target && targetRect && elementFound
+
+  // Get tooltip position relative to highlighted element
+  const getTooltipPosition = useCallback(() => {
+    const tooltipWidth = 480
+    const tooltipHeight = 420
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+    const padding = 24
+
+    // Mobile or no target - center on screen
+    if (viewportWidth < 1024 || !targetRect || !hasTarget) {
+      return {
+        position: 'fixed' as const,
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 1000,
+        width: `${Math.min(tooltipWidth, viewportWidth - padding * 2)}px`,
+      }
+    }
+
+    // Desktop positioning - prefer right side for sidebar elements
+    const strategies = [
+      // Right of target
+      {
+        top: Math.min(targetRect.top, viewportHeight - tooltipHeight - padding),
+        left: targetRect.right + padding,
+        score: targetRect.right + padding + tooltipWidth <= viewportWidth - padding ? 10 : 0
+      },
+      // Left of target
+      {
+        top: Math.min(targetRect.top, viewportHeight - tooltipHeight - padding),
+        left: targetRect.left - tooltipWidth - padding,
+        score: targetRect.left - tooltipWidth - padding >= padding ? 8 : 0
+      },
+      // Below target
+      {
+        top: Math.min(targetRect.bottom + padding, viewportHeight - tooltipHeight - padding),
+        left: Math.max(padding, Math.min(targetRect.left, viewportWidth - tooltipWidth - padding)),
+        score: targetRect.bottom + padding + tooltipHeight <= viewportHeight - padding ? 6 : 0
+      },
+      // Center fallback
+      {
+        top: (viewportHeight - tooltipHeight) / 2,
+        left: (viewportWidth - tooltipWidth) / 2,
+        score: 1
+      }
+    ]
+
+    const bestStrategy = strategies
+      .filter(s => s.score > 0)
+      .sort((a, b) => b.score - a.score)[0]
+    
+    return {
+      position: 'fixed' as const,
+      top: `${Math.max(padding, bestStrategy.top)}px`,
+      left: `${Math.max(padding, bestStrategy.left)}px`,
+      zIndex: 1000,
+      width: `${Math.min(tooltipWidth, viewportWidth - padding * 2)}px`,
+    }
+  }, [targetRect, hasTarget])
 
   const nextStep = useCallback(() => {
     if (isLastStep) {
@@ -122,6 +279,8 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
   const closeTutorial = useCallback(() => {
     setIsActive(false)
     setCurrentStep(0)
+    setTargetRect(null)
+    if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current)
     onComplete?.()
   }, [onComplete])
 
@@ -164,140 +323,178 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isActive, nextStep, prevStep, handleSkip])
 
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current)
+    }
+  }, [])
+
   if (!isActive) return null
 
   return (
     <>
-      {/* Overlay */}
-      <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+      {/* Enhanced Overlay with Spotlight Effect */}
+      <div className="fixed inset-0 z-50 transition-all duration-500">
+        
+        {/* Spotlight effect for highlighted elements */}
+        {hasTarget && targetRect && (
+          <>
+            {/* Dark overlay with spotlight cutout */}
+            <div 
+              className="absolute inset-0 transition-all duration-700"
+              style={{
+                background: `radial-gradient(ellipse ${targetRect.width + 80}px ${targetRect.height + 80}px at ${targetRect.left + targetRect.width/2}px ${targetRect.top + targetRect.height/2}px, transparent 0%, transparent 20%, rgba(0, 0, 0, 0.7) 70%)`
+              }}
+            />
+            
+            {/* Animated blue border around target */}
+            <div 
+              className="absolute rounded-2xl transition-all duration-700"
+              style={{
+                top: targetRect.top - 8,
+                left: targetRect.left - 8,
+                width: targetRect.width + 16,
+                height: targetRect.height + 16,
+                border: '3px solid #3B82F6',
+                boxShadow: '0 0 0 1px rgba(59, 130, 246, 0.3), 0 0 20px rgba(59, 130, 246, 0.4)',
+                animation: 'glow-pulse 2s ease-in-out infinite alternate'
+              }}
+            />
+          </>
+        )}
+
         {/* Tutorial Modal */}
         <div 
-          className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden"
+          style={getTooltipPosition()}
+          className="transition-all duration-500"
           role="dialog"
           aria-modal="true"
           aria-labelledby="tutorial-title"
         >
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-100">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center border border-blue-100">
-                {currentStepData.icon}
-              </div>
-              <div>
-                <h2 id="tutorial-title" className="text-xl font-semibold text-gray-900 mb-1">
-                  {currentStepData.title}
-                </h2>
-                <div className="flex items-center gap-3 text-sm text-gray-500">
-                  <span>Step {currentStep + 1} of {tutorialSteps.length}</span>
-                  <span>•</span>
-                  <span>Growfly Tutorial</span>
-                </div>
-              </div>
-            </div>
-            <button
-              onClick={handleSkip}
-              className="w-9 h-9 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors"
-              aria-label="Skip tutorial"
-            >
-              <X className="w-5 h-5 text-gray-400" />
-            </button>
-          </div>
-
-          {/* Content */}
-          <div className="p-6">
-            {/* Main content */}
-            <div className="mb-6">
-              <p className="text-gray-700 leading-relaxed text-base mb-4">
-                {currentStepData.content}
-              </p>
-
-              {/* Feature highlights */}
-              {currentStepData.features && (
-                <div className="mb-4">
-                  <div className="flex flex-wrap gap-2">
-                    {currentStepData.features.map((feature, index) => (
-                      <span 
-                        key={index}
-                        className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-100"
-                      >
-                        <Star className="w-3 h-3" />
-                        {feature}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Pro tip */}
-              {currentStepData.tip && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Lightbulb className="w-4 h-4 text-amber-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-amber-800 text-sm mb-1">Pro Tip</p>
-                      <p className="text-amber-700 text-sm leading-relaxed">
-                        {currentStepData.tip}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Progress Bar */}
-            <div className="mb-6">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-sm font-medium text-gray-600">Tutorial Progress</span>
-                <span className="text-sm font-semibold text-blue-600">
-                  {Math.round(progress)}% Complete
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2.5">
-                <div 
-                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Navigation */}
-            <div className="flex items-center justify-between">
+          <div className="bg-white rounded-3xl shadow-2xl max-h-[90vh] overflow-hidden border border-gray-100">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <div className="flex items-center gap-4">
-                <button
-                  onClick={handleSkip}
-                  className="text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors"
-                >
-                  Skip tour
-                </button>
-                {currentStep > 0 && (
-                  <button
-                    onClick={prevStep}
-                    className="flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors bg-gray-50 hover:bg-gray-100 px-3 py-2 rounded-lg"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                    Back
-                  </button>
+                <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center border border-blue-100">
+                  {currentStepData.icon}
+                </div>
+                <div>
+                  <h2 id="tutorial-title" className="text-xl font-semibold text-gray-900 mb-1">
+                    {currentStepData.title}
+                  </h2>
+                  <div className="flex items-center gap-3 text-sm text-gray-500">
+                    <span>Step {currentStep + 1} of {tutorialSteps.length}</span>
+                    <span>•</span>
+                    <span>Growfly Tutorial</span>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={handleSkip}
+                className="w-10 h-10 rounded-2xl hover:bg-gray-100 flex items-center justify-center transition-all duration-200 hover:scale-105"
+                aria-label="Skip tutorial"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {/* Main content */}
+              <div className="mb-6">
+                <p className="text-gray-700 leading-relaxed text-base mb-4">
+                  {currentStepData.content}
+                </p>
+
+                {/* Feature highlights */}
+                {currentStepData.features && (
+                  <div className="mb-4">
+                    <div className="flex flex-wrap gap-2">
+                      {currentStepData.features.map((feature, index) => (
+                        <span 
+                          key={index}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-100"
+                        >
+                          <Star className="w-3 h-3" />
+                          {feature}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Pro tip */}
+                {currentStepData.tip && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <Lightbulb className="w-4 h-4 text-amber-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-amber-800 text-sm mb-1">Pro Tip</p>
+                        <p className="text-amber-700 text-sm leading-relaxed">
+                          {currentStepData.tip}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
-              
-              <button
-                onClick={nextStep}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl"
-              >
-                {isLastStep ? (
-                  <>
-                    <CheckCircle className="w-4 h-4" />
-                    Get Started
-                  </>
-                ) : (
-                  <>
-                    Continue
-                    <ChevronRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
+
+              {/* Progress Bar */}
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-sm font-medium text-gray-600">Tutorial Progress</span>
+                  <span className="text-sm font-semibold text-blue-600">
+                    {Math.round(progress)}% Complete
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div 
+                    className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500 ease-out"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Navigation */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={handleSkip}
+                    className="text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors bg-gray-50 hover:bg-gray-100 px-4 py-2.5 rounded-2xl"
+                  >
+                    Skip tour
+                  </button>
+                  {currentStep > 0 && (
+                    <button
+                      onClick={prevStep}
+                      className="flex items-center gap-2 text-gray-600 hover:text-gray-800 text-sm font-medium transition-all duration-200 bg-gray-50 hover:bg-gray-100 px-4 py-2.5 rounded-2xl hover:scale-105"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      Back
+                    </button>
+                  )}
+                </div>
+                
+                <button
+                  onClick={nextStep}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105"
+                >
+                  {isLastStep ? (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      Get Started
+                    </>
+                  ) : (
+                    <>
+                      Continue
+                      <ChevronRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -306,9 +503,9 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
       {/* Skip Confirmation Modal */}
       {showSkipModal && (
         <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center">
                 <X className="w-5 h-5 text-blue-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900">
@@ -316,19 +513,19 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
               </h3>
             </div>
             <p className="text-gray-600 mb-6">
-              This tutorial shows you features that can save time and improve your workflow. You can always restart it later from Settings.
+              This tutorial shows you features that can significantly boost your business output. You can always restart it later from Settings.
             </p>
             
             <div className="flex gap-3">
               <button
                 onClick={cancelSkip}
-                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 py-3 px-4 rounded-lg font-medium transition-colors"
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 py-3 px-4 rounded-2xl font-medium transition-all duration-200 hover:scale-105"
               >
                 Continue Tour
               </button>
               <button
                 onClick={confirmSkip}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-2xl font-medium transition-all duration-200 hover:scale-105"
               >
                 Skip
               </button>
@@ -336,6 +533,18 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
           </div>
         </div>
       )}
+
+      {/* CSS for glow animation */}
+      <style jsx global>{`
+        @keyframes glow-pulse {
+          0% { 
+            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.3), 0 0 20px rgba(59, 130, 246, 0.4);
+          }
+          100% { 
+            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5), 0 0 30px rgba(59, 130, 246, 0.6);
+          }
+        }
+      `}</style>
     </>
   )
 }
