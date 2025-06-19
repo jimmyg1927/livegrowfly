@@ -169,8 +169,15 @@ function GoogleDocsHeader({
             </button>
 
             <button
-              onClick={() => window.open(`${API_URL}/api/collab/${activeDoc.id}/download?type=pdf`, '_blank')}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 rounded-2xl hover:bg-gray-200 dark:hover:bg-slate-700 transition-all duration-200 font-medium text-sm"
+              onClick={() => {
+                if (activeDoc) {
+                  const token = localStorage.getItem('growfly_jwt')
+                  if (token) {
+                    window.open(`${API_URL}/api/collab/${activeDoc.id}/download?type=pdf&token=${token}`, '_blank')
+                  }
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 rounded-2xl hover:bg-gray-200 dark:hover:bg-slate-700 transition-all duration-200 font-medium text-sm shadow-md hover:shadow-lg hover:scale-105"
             >
               <Download className="w-4 h-4" />
               <span className="hidden lg:inline">Download</span>
@@ -178,7 +185,7 @@ function GoogleDocsHeader({
 
             <button
               onClick={onShare}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-green-700 dark:text-green-300 rounded-2xl hover:from-green-200 hover:to-emerald-200 transition-all duration-200 font-medium text-sm shadow-lg"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-green-700 dark:text-green-300 rounded-2xl hover:from-green-200 hover:to-emerald-200 dark:hover:from-green-900/50 dark:hover:to-emerald-900/50 transition-all duration-200 font-medium text-sm shadow-lg hover:shadow-xl hover:scale-105"
             >
               <Share2 className="w-4 h-4" />
               <span>Share</span>
@@ -186,7 +193,7 @@ function GoogleDocsHeader({
 
             <button
               onClick={onSave}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg font-semibold text-sm hover:scale-105"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg font-semibold text-sm hover:scale-105 hover:shadow-xl active:scale-95"
             >
               <Save className="w-4 h-4" />
               <span>Save</span>
@@ -253,19 +260,19 @@ function DocumentDrawer({
         initial={{ y: '100%' }}
         animate={{ y: isOpen ? '0%' : '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-slate-700/50 rounded-t-3xl shadow-2xl z-50 max-h-[70vh] overflow-hidden"
+        className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-slate-700/50 rounded-t-3xl shadow-2xl z-50 max-h-[85vh] md:max-h-[70vh] overflow-hidden"
       >
         {/* Drawer Header */}
-        <div className="p-6 border-b border-gray-200/50 dark:border-slate-700/50">
+        <div className="p-4 md:p-6 border-b border-gray-200/50 dark:border-slate-700/50">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Documents</h2>
+            <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">Documents</h2>
             <div className="flex items-center gap-2">
               <button
                 onClick={onNewDoc}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg font-medium text-sm"
+                className="flex items-center gap-2 px-3 md:px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg font-medium text-sm"
               >
                 <Plus className="w-4 h-4" />
-                New
+                <span className="hidden sm:inline">New</span>
               </button>
               <button
                 onClick={onToggle}
@@ -284,7 +291,7 @@ function DocumentDrawer({
               placeholder="Search documents..."
               value={searchTerm}
               onChange={handleSearchChange}
-              className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm md:text-base"
               maxLength={100}
             />
           </div>
@@ -299,42 +306,42 @@ function DocumentDrawer({
               <button
                 key={id}
                 onClick={() => setActiveTab(id as any)}
-                className={`flex-1 flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
+                className={`flex-1 flex items-center justify-center gap-1 md:gap-2 px-2 md:px-4 py-2 rounded-xl font-medium transition-all duration-200 text-sm ${
                   activeTab === id
                     ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-md'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                 }`}
               >
                 <Icon className="w-4 h-4" />
-                <span>{label}</span>
+                <span className="hidden sm:inline">{label}</span>
               </button>
             ))}
           </div>
         </div>
 
         {/* Documents List */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6">
           {filteredDocs.length === 0 ? (
-            <div className="text-center py-12">
-              <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No documents found</h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-6">Create your first document to get started</p>
+            <div className="text-center py-8 md:py-12">
+              <FileText className="w-12 md:w-16 h-12 md:h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white mb-2">No documents found</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Create your first document to get started</p>
               <button
                 onClick={onNewDoc}
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg font-medium"
+                className="px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg font-medium text-sm"
               >
                 Create Document
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
               {filteredDocs.map((doc) => (
                 <motion.div
                   key={doc.id}
                   layout
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`group cursor-pointer p-4 rounded-2xl border transition-all duration-200 hover:scale-105 ${
+                  className={`group cursor-pointer p-3 md:p-4 rounded-2xl border transition-all duration-200 hover:scale-105 ${
                     activeDoc?.id === doc.id
                       ? 'border-blue-300 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 dark:border-blue-600 shadow-lg'
                       : 'border-gray-200 dark:border-slate-700 bg-white/60 dark:bg-slate-800/60 hover:border-gray-300 dark:hover:border-slate-600 shadow-md hover:shadow-lg'
@@ -345,8 +352,8 @@ function DocumentDrawer({
                   }}
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-4 h-4 text-white" />
+                    <div className="w-6 md:w-8 h-6 md:h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-3 md:w-4 h-3 md:h-4 text-white" />
                     </div>
                     <div className="opacity-0 group-hover:opacity-100 transition-all duration-200">
                       <button
@@ -354,18 +361,18 @@ function DocumentDrawer({
                           e.stopPropagation()
                           onDeleteDoc(doc.id)
                         }}
-                        className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-xl text-gray-400 hover:text-red-500 transition-all duration-200"
+                        className="p-1 md:p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-xl text-gray-400 hover:text-red-500 transition-all duration-200"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3 md:w-4 h-3 md:h-4" />
                       </button>
                     </div>
                   </div>
 
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2 truncate">
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2 truncate text-sm md:text-base">
                     {doc.title}
                   </h4>
                   
-                  <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-3">
+                  <div className="flex items-center gap-2 text-xs md:text-sm text-gray-500 dark:text-gray-400 mb-3">
                     <Clock className="w-3 h-3" />
                     <span>{formatDistanceToNow(new Date(doc.updatedAt), { addSuffix: true })}</span>
                     {doc.isShared && (
@@ -373,14 +380,14 @@ function DocumentDrawer({
                         <span>•</span>
                         <div className="flex items-center gap-1">
                           <Users className="w-3 h-3" />
-                          <span>Shared</span>
+                          <span className="hidden sm:inline">Shared</span>
                         </div>
                       </>
                     )}
                   </div>
 
-                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                    {doc.content.replace(/<[^>]*>/g, '').substring(0, 100) || 'No content yet...'}
+                  <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                    {doc.content.replace(/<[^>]*>/g, '').substring(0, 80) || 'No content yet...'}
                   </p>
                 </motion.div>
               ))}
@@ -393,13 +400,17 @@ function DocumentDrawer({
 }
 
 // Google Docs Style Bottom Tab Bar
-function BottomTabBar({ activeDoc, onToggleDrawer, onNewDoc }: {
+function BottomTabBar({ activeDoc, onToggleDrawer, onNewDoc, isAutoSaving, showComments }: {
   activeDoc: Doc | null
   onToggleDrawer: () => void
   onNewDoc: () => void
+  isAutoSaving: boolean
+  showComments: boolean
 }) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-slate-700/50 p-4 z-30">
+    <div className={`fixed bottom-0 left-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-slate-700/50 p-4 z-30 transition-all duration-300 ${
+      showComments ? 'right-[350px]' : 'right-0'
+    }`}>
       <div className="flex items-center justify-between max-w-6xl mx-auto">
         {/* Left: Document Info */}
         <div className="flex items-center gap-3">
@@ -412,16 +423,30 @@ function BottomTabBar({ activeDoc, onToggleDrawer, onNewDoc }: {
           </button>
           
           {activeDoc && (
-            <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-2xl">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Auto-saved</span>
+            <div className={`hidden sm:flex items-center gap-2 px-3 py-2 rounded-2xl transition-all duration-200 ${
+              isAutoSaving 
+                ? 'bg-yellow-50 dark:bg-yellow-900/20' 
+                : 'bg-blue-50 dark:bg-blue-900/20'
+            }`}>
+              <div className={`w-2 h-2 rounded-full ${
+                isAutoSaving 
+                  ? 'bg-yellow-500 animate-pulse' 
+                  : 'bg-green-500 animate-pulse'
+              }`}></div>
+              <span className={`text-sm font-medium ${
+                isAutoSaving 
+                  ? 'text-yellow-700 dark:text-yellow-300' 
+                  : 'text-blue-700 dark:text-blue-300'
+              }`}>
+                {isAutoSaving ? 'Saving...' : 'Auto-saved'}
+              </span>
             </div>
           )}
         </div>
 
-        {/* Center: Current Document */}
+        {/* Center: Current Document - Hide on mobile when comments open */}
         {activeDoc && (
-          <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-gray-50 dark:bg-slate-800 rounded-2xl">
+          <div className={`${showComments ? 'hidden lg:flex' : 'hidden md:flex'} items-center gap-3 px-4 py-2 bg-gray-50 dark:bg-slate-800 rounded-2xl`}>
             <FileText className="w-4 h-4 text-gray-600 dark:text-gray-400" />
             <span className="font-medium text-gray-900 dark:text-white truncate max-w-48">
               {activeDoc.title}
@@ -644,21 +669,25 @@ function CommentsSidebar({
   return (
     <motion.div
       initial={{ width: 0, opacity: 0 }}
-      animate={{ width: 350, opacity: 1 }}
+      animate={{ width: isVisible ? 350 : 0, opacity: isVisible ? 1 : 0 }}
       exit={{ width: 0, opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="fixed right-0 top-0 bottom-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-l border-gray-200/50 dark:border-slate-700/50 flex flex-col shadow-2xl z-30"
+      className="fixed right-0 top-0 bottom-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-l border-gray-200/50 dark:border-slate-700/50 flex flex-col shadow-2xl z-30 overflow-hidden"
+      style={{ width: isVisible ? '350px' : '0px' }}
     >
-      <div className="p-6 border-b border-gray-200/50 dark:border-slate-700/50">
+      <div className="p-4 lg:p-6 border-b border-gray-200/50 dark:border-slate-700/50">
         <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <MessageSquare className="w-5 h-5" />
-          Comments
+          <span>Comments</span>
+          <span className="text-sm bg-gray-100 dark:bg-slate-800 px-2 py-1 rounded-full">
+            {docComments.length}
+          </span>
         </h3>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-4 lg:p-6 pb-6">
         {docComments.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="text-center py-8 lg:py-12">
             <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500 dark:text-gray-400 font-medium mb-2">No comments yet</p>
             <p className="text-sm text-gray-400 dark:text-gray-500">Add the first comment below</p>
@@ -709,7 +738,7 @@ function CommentsSidebar({
         )}
       </div>
 
-      <div className="p-6 border-t border-gray-200/50 dark:border-slate-700/50">
+      <div className="p-4 lg:p-6 border-t border-gray-200/50 dark:border-slate-700/50 mb-16">
         <textarea
           placeholder="Add a comment..."
           value={newComment}
@@ -1224,9 +1253,9 @@ export default function GoogleDocsCollabZone() {
         
         <div className="flex-1 overflow-hidden flex">
           <div className={`${showComments ? 'flex-1' : 'w-full'} transition-all duration-300`}>
-            <div className="h-full p-8 overflow-hidden">
+            <div className="h-full p-4 lg:p-8 overflow-hidden">
               <div className="h-full max-w-4xl mx-auto bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-gray-200/50 dark:border-slate-700/50 overflow-hidden">
-                <div className="h-full overflow-y-auto p-12">
+                <div className="h-full overflow-y-auto p-6 lg:p-12 relative">
                   <Editor
                     key={`fullscreen-${activeDoc.id}`}
                     content={activeDoc.content}
@@ -1234,6 +1263,17 @@ export default function GoogleDocsCollabZone() {
                     docId={activeDoc.id}
                     showComments={false}
                   />
+                  
+                  {/* Fullscreen placeholder */}
+                  {!activeDoc.content && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="text-center text-gray-400 dark:text-gray-500">
+                        <FileText className="w-20 h-20 mx-auto mb-4 opacity-50" />
+                        <p className="text-2xl font-medium mb-2">Focus Mode</p>
+                        <p className="text-base">Start writing without distractions</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1292,9 +1332,9 @@ export default function GoogleDocsCollabZone() {
         {/* Document Editor */}
         <div className={`${showComments ? 'flex-1' : 'w-full'} transition-all duration-300`}>
           {activeDoc ? (
-            <div className="p-8">
-              <div className="max-w-4xl mx-auto bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/50 dark:border-slate-700/50 min-h-[80vh]">
-                <div className="p-12">
+            <div className="p-4 lg:p-8">
+              <div className="max-w-4xl mx-auto bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/50 dark:border-slate-700/50 min-h-[80vh] group hover:shadow-3xl transition-all duration-300">
+                <div className="p-6 lg:p-12">
                   <Editor
                     key={activeDoc.id}
                     content={activeDoc.content}
@@ -1302,6 +1342,17 @@ export default function GoogleDocsCollabZone() {
                     docId={activeDoc.id}
                     showComments={false}
                   />
+                  
+                  {/* Placeholder when editor is empty */}
+                  {!activeDoc.content && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="text-center text-gray-400 dark:text-gray-500">
+                        <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                        <p className="text-xl font-medium mb-2">Start writing...</p>
+                        <p className="text-sm">Click here to begin your document</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1353,7 +1404,22 @@ export default function GoogleDocsCollabZone() {
         activeDoc={activeDoc}
         onToggleDrawer={() => setShowDrawer(true)}
         onNewDoc={handleNewDoc}
+        isAutoSaving={isAutoSaving}
+        showComments={showComments}
       />
+
+      {/* Floating Documents Button - Only show when drawer is closed */}
+      {!showDrawer && docs.length > 1 && (
+        <motion.button
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          exit={{ scale: 0 }}
+          onClick={() => setShowDrawer(true)}
+          className="fixed left-6 bottom-32 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-full shadow-2xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 z-40 hover:scale-110 active:scale-95"
+        >
+          <FileText className="w-6 h-6" />
+        </motion.button>
+      )}
 
       {/* Document Drawer */}
       <DocumentDrawer

@@ -104,14 +104,23 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
     }
   ]
 
-  // Enhanced element finding with better targeting
+  // Enhanced element finding with precise targeting
   const findTargetElement = useCallback((step: TutorialStep): HTMLElement | null => {
     if (!step.target || typeof document === 'undefined') return null
     
     try {
       const selectors = step.target.split(', ').map(s => s.trim()).filter(Boolean)
       
-      for (const selector of selectors) {
+      // Prioritize selectors - exact href matches first, then partial matches
+      const prioritizedSelectors = selectors.sort((a, b) => {
+        if (a.includes('href="/') && !b.includes('href="/')) return -1
+        if (!a.includes('href="/') && b.includes('href="/')) return 1
+        if (a.includes('[href*=') && !b.includes('[href*=')) return -1
+        if (!a.includes('[href*=') && b.includes('[href*=')) return 1
+        return 0
+      })
+      
+      for (const selector of prioritizedSelectors) {
         try {
           // Handle :contains() pseudo-selector
           if (selector.includes(':contains(')) {
@@ -120,10 +129,14 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
               const [, baseSelector, text] = match
               const elements = document.querySelectorAll(baseSelector)
               for (const el of Array.from(elements)) {
-                if (el.textContent?.includes(text)) {
+                if (el.textContent?.trim().includes(text.trim())) {
                   const element = el as HTMLElement
+                  // More precise visibility check
                   if (element?.offsetParent !== null && 
-                      element.getBoundingClientRect().width > 0) {
+                      element.getBoundingClientRect().width > 0 &&
+                      element.getBoundingClientRect().height > 0 &&
+                      !element.hidden) {
+                    console.log(`✅ Found element with :contains: ${selector}`, element)
                     return element
                   }
                 }
@@ -131,17 +144,25 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
             }
           } else {
             const element = document.querySelector(selector) as HTMLElement
+            // More precise visibility and positioning check
             if (element?.offsetParent !== null && 
-                element.getBoundingClientRect().width > 0) {
+                element.getBoundingClientRect().width > 0 &&
+                element.getBoundingClientRect().height > 0 &&
+                !element.hidden) {
+              console.log(`✅ Found element with selector: ${selector}`, element)
               return element
             }
           }
         } catch (selectorError) {
+          console.log(`❌ Selector error: ${selector}`, selectorError)
           continue
         }
       }
+      
+      console.log(`❌ No valid elements found for: ${step.target}`)
       return null
     } catch (error) {
+      console.log('❌ Error in findTargetElement:', error)
       return null
     }
   }, [])
@@ -154,39 +175,77 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
     }
 
     let retryCount = 0
-    const maxRetries = 3
+    const maxRetries = 4
 
     const attemptFind = () => {
-      const element = findTargetElement(step)
-      
-      if (element) {
-        const rect = element.getBoundingClientRect()
-        if (rect.width > 0 && rect.height > 0) {
-          setTargetRect(rect)
-          setElementFound(true)
-          
-          // Smooth scroll to element
-          element.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center',
-            inline: 'center'
-          })
+      try {
+        const element = findTargetElement(step)
+        
+        if (element) {
+          // Wait a small amount for any animations to settle
+          setTimeout(() => {
+            const rect = element.getBoundingClientRect()
+            
+            // More thorough validation of the rect
+            if (rect && 
+                rect.width > 0 && 
+                rect.height > 0 && 
+                rect.top >= 0 && 
+                rect.left >= 0 &&
+                rect.top < window.innerHeight &&
+                rect.left < window.innerWidth) {
+              
+              console.log(`✅ Setting target rect:`, { 
+                width: rect.width, 
+                height: rect.height, 
+                top: rect.top, 
+                left: rect.left 
+              })
+              
+              setTargetRect(rect)
+              setElementFound(true)
+              
+              // Smooth scroll to element with better positioning
+              element.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center',
+                inline: 'nearest'
+              })
+              return true
+            } else {
+              console.log(`❌ Invalid rect:`, rect)
+            }
+          }, 100)
           return true
         }
-      }
-      
-      retryCount++
-      if (retryCount < maxRetries) {
-        retryTimeoutRef.current = setTimeout(attemptFind, 500)
+        
+        retryCount++
+        console.log(`🔍 Element not found, retry ${retryCount}/${maxRetries}`)
+        
+        if (retryCount < maxRetries) {
+          retryTimeoutRef.current = setTimeout(attemptFind, 300 + (retryCount * 200))
+          return false
+        } else {
+          console.log('❌ Max retries reached, showing tutorial without highlighting')
+          setTargetRect(null)
+          setElementFound(false)
+          return true
+        }
+      } catch (error) {
+        console.log('❌ Error in attemptFind:', error)
+        retryCount++
+        if (retryCount < maxRetries) {
+          retryTimeoutRef.current = setTimeout(attemptFind, 300 + (retryCount * 200))
+        } else {
+          setTargetRect(null)
+          setElementFound(false)
+        }
         return false
-      } else {
-        setTargetRect(null)
-        setElementFound(false)
-        return true
       }
     }
 
-    setTimeout(attemptFind, 200)
+    // Start finding with a small delay to ensure DOM is ready
+    setTimeout(attemptFind, 150)
   }, [findTargetElement])
 
   // Update target element when step changes
@@ -340,25 +399,40 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
         {/* Spotlight effect for highlighted elements */}
         {hasTarget && targetRect && (
           <>
-            {/* Dark overlay with spotlight cutout */}
+            {/* Dark overlay with precise spotlight cutout */}
             <div 
-              className="absolute inset-0 transition-all duration-700"
+              className="absolute inset-0 transition-all duration-700 pointer-events-none"
               style={{
-                background: `radial-gradient(ellipse ${targetRect.width + 80}px ${targetRect.height + 80}px at ${targetRect.left + targetRect.width/2}px ${targetRect.top + targetRect.height/2}px, transparent 0%, transparent 20%, rgba(0, 0, 0, 0.7) 70%)`
+                background: `radial-gradient(ellipse ${Math.round(targetRect.width + 60)}px ${Math.round(targetRect.height + 60)}px at ${Math.round(targetRect.left + targetRect.width/2)}px ${Math.round(targetRect.top + targetRect.height/2)}px, transparent 0%, transparent 15%, rgba(0, 0, 0, 0.75) 65%)`
               }}
             />
             
-            {/* Animated blue border around target */}
+            {/* Precise animated blue border around target */}
             <div 
-              className="absolute rounded-2xl transition-all duration-700"
+              className="absolute transition-all duration-700 pointer-events-none"
               style={{
-                top: targetRect.top - 8,
-                left: targetRect.left - 8,
-                width: targetRect.width + 16,
-                height: targetRect.height + 16,
+                top: Math.round(targetRect.top - 6),
+                left: Math.round(targetRect.left - 6),
+                width: Math.round(targetRect.width + 12),
+                height: Math.round(targetRect.height + 12),
                 border: '3px solid #3B82F6',
+                borderRadius: '16px',
                 boxShadow: '0 0 0 1px rgba(59, 130, 246, 0.3), 0 0 20px rgba(59, 130, 246, 0.4)',
                 animation: 'glow-pulse 2s ease-in-out infinite alternate'
+              }}
+            />
+            
+            {/* Inner highlight for better visibility */}
+            <div 
+              className="absolute transition-all duration-700 pointer-events-none"
+              style={{
+                top: Math.round(targetRect.top - 2),
+                left: Math.round(targetRect.left - 2),
+                width: Math.round(targetRect.width + 4),
+                height: Math.round(targetRect.height + 4),
+                border: '1px solid rgba(255, 255, 255, 0.6)',
+                borderRadius: '12px',
+                background: 'rgba(255, 255, 255, 0.05)'
               }}
             />
           </>
@@ -372,9 +446,9 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
           aria-modal="true"
           aria-labelledby="tutorial-title"
         >
-          <div className="bg-white rounded-3xl shadow-2xl max-h-[90vh] overflow-hidden border border-gray-100">
+          <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col max-h-[85vh]">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100 flex-shrink-0">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center border border-blue-100">
                   {currentStepData.icon}
@@ -399,8 +473,8 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
               </button>
             </div>
 
-            {/* Content */}
-            <div className="p-6">
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-6">
               {/* Main content */}
               <div className="mb-6">
                 <p className="text-gray-700 leading-relaxed text-base mb-4">
@@ -457,20 +531,22 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
                   />
                 </div>
               </div>
+            </div>
 
-              {/* Navigation */}
+            {/* Fixed Navigation Footer */}
+            <div className="border-t border-gray-100 p-6 flex-shrink-0 bg-gray-50 rounded-b-3xl">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   <button
                     onClick={handleSkip}
-                    className="text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors bg-gray-50 hover:bg-gray-100 px-4 py-2.5 rounded-2xl"
+                    className="text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors bg-white hover:bg-gray-100 px-4 py-2.5 rounded-2xl border border-gray-200"
                   >
                     Skip tour
                   </button>
                   {currentStep > 0 && (
                     <button
                       onClick={prevStep}
-                      className="flex items-center gap-2 text-gray-600 hover:text-gray-800 text-sm font-medium transition-all duration-200 bg-gray-50 hover:bg-gray-100 px-4 py-2.5 rounded-2xl hover:scale-105"
+                      className="flex items-center gap-2 text-gray-600 hover:text-gray-800 text-sm font-medium transition-all duration-200 bg-white hover:bg-gray-100 px-4 py-2.5 rounded-2xl border border-gray-200 hover:scale-105"
                     >
                       <ChevronLeft className="w-4 h-4" />
                       Back
