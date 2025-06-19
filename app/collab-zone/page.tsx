@@ -750,6 +750,11 @@ export default function GoogleDocsCollabZone() {
   // Comments state
   const [comments, setComments] = useState<Comment[]>([])
 
+  const showStatus = useCallback((type: 'success' | 'error', text: string) => {
+    setStatusMsg({ type, text })
+    setTimeout(() => setStatusMsg(null), 3000)
+  }, [])
+
   // Load comments from backend
   const loadComments = useCallback(async (docId: string, token: string) => {
     try {
@@ -883,11 +888,6 @@ export default function GoogleDocsCollabZone() {
 
     return () => clearTimeout(timeoutId)
   }, [activeDoc?.content, autoSave])
-
-  const showStatus = useCallback((type: 'success' | 'error', text: string) => {
-    setStatusMsg({ type, text })
-    setTimeout(() => setStatusMsg(null), 3000)
-  }, [])
 
   const loadDocuments = useCallback(async (token: string) => {
     if (!isValidToken(token)) {
