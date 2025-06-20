@@ -1,813 +1,895 @@
-'use client'
-
-import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import React, { 
+  useState, 
+  useEffect, 
+  useCallback, 
+  useRef, 
+  useMemo, 
+  useReducer,
+  createContext,
+  useContext,
+  ReactNode
+} from 'react'
 import { 
-  FaImages, 
-  FaSpinner, 
-  FaDownload, 
-  FaTrash, 
-  FaEye, 
-  FaCalendarAlt,
-  FaSearch,
-  FaHeart,
-  FaRegHeart,
-  FaBookmark,
-  FaRegBookmark,
-  FaShare,
-  FaExclamationTriangle
-} from 'react-icons/fa'
+  X, ChevronRight, ArrowRight, Play, Pause, 
+  BarChart3, Image, Bookmark, Users, GraduationCap, 
+  Handshake, Settings, Sparkles, Zap, Lightbulb
+} from 'lucide-react'
 
-// Get API URL from environment
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://glowfly-api-production.up.railway.app'
+// ========================= COMPONENT PROPS INTERFACES =========================
 
-// ✅ Enhanced image interface with favorites and pins
-interface GeneratedImage {
+interface GrowflyTutorialProps {
+  isFirstTime?: boolean
+  autoplay?: boolean
+  onComplete?: () => void
+}
+
+interface GrowflySlideshowProps extends GrowflyTutorialProps {}
+
+interface LaunchTourButtonProps {
+  className?: string
+  children?: ReactNode
+}
+
+// ========================= TYPES & INTERFACES =========================
+
+interface SlideContent {
   id: string
-  url: string
-  originalPrompt: string
-  size: string
-  createdAt: string
-  isPinned?: boolean
-  isFavorite?: boolean
+  title: string
+  text: string
+  subtext?: string
+  icon: ReactNode
+  emoji: string
 }
 
-// ✅ FIXED: Safe Image component with better error handling and Set fix
-const SafeImage: React.FC<{ 
-  src: string; 
-  alt: string; 
-  className?: string;
-  onError?: () => void;
-  onLoad?: () => void;
-}> = ({ src, alt, className, onError, onLoad }) => {
-  const [error, setError] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [retryCount, setRetryCount] = useState(0)
-  const maxRetries = 2
-
-  const handleError = () => {
-    if (retryCount < maxRetries) {
-      setRetryCount(prev => prev + 1)
-      setLoading(true)
-      setError(false)
-      // Retry with cache busting
-      const img = new Image()
-      img.onload = handleLoad
-      img.onerror = () => setError(true)
-      img.src = `${src}?retry=${retryCount + 1}&t=${Date.now()}`
-    } else {
-      setError(true)
-      setLoading(false)
-      onError?.()
-    }
-  }
-
-  const handleLoad = () => {
-    setLoading(false)
-    setError(false)
-    onLoad?.()
-  }
-
-  if (error) {
-    return (
-      <div className={`${className} bg-gradient-to-br from-gray-100 to-gray-200 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 dark:border-slate-600`}>
-        <div className="text-center p-6">
-          <FaExclamationTriangle className="text-red-400 text-3xl mx-auto mb-3" />
-          <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Image unavailable</p>
-          <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">URL may have expired</p>
-          <button
-            onClick={() => {
-              setRetryCount(0)
-              setError(false)
-              setLoading(true)
-            }}
-            className="mt-2 text-xs text-blue-600 hover:text-blue-800 underline"
-          >
-            Retry loading
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="relative">
-      {loading && (
-        <div className={`${className} bg-gradient-to-br from-gray-100 to-gray-200 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center rounded-2xl animate-pulse`}>
-          <FaSpinner className="text-gray-400 text-2xl animate-spin" />
-        </div>
-      )}
-      <img
-        src={src}
-        alt={alt}
-        className={`${className} ${loading ? 'opacity-0 absolute' : 'opacity-100'} transition-opacity duration-300`}
-        onError={handleError}
-        onLoad={handleLoad}
-        loading="lazy"
-      />
-    </div>
-  )
+interface SlideshowState {
+  isActive: boolean
+  currentSlide: number
+  isAutoPlaying: boolean
+  showSkipModal: boolean
+  isAnimating: boolean
+  hasStarted: boolean
 }
 
-// ✅ Enhanced Image Detail Modal with rounded corners
-const ImageDetailModal: React.FC<{
-  image: GeneratedImage | null
-  isOpen: boolean
-  onClose: () => void
-  onDelete: (id: string) => void
-  onPin: (id: string) => void
-  onFavorite: (id: string) => void
-}> = ({ image, isOpen, onClose, onDelete, onPin, onFavorite }) => {
-  if (!isOpen || !image) return null
+type SlideshowAction = 
+  | { type: 'ACTIVATE'; payload?: { autoplay?: boolean } }
+  | { type: 'DEACTIVATE' }
+  | { type: 'NEXT_SLIDE' }
+  | { type: 'PREV_SLIDE' }
+  | { type: 'SET_SLIDE'; payload: number }
+  | { type: 'TOGGLE_AUTOPLAY' }
+  | { type: 'SHOW_SKIP_MODAL'; payload: boolean }
+  | { type: 'SET_ANIMATING'; payload: boolean }
+  | { type: 'MARK_STARTED' }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-4xl max-h-[90vh] overflow-y-auto mx-4 w-full">
-        <div className="p-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Image Details
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-all duration-200"
-            >
-              ✕
-            </button>
-          </div>
-
-          {/* Image */}
-          <div className="mb-6">
-            <SafeImage
-              src={image.url}
-              alt={image.originalPrompt}
-              className="w-full rounded-2xl shadow-lg"
-            />
-          </div>
-
-          {/* Details */}
-          <div className="space-y-4 mb-6">
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Description
-              </h3>
-              <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-slate-700 p-4 rounded-2xl">
-                {image.originalPrompt}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-gray-600 dark:text-gray-400">Size:</span>
-                <span className="ml-2 text-gray-900 dark:text-white">{image.size}</span>
-              </div>
-              <div>
-                <span className="text-gray-600 dark:text-gray-400">Created:</span>
-                <span className="ml-2 text-gray-900 dark:text-white">
-                  {new Date(image.createdAt).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3">
-            <button
-              onClick={() => onPin(image.id)}
-              className={`flex-1 px-4 py-3 rounded-2xl font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
-                image.isPinned
-                  ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                  : 'bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300'
-              }`}
-            >
-              {image.isPinned ? <FaBookmark /> : <FaRegBookmark />}
-              {image.isPinned ? 'Unpin' : 'Pin'}
-            </button>
-            <button
-              onClick={() => onFavorite(image.id)}
-              className={`flex-1 px-4 py-3 rounded-2xl font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
-                image.isFavorite
-                  ? 'bg-red-500 hover:bg-red-600 text-white'
-                  : 'bg-red-100 hover:bg-red-200 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-700 dark:text-red-300'
-              }`}
-            >
-              {image.isFavorite ? <FaHeart /> : <FaRegHeart />}
-              {image.isFavorite ? 'Unfavorite' : 'Favorite'}
-            </button>
-            <button
-              onClick={() => {
-                const link = document.createElement('a')
-                link.href = image.url
-                link.download = `growfly-${image.id}.png`
-                link.click()
-              }}
-              className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-2xl font-medium transition-all duration-200 flex items-center justify-center gap-2"
-            >
-              <FaDownload />
-              Download
-            </button>
-            <button
-              onClick={() => {
-                if (confirm('Delete this image permanently?')) {
-                  onDelete(image.id)
-                  onClose()
-                }
-              }}
-              className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-2xl font-medium transition-all duration-200 flex items-center justify-center gap-2"
-            >
-              <FaTrash />
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+interface SlideshowContextValue {
+  state: SlideshowState
+  dispatch: React.Dispatch<SlideshowAction>
+  slides: SlideContent[]
 }
 
-// ✅ Enhanced Delete Confirmation Modal with rounded corners
-const DeleteConfirmModal: React.FC<{
-  isOpen: boolean
-  onClose: () => void
-  onConfirm: () => void
-  imageName: string
-}> = ({ isOpen, onClose, onConfirm, imageName }) => {
-  if (!isOpen) return null
+// ========================= SLIDE CONTENT =========================
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-md mx-4 w-full">
-        <div className="p-8">
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            Delete Image
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Are you sure you want to delete &ldquo;{imageName}&rdquo;? This action cannot be undone.
-          </p>
-          <div className="flex gap-3">
-            <button
-              onClick={onClose}
-              className="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-slate-600 dark:hover:bg-slate-500 text-gray-800 dark:text-white px-4 py-3 rounded-2xl font-medium transition-all duration-200"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => {
-                onConfirm()
-                onClose()
-              }}
-              className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-2xl font-medium transition-all duration-200"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+const SLIDES: SlideContent[] = [
+  {
+    id: 'welcome',
+    title: 'Welcome to Growfly — Your AI-Powered Business Sidekick 🚀',
+    text: 'Growfly is your distraction-free, AI productivity platform designed for entrepreneurs, creators and teams. Let\'s show you around the key parts of your dashboard so you can get the most out of it from Day 1.',
+    icon: <Sparkles className="w-8 h-8" />,
+    emoji: '🚀'
+  },
+  {
+    id: 'xp-tracker',
+    title: 'Your XP Score — See Your Progress in Real Time 📊',
+    text: 'Every prompt you run earns you XP. You\'ll level up through fun titles like "Just Curious" and "Prompt Commander". More XP = More mastery, smarter responses, and unlockable perks.',
+    icon: <BarChart3 className="w-8 h-8" />,
+    emoji: '📊'
+  },
+  {
+    id: 'gallery',
+    title: 'Gallery — Your AI-Generated Visuals in One Place 🖼️',
+    text: 'Every image you generate with Growfly is saved here automatically. Download, review or reuse them whenever you like — from product visuals to marketing mockups.',
+    icon: <Image className="w-8 h-8" />,
+    emoji: '🖼️'
+  },
+  {
+    id: 'saved',
+    title: 'Saved — Bookmark Your Best Ideas 💡',
+    text: 'Keep your favourite responses handy. From content drafts to clever answers, you can title and revisit your saved AI responses anytime in one tidy tab.',
+    icon: <Bookmark className="w-8 h-8" />,
+    emoji: '💡'
+  },
+  {
+    id: 'collab-zone',
+    title: 'Collab Zone — Edit Together, Anywhere ✍️',
+    text: 'Create, edit and collaborate on live documents with your team. Work in real-time, add comments, and export to Word or PDF. Perfect for brainstorming, reports or planning together.',
+    icon: <Users className="w-8 h-8" />,
+    emoji: '✍️'
+  },
+  {
+    id: 'education-hub',
+    title: 'Education Hub — Level Up Your Skills 📚',
+    text: 'Packed with prompt examples, AI how-tos, and tips to sharpen your creativity. Whether you\'re new to AI or want to push further, the Education Hub helps you stay ahead.',
+    icon: <GraduationCap className="w-8 h-8" />,
+    emoji: '📚'
+  },
+  {
+    id: 'trusted-partners',
+    title: 'Trusted Partners — Pre-Vetted Tools We Trust 🤖',
+    text: 'Explore a curated list of tools, platforms, and expert services we trust to help you grow your business — from automation and branding to finance and legal support.',
+    icon: <Handshake className="w-8 h-8" />,
+    emoji: '🤖'
+  },
+  {
+    id: 'brand-settings',
+    title: 'Brand Settings — Smarter AI Starts Here 🎯',
+    text: 'Tell Growfly about your brand: tone of voice, audience, industry, and goals. The more we know, the better the AI responses match your brand identity.',
+    subtext: 'Customise once. Get tailored responses forever.',
+    icon: <Settings className="w-8 h-8" />,
+    emoji: '🎯'
+  },
+  {
+    id: 'wishlist',
+    title: 'Wishlist — The Place Where Dreams Come True ✨',
+    text: 'Got an idea? Drop it in the Wishlist. Suggest new tools, features or AI use cases for your business. The most upvoted ones get built by our nerds (seriously). If your idea gets picked, we\'ll even reward you.',
+    subtext: 'Shape the future of Growfly with your ideas.',
+    icon: <Lightbulb className="w-8 h-8" />,
+    emoji: '✨'
+  },
+  {
+    id: 'other-features',
+    title: 'Even More Awesomeness Awaits ⚡',
+    text: '• Refer a Friend: Earn bonus prompts\n• Change Plan: Upgrade as you grow\n• Account Settings: Manage your info and preferences\n• Support: We\'re always here if you need help',
+    icon: <Zap className="w-8 h-8" />,
+    emoji: '⚡'
+  },
+  {
+    id: 'final',
+    title: 'You\'re All Set to Start Using Growfly 🦋',
+    text: 'Try your first prompt, explore your dashboard, and let the AI do the heavy lifting. You\'ve got this — and we\'ve got your back.',
+    icon: <Sparkles className="w-8 h-8" />,
+    emoji: '🦋'
+  }
+]
+
+// ========================= UTILITY FUNCTIONS =========================
+
+const debounce = <T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): ((...args: Parameters<T>) => void) => {
+  let timeout: NodeJS.Timeout
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => func(...args), wait)
+  }
 }
 
-export default function GalleryPage() {
-  const [images, setImages] = useState<GeneratedImage[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null)
-  const [showDetailModal, setShowDetailModal] = useState(false)
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [imageToDelete, setImageToDelete] = useState<string | null>(null)
-  // ✅ FIXED: Using Array instead of Set to avoid TypeScript iteration error
-  const [imageLoadErrors, setImageLoadErrors] = useState<string[]>([])
-  
-  // ✅ Search and filter states
-  const [searchQuery, setSearchQuery] = useState('')
-  const [sortBy, setSortBy] = useState<'date' | 'prompt' | 'size'>('date')
-  const [filterBy, setFilterBy] = useState<'all' | 'favorites' | 'pinned' | 'recent'>('all')
-  const [sizeFilter, setSizeFilter] = useState<'all' | 'square' | 'portrait' | 'landscape'>('all')
-  
-  const router = useRouter()
-  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
+// ========================= SLIDESHOW REDUCER =========================
 
-  // ✅ Enhanced image loading with better error handling and retry logic
-  useEffect(() => {
-    if (!token) {
-      router.push('/onboarding')
-      return
-    }
+const initialSlideshowState: SlideshowState = {
+  isActive: false,
+  currentSlide: 0,
+  isAutoPlaying: false,
+  showSkipModal: false,
+  isAnimating: false,
+  hasStarted: false
+}
 
-    const fetchImages = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        
-        const response = await fetch(`${API_BASE_URL}/api/dalle/gallery`, {
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        })
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-        }
-
-        const data = await response.json()
-        
-        // ✅ IMPROVED: Better data transformation with fallbacks
-        const transformedImages = (data.images || []).map((img: any) => ({
-          id: img.id || `img_${Date.now()}_${Math.random()}`,
-          url: img.imageUrl || img.url,
-          originalPrompt: img.prompt || img.originalPrompt || 'No description available',
-          size: img.size || '1024x1024',
-          createdAt: img.createdAt || new Date().toISOString(),
-          isPinned: false, // You can add this to your backend later
-          isFavorite: false // You can add this to your backend later
-        }))
-
-        // ✅ NEW: Validate image URLs before setting state
-        const validImages = transformedImages.filter((img: GeneratedImage) => {
-          if (!img.url || img.url === 'undefined' || img.url === 'null') {
-            console.warn('Invalid image URL found:', img)
-            return false
-          }
-          return true
-        })
-
-        setImages(validImages)
-        setError(null)
-        
-        // ✅ NEW: Pre-load a few images to check for URL validity
-        validImages.slice(0, 5).forEach((img: GeneratedImage) => {
-          const testImg = new Image()
-          testImg.onload = () => {
-            console.log('✅ Image loaded successfully:', img.id)
-          }
-          testImg.onerror = () => {
-            console.warn('❌ Image failed to load:', img.id, img.url)
-            // ✅ FIXED: Using Array instead of Set
-            setImageLoadErrors(prev => prev.includes(img.id) ? prev : [...prev, img.id])
-          }
-          testImg.src = img.url
-        })
-
-      } catch (err) {
-        console.error('❌ Failed to fetch images:', err)
-        setError(err instanceof Error ? err.message : 'Failed to load images. Please check your connection and try again.')
-      } finally {
-        setLoading(false)
+const slideshowReducer = (state: SlideshowState, action: SlideshowAction): SlideshowState => {
+  switch (action.type) {
+    case 'ACTIVATE':
+      return {
+        ...state,
+        isActive: true,
+        currentSlide: 0,
+        isAutoPlaying: action.payload?.autoplay ?? false,
+        showSkipModal: false,
+        hasStarted: true
       }
-    }
-
-    fetchImages()
-  }, [token, router])
-
-  // ✅ Filter and sort logic
-  const filteredAndSortedImages = React.useMemo(() => {
-    let filtered = images
-
-    // Apply search filter
-    if (searchQuery) {
-      filtered = filtered.filter(img => 
-        img.originalPrompt.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    }
-
-    // Apply category filter
-    switch (filterBy) {
-      case 'favorites': {
-        filtered = filtered.filter(img => img.isFavorite)
-        break
+    
+    case 'DEACTIVATE':
+      return {
+        ...state,
+        isActive: false,
+        currentSlide: 0,
+        isAutoPlaying: false,
+        showSkipModal: false,
+        isAnimating: false
       }
-      case 'pinned': {
-        filtered = filtered.filter(img => img.isPinned)
-        break
+    
+    case 'NEXT_SLIDE':
+      return {
+        ...state,
+        currentSlide: Math.min(state.currentSlide + 1, SLIDES.length - 1),
+        isAnimating: true
       }
-      case 'recent': {
-        const oneWeekAgo = new Date()
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
-        filtered = filtered.filter(img => new Date(img.createdAt) > oneWeekAgo)
-        break
+    
+    case 'PREV_SLIDE':
+      return {
+        ...state,
+        currentSlide: Math.max(0, state.currentSlide - 1),
+        isAnimating: true
       }
-      default:
-        break
-    }
-
-    // Apply size filter
-    switch (sizeFilter) {
-      case 'square': {
-        filtered = filtered.filter(img => img.size.includes('1024x1024'))
-        break
+    
+    case 'SET_SLIDE':
+      return {
+        ...state,
+        currentSlide: action.payload,
+        isAnimating: true
       }
-      case 'portrait': {
-        filtered = filtered.filter(img => img.size.includes('1024x1792'))
-        break
+    
+    case 'TOGGLE_AUTOPLAY':
+      return {
+        ...state,
+        isAutoPlaying: !state.isAutoPlaying
       }
-      case 'landscape': {
-        filtered = filtered.filter(img => img.size.includes('1792x1024'))
-        break
+    
+    case 'SHOW_SKIP_MODAL':
+      return {
+        ...state,
+        showSkipModal: action.payload
       }
-      default:
-        break
-    }
-
-    // Apply sorting
-    switch (sortBy) {
-      case 'date': {
-        filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        break
+    
+    case 'SET_ANIMATING':
+      return {
+        ...state,
+        isAnimating: action.payload
       }
-      case 'prompt': {
-        filtered.sort((a, b) => a.originalPrompt.localeCompare(b.originalPrompt))
-        break
+    
+    case 'MARK_STARTED':
+      return {
+        ...state,
+        hasStarted: true
       }
-      case 'size': {
-        filtered.sort((a, b) => a.size.localeCompare(b.size))
-        break
-      }
-      default:
-        break
-    }
-
-    return filtered
-  }, [images, searchQuery, filterBy, sizeFilter, sortBy])
-
-  const handleImageClick = (image: GeneratedImage) => {
-    setSelectedImage(image)
-    setShowDetailModal(true)
+    
+    default:
+      return state
   }
+}
 
-  const confirmDelete = (imageId: string) => {
-    setImageToDelete(imageId)
-    setShowDeleteModal(true)
-  }
+// ========================= CUSTOM HOOKS =========================
 
-  const handleDelete = async (imageId: string) => {
+const useLocalStorage = <T extends unknown>(key: string, initialValue: T) => {
+  const [storedValue, setStoredValue] = useState<T>(() => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/dalle/images/${imageId}`, {
-        method: 'DELETE',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
+      if (typeof window === 'undefined') return initialValue
+      const item = window.localStorage.getItem(key)
+      return item ? JSON.parse(item) : initialValue
+    } catch (error) {
+      console.warn(`Error reading localStorage key "${key}":`, error)
+      return initialValue
+    }
+  })
 
-      if (!response.ok) {
-        throw new Error('Failed to delete image')
+  const setValue = useCallback((value: T | ((val: T) => T)) => {
+    try {
+      const valueToStore = value instanceof Function ? value(storedValue) : value
+      setStoredValue(valueToStore)
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(key, JSON.stringify(valueToStore))
+      }
+    } catch (error) {
+      console.warn(`Error setting localStorage key "${key}":`, error)
+    }
+  }, [key, storedValue])
+
+  return [storedValue, setValue] as const
+}
+
+const useAutoplay = (
+  isActive: boolean,
+  isAutoPlaying: boolean,
+  currentSlide: number,
+  totalSlides: number,
+  onNext: () => void,
+  onComplete: () => void
+) => {
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    if (isActive && isAutoPlaying && currentSlide < totalSlides - 1) {
+      intervalRef.current = setInterval(() => {
+        onNext()
+      }, 5000) // 5 seconds per slide
+    } else if (isActive && isAutoPlaying && currentSlide === totalSlides - 1) {
+      // Auto-complete on final slide
+      setTimeout(() => {
+        onComplete()
+      }, 5000)
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
+    }
+  }, [isActive, isAutoPlaying, currentSlide, totalSlides, onNext, onComplete])
+}
+
+const useKeyboardNavigation = (
+  isActive: boolean,
+  handlers: {
+    onNext: () => void
+    onPrev: () => void
+    onEscape: () => void
+    onToggleAutoplay: () => void
+  }
+) => {
+  useEffect(() => {
+    if (!isActive) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const keyMap: Record<string, (event: KeyboardEvent) => void> = {
+        'Escape': () => handlers.onEscape(),
+        'ArrowRight': () => handlers.onNext(),
+        'ArrowLeft': () => handlers.onPrev(),
+        'Enter': () => handlers.onNext(),
+        ' ': (event: KeyboardEvent) => { event.preventDefault(); handlers.onToggleAutoplay() }
       }
 
-      // Remove from local state
-      setImages(prev => prev.filter(img => img.id !== imageId))
-      setError(null)
-    } catch (err) {
-      console.error('❌ Failed to delete image:', err)
-      setError('Failed to delete image. Please try again.')
+      const handler = keyMap[e.key]
+      if (handler) {
+        e.preventDefault()
+        handler(e)
+      }
     }
-  }
 
-  const handlePin = (imageId: string) => {
-    setImages(prev => prev.map(img => 
-      img.id === imageId ? { ...img, isPinned: !img.isPinned } : img
-    ))
-  }
+    document.addEventListener('keydown', handleKeyDown, { capture: true })
+    return () => document.removeEventListener('keydown', handleKeyDown, { capture: true })
+  }, [isActive, handlers])
+}
 
-  const handleFavorite = (imageId: string) => {
-    setImages(prev => prev.map(img => 
-      img.id === imageId ? { ...img, isFavorite: !img.isFavorite } : img
-    ))
-  }
+// ========================= SLIDESHOW CONTEXT =========================
 
-  const handleShare = (imageId: string) => {
-    const image = images.find(img => img.id === imageId)
-    if (image && navigator.share) {
-      navigator.share({
-        title: 'Check out this AI-generated image!',
-        text: image.originalPrompt,
-        url: image.url
-      })
-    } else if (image) {
-      navigator.clipboard.writeText(image.url)
-      alert('Image URL copied to clipboard!')
-    }
-  }
+const SlideshowContext = createContext<SlideshowContextValue | null>(null)
 
-  // ✅ FIXED: Handle image load errors using Array
-  const handleImageError = (imageId: string) => {
-    setImageLoadErrors(prev => prev.includes(imageId) ? prev : [...prev, imageId])
+export const useSlideshow = () => {
+  const context = useContext(SlideshowContext)
+  if (!context) {
+    throw new Error('useSlideshow must be used within a SlideshowProvider')
   }
+  return context
+}
+
+interface SlideIndicatorsProps {
+  total: number
+  current: number
+  onSlideSelect: (index: number) => void
+}
+
+interface SkipModalProps {
+  isVisible: boolean
+  onConfirm: () => void
+  onCancel: () => void
+}
+
+interface SlideContentProps {
+  slide: SlideContent
+  isAnimating: boolean
+}
+
+// ========================= COMPONENTS =========================
+
+const SlideIndicators: React.FC<SlideIndicatorsProps> = ({ 
+  total, 
+  current, 
+  onSlideSelect 
+}) => (
+  <div className="flex justify-center gap-2 mb-8">
+    {Array.from({ length: total }, (_, i) => (
+      <button
+        key={i}
+        onClick={() => onSlideSelect(i)}
+        className={`w-3 h-3 rounded-full transition-all duration-300 ${
+          i === current 
+            ? 'bg-blue-500 dark:bg-blue-400 scale-125' 
+            : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
+        }`}
+        aria-label={`Go to slide ${i + 1}`}
+      />
+    ))}
+  </div>
+)
+
+const SkipModal: React.FC<SkipModalProps> = ({ 
+  isVisible, 
+  onConfirm, 
+  onCancel 
+}) => {
+  if (!isVisible) return null
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-gray-900 dark:text-white transition-colors duration-300">
-      <div className="p-6 space-y-6">
-        
-        {/* ✅ Enhanced header with rounded elements */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
-              <FaImages className="text-purple-500" />
-              Gallery
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Your AI-generated image collection
-            </p>
+    <div className="fixed inset-0 bg-black/80 z-[80] flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-md w-full p-8 transform transition-all duration-300 scale-100 border border-gray-200 dark:border-gray-700">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900 dark:to-red-900 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-orange-200 dark:border-orange-700">
+            <X className="w-8 h-8 text-orange-600 dark:text-orange-400" />
           </div>
-          <div className="text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-slate-800 px-6 py-3 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-lg">
-            {filteredAndSortedImages.length} of {images.length} {images.length === 1 ? 'image' : 'images'}
-            {imageLoadErrors.length > 0 && (
-              <div className="text-xs text-orange-600 dark:text-orange-400 mt-1">
-                {imageLoadErrors.length} image{imageLoadErrors.length === 1 ? '' : 's'} failed to load
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ✅ Enhanced Search and Filters Bar with rounded corners */}
-        <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-gray-200 dark:border-slate-700 shadow-xl">
-          <div className="flex flex-col lg:flex-row gap-4 items-center">
-            {/* Search */}
-            <div className="relative flex-1 w-full lg:w-auto">
-              <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search your images..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
-              />
-            </div>
-
-            {/* Filters */}
-            <div className="flex flex-wrap gap-3 items-center">
-              <select
-                value={filterBy}
-                onChange={(e) => setFilterBy(e.target.value as any)}
-                className="px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 min-w-[120px]"
-              >
-                <option value="all">All Images</option>
-                <option value="favorites">Favorites</option>
-                <option value="pinned">Pinned</option>
-                <option value="recent">Recent (7 days)</option>
-              </select>
-
-              <select
-                value={sizeFilter}
-                onChange={(e) => setSizeFilter(e.target.value as any)}
-                className="px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 min-w-[120px]"
-              >
-                <option value="all">All Sizes</option>
-                <option value="square">Square</option>
-                <option value="portrait">Portrait</option>
-                <option value="landscape">Landscape</option>
-              </select>
-
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 min-w-[120px]"
-              >
-                <option value="date">Sort by Date</option>
-                <option value="prompt">Sort by Prompt</option>
-                <option value="size">Sort by Size</option>
-              </select>
-
-              {(searchQuery || filterBy !== 'all' || sizeFilter !== 'all') && (
-                <button
-                  onClick={() => {
-                    setSearchQuery('')
-                    setFilterBy('all')
-                    setSizeFilter('all')
-                    setSortBy('date')
-                  }}
-                  className="px-4 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-slate-600 dark:hover:bg-slate-500 text-gray-700 dark:text-gray-300 rounded-2xl text-sm font-medium transition-all duration-200"
-                >
-                  Clear Filters
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* ✅ IMPROVED: Error Message with retry option */}
-        {error && (
-          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl text-red-700 dark:text-red-300 text-sm relative">
-            <button 
-              onClick={() => setError(null)}
-              className="absolute top-2 right-2 text-red-500 hover:text-red-700 p-2 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-full transition-all duration-200"
-            >
-              ✕
-            </button>
-            <div className="flex items-start gap-3">
-              <FaExclamationTriangle className="text-red-500 mt-0.5 flex-shrink-0" />
-              <div>
-                <strong>⚠️ {error}</strong>
-                <div className="mt-2">
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
-                  >
-                    Retry Loading
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Loading State */}
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <FaSpinner className="animate-spin text-purple-500 text-4xl mb-4 mx-auto" />
-              <p className="text-gray-600 dark:text-gray-400">Loading your images...</p>
-              <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">This may take a moment if you have many images</p>
-            </div>
-          </div>
-        ) : filteredAndSortedImages.length === 0 ? (
-          /* ✅ Enhanced Empty State */
-          <div className="text-center py-20">
-            <FaImages className="text-gray-400 text-6xl mx-auto mb-6" />
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              {searchQuery || filterBy !== 'all' || sizeFilter !== 'all' 
-                ? 'No images match your search' 
-                : 'No images generated yet'
-              }
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              {searchQuery || filterBy !== 'all' || sizeFilter !== 'all'
-                ? 'Try adjusting your search or filters'
-                : 'Start creating amazing images with AI'
-              }
-            </p>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Skip Dashboard Tour?</h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
+            This quick tour shows you the key features of your Growfly dashboard. 
+            You can always restart it later from Settings.
+          </p>
+          
+          <div className="flex gap-4">
             <button
-              onClick={() => router.push('/dashboard')}
-              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-4 rounded-2xl font-medium transition-all duration-200 flex items-center gap-3 mx-auto shadow-lg hover:shadow-xl transform hover:scale-105"
+              onClick={onCancel}
+              className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white py-4 px-6 rounded-2xl font-bold transition-all duration-200 hover:scale-105"
             >
-              <FaImages />
-              Generate Your First Image
+              Continue Tour
             </button>
+            <button
+              onClick={onConfirm}
+              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-4 px-6 rounded-2xl font-bold transition-all duration-200 hover:scale-105 shadow-lg"
+            >
+              Skip Tour
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const SlideContent: React.FC<SlideContentProps> = ({ 
+  slide, 
+  isAnimating 
+}) => {
+  const isListSlide = slide.text.includes('•')
+  
+  return (
+    <div className={`transition-all duration-500 ${isAnimating ? 'opacity-75 scale-98' : 'opacity-100 scale-100'}`}>
+      {/* Icon Section */}
+      <div className="text-center mb-8">
+        <div className="w-24 h-24 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-blue-200 dark:border-blue-800 shadow-lg">
+          <div className="text-blue-600 dark:text-blue-400">
+            {slide.icon}
+          </div>
+        </div>
+        <div className="text-6xl mb-4" role="img" aria-label={`${slide.emoji} emoji`}>
+          {slide.emoji}
+        </div>
+      </div>
+
+      {/* Content Section */}
+      <div className="text-center max-w-4xl mx-auto">
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
+          {slide.title}
+        </h2>
+        
+        {isListSlide ? (
+          <div className="text-left bg-gray-50 dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700">
+            <div className="space-y-4">
+              {slide.text.split('\n').map((item, index) => (
+                <div key={index} className="flex items-start gap-4">
+                  <div className="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full mt-3 flex-shrink-0"></div>
+                  <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
+                    {item.replace('• ', '')}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
-          /* ✅ Enhanced Image Grid with improved error handling */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredAndSortedImages.map((image) => (
-              <div
-                key={image.id}
-                className="group bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-lg border border-gray-200 dark:border-slate-700 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1"
-              >
-                {/* Image */}
-                <div 
-                  className="relative aspect-square cursor-pointer overflow-hidden"
-                  onClick={() => handleImageClick(image)}
-                >
-                  <SafeImage
-                    src={image.url}
-                    alt={image.originalPrompt}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    onError={() => handleImageError(image.id)}
-                  />
-                  
-                  {/* Overlay on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
-                    <FaEye className="text-white text-2xl" />
-                  </div>
-
-                  {/* Pin/Favorite indicators */}
-                  <div className="absolute top-3 right-3 flex gap-2">
-                    {image.isPinned && (
-                      <div className="bg-blue-500 text-white p-2 rounded-full shadow-lg">
-                        <FaBookmark className="w-3 h-3" />
-                      </div>
-                    )}
-                    {image.isFavorite && (
-                      <div className="bg-red-500 text-white p-2 rounded-full shadow-lg">
-                        <FaHeart className="w-3 h-3" />
-                      </div>
-                    )}
-                    {/* ✅ FIXED: Using Array.includes instead of Set.has */}
-                    {imageLoadErrors.includes(image.id) && (
-                      <div className="bg-orange-500 text-white p-2 rounded-full shadow-lg" title="Image failed to load">
-                        <FaExclamationTriangle className="w-3 h-3" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-5">
-                  <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 mb-4 leading-relaxed">
-                    {image.originalPrompt}
-                  </p>
-                  
-                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-4">
-                    <span className="flex items-center gap-1 bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded-full">
-                      <FaCalendarAlt />
-                      {new Date(image.createdAt).toLocaleDateString()}
-                    </span>
-                    <span className="bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 px-2 py-1 rounded-full">
-                      {image.size}
-                    </span>
-                  </div>
-
-                  {/* ✅ Enhanced Actions with rounded corners */}
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handlePin(image.id)
-                      }}
-                      className={`flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-2xl text-xs font-medium transition-all duration-200 ${
-                        image.isPinned
-                          ? 'bg-blue-500 text-white hover:bg-blue-600'
-                          : 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/40'
-                      }`}
-                    >
-                      {image.isPinned ? <FaBookmark /> : <FaRegBookmark />}
-                      Pin
-                    </button>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleFavorite(image.id)
-                      }}
-                      className={`flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-2xl text-xs font-medium transition-all duration-200 ${
-                        image.isFavorite
-                          ? 'bg-red-500 text-white hover:bg-red-600'
-                          : 'bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/40'
-                      }`}
-                    >
-                      {image.isFavorite ? <FaHeart /> : <FaRegHeart />}
-                      ♥
-                    </button>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        const link = document.createElement('a')
-                        link.href = image.url
-                        link.download = `growfly-${image.id}.png`
-                        link.click()
-                      }}
-                      className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/40 rounded-2xl text-xs font-medium transition-all duration-200"
-                    >
-                      <FaDownload />
-                      Save
-                    </button>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleShare(image.id)
-                      }}
-                      className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-2xl transition-all duration-200"
-                      title="Share image"
-                    >
-                      <FaShare className="w-3 h-3" />
-                    </button>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        confirmDelete(image.id)
-                      }}
-                      className="p-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl transition-all duration-200"
-                      title="Delete image"
-                    >
-                      <FaTrash className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <p className="text-xl md:text-2xl text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
+            {slide.text}
+          </p>
+        )}
+        
+        {slide.subtext && (
+          <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-2xl border border-blue-200 dark:border-blue-800">
+            <p className="text-lg font-medium text-blue-800 dark:text-blue-300 italic">
+              {slide.subtext}
+            </p>
           </div>
         )}
       </div>
+    </div>
+  )
+}
 
-      {/* Image Detail Modal */}
-      <ImageDetailModal
-        image={selectedImage}
-        isOpen={showDetailModal}
-        onClose={() => {
-          setShowDetailModal(false)
-          setSelectedImage(null)
-        }}
-        onDelete={confirmDelete}
-        onPin={handlePin}
-        onFavorite={handleFavorite}
+const SlideshowModal: React.FC = () => {
+  const { state, dispatch, slides } = useSlideshow()
+  
+  const currentSlide = slides[state.currentSlide]
+  const progress = ((state.currentSlide + 1) / slides.length) * 100
+  const isFirstSlide = state.currentSlide === 0
+  const isLastSlide = state.currentSlide === slides.length - 1
+
+  const handleNext = useCallback(() => {
+    if (isLastSlide) {
+      dispatch({ type: 'DEACTIVATE' })
+    } else {
+      dispatch({ type: 'NEXT_SLIDE' })
+    }
+  }, [isLastSlide, dispatch])
+
+  const handlePrev = useCallback(() => {
+    if (state.currentSlide > 0) {
+      dispatch({ type: 'PREV_SLIDE' })
+    }
+  }, [state.currentSlide, dispatch])
+
+  const handleSkip = useCallback(() => {
+    dispatch({ type: 'SHOW_SKIP_MODAL', payload: true })
+  }, [dispatch])
+
+  const handleToggleAutoplay = useCallback(() => {
+    dispatch({ type: 'TOGGLE_AUTOPLAY' })
+  }, [dispatch])
+
+  // Stop animation after delay
+  useEffect(() => {
+    if (state.isAnimating) {
+      const timer = setTimeout(() => {
+        dispatch({ type: 'SET_ANIMATING', payload: false })
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [state.isAnimating, dispatch])
+
+  // Autoplay functionality
+  useAutoplay(
+    state.isActive,
+    state.isAutoPlaying,
+    state.currentSlide,
+    slides.length,
+    handleNext,
+    () => dispatch({ type: 'DEACTIVATE' })
+  )
+
+  // Keyboard navigation
+  useKeyboardNavigation(state.isActive, {
+    onNext: handleNext,
+    onPrev: handlePrev,
+    onEscape: handleSkip,
+    onToggleAutoplay: handleToggleAutoplay
+  })
+
+  if (!state.isActive || !currentSlide) return null
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center">
+      {/* Blurred Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-600/95 via-indigo-700/95 to-purple-800/95 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/20" />
+      
+      {/* Main Modal */}
+      <div className="relative z-10 w-full max-w-6xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+          
+          {/* Header */}
+          <div className="relative bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 border-b border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleToggleAutoplay}
+                    className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-2xl flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg"
+                    aria-label={state.isAutoPlaying ? 'Pause autoplay' : 'Start autoplay'}
+                  >
+                    {state.isAutoPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                  </button>
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard Tour</h1>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Slide {state.currentSlide + 1} of {slides.length}
+                      {state.isAutoPlaying && ' • Auto-playing'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <button
+                onClick={handleSkip}
+                className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-200 hover:scale-105 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                aria-label="Skip tour"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="mt-6">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                <div 
+                  className="h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full transition-all duration-700 ease-out"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Slide Content */}
+          <div className="p-8 md:p-12 min-h-[60vh] flex flex-col justify-center">
+            <SlideContent slide={currentSlide} isAnimating={state.isAnimating} />
+          </div>
+
+          {/* Footer */}
+          <div className="bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 border-t border-gray-200 dark:border-gray-700 p-6">
+            <SlideIndicators 
+              total={slides.length} 
+              current={state.currentSlide}
+              onSlideSelect={(index) => dispatch({ type: 'SET_SLIDE', payload: index })}
+            />
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleSkip}
+                  className="px-6 py-3 text-sm font-semibold rounded-2xl transition-all duration-200 hover:scale-105 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600"
+                >
+                  Skip Tour
+                </button>
+                {!isFirstSlide && (
+                  <button
+                    onClick={handlePrev}
+                    className="flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-2xl transition-all duration-200 hover:scale-105 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600"
+                  >
+                    <ChevronRight className="w-4 h-4 rotate-180" />
+                    Previous
+                  </button>
+                )}
+              </div>
+              
+              <button
+                onClick={handleNext}
+                className={`flex items-center gap-3 px-8 py-3 rounded-2xl font-bold transition-all duration-200 shadow-lg hover:scale-105 ${
+                  isLastSlide
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 shadow-green-500/25'
+                    : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-blue-500/25'
+                }`}
+              >
+                {isLastSlide ? (
+                  <>
+                    Get Started
+                    <Sparkles className="w-5 h-5" />
+                  </>
+                ) : (
+                  <>
+                    Next
+                    <ArrowRight className="w-5 h-5" />
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ========================= MAIN TUTORIAL COMPONENT =========================
+
+const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({ 
+  isFirstTime = false,
+  autoplay = false,
+  onComplete
+}) => {
+  const [state, dispatch] = useReducer(slideshowReducer, initialSlideshowState)
+  const [hasSeenTour, setHasSeenTour] = useLocalStorage('growfly-tutorial-completed', false)
+
+  const contextValue: SlideshowContextValue = useMemo(() => ({
+    state,
+    dispatch,
+    slides: SLIDES
+  }), [state, dispatch])
+
+  // Initialize slideshow
+  useEffect(() => {
+    if (isFirstTime && !hasSeenTour) {
+      setTimeout(() => {
+        if (typeof document !== 'undefined') {
+          document.body.style.overflow = 'hidden'
+        }
+        dispatch({ type: 'ACTIVATE', payload: { autoplay } })
+      }, 500) // Small delay for better UX
+    }
+  }, [isFirstTime, autoplay, hasSeenTour])
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = ''
+      }
+    }
+  }, [])
+
+  const handleComplete = useCallback(() => {
+    dispatch({ type: 'DEACTIVATE' })
+    if (typeof document !== 'undefined') {
+      document.body.style.overflow = ''
+    }
+    setHasSeenTour(true)
+    onComplete?.()
+  }, [onComplete, setHasSeenTour])
+
+  const handleSkipConfirm = useCallback(() => {
+    dispatch({ type: 'SHOW_SKIP_MODAL', payload: false })
+    handleComplete()
+  }, [handleComplete])
+
+  const handleSkipCancel = useCallback(() => {
+    dispatch({ type: 'SHOW_SKIP_MODAL', payload: false })
+  }, [])
+
+  // Handle modal close
+  useEffect(() => {
+    if (!state.isActive && state.hasStarted) {
+      handleComplete()
+    }
+  }, [state.isActive, state.hasStarted, handleComplete])
+
+  return (
+    <SlideshowContext.Provider value={contextValue}>
+      {state.isActive && (
+        <>
+          <SlideshowModal />
+          
+          <SkipModal
+            isVisible={state.showSkipModal}
+            onConfirm={handleSkipConfirm}
+            onCancel={handleSkipCancel}
+          />
+        </>
+      )}
+    </SlideshowContext.Provider>
+  )
+}
+
+// ========================= SLIDESHOW ALIAS =========================
+
+const GrowflySlideshow: React.FC<GrowflySlideshowProps> = GrowflyTutorial
+
+// ========================= LAUNCH TOUR COMPONENT =========================
+
+const LaunchTourButton: React.FC<LaunchTourButtonProps> = ({ 
+  className = "",
+  children = "Launch Tour"
+}) => {
+  const [showSlideshow, setShowSlideshow] = useState(false)
+
+  return (
+    <>
+      <button
+        onClick={() => setShowSlideshow(true)}
+        className={`inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-2xl transition-all duration-200 hover:scale-105 shadow-lg ${className}`}
+      >
+        <Play className="w-4 h-4" />
+        {children}
+      </button>
+      
+      <GrowflyTutorial
+        isFirstTime={showSlideshow}
+        autoplay={false}
+        onComplete={() => setShowSlideshow(false)}
       />
+    </>
+  )
+}
 
-      {/* Delete Confirmation Modal */}
-      <DeleteConfirmModal
-        isOpen={showDeleteModal}
-        onClose={() => {
-          setShowDeleteModal(false)
-          setImageToDelete(null)
-        }}
-        onConfirm={() => {
-          if (imageToDelete) {
-            handleDelete(imageToDelete)
-          }
-        }}
-        imageName={imageToDelete ? images.find(img => img.id === imageToDelete)?.originalPrompt.substring(0, 50) + '...' || '' : ''}
+// ========================= DEMO COMPONENT =========================
+
+function SlideshowDemo(): React.ReactElement {
+  const [showSlideshow, setShowSlideshow] = useState(false)
+  const [showAutoplaySlideshow, setShowAutoplaySlideshow] = useState(false)
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+      {/* Demo Content */}
+      <div className="max-w-4xl mx-auto p-8">
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">
+            Growfly Dashboard Tour 🚀
+          </h1>
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
+            Beautiful, responsive slideshow modal with autoplay and manual controls
+          </p>
+        </div>
+
+        {/* Feature Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg border border-gray-200 dark:border-gray-700">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">🎨 Design Features</h2>
+            <ul className="space-y-3 text-gray-700 dark:text-gray-300">
+              <li>• Curved corners & soft shadows</li>
+              <li>• Light/dark mode support</li>
+              <li>• Emojis in headings</li>
+              <li>• Blurred background overlay</li>
+              <li>• Smooth animations</li>
+            </ul>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg border border-gray-200 dark:border-gray-700">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">⚡ Interactive Features</h2>
+            <ul className="space-y-3 text-gray-700 dark:text-gray-300">
+              <li>• Autoplay with pause/play</li>
+              <li>• Keyboard navigation</li>
+              <li>• Slide indicators</li>
+              <li>• Skip tour modal</li>
+              <li>• Progress tracking</li>
+            </ul>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg border border-gray-200 dark:border-gray-700">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">📱 Responsive Design</h2>
+            <ul className="space-y-3 text-gray-700 dark:text-gray-300">
+              <li>• Mobile-optimized layout</li>
+              <li>• Adaptive text sizing</li>
+              <li>• Touch-friendly controls</li>
+              <li>• Flexible content areas</li>
+              <li>• Accessibility support</li>
+            </ul>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg border border-gray-200 dark:border-gray-700">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">🛠️ Integration Ready</h2>
+            <ul className="space-y-3 text-gray-700 dark:text-gray-300">
+              <li>• localStorage persistence</li>
+              <li>• Settings integration</li>
+              <li>• First-time user detection</li>
+              <li>• Manual launch button</li>
+              <li>• Completion callbacks</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Demo Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <button
+            onClick={() => setShowAutoplaySlideshow(true)}
+            className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-2xl transition-all duration-200 hover:scale-105 shadow-lg"
+          >
+            <Play className="w-5 h-5" />
+            Demo: First-Time User (Autoplay)
+          </button>
+          
+          <LaunchTourButton className="px-8 py-4 text-lg">
+            🎯 Manual Launch Tour
+          </LaunchTourButton>
+        </div>
+
+        {/* Usage Instructions */}
+        <div className="mt-16 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-8 rounded-3xl border border-blue-200 dark:border-blue-800">
+          <h3 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">🚀 How to Integrate</h3>
+          <div className="space-y-4 text-gray-700 dark:text-gray-300">
+            <p><strong>For First-Time Users (Settings):</strong></p>
+            <code className="block bg-gray-100 dark:bg-gray-800 p-4 rounded-xl text-sm">
+              {`<GrowflyTutorial isFirstTime={true} autoplay={true} onComplete={handleTourComplete} />`}
+            </code>
+            
+            <p><strong>For Manual Launch (Settings Button):</strong></p>
+            <code className="block bg-gray-100 dark:bg-gray-800 p-4 rounded-xl text-sm">
+              {`<LaunchTourButton>Launch Dashboard Tour</LaunchTourButton>`}
+            </code>
+          </div>
+        </div>
+      </div>
+
+      {/* Demo Slideshows */}
+      <GrowflyTutorial
+        isFirstTime={showAutoplaySlideshow}
+        autoplay={true}
+        onComplete={() => setShowAutoplaySlideshow(false)}
       />
     </div>
   )
 }
+
+// ========================= EXPORTS =========================
+
+// Default export - main tutorial component
+export default GrowflyTutorial
+
+// Named exports
+export { GrowflySlideshow, SlideshowDemo, LaunchTourButton }
+
+// Type exports for external use
+export type { GrowflyTutorialProps, LaunchTourButtonProps }

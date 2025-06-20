@@ -1,5 +1,4 @@
 'use client'
-export const dynamic = 'force-dynamic'
 
 import React, { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -31,7 +30,6 @@ import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
 import streamChat from '@lib/streamChat'
 import { useUserStore } from '@lib/store'
-// ✅ NEW: Import tutorial component
 import GrowflyTutorial from '@/components/tutorial/GrowflyTutorial'
 
 // Use environment variable directly instead of importing from constants
@@ -2302,6 +2300,7 @@ function DashboardContent() {
       {/* ✅ FIXED: Tutorial Component with force option */}
       <GrowflyTutorial 
         isFirstTime={showTutorial || forceTutorial}
+        autoplay={true}
         onComplete={handleTutorialComplete}
       />
     </div>
