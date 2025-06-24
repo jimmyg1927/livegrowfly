@@ -1,3 +1,5 @@
+'use client'
+
 import React, { 
   useState, 
   useEffect, 
@@ -22,6 +24,8 @@ interface GrowflyTutorialProps {
   autoplay?: boolean
   onComplete?: () => void
 }
+
+interface GrowflySlideshowProps extends GrowflyTutorialProps {}
 
 interface LaunchTourButtonProps {
   className?: string
@@ -353,8 +357,6 @@ export const useSlideshow = () => {
   }
   return context
 }
-
-// ========================= COMPONENT PROPS INTERFACES =========================
 
 interface SlideIndicatorsProps {
   total: number
@@ -746,7 +748,7 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
 
 // ========================= SLIDESHOW ALIAS =========================
 
-const GrowflySlideshow: React.FC<GrowflyTutorialProps> = GrowflyTutorial
+const GrowflySlideshow: React.FC<GrowflySlideshowProps> = GrowflyTutorial
 
 // ========================= LAUNCH TOUR COMPONENT =========================
 
@@ -889,7 +891,7 @@ function SlideshowDemo(): React.ReactElement {
 export default GrowflyTutorial
 
 // Named exports
-export { GrowflySlideshow, LaunchTourButton, SlideshowDemo }
+export { GrowflySlideshow, SlideshowDemo, LaunchTourButton }
 
 // Type exports for external use
 export type { GrowflyTutorialProps, LaunchTourButtonProps }
