@@ -22,6 +22,7 @@ export default function WishlistPage() {
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({ title: '', subtitle: '', body: '' })
   const [submitting, setSubmitting] = useState(false)
+  const [voting, setVoting] = useState<string | null>(null) // Track which item is being voted on
   const [searchTerm, setSearchTerm] = useState('')
   const [sortBy, setSortBy] = useState<'votes' | 'recent'>('votes')
   const [showForm, setShowForm] = useState(false)
@@ -85,14 +86,16 @@ export default function WishlistPage() {
   }
 
   const handleVote = async (id: string, vote: 'positive' | 'negative') => {
-    if (!token) return
+    if (!token || voting === id) return
     
     // Find the current item to check existing vote
     const currentItem = items.find(item => item.id === id)
     if (!currentItem) return
     
     // If user clicks the same vote they already have, remove the vote
-    const finalVote = currentItem.userVote === vote ? 'none' : vote
+    const finalVote: 'none' | 'positive' | 'negative' = currentItem.userVote === vote ? 'none' : vote
+    
+    setVoting(id) // Prevent multiple rapid clicks
     
     try {
       const res = await fetch(`${API_BASE_URL}/api/wishlist/${id}/vote`, {
@@ -104,9 +107,39 @@ export default function WishlistPage() {
         body: JSON.stringify({ vote: finalVote }),
       })
       if (!res.ok) throw new Error()
-      fetchItems()
-    } catch {
+      
+      // Update the local state immediately for better UX
+      setItems((prevItems: WishlistItem[]) => 
+        prevItems.map((item: WishlistItem): WishlistItem => {
+          if (item.id === id) {
+            const updatedItem: WishlistItem = { ...item, userVote: finalVote }
+            
+            // Update vote counts locally
+            if (currentItem.userVote === 'positive' && finalVote !== 'positive') {
+              updatedItem.positiveVotes = Math.max(0, updatedItem.positiveVotes - 1)
+            } else if (currentItem.userVote !== 'positive' && finalVote === 'positive') {
+              updatedItem.positiveVotes += 1
+            }
+            
+            if (currentItem.userVote === 'negative' && finalVote !== 'negative') {
+              updatedItem.negativeVotes = Math.max(0, updatedItem.negativeVotes - 1)
+            } else if (currentItem.userVote !== 'negative' && finalVote === 'negative') {
+              updatedItem.negativeVotes += 1
+            }
+            
+            return updatedItem
+          }
+          return item
+        })
+      )
+      
+      // Optionally refresh from server to ensure consistency
+      // fetchItems()
+    } catch (error) {
+      console.error('Vote error:', error)
       alert('Could not register vote.')
+    } finally {
+      setVoting(null)
     }
   }
 
@@ -400,6 +433,7 @@ export default function WishlistPage() {
               const badge = getPopularityBadge(item.positiveVotes)
               const totalVotes = item.positiveVotes + item.negativeVotes
               const positiveRatio = totalVotes > 0 ? (item.positiveVotes / totalVotes) * 100 : 0
+              const isVoting = voting === item.id
               
               return (
                 <motion.div
@@ -454,40 +488,55 @@ export default function WishlistPage() {
                     <div className="flex gap-3">
                       <motion.button
                         onClick={() => handleVote(item.id, 'positive')}
+                        disabled={isVoting}
                         className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200 ${
                           item.userVote === 'positive'
-                            ? 'bg-green-600 text-white shadow-lg'
+                            ? 'bg-green-600 text-white shadow-lg ring-2 ring-green-300 dark:ring-green-500/50'
                             : 'bg-gray-100 dark:bg-slate-700 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
-                        }`}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        whileHover={!isVoting ? { scale: 1.05 } : undefined}
+                        whileTap={!isVoting ? { scale: 0.95 } : undefined}
                         title={item.userVote === 'positive' ? 'Remove your upvote' : 'Upvote this feature'}
                       >
-                        <ThumbsUp className="w-4 h-4" />
+                        <ThumbsUp className={`w-4 h-4 ${item.userVote === 'positive' ? 'fill-current' : ''}`} />
                         <span>{item.positiveVotes}</span>
+                        {item.userVote === 'positive' && (
+                          <span className="text-xs opacity-75">✓</span>
+                        )}
                       </motion.button>
                       
                       <motion.button
                         onClick={() => handleVote(item.id, 'negative')}
+                        disabled={isVoting}
                         className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200 ${
                           item.userVote === 'negative'
-                            ? 'bg-red-600 text-white shadow-lg'
+                            ? 'bg-red-600 text-white shadow-lg ring-2 ring-red-300 dark:ring-red-500/50'
                             : 'bg-gray-100 dark:bg-slate-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
-                        }`}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        whileHover={!isVoting ? { scale: 1.05 } : undefined}
+                        whileTap={!isVoting ? { scale: 0.95 } : undefined}
                         title={item.userVote === 'negative' ? 'Remove your downvote' : 'Downvote this feature'}
                       >
-                        <ThumbsDown className="w-4 h-4" />
+                        <ThumbsDown className={`w-4 h-4 ${item.userVote === 'negative' ? 'fill-current' : ''}`} />
                         <span>{item.negativeVotes}</span>
+                        {item.userVote === 'negative' && (
+                          <span className="text-xs opacity-75">✓</span>
+                        )}
                       </motion.button>
                     </div>
                     
-                    {totalVotes > 0 && (
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {totalVotes} total vote{totalVotes !== 1 ? 's' : ''}
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {totalVotes > 0 && (
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {totalVotes} total vote{totalVotes !== 1 ? 's' : ''}
+                        </div>
+                      )}
+                      {item.userVote !== 'none' && (
+                        <div className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                          You voted
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               )

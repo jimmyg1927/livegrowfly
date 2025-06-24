@@ -25,6 +25,9 @@ import {
   FaImages,
   FaQuestionCircle,
   FaCopy,
+  FaExclamationTriangle,
+  FaWifi,
+  FaPlug,
 } from 'react-icons/fa'
 import SaveModal from '@/components/SaveModal'
 import FeedbackModal from '@/components/FeedbackModal'
@@ -103,6 +106,145 @@ const IMAGE_LIMITS: Record<string, { daily: number; monthly: number }> = {
 
 const MAX_PERSISTENT_MESSAGES = 10
 
+// Type guard utilities for error handling
+const isErrorWithStatus = (error: unknown): error is { status: number } => {
+  return typeof error === 'object' && error !== null && 'status' in error
+}
+
+const isErrorWithMessage = (error: unknown): error is { message: string } => {
+  return typeof error === 'object' && error !== null && 'message' in error
+}
+
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message
+  if (isErrorWithMessage(error)) return error.message
+  if (typeof error === 'string') return error
+  return 'An unknown error occurred'
+}
+
+// Enhanced Error Boundary Component
+interface ErrorBoundaryState {
+  hasError: boolean
+  error: Error | null
+  errorInfo: React.ErrorInfo | null
+}
+
+interface ErrorBoundaryProps {
+  children: React.ReactNode
+}
+
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props)
+    this.state = { hasError: false, error: null, errorInfo: null }
+  }
+
+  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    this.setState({
+      error: error,
+      errorInfo: errorInfo
+    })
+    console.error('Dashboard Error Boundary caught an error:', error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+          <div className="text-center max-w-md mx-4">
+            <div className="text-6xl mb-4">⚠️</div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              Something went wrong
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              We encountered an unexpected error. Please refresh the page or try again later.
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                Refresh Page
+              </button>
+              <button
+                onClick={() => this.setState({ hasError: false, error: null, errorInfo: null })}
+                className="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+            {process.env.NODE_ENV === 'development' && this.state.error && (
+              <details className="mt-6 text-left">
+                <summary className="cursor-pointer text-sm text-gray-500">Error Details</summary>
+                <pre className="mt-2 text-xs bg-gray-100 dark:bg-gray-800 p-3 rounded overflow-auto">
+                  {this.state.error.toString()}
+                  <br />
+                  {this.state.errorInfo?.componentStack}
+                </pre>
+              </details>
+            )}
+          </div>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
+
+// Enhanced Loading Skeleton Components
+const UsageCardSkeleton = () => (
+  <div className="animate-pulse">
+    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-1"></div>
+    <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+  </div>
+)
+
+const MessageSkeleton = () => (
+  <div className="flex justify-start w-full mb-3">
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 max-w-[80%] p-4 rounded-2xl animate-pulse">
+      <div className="space-y-3">
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-4/6"></div>
+      </div>
+    </div>
+  </div>
+)
+
+// Enhanced Network Status Component
+interface NetworkStatusProps {
+  isOnline: boolean
+  isConnecting: boolean
+}
+
+const NetworkStatus: React.FC<NetworkStatusProps> = ({ isOnline, isConnecting }) => {
+  if (isOnline) return null
+
+  return (
+    <div className="fixed top-0 left-0 right-0 z-50 bg-red-500 text-white p-2 text-center text-sm">
+      <div className="flex items-center justify-center gap-2">
+        {isConnecting ? (
+          <>
+            <FaSpinner className="animate-spin" />
+            <span>Reconnecting...</span>
+          </>
+        ) : (
+          <>
+            <FaWifi className="opacity-50" />
+            <span>No internet connection</span>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // Copy functionality
 const copyToClipboard = async (text: string) => {
   try {
@@ -125,32 +267,49 @@ const copyToClipboard = async (text: string) => {
   }
 }
 
-// Image error handling component
-const SafeImage: React.FC<{ 
-  src: string; 
-  alt: string; 
-  className?: string;
-  onError?: () => void;
-}> = ({ src, alt, className, onError }) => {
+// Enhanced Image error handling component
+interface SafeImageProps {
+  src: string
+  alt: string
+  className?: string
+  onError?: () => void
+}
+
+const SafeImage: React.FC<SafeImageProps> = ({ src, alt, className, onError }) => {
   const [error, setError] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [retryCount, setRetryCount] = useState(0)
+  const maxRetries = 3
 
   const handleError = () => {
-    setError(true)
     setLoading(false)
-    onError?.()
+    if (retryCount < maxRetries) {
+      // Retry loading after a delay
+      setTimeout(() => {
+        setRetryCount(prev => prev + 1)
+        setError(false)
+        setLoading(true)
+      }, 1000 * (retryCount + 1))
+    } else {
+      setError(true)
+      onError?.()
+    }
   }
 
   const handleLoad = () => {
     setLoading(false)
+    setRetryCount(0)
   }
 
   if (error) {
     return (
       <div className={`${className} bg-gray-100 dark:bg-gray-800 flex items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700`}>
         <div className="text-center p-4">
-          <FaImages className="text-gray-400 text-2xl mx-auto mb-2" />
-          <p className="text-xs text-gray-500 dark:text-gray-400">Image unavailable</p>
+          <FaExclamationTriangle className="text-gray-400 text-2xl mx-auto mb-2" />
+          <p className="text-xs text-gray-500 dark:text-gray-400">Image failed to load</p>
+          {retryCount > 0 && (
+            <p className="text-xs text-gray-400 mt-1">Retried {retryCount} times</p>
+          )}
         </div>
       </div>
     )
@@ -160,7 +319,12 @@ const SafeImage: React.FC<{
     <div className="relative">
       {loading && (
         <div className={`${className} bg-gray-100 dark:bg-gray-800 flex items-center justify-center rounded-xl animate-pulse`}>
-          <FaSpinner className="text-gray-400 text-xl animate-spin" />
+          <div className="flex flex-col items-center">
+            <FaSpinner className="text-gray-400 text-xl animate-spin mb-2" />
+            {retryCount > 0 && (
+              <p className="text-xs text-gray-400">Retry {retryCount}/{maxRetries}</p>
+            )}
+          </div>
         </div>
       )}
       <img
@@ -175,7 +339,12 @@ const SafeImage: React.FC<{
 }
 
 // File Preview Component
-const FilePreview: React.FC<{ file: UploadedFile; onRemove: () => void }> = ({ file, onRemove }) => {
+interface FilePreviewProps {
+  file: UploadedFile
+  onRemove: () => void
+}
+
+const FilePreview: React.FC<FilePreviewProps> = ({ file, onRemove }) => {
   const getFileIcon = () => {
     if (file.type.startsWith('image/')) {
       return file.preview ? (
@@ -224,11 +393,13 @@ const FilePreview: React.FC<{ file: UploadedFile; onRemove: () => void }> = ({ f
   )
 }
 
-const ImageGenerationModal: React.FC<{
+interface ImageGenerationModalProps {
   open: boolean
   onClose: () => void
   onImageGenerated: (image: GeneratedImage) => void
-}> = ({ open, onClose, onImageGenerated }) => {
+}
+
+const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({ open, onClose, onImageGenerated }) => {
   const [prompt, setPrompt] = useState('')
   const [size, setSize] = useState('1024x1024')
   const [style, setStyle] = useState('vivid')
@@ -237,11 +408,15 @@ const ImageGenerationModal: React.FC<{
   const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null)
   const [error, setError] = useState('')
   const [imageUsage, setImageUsage] = useState<ImageUsage | null>(null)
+  const [isLoadingUsage, setIsLoadingUsage] = useState(false)
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
   const router = useRouter()
 
   useEffect(() => {
     if (open && token) {
+      setIsLoadingUsage(true)
+      setError('')
+      
       fetch(`${API_BASE_URL}/api/dalle/usage`, {
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -269,8 +444,9 @@ const ImageGenerationModal: React.FC<{
             })
           }
         })
-        .catch(err => {
+        .catch((err: unknown) => {
           console.error('❌ Failed to fetch image usage in modal:', err)
+          setError('Failed to load usage data. Some features may be limited.')
           const limits = IMAGE_LIMITS.free
           setImageUsage({
             subscriptionType: 'free',
@@ -281,6 +457,9 @@ const ImageGenerationModal: React.FC<{
             canGenerate: true,
             _fallback: true
           })
+        })
+        .finally(() => {
+          setIsLoadingUsage(false)
         })
     }
   }, [open, token])
@@ -366,8 +545,9 @@ const ImageGenerationModal: React.FC<{
         } : null)
       }
 
-    } catch (err: any) {
-      setError(err.message || 'Failed to generate image')
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err)
+      setError(errorMessage)
     } finally {
       setIsGenerating(false)
     }
@@ -454,7 +634,19 @@ const ImageGenerationModal: React.FC<{
                 </p>
               </div>
 
-              {imageUsage && (
+              {isLoadingUsage ? (
+                <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse"></div>
+                    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-24 animate-pulse"></div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <UsageCardSkeleton />
+                    <UsageCardSkeleton />
+                    <UsageCardSkeleton />
+                  </div>
+                </div>
+              ) : imageUsage && (
                 <div className="mb-6 space-y-4">
                   {imageUsage._fallback && (
                     <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
@@ -675,6 +867,15 @@ function DashboardContent() {
   const { user, setUser } = useUserStore()
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
 
+  // Enhanced loading states
+  const [isLoadingUser, setIsLoadingUser] = useState(true)
+  const [isLoadingMessages, setIsLoadingMessages] = useState(true)
+  const [isLoadingUsage, setIsLoadingUsage] = useState(true)
+  const [networkError, setNetworkError] = useState<string | null>(null)
+  const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? navigator.onLine : true)
+  const [isConnecting, setIsConnecting] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
+
   const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || 'free'] || 20
   const promptsUsed = user?.promptsUsed ?? 0
   const promptsRemaining = Math.max(0, promptLimit - promptsUsed)
@@ -716,6 +917,84 @@ function DashboardContent() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const scrollTimeoutRef = useRef<NodeJS.Timeout>()
   const lastScrollTop = useRef<number>(0)
+
+  // Network status monitoring
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true)
+      setNetworkError(null)
+      setIsConnecting(false)
+    }
+
+    const handleOffline = () => {
+      setIsOnline(false)
+      setNetworkError('No internet connection')
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  // Enhanced error handling with retry logic
+  const handleApiError = async (error: unknown, operation: string, retryFn?: () => Promise<void>) => {
+    console.error(`❌ ${operation} failed:`, error)
+    
+    if (!isOnline) {
+      setNetworkError('No internet connection. Please check your network and try again.')
+      return
+    }
+
+    // Check for network/fetch errors
+    if (error instanceof Error && error.name === 'TypeError' && error.message.includes('fetch')) {
+      setNetworkError('Network error. Please check your connection.')
+      setIsConnecting(true)
+      
+      // Auto-retry after 3 seconds
+      if (retryFn && retryCount < 3) {
+        setTimeout(async () => {
+          setRetryCount(prev => prev + 1)
+          try {
+            await retryFn()
+            setIsConnecting(false)
+            setRetryCount(0)
+          } catch (retryError) {
+            handleApiError(retryError, `${operation} (retry ${retryCount + 1})`, retryFn)
+          }
+        }, 3000)
+      } else {
+        setIsConnecting(false)
+        setRetryCount(0)
+      }
+      return
+    }
+
+    // Check for HTTP status errors
+    if (isErrorWithStatus(error)) {
+      if (error.status === 401) {
+        setNetworkError('Authentication error. Please log in again.')
+        localStorage.removeItem('growfly_jwt')
+        router.push('/onboarding')
+        return
+      }
+
+      if (error.status === 429) {
+        setNetworkError('Too many requests. Please wait a moment and try again.')
+        return
+      }
+
+      if (error.status >= 500) {
+        setNetworkError('Server error. Please try again later.')
+        return
+      }
+    }
+
+    setNetworkError(`${operation} failed. Please try again.`)
+  }
 
   // ✅ ENHANCED: Tutorial integration for new users with better logging
   useEffect(() => {
@@ -812,9 +1091,11 @@ function DashboardContent() {
     }
   }
 
-  // Load dashboard conversations from DB
+  // Enhanced load dashboard conversations from DB with error handling
   const loadDashboardConversationsFromDB = async () => {
     if (!token) return
+    
+    setIsLoadingMessages(true)
     
     try {
       const response = await fetch(`${API_BASE_URL}/api/chat/dashboard-history`, {
@@ -837,9 +1118,12 @@ function DashboardContent() {
         console.log('No dashboard history found or error loading')
         setMessages([])
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to load dashboard conversations from DB:', err)
+      handleApiError(err, 'Loading conversation history')
       setMessages([])
+    } finally {
+      setIsLoadingMessages(false)
     }
   }
 
@@ -873,53 +1157,95 @@ function DashboardContent() {
     setUploadedFiles([])
   }
 
-  // Enhanced image usage fetching with new limits
+  // Enhanced image usage fetching with better error handling
   useEffect(() => {
-    if (token) {
-      fetch(`${API_BASE_URL}/api/dalle/usage`, {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-        .then(res => {
-          if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`)
-          return res.json()
-        })
-        .then(data => {
-          if (data && !data.error && data.dailyImages && data.monthlyImages && data.totalPrompts) {
-            setImageUsage(data)
-          } else {
-            const subType = user?.subscriptionType?.toLowerCase() || 'free'
-            const limits = IMAGE_LIMITS[subType] || IMAGE_LIMITS.free
-            setImageUsage({
-              subscriptionType: subType,
-              subscriptionName: subType.charAt(0).toUpperCase() + subType.slice(1),
-              dailyImages: { used: 0, limit: limits.daily, remaining: limits.daily },
-              monthlyImages: { used: 0, limit: limits.monthly, remaining: limits.monthly },
-              totalPrompts: { used: promptsUsed, limit: promptLimit, remaining: promptLimit - promptsUsed },
-              canGenerate: true,
-              _fallback: true
-            })
-          }
-        })
-        .catch(err => {
-          console.error('❌ Failed to fetch image usage:', err)
-          const limits = IMAGE_LIMITS.free
-          setImageUsage({
-            subscriptionType: 'free',
-            subscriptionName: 'Free',
-            dailyImages: { used: 0, limit: limits.daily, remaining: limits.daily },
-            monthlyImages: { used: 0, limit: limits.monthly, remaining: limits.monthly },
-            totalPrompts: { used: promptsUsed, limit: promptLimit, remaining: promptLimit - promptsUsed },
-            canGenerate: true,
-            _fallback: true
+    if (token && user) {
+      setIsLoadingUsage(true)
+      
+      const fetchImageUsage = async () => {
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/dalle/usage`, {
+            headers: { 
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
           })
-        })
+          
+          if (response.ok) {
+            const data = await response.json()
+            
+            // Validate the response has the required fields
+            if (data && data.dailyImages && data.monthlyImages && data.totalPrompts) {
+              console.log('✅ Successfully loaded real usage data:', data)
+              setImageUsage(data)
+              return
+            }
+          }
+          
+          // If API call failed or returned invalid data, use user's actual subscription data
+          console.log('⚠️ API call failed, using subscription-based limits')
+          const subType = user.subscriptionType?.toLowerCase() || 'free'
+          const limits = IMAGE_LIMITS[subType] || IMAGE_LIMITS.free
+          
+          setImageUsage({
+            subscriptionType: subType,
+            subscriptionName: user.subscriptionType || 'Free',
+            dailyImages: { 
+              used: 0, 
+              limit: limits.daily, 
+              remaining: limits.daily 
+            },
+            monthlyImages: { 
+              used: 0, 
+              limit: limits.monthly, 
+              remaining: limits.monthly 
+            },
+            totalPrompts: { 
+              used: user.promptsUsed || 0, 
+              limit: promptLimit, 
+              remaining: Math.max(0, promptLimit - (user.promptsUsed || 0))
+            },
+            canGenerate: (user.promptsUsed || 0) < promptLimit,
+          })
+          
+        } catch (err: unknown) {
+          console.error('❌ Failed to fetch image usage:', err)
+          handleApiError(err, 'Loading image usage')
+          
+          // Fallback with user's actual subscription data
+          const subType = user.subscriptionType?.toLowerCase() || 'free'
+          const limits = IMAGE_LIMITS[subType] || IMAGE_LIMITS.free
+          
+          setImageUsage({
+            subscriptionType: subType,
+            subscriptionName: user.subscriptionType || 'Free',
+            dailyImages: { 
+              used: 0, 
+              limit: limits.daily, 
+              remaining: limits.daily 
+            },
+            monthlyImages: { 
+              used: 0, 
+              limit: limits.monthly, 
+              remaining: limits.monthly 
+            },
+            totalPrompts: { 
+              used: user.promptsUsed || 0, 
+              limit: promptLimit, 
+              remaining: Math.max(0, promptLimit - (user.promptsUsed || 0))
+            },
+            canGenerate: (user.promptsUsed || 0) < promptLimit,
+          })
+        } finally {
+          setIsLoadingUsage(false)
+        }
+      }
+      
+      fetchImageUsage()
     }
-  }, [token, promptsUsed, promptLimit, user?.subscriptionType])
+  }, [token, user, promptLimit])
 
-  // Enhanced user data fetching
+  // Enhanced user data fetching with retry logic
   useEffect(() => {
     if (!token) {
       router.push('/onboarding')
@@ -927,6 +1253,8 @@ function DashboardContent() {
     }
     
     const fetchUserData = async () => {
+      setIsLoadingUser(true)
+      
       try {
         const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
           method: 'GET',
@@ -939,16 +1267,19 @@ function DashboardContent() {
         if (response.ok) {
           const userData = await response.json()
           setUser(userData)
+          setNetworkError(null)
         } else {
-          console.error('❌ Failed to fetch user data:', response.status, response.statusText)
-          
-          if (response.status === 401) {
-            localStorage.removeItem('growfly_jwt')
-            router.push('/onboarding')
-          }
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
         }
       } catch (error) {
-        console.error('❌ Error fetching user data:', error)
+        handleApiError(error, 'Loading user data', fetchUserData)
+        
+         if (isErrorWithStatus(error) && error.status === 401) {
+    localStorage.removeItem('growfly_jwt')
+    router.push('/onboarding')
+        }
+      } finally {
+        setIsLoadingUser(false)
       }
     }
     
@@ -1054,46 +1385,54 @@ function DashboardContent() {
     }
   }, [messages, disableAutoScroll, isUserScrolling, isStreaming])
 
-  // Enhanced file handling with drag & drop
+  // Enhanced file handling with drag & drop and better error handling
   const handleFileSelect = (files: FileList) => {
     Array.from(files).forEach(file => {
-      // Enhanced file size limit (25MB for documents, 10MB for images)
-      const maxSize = file.type.startsWith('image/') ? 10 * 1024 * 1024 : 25 * 1024 * 1024
-      if (file.size > maxSize) {
-        const sizeMB = Math.round(maxSize / (1024 * 1024))
-        setError(`File ${file.name} is too large. Maximum size is ${sizeMB}MB.`)
-        return
-      }
-
-      const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      const newFile: UploadedFile = {
-        id: fileId,
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        file: file,
-      }
-
-      // Enhanced file preview support
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader()
-        reader.onload = (e) => {
-          setUploadedFiles(prev => prev.map(f => 
-            f.id === fileId ? { ...f, preview: e.target?.result as string } : f
-          ))
+      try {
+        // Enhanced file size limit (25MB for documents, 10MB for images)
+        const maxSize = file.type.startsWith('image/') ? 10 * 1024 * 1024 : 25 * 1024 * 1024
+        if (file.size > maxSize) {
+          const sizeMB = Math.round(maxSize / (1024 * 1024))
+          setError(`File ${file.name} is too large. Maximum size is ${sizeMB}MB.`)
+          return
         }
-        reader.readAsDataURL(file)
-      } else if (file.type === 'application/pdf') {
-        newFile.content = `PDF file: ${file.name}`
-      } else if (file.type.includes('sheet') || file.type.includes('excel') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-        newFile.content = `Excel file: ${file.name}`
-      } else if (file.type.includes('word') || file.name.endsWith('.docx') || file.name.endsWith('.doc')) {
-        newFile.content = `Word document: ${file.name}`
-      } else if (file.type.includes('presentation') || file.name.endsWith('.pptx') || file.name.endsWith('.ppt')) {
-        newFile.content = `PowerPoint presentation: ${file.name}`
-      }
 
-      setUploadedFiles(prev => [...prev, newFile])
+        const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        const newFile: UploadedFile = {
+          id: fileId,
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          file: file,
+        }
+
+        // Enhanced file preview support with error handling
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader()
+          reader.onload = (e) => {
+            setUploadedFiles(prev => prev.map(f => 
+              f.id === fileId ? { ...f, preview: e.target?.result as string } : f
+            ))
+          }
+          reader.onerror = () => {
+            setError(`Failed to read image file: ${file.name}`)
+          }
+          reader.readAsDataURL(file)
+        } else if (file.type === 'application/pdf') {
+          newFile.content = `PDF file: ${file.name}`
+        } else if (file.type.includes('sheet') || file.type.includes('excel') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+          newFile.content = `Excel file: ${file.name}`
+        } else if (file.type.includes('word') || file.name.endsWith('.docx') || file.name.endsWith('.doc')) {
+          newFile.content = `Word document: ${file.name}`
+        } else if (file.type.includes('presentation') || file.name.endsWith('.pptx') || file.name.endsWith('.ppt')) {
+          newFile.content = `PowerPoint presentation: ${file.name}`
+        }
+
+        setUploadedFiles(prev => [...prev, newFile])
+      } catch (error: unknown) {
+        console.error('Error processing file:', error)
+        setError(`Failed to process file: ${file.name}`)
+      }
     })
   }
 
@@ -1155,7 +1494,7 @@ function DashboardContent() {
     }
   }
 
-  // Enhanced handleStream with conversation context and files
+  // Enhanced handleStream with conversation context and files and better error handling
   const handleStreamWithFiles = async (prompt: string, aId: string, files: File[] = []) => {
     let fullContent = ''
     let followUps: string[] = []
@@ -1243,6 +1582,7 @@ function DashboardContent() {
             })
           } catch (saveError) {
             console.error('Failed to save to dashboard history:', saveError)
+            // Don't show error to user for save failure
           }
           
           if (user) {
@@ -1278,16 +1618,22 @@ function DashboardContent() {
                   setUser(freshUserData)
                 }
               }
-            } catch (error) {
+            } catch (error: unknown) {
               console.error('❌ Database sync error:', error)
+              // Don't show error to user for sync failure
             }
           }
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
           setIsLoading(false)
           setIsStreaming(false)
           
-          if (error.type === 'rate_limit') {
+          // Check if error has type property for rate limiting
+          const hasType = (err: unknown): err is { type: string; message: string } => {
+            return typeof err === 'object' && err !== null && 'type' in err && 'message' in err
+          }
+          
+          if (hasType(error) && error.type === 'rate_limit') {
             setError(error.message)
             setMessages((prev) => prev.filter(msg => msg.id !== aId))
           } else {
@@ -1298,10 +1644,11 @@ function DashboardContent() {
                   : msg
               )
             )
+            handleApiError(error, 'Sending message')
           }
         },
       })
-    } catch (error) {
+    } catch (error: unknown) {
       setIsLoading(false)
       setIsStreaming(false)
       setMessages((prev) =>
@@ -1311,10 +1658,11 @@ function DashboardContent() {
             : msg
         )
       )
+      handleApiError(error, 'Sending message')
     }
   }
 
-  // Enhanced handleSubmit
+  // Enhanced handleSubmit with better error handling
   const handleSubmit = async (override?: string) => {
     const text = override || input.trim()
     if (!text && uploadedFiles.length === 0) return
@@ -1335,6 +1683,11 @@ function DashboardContent() {
       setError(`You've reached your ${periodText} limit of ${promptLimit} prompts. Resets on ${resetDateText}. Upgrade your plan to continue.`)
       setShakeInput(true)
       setTimeout(() => setShakeInput(false), 600)
+      return
+    }
+
+    if (!isOnline) {
+      setError('No internet connection. Please check your network and try again.')
       return
     }
 
@@ -1361,11 +1714,16 @@ function DashboardContent() {
     const filesToSend: File[] = []
     
     for (const uploadedFile of uploadedFiles) {
-      if (uploadedFile.file) {
-        filesToSend.push(uploadedFile.file)
-      } else if (uploadedFile.preview && uploadedFile.type.startsWith('image/')) {
-        const file = createFileFromPreview(uploadedFile.preview, uploadedFile.name, uploadedFile.type)
-        filesToSend.push(file)
+      try {
+        if (uploadedFile.file) {
+          filesToSend.push(uploadedFile.file)
+        } else if (uploadedFile.preview && uploadedFile.type.startsWith('image/')) {
+          const file = createFileFromPreview(uploadedFile.preview, uploadedFile.name, uploadedFile.type)
+          filesToSend.push(file)
+        }
+      } catch (error: unknown) {
+        console.error('Error processing file for upload:', error)
+        setError(`Failed to process file: ${uploadedFile.name}`)
       }
     }
 
@@ -1401,7 +1759,7 @@ function DashboardContent() {
       setError(null)
       
       return result
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error saving response:', error)
       setError('Failed to save response. Please try again.')
       return null
@@ -1439,7 +1797,7 @@ function DashboardContent() {
       setCurrentSaveMessageId(null)
       
       return result
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error saving to Collab Zone:', error)
       setError('Failed to save to Collab Zone. Please try again.')
       return null
@@ -1457,7 +1815,7 @@ function DashboardContent() {
       if (result) {
         router.push(`/collab-zone?document=${result.id}`)
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error sharing to Collab Zone:', error)
       setError('Failed to share to Collab Zone. Please try again.')
     }
@@ -1501,7 +1859,10 @@ function DashboardContent() {
             setImageUsage(data)
           }
         })
-        .catch(err => console.error('Failed to refresh image usage:', err))
+        .catch((err: unknown) => {
+          console.error('Failed to refresh image usage:', err)
+          handleApiError(err, 'Refreshing image usage')
+        })
     }
   }
 
@@ -1512,7 +1873,7 @@ function DashboardContent() {
       link.download = `growfly-${image.id}.png`
       link.target = '_blank'
       link.click()
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to download image:', error)
       window.open(image.url, '_blank')
     }
@@ -1538,107 +1899,135 @@ function DashboardContent() {
     localStorage.setItem('security_notice_dismissed', new Date().toISOString())
   }
 
+  // Show loading screen while initial data is loading
+  if (isLoadingUser || isLoadingMessages) {
+    return (
+      <div className="h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center max-w-md mx-4">
+          <div className="flex items-center justify-center mb-6">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Loading Growfly Dashboard
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            {isLoadingUser ? 'Fetching your account data...' : 'Loading your conversations...'}
+          </p>
+          <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
+            <FaSpinner className="animate-spin" />
+            <span>Please wait</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div 
-      className="h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300 flex flex-col relative"
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
-      <style jsx>{`
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
-          20%, 40%, 60%, 80% { transform: translateX(2px); }
-        }
-      `}</style>
-      
-      {/* Drag and Drop Overlay */}
-      {isDragOver && (
-        <div className="fixed inset-0 z-50 bg-gray-500/20 backdrop-blur-sm flex items-center justify-center">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-2xl border-2 border-dashed border-gray-500 max-w-md text-center">
-            <div className="text-6xl mb-4">📁</div>
-            <h3 className="text-2xl font-bold text-gray-600 dark:text-gray-300 mb-2">Drop Files Here</h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              Support for images, PDF, Word, Excel, PowerPoint
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-              Up to 25MB per document, 10MB per image
-            </p>
-          </div>
-        </div>
-      )}
-      
-      {/* Security Notice - Compact Banner */}
-      {messages.length > 0 && showSecurityNotice && (
-        <div className="w-full bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800 p-2">
-          <div className="flex items-center justify-between max-w-5xl mx-auto">
-            <div className="flex items-center gap-2">
-              <span className="text-blue-600 dark:text-blue-400 text-base">💡</span>
-              <div className="text-sm">
-                <span className="text-blue-900 dark:text-blue-100 font-medium">Your conversations are securely saved!</span>
-                <span className="text-blue-700 dark:text-blue-300 ml-1">Your last 10 exchanges stay private to your account.</span>
-              </div>
+    <ErrorBoundary>
+      <div 
+        className="h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300 flex flex-col relative"
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <style jsx>{`
+          @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+            20%, 40%, 60%, 80% { transform: translateX(2px); }
+          }
+        `}</style>
+        
+        {/* Network Status Banner */}
+        <NetworkStatus isOnline={isOnline} isConnecting={isConnecting} />
+        
+        {/* Drag and Drop Overlay */}
+        {isDragOver && (
+          <div className="fixed inset-0 z-50 bg-gray-500/20 backdrop-blur-sm flex items-center justify-center">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-2xl border-2 border-dashed border-gray-500 max-w-md text-center">
+              <div className="text-6xl mb-4">📁</div>
+              <h3 className="text-2xl font-bold text-gray-600 dark:text-gray-300 mb-2">Drop Files Here</h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Support for images, PDF, Word, Excel, PowerPoint
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+                Up to 25MB per document, 10MB per image
+              </p>
             </div>
-            <button
-              onClick={dismissSecurityNotice}
-              className="text-blue-400 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-300 p-1.5 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-800 transition-all duration-200 transform hover:scale-105"
-              title="Dismiss for 7 days"
-            >
-              <HiX className="w-4 h-4" />
-            </button>
           </div>
-        </div>
-      )}
-
-      {/* Content Area - Proper sidebar spacing */}
-      <div className="flex-1 overflow-hidden ml-0 sm:ml-56" data-tour="dashboard-main">
-        <div ref={containerRef} className="h-full overflow-y-auto pb-80 pl-0 pr-4 pt-4">
-
-        {/* Prompt Limit Warning */}
-        {isAtPromptLimit && (
-          <div className="mt-4 mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
-            <button 
-              onClick={dismissError}
-              className="absolute top-2 right-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200"
-            >
-              <HiX className="w-4 h-4" />
-            </button>
-            <strong>🚫 Prompt Limit Reached</strong>
-            <p className="mt-2">
-              You've used all {promptLimit} prompts for your {user?.subscriptionType?.toLowerCase() || 'free'} plan.
-            </p>
-            <p className="text-sm mt-1">
-              Resets: {getResetDate(user?.subscriptionType?.toLowerCase() || 'free').toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit'
-              })}
-            </p>
-            <div className="mt-3">
+        )}
+        
+        {/* Security Notice - Compact Banner */}
+        {messages.length > 0 && showSecurityNotice && (
+          <div className="w-full bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800 p-2">
+            <div className="flex items-center justify-between max-w-5xl mx-auto">
+              <div className="flex items-center gap-2">
+                <span className="text-blue-600 dark:text-blue-400 text-base">💡</span>
+                <div className="text-sm">
+                  <span className="text-blue-900 dark:text-blue-100 font-medium">Your conversations are securely saved!</span>
+                  <span className="text-blue-700 dark:text-blue-300 ml-1">Your last 10 exchanges stay private to your account.</span>
+                </div>
+              </div>
               <button
-                onClick={() => router.push('/change-plan')}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors"
+                onClick={dismissSecurityNotice}
+                className="text-blue-400 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-300 p-1.5 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-800 transition-all duration-200 transform hover:scale-105"
+                title="Dismiss for 7 days"
               >
-                Upgrade Plan
+                <HiX className="w-4 h-4" />
               </button>
             </div>
           </div>
         )}
 
-        {/* Error Message */}
-        {error && (
-          <div className="mt-4 mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
-            <button 
-              onClick={dismissError}
-              className="absolute top-2 right-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200"
-            >
-              <HiX className="w-4 h-4" />
-            </button>
-            <strong>⚠️ {error}</strong>
-            {error.includes('limit') && (
-              <div className="mt-2">
+        {/* Content Area - Proper sidebar spacing */}
+        <div className="flex-1 overflow-hidden ml-0 sm:ml-56" data-tour="dashboard-main">
+          <div ref={containerRef} className="h-full overflow-y-auto pb-80 pl-0 pr-4 pt-4">
+
+          {/* Network Error Banner */}
+          {networkError && (
+            <div className="mt-4 mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
+              <button 
+                onClick={() => setNetworkError(null)}
+                className="absolute top-2 right-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200"
+              >
+                <HiX className="w-4 h-4" />
+              </button>
+              <div className="flex items-center gap-2 mb-2">
+                <FaExclamationTriangle className="text-red-600" />
+                <strong>Connection Issue</strong>
+              </div>
+              <p>{networkError}</p>
+              {isConnecting && (
+                <div className="mt-2 flex items-center gap-2 text-sm">
+                  <FaSpinner className="animate-spin" />
+                  <span>Attempting to reconnect...</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Prompt Limit Warning */}
+          {isAtPromptLimit && (
+            <div className="mt-4 mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
+              <button 
+                onClick={dismissError}
+                className="absolute top-2 right-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200"
+              >
+                <HiX className="w-4 h-4" />
+              </button>
+              <strong>🚫 Prompt Limit Reached</strong>
+              <p className="mt-2">
+                You've used all {promptLimit} prompts for your {user?.subscriptionType?.toLowerCase() || 'free'} plan.
+              </p>
+              <p className="text-sm mt-1">
+                Resets: {getResetDate(user?.subscriptionType?.toLowerCase() || 'free').toLocaleDateString('en-US', { 
+                  month: 'short', 
+                  day: 'numeric',
+                  hour: 'numeric',
+                  minute: '2-digit'
+                })}
+              </p>
+              <div className="mt-3">
                 <button
                   onClick={() => router.push('/change-plan')}
                   className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors"
@@ -1646,664 +2035,687 @@ function DashboardContent() {
                   Upgrade Plan
                 </button>
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
 
-        {/* Chat Messages - Traditional Chat Layout */}
-        <div className="space-y-3 min-h-0 flex-1 pt-6">
-          {messages.length === 0 ? (
-            <div className="flex items-center justify-center h-full min-h-[50vh] pt-8">
-              <div className="text-center max-w-2xl">
-                <div className="mb-6">
-                  <div className="text-6xl md:text-8xl mb-4 animate-bounce">👋</div>
-                  <h3 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-3">
-                    Welcome to Growfly! 🚀
-                  </h3>
-                  <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
-                    Your AI business assistant is ready to help you grow, optimize, and succeed. 
-                    Start by choosing a quick prompt or asking any business question.
-                  </p>
+          {/* Error Message */}
+          {error && (
+            <div className="mt-4 mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
+              <button 
+                onClick={dismissError}
+                className="absolute top-2 right-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200"
+              >
+                <HiX className="w-4 h-4" />
+              </button>
+              <strong>⚠️ {error}</strong>
+              {error.includes('limit') && (
+                <div className="mt-2">
+                  <button
+                    onClick={() => router.push('/change-plan')}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors"
+                  >
+                    Upgrade Plan
+                  </button>
                 </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-                  <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
-                    <div className="text-xl mb-2">💡</div>
-                    <h4 className="font-semibold text-gray-900 dark:text-white text-sm">Smart Suggestions</h4>
-                    <p className="text-xs text-gray-700 dark:text-gray-300 mt-1">Get AI-powered business insights</p>
+              )}
+            </div>
+          )}
+
+          {/* Chat Messages - Traditional Chat Layout */}
+          <div className="space-y-3 min-h-0 flex-1 pt-6">
+            {messages.length === 0 ? (
+              <div className="flex items-center justify-center h-full min-h-[50vh] pt-8">
+                <div className="text-center max-w-2xl">
+                  <div className="mb-6">
+                    <div className="text-6xl md:text-8xl mb-4 animate-bounce">👋</div>
+                    <h3 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-3">
+                      Welcome to Growfly! 🚀
+                    </h3>
+                    <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
+                      Your AI business assistant is ready to help you grow, optimize, and succeed. 
+                      Start by choosing a quick prompt or asking any business question.
+                    </p>
                   </div>
-                  <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700" data-tour="gallery">
-                    <div className="text-xl mb-2">📁</div>
-                    <h4 className="font-semibold text-gray-900 dark:text-white text-sm">Enhanced File Support</h4>
-                    <p className="text-xs text-gray-700 dark:text-gray-300 mt-1">Drag & drop Excel, Word, PowerPoint files</p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
+                      <div className="text-xl mb-2">💡</div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white text-sm">Smart Suggestions</h4>
+                      <p className="text-xs text-gray-700 dark:text-gray-300 mt-1">Get AI-powered business insights</p>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700" data-tour="gallery">
+                      <div className="text-xl mb-2">📁</div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white text-sm">Enhanced File Support</h4>
+                      <p className="text-xs text-gray-700 dark:text-gray-300 mt-1">Drag & drop Excel, Word, PowerPoint files</p>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-                  <div className="flex items-center gap-2">
-                    <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">⌘</kbd>
-                    <span>+</span>
-                    <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">K</kbd>
-                    <span>Quick shortcuts</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    <span>Ready to help</span>
+                  
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center gap-2">
+                      <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">⌘</kbd>
+                      <span>+</span>
+                      <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">K</kbd>
+                      <span>Quick shortcuts</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full animate-pulse ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      <span>{isOnline ? 'Ready to help' : 'Connection issues'}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <>
-              {messages.map((msg, index) => (
-                <div
-                  key={msg.id}
-                  className={`flex mb-3 w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  onMouseEnter={() => setHoveredMessageId(msg.id)}
-                  onMouseLeave={() => setHoveredMessageId(null)}
-                >
-                  {/* Traditional Chat Bubbles */}
+            ) : (
+              <>
+                {messages.map((msg, index) => (
                   <div
-                    className={`relative rounded-2xl shadow-sm transition-all duration-200 ${
-                      msg.role === 'user'
-                        ? 'bg-blue-600 text-white max-w-[75%] sm:max-w-[65%] p-4'
-                        : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-white max-w-[90%] sm:max-w-[80%] p-4'
-                    }`}
+                    key={msg.id}
+                    className={`flex mb-3 w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    onMouseEnter={() => setHoveredMessageId(msg.id)}
+                    onMouseLeave={() => setHoveredMessageId(null)}
                   >
-                    {/* Display uploaded files for user messages */}
-                    {msg.role === 'user' && msg.files && msg.files.length > 0 && (
-                      <div className="mb-3 space-y-2">
-                        <p className="text-xs text-blue-200 font-medium">📎 Attached Files:</p>
-                        <div className="grid grid-cols-1 gap-2">
-                          {msg.files.map((file) => (
-                            <div key={file.id} className="bg-blue-500 rounded-lg p-2 flex items-center gap-2">
-                              {file.type.startsWith('image/') && file.preview ? (
-                                <img src={file.preview} alt={file.name} className="w-8 h-8 object-cover rounded" />
-                              ) : file.type === 'application/pdf' ? (
-                                <FaFilePdf className="w-6 h-6 text-blue-200" />
-                              ) : (
-                                <FaFileAlt className="w-6 h-6 text-blue-200" />
-                              )}
-                              <span className="text-xs text-blue-100">{file.name}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {msg.imageUrl && (
-                      <Image
-                        src={msg.imageUrl}
-                        alt="Uploaded"
-                        width={280}
-                        height={280}
-                        className="mb-3 rounded-xl shadow-md"
-                      />
-                    )}
-
-                    {/* Generated images */}
-                    {msg.generatedImage && (
-                      <div className="mb-3">
-                        <SafeImage
-                          src={msg.generatedImage.url}
-                          alt={msg.generatedImage.originalPrompt}
-                          className="w-full max-w-lg rounded-xl shadow-lg"
-                          onError={() => {
-                            console.error('Failed to load generated image:', msg.generatedImage?.url)
-                          }}
-                        />
-                        <div className="mt-3 flex gap-2">
-                          <button
-                            onClick={() => handleDownloadImage(msg.generatedImage!)}
-                            className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
-                          >
-                            <FaFileDownload />
-                            Download
-                          </button>
-                          <button
-                            onClick={() => router.push('/gallery')}
-                            className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
-                          >
-                            <FaImages />
-                            Gallery
-                          </button>
-                          <button
-                            onClick={() => handleShareImage(msg.generatedImage!)}
-                            className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
-                          >
-                            <FaShareSquare />
-                            Share
-                          </button>
-                        </div>
-                        <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                          <p><strong>Size:</strong> {msg.generatedImage.size} • <strong>Style:</strong> {msg.generatedImage.style}</p>
-                          <p><strong>Created:</strong> {new Date(msg.generatedImage.createdAt).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                      {msg.content ? (
-                        <div className="prose prose-sm max-w-none dark:prose-invert">
-                          {msg.content}
-                        </div>
-                      ) : msg.role === 'assistant' && (isLoading || isStreaming) ? (
-                        <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400 py-2">
-                          <div className="flex gap-1">
-                            <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                            <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                            <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
-                          </div>
-                          <span className="animate-pulse text-sm font-medium">Thinking...</span>
-                        </div>
-                      ) : ''}
-                    </div>
-
-                    {msg.role === 'assistant' && msg.content && (
-                      <>
-                        {/* Follow-up Questions - Only ONE */}
-                        {msg.followUps && msg.followUps.length > 0 && (
-                          <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="text-sm">💡</span>
-                              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Continue the conversation:</span>
-                            </div>
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault()
-                                const cleanFollowUp = msg.followUps![0].replace(/^\s*[\(\)]\s*/, '').trim()
-                                handleSubmit(cleanFollowUp)
-                              }}
-                              disabled={isLoading || isStreaming}
-                              className="w-full bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 disabled:bg-gray-100 dark:disabled:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-200 disabled:text-gray-500 dark:disabled:text-gray-500 p-0 rounded-xl text-sm font-medium shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-600 disabled:border-gray-200 dark:disabled:border-gray-600 transition-all duration-200 hover:scale-[1.01] disabled:transform-none disabled:cursor-not-allowed text-left focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
-                            >
-                              <div className="px-3 py-2">
-                                {msg.followUps[0].replace(/^\s*[\(\)]\s*/, '').trim()}
+                    {/* Traditional Chat Bubbles */}
+                    <div
+                      className={`relative rounded-2xl shadow-sm transition-all duration-200 ${
+                        msg.role === 'user'
+                          ? 'bg-blue-600 text-white max-w-[75%] sm:max-w-[65%] p-4'
+                          : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-white max-w-[90%] sm:max-w-[80%] p-4'
+                      }`}
+                    >
+                      {/* Display uploaded files for user messages */}
+                      {msg.role === 'user' && msg.files && msg.files.length > 0 && (
+                        <div className="mb-3 space-y-2">
+                          <p className="text-xs text-blue-200 font-medium">📎 Attached Files:</p>
+                          <div className="grid grid-cols-1 gap-2">
+                            {msg.files.map((file) => (
+                              <div key={file.id} className="bg-blue-500 rounded-lg p-2 flex items-center gap-2">
+                                {file.type.startsWith('image/') && file.preview ? (
+                                  <img src={file.preview} alt={file.name} className="w-8 h-8 object-cover rounded" />
+                                ) : file.type === 'application/pdf' ? (
+                                  <FaFilePdf className="w-6 h-6 text-blue-200" />
+                                ) : (
+                                  <FaFileAlt className="w-6 h-6 text-blue-200" />
+                                )}
+                                <span className="text-xs text-blue-100">{file.name}</span>
                               </div>
-                            </button>
+                            ))}
                           </div>
-                        )}
-
-                        {/* Action Buttons - NO PDF/Excel downloads */}
-                        <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                          <div className="relative">
-                            <button
-                              onClick={() => handleCopyMessage(msg.id, msg.content)}
-                              className={`p-2 rounded-xl border transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 ${
-                                copiedMessageId === msg.id 
-                                  ? 'text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
-                                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-gray-50 dark:bg-gray-800'
-                              }`}
-                              title="Copy message"
-                            >
-                              <FaCopy className="w-4 h-4" />
-                            </button>
-                            {copiedMessageId === msg.id && (
-                              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap z-10">
-                                Copied!
-                              </div>
-                            )}
-                          </div>
-
-                          <button
-                            onClick={() => {
-                              setCurrentFeedbackMessageId(msg.id)
-                              setShowFeedbackModal(true)
-                            }}
-                            className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-200 dark:hover:border-green-800 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
-                            title="Like this response"
-                          >
-                            <HiThumbUp className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setCurrentFeedbackMessageId(msg.id)
-                              setShowFeedbackModal(true)
-                            }}
-                            className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 dark:hover:border-red-800 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
-                            title="Dislike this response"
-                          >
-                            <HiThumbDown className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setCurrentSaveMessageId(msg.id)
-                              setShowSaveModal(true)
-                            }}
-                            className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-yellow-600 dark:hover:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:border-yellow-200 dark:hover:border-yellow-800 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
-                            title="Save to Saved Responses"
-                            data-tour="saved-responses"
-                          >
-                            <FaRegBookmark className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleShareToCollabZone(msg.id)}
-                            className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
-                            title="Share to Collab Zone"
-                            data-tour="collab-zone"
-                          >
-                            <FaShareSquare className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
-              <div ref={chatEndRef} className="h-8" />
-            </>
-          )}
-        </div>
-        </div>
-      </div>
-
-      {/* File Upload Preview - Modern Compact Style */}
-      {uploadedFiles.length > 0 && (
-        <div className="fixed bottom-16 left-4 right-4 sm:left-60 z-30">
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-700 p-2 shadow-lg">
-              <div className="flex items-center gap-2 overflow-x-auto">
-                {uploadedFiles.map((file) => (
-                  <div key={file.id} className="relative flex-shrink-0 group">
-                    <div className="relative bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden">
-                      {file.type.startsWith('image/') && file.preview ? (
-                        <img 
-                          src={file.preview} 
-                          alt={file.name} 
-                          className="w-12 h-12 object-cover" 
-                        />
-                      ) : (
-                        <div className="w-12 h-12 flex items-center justify-center">
-                          {file.type === 'application/pdf' ? (
-                            <FaFilePdf className="w-6 h-6 text-red-500" />
-                          ) : file.type.includes('sheet') || file.type.includes('excel') ? (
-                            <FaFileExcel className="w-6 h-6 text-green-500" />
-                          ) : (
-                            <FaFileAlt className="w-6 h-6 text-gray-500" />
-                          )}
                         </div>
                       )}
-                      <button
-                        onClick={() => removeFile(file.id)}
-                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        ×
-                      </button>
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs px-1 py-0.5 rounded-b-lg truncate opacity-0 group-hover:opacity-100 transition-opacity">
-                      {file.name.split('.')[0].substring(0, 8)}...
+
+                      {msg.imageUrl && (
+                        <Image
+                          src={msg.imageUrl}
+                          alt="Uploaded"
+                          width={280}
+                          height={280}
+                          className="mb-3 rounded-xl shadow-md"
+                        />
+                      )}
+
+                      {/* Generated images */}
+                      {msg.generatedImage && (
+                        <div className="mb-3">
+                          <SafeImage
+                            src={msg.generatedImage.url}
+                            alt={msg.generatedImage.originalPrompt}
+                            className="w-full max-w-lg rounded-xl shadow-lg"
+                            onError={() => {
+                              console.error('Failed to load generated image:', msg.generatedImage?.url)
+                            }}
+                          />
+                          <div className="mt-3 flex gap-2">
+                            <button
+                              onClick={() => handleDownloadImage(msg.generatedImage!)}
+                              className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                            >
+                              <FaFileDownload />
+                              Download
+                            </button>
+                            <button
+                              onClick={() => router.push('/gallery')}
+                              className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                            >
+                              <FaImages />
+                              Gallery
+                            </button>
+                            <button
+                              onClick={() => handleShareImage(msg.generatedImage!)}
+                              className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                            >
+                              <FaShareSquare />
+                              Share
+                            </button>
+                          </div>
+                          <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                            <p><strong>Size:</strong> {msg.generatedImage.size} • <strong>Style:</strong> {msg.generatedImage.style}</p>
+                            <p><strong>Created:</strong> {new Date(msg.generatedImage.createdAt).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                        {msg.content ? (
+                          <div className="prose prose-sm max-w-none dark:prose-invert">
+                            {msg.content}
+                          </div>
+                        ) : msg.role === 'assistant' && (isLoading || isStreaming) ? (
+                          <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400 py-2">
+                            <div className="flex gap-1">
+                              <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                              <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                              <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
+                            </div>
+                            <span className="animate-pulse text-sm font-medium">Thinking...</span>
+                          </div>
+                        ) : ''}
+                      </div>
+
+                      {msg.role === 'assistant' && msg.content && (
+                        <>
+                          {/* Follow-up Questions - Only ONE */}
+                          {msg.followUps && msg.followUps.length > 0 && (
+                            <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-sm">💡</span>
+                                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Continue the conversation:</span>
+                              </div>
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  const cleanFollowUp = msg.followUps![0].replace(/^\s*[\(\)]\s*/, '').trim()
+                                  handleSubmit(cleanFollowUp)
+                                }}
+                                disabled={isLoading || isStreaming}
+                                className="w-full bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 disabled:bg-gray-100 dark:disabled:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-200 disabled:text-gray-500 dark:disabled:text-gray-500 p-0 rounded-xl text-sm font-medium shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-600 disabled:border-gray-200 dark:disabled:border-gray-600 transition-all duration-200 hover:scale-[1.01] disabled:transform-none disabled:cursor-not-allowed text-left focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                              >
+                                <div className="px-3 py-2">
+                                  {msg.followUps[0].replace(/^\s*[\(\)]\s*/, '').trim()}
+                                </div>
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Action Buttons - NO PDF/Excel downloads */}
+                          <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                            <div className="relative">
+                              <button
+                                onClick={() => handleCopyMessage(msg.id, msg.content)}
+                                className={`p-2 rounded-xl border transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 ${
+                                  copiedMessageId === msg.id 
+                                    ? 'text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-gray-50 dark:bg-gray-800'
+                                }`}
+                                title="Copy message"
+                              >
+                                <FaCopy className="w-4 h-4" />
+                              </button>
+                              {copiedMessageId === msg.id && (
+                                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap z-10">
+                                  Copied!
+                                </div>
+                              )}
+                            </div>
+
+                            <button
+                              onClick={() => {
+                                setCurrentFeedbackMessageId(msg.id)
+                                setShowFeedbackModal(true)
+                              }}
+                              className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-200 dark:hover:border-green-800 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
+                              title="Like this response"
+                            >
+                              <HiThumbUp className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setCurrentFeedbackMessageId(msg.id)
+                                setShowFeedbackModal(true)
+                              }}
+                              className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 dark:hover:border-red-800 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
+                              title="Dislike this response"
+                            >
+                              <HiThumbDown className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setCurrentSaveMessageId(msg.id)
+                                setShowSaveModal(true)
+                              }}
+                              className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-yellow-600 dark:hover:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:border-yellow-200 dark:hover:border-yellow-800 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
+                              title="Save to Saved Responses"
+                              data-tour="saved-responses"
+                            >
+                              <FaRegBookmark className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleShareToCollabZone(msg.id)}
+                              className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
+                              title="Share to Collab Zone"
+                              data-tour="collab-zone"
+                            >
+                              <FaShareSquare className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}
-                <button
-                  onClick={() => setUploadedFiles([])}
-                  className="text-xs text-gray-500 dark:text-gray-400 hover:text-red-500 px-2 py-1 rounded transition-colors flex-shrink-0"
-                >
-                  Clear all
-                </button>
+                <div ref={chatEndRef} className="h-8" />
+              </>
+            )}
+          </div>
+          </div>
+        </div>
+
+        {/* File Upload Preview - Modern Compact Style */}
+        {uploadedFiles.length > 0 && (
+          <div className="fixed bottom-16 left-4 right-4 sm:left-60 z-30">
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-700 p-2 shadow-lg">
+                <div className="flex items-center gap-2 overflow-x-auto">
+                  {uploadedFiles.map((file) => (
+                    <div key={file.id} className="relative flex-shrink-0 group">
+                      <div className="relative bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden">
+                        {file.type.startsWith('image/') && file.preview ? (
+                          <img 
+                            src={file.preview} 
+                            alt={file.name} 
+                            className="w-12 h-12 object-cover" 
+                          />
+                        ) : (
+                          <div className="w-12 h-12 flex items-center justify-center">
+                            {file.type === 'application/pdf' ? (
+                              <FaFilePdf className="w-6 h-6 text-red-500" />
+                            ) : file.type.includes('sheet') || file.type.includes('excel') ? (
+                              <FaFileExcel className="w-6 h-6 text-green-500" />
+                            ) : (
+                              <FaFileAlt className="w-6 h-6 text-gray-500" />
+                            )}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => removeFile(file.id)}
+                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs px-1 py-0.5 rounded-b-lg truncate opacity-0 group-hover:opacity-100 transition-opacity">
+                        {file.name.split('.')[0].substring(0, 8)}...
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => setUploadedFiles([])}
+                    className="text-xs text-gray-500 dark:text-gray-400 hover:text-red-500 px-2 py-1 rounded transition-colors flex-shrink-0"
+                  >
+                    Clear all
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Modern Single-Line Input */}
-      <div className="fixed bottom-4 left-4 right-4 sm:left-60 z-20">
-        <div className="max-w-4xl mx-auto">
-          {/* Inline Error Messages */}
-          {error && (
-            <div className="mb-2 text-sm text-red-600 dark:text-red-400 flex items-center gap-1 bg-red-50 dark:bg-red-900/20 p-2 rounded-lg border border-red-200 dark:border-red-800">
-              <span>⚠️</span>
-              <span>{error}</span>
-              <button onClick={dismissError} className="ml-auto text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-300">
-                <HiX className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-          
-          <div className={`bg-white dark:bg-gray-800 shadow-xl rounded-full border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:shadow-2xl ${
-            shakeInput ? 'animate-pulse border-red-300 dark:border-red-700' : ''
-          } ${input.trim() || uploadedFiles.length > 0 ? 'rounded-2xl' : 'rounded-full'}`}>
-            <div className="flex items-end gap-2 p-2">
-              
-              {/* Action Buttons */}
-              <div className="flex gap-1 flex-shrink-0">
+        {/* Modern Single-Line Input */}
+        <div className="fixed bottom-4 left-4 right-4 sm:left-60 z-20">
+          <div className="max-w-4xl mx-auto">
+            {/* Inline Error Messages */}
+            {error && (
+              <div className="mb-2 text-sm text-red-600 dark:text-red-400 flex items-center gap-1 bg-red-50 dark:bg-red-900/20 p-2 rounded-lg border border-red-200 dark:border-red-800">
+                <span>⚠️</span>
+                <span>{error}</span>
+                <button onClick={dismissError} className="ml-auto text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-300">
+                  <HiX className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            
+            <div className={`bg-white dark:bg-gray-800 shadow-xl rounded-full border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:shadow-2xl ${
+              shakeInput ? 'animate-pulse border-red-300 dark:border-red-700' : ''
+            } ${input.trim() || uploadedFiles.length > 0 ? 'rounded-2xl' : 'rounded-full'}`}>
+              <div className="flex items-end gap-2 p-2">
+                
+                {/* Action Buttons - Enhanced with blue theme */}
+                <div className="flex gap-1 flex-shrink-0">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (!isLoading && !isStreaming && fileInputRef.current) {
+                        fileInputRef.current.click()
+                      }
+                    }}
+                    disabled={isLoading || isStreaming || isAtPromptLimit}
+                    className={`p-2 rounded-full transition-all duration-200 ${
+                      isLoading || isStreaming || isAtPromptLimit
+                        ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-700 text-gray-400'
+                        : 'bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-800/50 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:scale-110 active:scale-95'
+                    }`}
+                    title="Upload files"
+                  >
+                    <FaPaperclip className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
+                        setShowImageModal(true)
+                      } else {
+                        router.push('/change-plan')
+                      }
+                    }}
+                    disabled={isAtPromptLimit}
+                    className={`p-2 rounded-full transition-all duration-200 ${
+                      (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0 && !isAtPromptLimit)
+                        ? 'bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-800/50 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:scale-110 active:scale-95'
+                        : 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-700 text-gray-400'
+                    }`}
+                    title="Generate image"
+                    data-tour="gallery"
+                  >
+                    <FaPalette className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Text Input */}
+                <div className="flex-1 relative min-h-[36px] flex items-center">
+                  <textarea
+                    ref={textareaRef}
+                    rows={1}
+                    placeholder="Type your message..."
+                    className="w-full px-3 py-2 border-0 bg-transparent text-gray-900 dark:text-white resize-none text-sm focus:outline-none placeholder-gray-400 dark:placeholder-gray-500 leading-tight"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onFocus={() => setInputFocused(true)}
+                    onBlur={() => setInputFocused(false)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        handleSubmit()
+                      }
+                    }}
+                    disabled={isLoading || isStreaming || isAtPromptLimit || !isOnline}
+                    data-tour="chat-input"
+                    style={{ maxHeight: '96px', minHeight: '36px' }}
+                  />
+                </div>
+
+                {/* Send Button */}
                 <button
                   onClick={(e) => {
                     e.preventDefault()
-                    if (!isLoading && !isStreaming && fileInputRef.current) {
-                      fileInputRef.current.click()
-                    }
+                    handleSubmit()
                   }}
-                  disabled={isLoading || isStreaming || isAtPromptLimit}
-                  className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 ${
-                    isLoading || isStreaming || isAtPromptLimit
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:scale-110 active:scale-95'
+                  disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || isAtPromptLimit || !isOnline}
+                  className={`p-2 rounded-full transition-all duration-200 flex-shrink-0 flex items-center justify-center min-w-[36px] min-h-[36px] ${
+                    (!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || isAtPromptLimit || !isOnline
+                      ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95'
                   }`}
-                  title="Upload files"
+                  title="Send message"
                 >
-                  <FaPaperclip className="w-4 h-4" />
+                  {isLoading || isStreaming ? (
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                  )}
                 </button>
-
-                <button
-                  onClick={() => {
-                    if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
-                      setShowImageModal(true)
-                    } else {
-                      router.push('/change-plan')
-                    }
+                
+                <input
+                  type="file"
+                  accept="image/*,application/pdf,.txt,.doc,.docx,.xls,.xlsx,.ppt,.pptx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-excel,application/vnd.ms-powerpoint,application/msword"
+                  onChange={(e) => {
+                    const files = e.target.files
+                    if (files) handleFileSelect(files)
                   }}
-                  disabled={isAtPromptLimit}
-                  className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-all duration-200 ${
-                    (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0 && !isAtPromptLimit)
-                      ? 'hover:scale-110 active:scale-95'
-                      : 'opacity-50 cursor-not-allowed'
-                  }`}
-                  title="Generate image"
-                  data-tour="gallery"
-                >
-                  <FaPalette className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Text Input */}
-              <div className="flex-1 relative min-h-[36px] flex items-center">
-                <textarea
-                  ref={textareaRef}
-                  rows={1}
-                  placeholder="Type your message..."
-                  className="w-full px-3 py-2 border-0 bg-transparent text-gray-900 dark:text-white resize-none text-sm focus:outline-none placeholder-gray-400 dark:placeholder-gray-500 leading-tight"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onFocus={() => setInputFocused(true)}
-                  onBlur={() => setInputFocused(false)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault()
-                      handleSubmit()
-                    }
-                  }}
+                  className="hidden"
+                  ref={fileInputRef}
                   disabled={isLoading || isStreaming || isAtPromptLimit}
-                  data-tour="chat-input"
-                  style={{ maxHeight: '96px', minHeight: '36px' }}
+                  multiple
                 />
               </div>
-
-              {/* Send Button */}
-              <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  handleSubmit()
-                }}
-                disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || isAtPromptLimit}
-                className={`p-2 rounded-full transition-all duration-200 flex-shrink-0 flex items-center justify-center min-w-[36px] min-h-[36px] ${
-                  (!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || isAtPromptLimit
-                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95'
-                }`}
-                title="Send message"
-              >
-                {isLoading || isStreaming ? (
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                ) : (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                  </svg>
-                )}
-              </button>
-              
-              <input
-                type="file"
-                accept="image/*,application/pdf,.txt,.doc,.docx,.xls,.xlsx,.ppt,.pptx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-excel,application/vnd.ms-powerpoint,application/msword"
-                onChange={(e) => {
-                  const files = e.target.files
-                  if (files) handleFileSelect(files)
-                }}
-                className="hidden"
-                ref={fileInputRef}
-                disabled={isLoading || isStreaming || isAtPromptLimit}
-                multiple
-              />
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Help Button - Enhanced Style */}
-      <div className="fixed right-4 bottom-20 md:bottom-24 z-30">
-        <button
-          onClick={() => setShowHelpModal(true)}
-          disabled={isLoading || isStreaming}
-          className="bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white p-0 md:p-0 rounded-full shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-110 active:scale-95 disabled:transform-none w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
-          title="Quick Start Guide"
-          data-tour="education-hub"
-        >
-          <FaQuestionCircle className="w-5 h-5 md:w-4 md:h-4" />
-        </button>
-      </div>
-
-      {/* ✅ ENHANCED: Development test button with better debug info */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed top-4 right-4 bg-red-500 text-white p-3 rounded-lg z-50 text-sm space-y-2">
-          <div>
-            <strong>🧪 Tutorial Debug</strong>
-          </div>
-          <div className="text-xs space-y-1">
-            <div>showTutorial: {showTutorial.toString()}</div>
-            <div>forceTutorial: {forceTutorial.toString()}</div>
-            <div>hasCompleted: {localStorage.getItem('growfly-tutorial-completed') || 'false'}</div>
-            <div>justCompleted: {sessionStorage.getItem('justCompletedOnboarding') || 'false'}</div>
-          </div>
+        {/* Help Button - Enhanced Style */}
+        <div className="fixed right-4 bottom-20 md:bottom-24 z-30">
           <button
-            onClick={() => {
-              console.log('🎯 Manual tutorial trigger from debug panel')
-              setShowTutorial(true)
-              setForceTutorial(true)
-            }}
-            className="bg-white text-red-500 px-2 py-1 rounded text-xs font-bold w-full"
+            onClick={() => setShowHelpModal(true)}
+            disabled={isLoading || isStreaming}
+            className="bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white p-0 md:p-0 rounded-full shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-110 active:scale-95 disabled:transform-none w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+            title="Quick Start Guide"
+            data-tour="education-hub"
           >
-            🎯 Force Start Tutorial
-          </button>
-          <button
-            onClick={() => {
-              localStorage.removeItem('growfly-tutorial-completed')
-              sessionStorage.setItem('justCompletedOnboarding', 'true')
-              window.location.reload()
-            }}
-            className="bg-yellow-500 text-white px-2 py-1 rounded text-xs font-bold w-full"
-          >
-            🔄 Reset as New User
+            <FaQuestionCircle className="w-5 h-5 md:w-4 md:h-4" />
           </button>
         </div>
-      )}
 
-      {/* Help Modal */}
-      {showHelpModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-5xl mx-4 w-full max-h-[90vh] overflow-y-auto border border-gray-200/50 dark:border-gray-700/50">
-            <div className="p-8">
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
-                    🚀 Quick Start Hub
-                  </h2>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Choose from these proven business prompts to get immediate value from Growfly
-                  </p>
+        {/* ✅ ENHANCED: Development test button with better debug info */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="fixed top-4 right-4 bg-red-500 text-white p-3 rounded-lg z-50 text-sm space-y-2">
+            <div>
+              <strong>🧪 Tutorial Debug</strong>
+            </div>
+            <div className="text-xs space-y-1">
+              <div>showTutorial: {showTutorial.toString()}</div>
+              <div>forceTutorial: {forceTutorial.toString()}</div>
+              <div>hasCompleted: {localStorage.getItem('growfly-tutorial-completed') || 'false'}</div>
+              <div>justCompleted: {sessionStorage.getItem('justCompletedOnboarding') || 'false'}</div>
+            </div>
+            <button
+              onClick={() => {
+                console.log('🎯 Manual tutorial trigger from debug panel')
+                setShowTutorial(true)
+                setForceTutorial(true)
+              }}
+              className="bg-white text-red-500 px-2 py-1 rounded text-xs font-bold w-full"
+            >
+              🎯 Force Start Tutorial
+            </button>
+            <button
+              onClick={() => {
+                localStorage.removeItem('growfly-tutorial-completed')
+                sessionStorage.setItem('justCompletedOnboarding', 'true')
+                window.location.reload()
+              }}
+              className="bg-yellow-500 text-white px-2 py-1 rounded text-xs font-bold w-full"
+            >
+              🔄 Reset as New User
+            </button>
+          </div>
+        )}
+
+        {/* Help Modal */}
+        {showHelpModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-5xl mx-4 w-full max-h-[90vh] overflow-y-auto border border-gray-200/50 dark:border-gray-700/50">
+              <div className="p-8">
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
+                      🚀 Quick Start Hub
+                    </h2>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Choose from these proven business prompts to get immediate value from Growfly
+                    </p>
+                  </div>
+                  <button 
+                    onClick={() => setShowHelpModal(false)} 
+                    className="p-3 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
-                <button 
-                  onClick={() => setShowHelpModal(false)} 
-                  className="p-3 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <button
-                  onClick={() => {
-                    handleSubmit("What are some effective marketing strategies for my business that I can implement this month?")
-                    setShowHelpModal(false)
-                  }}
-                  disabled={isLoading || isStreaming || isAtPromptLimit}
-                  className="group p-6 text-left bg-gray-50 dark:bg-gray-800 rounded-3xl hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200 dark:border-gray-700"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="text-4xl group-hover:scale-110 transition-transform duration-300">📈</div>
-                    <div className="flex-1">
-                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Marketing Strategies</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Get actionable marketing ideas, campaign strategies, and customer acquisition tactics you can implement immediately to grow your business.</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Social Media</span>
-                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Content Strategy</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <button
+                    onClick={() => {
+                      handleSubmit("What are some effective marketing strategies for my business that I can implement this month?")
+                      setShowHelpModal(false)
+                    }}
+                    disabled={isLoading || isStreaming || isAtPromptLimit}
+                    className="group p-6 text-left bg-gray-50 dark:bg-gray-800 rounded-3xl hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200 dark:border-gray-700"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="text-4xl group-hover:scale-110 transition-transform duration-300">📈</div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Marketing Strategies</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Get actionable marketing ideas, campaign strategies, and customer acquisition tactics you can implement immediately to grow your business.</p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Social Media</span>
+                          <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Content Strategy</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </button>
-                <button
-                  onClick={() => {
-                    handleSubmit("Analyze my business operations and suggest 3 specific improvements I can make this week.")
-                    setShowHelpModal(false)
-                  }}
-                  disabled={isLoading || isStreaming || isAtPromptLimit}
-                  className="group p-6 text-left bg-gray-50 dark:bg-gray-800 rounded-3xl hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200 dark:border-gray-700"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="text-4xl group-hover:scale-110 transition-transform duration-300">⚡</div>
-                    <div className="flex-1">
-                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Business Optimization</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Identify bottlenecks, streamline processes, and find quick wins to improve efficiency, reduce costs, and boost productivity.</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Process Improvement</span>
-                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Cost Reduction</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleSubmit("Analyze my business operations and suggest 3 specific improvements I can make this week.")
+                      setShowHelpModal(false)
+                    }}
+                    disabled={isLoading || isStreaming || isAtPromptLimit}
+                    className="group p-6 text-left bg-gray-50 dark:bg-gray-800 rounded-3xl hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200 dark:border-gray-700"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="text-4xl group-hover:scale-110 transition-transform duration-300">⚡</div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Business Optimization</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Identify bottlenecks, streamline processes, and find quick wins to improve efficiency, reduce costs, and boost productivity.</p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Process Improvement</span>
+                          <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Cost Reduction</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </button>
-                <button
-                  onClick={() => {
-                    handleSubmit("Help me create a compelling business proposal for a potential client or investor.")
-                    setShowHelpModal(false)
-                  }}
-                  disabled={isLoading || isStreaming || isAtPromptLimit}
-                  className="group p-6 text-left bg-gray-50 dark:bg-gray-800 rounded-3xl hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200 dark:border-gray-700"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="text-4xl group-hover:scale-110 transition-transform duration-300">📊</div>
-                    <div className="flex-1">
-                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Business Proposals</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Create compelling proposals, pitch decks, and business documents that win clients and secure funding opportunities.</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Proposals</span>
-                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Pitch Decks</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleSubmit("Help me create a compelling business proposal for a potential client or investor.")
+                      setShowHelpModal(false)
+                    }}
+                    disabled={isLoading || isStreaming || isAtPromptLimit}
+                    className="group p-6 text-left bg-gray-50 dark:bg-gray-800 rounded-3xl hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200 dark:border-gray-700"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="text-4xl group-hover:scale-110 transition-transform duration-300">📊</div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Business Proposals</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Create compelling proposals, pitch decks, and business documents that win clients and secure funding opportunities.</p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Proposals</span>
+                          <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Pitch Decks</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </button>
-                <button
-                  onClick={() => {
-                    handleSubmit("What are the current trends in my industry and how can I capitalize on them?")
-                    setShowHelpModal(false)
-                  }}
-                  disabled={isLoading || isStreaming || isAtPromptLimit}
-                  className="group p-6 text-left bg-gray-50 dark:bg-gray-800 rounded-3xl hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200 dark:border-gray-700"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="text-4xl group-hover:scale-110 transition-transform duration-300">🎯</div>
-                    <div className="flex-1">
-                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Industry Analysis</h4>
-                      <p className="text-gray-600 dark:text-gray-400 leading-relaxed">Stay ahead of the competition with insights into industry trends, market opportunities, and strategic positioning.</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Market Research</span>
-                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Competitive Analysis</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleSubmit("What are the current trends in my industry and how can I capitalize on them?")
+                      setShowHelpModal(false)
+                    }}
+                    disabled={isLoading || isStreaming || isAtPromptLimit}
+                    className="group p-6 text-left bg-gray-50 dark:bg-gray-800 rounded-3xl hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200 dark:border-gray-700"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="text-4xl group-hover:scale-110 transition-transform duration-300">🎯</div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Industry Analysis</h4>
+                        <p className="text-gray-600 dark:text-gray-400 leading-relaxed">Stay ahead of the competition with insights into industry trends, market opportunities, and strategic positioning.</p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Market Research</span>
+                          <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Competitive Analysis</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </button>
-              </div>
-              
-              <div className="mt-8 p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                  ⚡ Pro Tips for Better Results
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-start gap-3">
-                    <span className="text-gray-500 text-lg">💡</span>
-                    <div>
-                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Be Specific</h4>
-                      <p className="text-gray-600 dark:text-gray-400">Include your industry, company size, and specific goals for more tailored advice.</p>
+                  </button>
+                </div>
+                
+                <div className="mt-8 p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                    ⚡ Pro Tips for Better Results
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="flex items-start gap-3">
+                      <span className="text-gray-500 text-lg">💡</span>
+                      <div>
+                        <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Be Specific</h4>
+                        <p className="text-gray-600 dark:text-gray-400">Include your industry, company size, and specific goals for more tailored advice.</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="text-gray-500 text-lg">📁</span>
-                    <div>
-                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Upload Files</h4>
-                      <p className="text-gray-600 dark:text-gray-400">Share documents, spreadsheets, or presentations for analysis and insights.</p>
+                    <div className="flex items-start gap-3">
+                      <span className="text-gray-500 text-lg">📁</span>
+                      <div>
+                        <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Upload Files</h4>
+                        <p className="text-gray-600 dark:text-gray-400">Share documents, spreadsheets, or presentations for analysis and insights.</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="text-gray-500 text-lg">🎨</span>
-                    <div>
-                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Create Images</h4>
-                      <p className="text-gray-600 dark:text-gray-400">Generate professional visuals for marketing, presentations, and social media.</p>
+                    <div className="flex items-start gap-3">
+                      <span className="text-gray-500 text-lg">🎨</span>
+                      <div>
+                        <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Create Images</h4>
+                        <p className="text-gray-600 dark:text-gray-400">Generate professional visuals for marketing, presentations, and social media.</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="text-gray-500 text-lg">🔖</span>
-                    <div>
-                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Save Responses</h4>
-                      <p className="text-gray-600 dark:text-gray-400">Bookmark useful responses to access them anytime in your saved collection.</p>
+                    <div className="flex items-start gap-3">
+                      <span className="text-gray-500 text-lg">🔖</span>
+                      <div>
+                        <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Save Responses</h4>
+                        <p className="text-gray-600 dark:text-gray-400">Bookmark useful responses to access them anytime in your saved collection.</p>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Image Generation Modal */}
-      <ImageGenerationModal
-        open={showImageModal}
-        onClose={() => setShowImageModal(false)}
-        onImageGenerated={handleImageGenerated}
-      />
-
-      {/* Save Modal */}
-      {showSaveModal && currentSaveMessageId && (
-        <SaveModal
-          open={showSaveModal}
-          onClose={() => {
-            setShowSaveModal(false)
-            setCurrentSaveMessageId(null)
-          }}
-          messageId={currentSaveMessageId}
-          onSaveResponse={handleSaveResponse}
-          onSaveToCollabZone={handleSaveToCollabZone}
+        {/* Image Generation Modal */}
+        <ImageGenerationModal
+          open={showImageModal}
+          onClose={() => setShowImageModal(false)}
+          onImageGenerated={handleImageGenerated}
         />
-      )}
 
-      {/* Feedback Modal */}
-      {showFeedbackModal && currentFeedbackMessageId && (
-        <FeedbackModal
-          open={showFeedbackModal}
-          onClose={() => {
-            setShowFeedbackModal(false)
-            setCurrentFeedbackMessageId(null)
-          }}
-          responseId={currentFeedbackMessageId}
+        {/* Save Modal */}
+        {showSaveModal && currentSaveMessageId && (
+          <SaveModal
+            open={showSaveModal}
+            onClose={() => {
+              setShowSaveModal(false)
+              setCurrentSaveMessageId(null)
+            }}
+            messageId={currentSaveMessageId}
+            onSaveResponse={handleSaveResponse}
+            onSaveToCollabZone={handleSaveToCollabZone}
+          />
+        )}
+
+        {/* Feedback Modal */}
+        {showFeedbackModal && currentFeedbackMessageId && (
+          <FeedbackModal
+            open={showFeedbackModal}
+            onClose={() => {
+              setShowFeedbackModal(false)
+              setCurrentFeedbackMessageId(null)
+            }}
+            responseId={currentFeedbackMessageId}
+          />
+        )}
+
+        {/* ✅ FIXED: Tutorial Component with force option */}
+        <GrowflyTutorial 
+          isFirstTime={showTutorial || forceTutorial}
+          autoplay={true}
+          onComplete={handleTutorialComplete}
         />
-      )}
-
-      {/* ✅ FIXED: Tutorial Component with force option */}
-      <GrowflyTutorial 
-        isFirstTime={showTutorial || forceTutorial}
-        autoplay={true}
-        onComplete={handleTutorialComplete}
-      />
-    </div>
+      </div>
+    </ErrorBoundary>
   )
 }
 
