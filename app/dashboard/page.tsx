@@ -106,22 +106,6 @@ const IMAGE_LIMITS: Record<string, { daily: number; monthly: number }> = {
 
 const MAX_PERSISTENT_MESSAGES = 10
 
-// Type guard utilities for error handling
-const isErrorWithStatus = (error: unknown): error is { status: number } => {
-  return typeof error === 'object' && error !== null && 'status' in error
-}
-
-const isErrorWithMessage = (error: unknown): error is { message: string } => {
-  return typeof error === 'object' && error !== null && 'message' in error
-}
-
-const getErrorMessage = (error: unknown): string => {
-  if (error instanceof Error) return error.message
-  if (isErrorWithMessage(error)) return error.message
-  if (typeof error === 'string') return error
-  return 'An unknown error occurred'
-}
-
 // Enhanced Error Boundary Component
 interface ErrorBoundaryState {
   hasError: boolean
@@ -546,7 +530,7 @@ const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({ open, onClo
       }
 
     } catch (err: unknown) {
-      const errorMessage = getErrorMessage(err)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to generate image. Please check your connection and try again.'
       setError(errorMessage)
     } finally {
       setIsGenerating(false)
@@ -871,7 +855,6 @@ function DashboardContent() {
   const [isLoadingUser, setIsLoadingUser] = useState(true)
   const [isLoadingMessages, setIsLoadingMessages] = useState(true)
   const [isLoadingUsage, setIsLoadingUsage] = useState(true)
-  const [networkError, setNetworkError] = useState<string | null>(null)
   const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? navigator.onLine : true)
   const [isConnecting, setIsConnecting] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
@@ -922,13 +905,11 @@ function DashboardContent() {
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true)
-      setNetworkError(null)
       setIsConnecting(false)
     }
 
     const handleOffline = () => {
       setIsOnline(false)
-      setNetworkError('No internet connection')
     }
 
     window.addEventListener('online', handleOnline)
@@ -945,13 +926,12 @@ function DashboardContent() {
     console.error(`❌ ${operation} failed:`, error)
     
     if (!isOnline) {
-      setNetworkError('No internet connection. Please check your network and try again.')
       return
     }
 
-    // Check for network/fetch errors
-    if (error instanceof Error && error.name === 'TypeError' && error.message.includes('fetch')) {
-      setNetworkError('Network error. Please check your connection.')
+    const errorObj = error as { name?: string; message?: string; status?: number }
+
+    if (errorObj?.name === 'TypeError' && errorObj?.message?.includes('fetch')) {
       setIsConnecting(true)
       
       // Auto-retry after 3 seconds
@@ -973,27 +953,11 @@ function DashboardContent() {
       return
     }
 
-    // Check for HTTP status errors
-    if (isErrorWithStatus(error)) {
-      if (error.status === 401) {
-        setNetworkError('Authentication error. Please log in again.')
-        localStorage.removeItem('growfly_jwt')
-        router.push('/onboarding')
-        return
-      }
-
-      if (error.status === 429) {
-        setNetworkError('Too many requests. Please wait a moment and try again.')
-        return
-      }
-
-      if (error.status >= 500) {
-        setNetworkError('Server error. Please try again later.')
-        return
-      }
+    if (errorObj?.status === 401) {
+      localStorage.removeItem('growfly_jwt')
+      router.push('/onboarding')
+      return
     }
-
-    setNetworkError(`${operation} failed. Please try again.`)
   }
 
   // ✅ ENHANCED: Tutorial integration for new users with better logging
@@ -1267,16 +1231,16 @@ function DashboardContent() {
         if (response.ok) {
           const userData = await response.json()
           setUser(userData)
-          setNetworkError(null)
         } else {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`)
         }
       } catch (error) {
+        const errorObj = error as { status?: number }
         handleApiError(error, 'Loading user data', fetchUserData)
         
-         if (isErrorWithStatus(error) && error.status === 401) {
-    localStorage.removeItem('growfly_jwt')
-    router.push('/onboarding')
+        if (errorObj?.status === 401) {
+          localStorage.removeItem('growfly_jwt')
+          router.push('/onboarding')
         }
       } finally {
         setIsLoadingUser(false)
@@ -1628,13 +1592,9 @@ function DashboardContent() {
           setIsLoading(false)
           setIsStreaming(false)
           
-          // Check if error has type property for rate limiting
-          const hasType = (err: unknown): err is { type: string; message: string } => {
-            return typeof err === 'object' && err !== null && 'type' in err && 'message' in err
-          }
-          
-          if (hasType(error) && error.type === 'rate_limit') {
-            setError(error.message)
+          const errorObj = error as { type?: string; message?: string }
+          if (errorObj?.type === 'rate_limit') {
+            setError(errorObj.message || 'Rate limit exceeded')
             setMessages((prev) => prev.filter(msg => msg.id !== aId))
           } else {
             setMessages((prev) =>
@@ -1982,29 +1942,6 @@ function DashboardContent() {
         {/* Content Area - Proper sidebar spacing */}
         <div className="flex-1 overflow-hidden ml-0 sm:ml-56" data-tour="dashboard-main">
           <div ref={containerRef} className="h-full overflow-y-auto pb-80 pl-0 pr-4 pt-4">
-
-          {/* Network Error Banner */}
-          {networkError && (
-            <div className="mt-4 mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
-              <button 
-                onClick={() => setNetworkError(null)}
-                className="absolute top-2 right-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200"
-              >
-                <HiX className="w-4 h-4" />
-              </button>
-              <div className="flex items-center gap-2 mb-2">
-                <FaExclamationTriangle className="text-red-600" />
-                <strong>Connection Issue</strong>
-              </div>
-              <p>{networkError}</p>
-              {isConnecting && (
-                <div className="mt-2 flex items-center gap-2 text-sm">
-                  <FaSpinner className="animate-spin" />
-                  <span>Attempting to reconnect...</span>
-                </div>
-              )}
-            </div>
-          )}
 
           {/* Prompt Limit Warning */}
           {isAtPromptLimit && (

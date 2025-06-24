@@ -13,7 +13,12 @@ import {
   Trash2,
   ExternalLink,
   Copy,
-  Check
+  Check,
+  Search,
+  Heart,
+  Filter,
+  SortAsc,
+  SortDesc
 } from 'lucide-react'
 import { FaTwitter, FaFacebook, FaLinkedin, FaInstagram } from 'react-icons/fa'
 
@@ -30,6 +35,7 @@ interface GeneratedImage {
   createdAt: string
   userId: string
   expiresAt?: string
+  isFavorite?: boolean
 }
 
 interface TimeRemaining {
@@ -38,6 +44,8 @@ interface TimeRemaining {
   minutes: number
   total: number
 }
+
+type SortOption = 'newest' | 'oldest' | 'favorites' | 'prompt'
 
 // Utility functions
 const calculateTimeRemaining = (expiresAt: string): TimeRemaining => {
@@ -226,7 +234,8 @@ const ImageCard: React.FC<{
   image: GeneratedImage; 
   onDelete: (id: string) => void;
   onView: (image: GeneratedImage) => void;
-}> = ({ image, onDelete, onView }) => {
+  onToggleFavorite: (id: string) => void;
+}> = ({ image, onDelete, onView, onToggleFavorite }) => {
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(null)
   const [copiedUrl, setCopiedUrl] = useState(false)
   const [userLocation, setUserLocation] = useState<string | undefined>(undefined)
@@ -299,6 +308,20 @@ const ImageCard: React.FC<{
           onError={() => console.error('Image failed to load:', image.url)}
         />
         
+        {/* Favorite button - top right */}
+        <button
+          onClick={() => onToggleFavorite(image.id)}
+          className="absolute top-3 right-3 bg-white/90 hover:bg-white p-2 rounded-full transition-all duration-200 shadow-md"
+        >
+          <Heart 
+            className={`w-4 h-4 transition-colors ${
+              image.isFavorite 
+                ? 'fill-red-500 text-red-500' 
+                : 'text-gray-600 hover:text-red-500'
+            }`} 
+          />
+        </button>
+        
         {/* Overlay on hover */}
         <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 hover:opacity-100">
           <button
@@ -330,13 +353,13 @@ const ImageCard: React.FC<{
           </div>
         )}
 
-        {/* Action buttons */}
+        {/* Action buttons - improved visibility */}
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-2">
             {/* Download */}
             <button
               onClick={() => downloadImage(image.url, `growfly-${image.id}.png`)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+              className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
               title="Download"
             >
               <Download className="w-4 h-4" />
@@ -345,7 +368,7 @@ const ImageCard: React.FC<{
             {/* Copy URL */}
             <button
               onClick={copyImageUrl}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+              className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
               title="Copy URL"
             >
               {copiedUrl ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
@@ -354,18 +377,18 @@ const ImageCard: React.FC<{
             {/* Delete */}
             <button
               onClick={() => onDelete(image.id)}
-              className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+              className="p-2 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-800/40 rounded-lg transition-colors text-red-600 dark:text-red-400"
               title="Delete"
             >
               <Trash2 className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Enhanced social sharing */}
+          {/* Enhanced social sharing - improved visibility */}
           <div className="flex items-center gap-1">
             <button
               onClick={() => shareToTwitter(image.url, image.originalPrompt, image.style)}
-              className="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors text-gray-600 dark:text-gray-400 hover:text-blue-500"
+              className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors text-gray-700 dark:text-gray-300 hover:text-blue-500"
               title="Share to X (Twitter)"
             >
               <FaTwitter className="w-3 h-3" />
@@ -373,7 +396,7 @@ const ImageCard: React.FC<{
             
             <button
               onClick={() => shareToFacebook(image.url, image.originalPrompt, image.style)}
-              className="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors text-gray-600 dark:text-gray-400 hover:text-blue-600"
+              className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors text-gray-700 dark:text-gray-300 hover:text-blue-600"
               title="Share to Facebook"
             >
               <FaFacebook className="w-3 h-3" />
@@ -381,7 +404,7 @@ const ImageCard: React.FC<{
             
             <button
               onClick={() => shareToLinkedIn(image.url, image.originalPrompt, image.style, userLocation)}
-              className="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors text-gray-600 dark:text-gray-400 hover:text-blue-700"
+              className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors text-gray-700 dark:text-gray-300 hover:text-blue-700"
               title="Share to LinkedIn"
             >
               <FaLinkedin className="w-3 h-3" />
@@ -389,7 +412,7 @@ const ImageCard: React.FC<{
             
             <button
               onClick={() => shareToInstagram(image.url, image.originalPrompt, image.style)}
-              className="p-2 hover:bg-pink-100 dark:hover:bg-pink-900/30 rounded-lg transition-colors text-gray-600 dark:text-gray-400 hover:text-pink-500"
+              className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors text-gray-700 dark:text-gray-300 hover:text-pink-500"
               title="Share to Instagram"
             >
               <FaInstagram className="w-3 h-3" />
@@ -405,7 +428,8 @@ const ImageCard: React.FC<{
 const ImageModal: React.FC<{
   image: GeneratedImage | null;
   onClose: () => void;
-}> = ({ image, onClose }) => {
+  onToggleFavorite: (id: string) => void;
+}> = ({ image, onClose, onToggleFavorite }) => {
   const [userLocation, setUserLocation] = useState<string | undefined>(undefined)
 
   useEffect(() => {
@@ -436,7 +460,21 @@ const ImageModal: React.FC<{
           </div>
           
           <div className="md:w-1/3 p-6 space-y-4">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Image Details</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Image Details</h3>
+              <button
+                onClick={() => onToggleFavorite(image.id)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <Heart 
+                  className={`w-5 h-5 transition-colors ${
+                    image.isFavorite 
+                      ? 'fill-red-500 text-red-500' 
+                      : 'text-gray-600 hover:text-red-500'
+                  }`} 
+                />
+              </button>
+            </div>
             
             <div className="space-y-3">
               <div>
@@ -465,7 +503,7 @@ const ImageModal: React.FC<{
             <div className="pt-4 space-y-2">
               <button
                 onClick={() => downloadImage(image.url, `growfly-${image.id}.png`)}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                className="w-full bg-gray-800 hover:bg-gray-900 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
               >
                 <Download className="w-4 h-4" />
                 Download Image
@@ -474,7 +512,7 @@ const ImageModal: React.FC<{
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => shareToTwitter(image.url, image.originalPrompt, image.style)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                  className="bg-gray-700 hover:bg-gray-800 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
                 >
                   <FaTwitter className="w-3 h-3" />
                   X/Twitter
@@ -482,7 +520,7 @@ const ImageModal: React.FC<{
                 
                 <button
                   onClick={() => shareToLinkedIn(image.url, image.originalPrompt, image.style, userLocation)}
-                  className="bg-blue-700 hover:bg-blue-800 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                  className="bg-gray-700 hover:bg-gray-800 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
                 >
                   <FaLinkedin className="w-3 h-3" />
                   LinkedIn
@@ -492,7 +530,7 @@ const ImageModal: React.FC<{
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => shareToFacebook(image.url, image.originalPrompt, image.style)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                  className="bg-gray-700 hover:bg-gray-800 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
                 >
                   <FaFacebook className="w-3 h-3" />
                   Facebook
@@ -500,7 +538,7 @@ const ImageModal: React.FC<{
                 
                 <button
                   onClick={() => shareToInstagram(image.url, image.originalPrompt, image.style)}
-                  className="bg-pink-500 hover:bg-pink-600 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                  className="bg-gray-700 hover:bg-gray-800 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
                 >
                   <FaInstagram className="w-3 h-3" />
                   Instagram
@@ -521,6 +559,11 @@ export default function GalleryPage() {
   const [loading, setLoading] = useState(true)
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null)
   const [error, setError] = useState<string | null>(null)
+  
+  // New state for search and filtering
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState<SortOption>('newest')
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
 
@@ -544,10 +587,11 @@ export default function GalleryPage() {
 
       const data = await response.json()
       
-      // Add expiration dates (30 days from creation)
+      // Add expiration dates and favorite status
       const imagesWithExpiry = data.images.map((img: GeneratedImage) => ({
         ...img,
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+        isFavorite: false // You might want to fetch this from your backend
       }))
       
       setImages(imagesWithExpiry)
@@ -574,6 +618,54 @@ export default function GalleryPage() {
   const handleCloseModal = useCallback(() => {
     setSelectedImage(null)
   }, [])
+
+  const handleToggleFavorite = useCallback((imageId: string) => {
+    setImages(prev => prev.map(img => 
+      img.id === imageId 
+        ? { ...img, isFavorite: !img.isFavorite }
+        : img
+    ))
+  }, [])
+
+  // Filter and sort images
+  const filteredAndSortedImages = React.useMemo(() => {
+    let filtered = images
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(image =>
+        image.originalPrompt.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        image.style.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    }
+
+    // Filter by favorites
+    if (showFavoritesOnly) {
+      filtered = filtered.filter(image => image.isFavorite)
+    }
+
+    // Sort images
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        case 'oldest':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        case 'favorites':
+          if (a.isFavorite && !b.isFavorite) return -1
+          if (!a.isFavorite && b.isFavorite) return 1
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        case 'prompt':
+          return a.originalPrompt.localeCompare(b.originalPrompt)
+        default:
+          return 0
+      }
+    })
+
+    return sorted
+  }, [images, searchQuery, sortBy, showFavoritesOnly])
+
+  const favoriteCount = images.filter(img => img.isFavorite).length
 
   if (loading) {
     return (
@@ -606,33 +698,122 @@ export default function GalleryPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Your AI Gallery</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
             {images.length} {images.length === 1 ? 'image' : 'images'} created
+            {favoriteCount > 0 && (
+              <span className="text-red-500 ml-2">• {favoriteCount} favorite{favoriteCount !== 1 ? 's' : ''}</span>
+            )}
           </p>
         </div>
 
-        {images.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">🎨</div>
-            <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">No images yet</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">Start creating amazing AI artwork!</p>
+        {/* Search and Filter Controls */}
+        <div className="mb-6 space-y-4 lg:space-y-0 lg:flex lg:items-center lg:justify-between lg:gap-4">
+          {/* Search Bar */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search by prompt or style..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          {/* Controls */}
+          <div className="flex items-center gap-3">
+            {/* Favorites Toggle */}
             <button
-              onClick={() => router.push('/dashboard')}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-colors ${
+                showFavoritesOnly
+                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                  : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
             >
-              Create Your First Image
+              <Heart className={`w-4 h-4 ${showFavoritesOnly ? 'fill-current' : ''}`} />
+              <span className="hidden sm:inline">
+                {showFavoritesOnly ? 'Show All' : 'Favorites'}
+              </span>
             </button>
+
+            {/* Sort Dropdown */}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="favorites">Favorites First</option>
+              <option value="prompt">By Prompt (A-Z)</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Results count */}
+        {(searchQuery || showFavoritesOnly) && (
+          <div className="mb-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Showing {filteredAndSortedImages.length} of {images.length} images
+              {searchQuery && (
+                <span> matching "{searchQuery}"</span>
+              )}
+              {showFavoritesOnly && (
+                <span> (favorites only)</span>
+              )}
+            </p>
+          </div>
+        )}
+
+        {/* Images Grid */}
+        {filteredAndSortedImages.length === 0 ? (
+          <div className="text-center py-12">
+            {images.length === 0 ? (
+              <>
+                <div className="text-6xl mb-4">🎨</div>
+                <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">No images yet</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">Start creating amazing AI artwork!</p>
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                >
+                  Create Your First Image
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="text-6xl mb-4">🔍</div>
+                <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">No images found</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  {showFavoritesOnly 
+                    ? "You haven't favorited any images yet" 
+                    : "Try adjusting your search terms"}
+                </p>
+                <button
+                  onClick={() => {
+                    setSearchQuery('')
+                    setShowFavoritesOnly(false)
+                  }}
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                >
+                  Clear Filters
+                </button>
+              </>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {images.map((image) => (
+            {filteredAndSortedImages.map((image) => (
               <ImageCard
                 key={image.id}
                 image={image}
                 onDelete={handleDeleteImage}
                 onView={handleViewImage}
+                onToggleFavorite={handleToggleFavorite}
               />
             ))}
           </div>
@@ -640,7 +821,11 @@ export default function GalleryPage() {
       </div>
 
       {/* Image Modal */}
-      <ImageModal image={selectedImage} onClose={handleCloseModal} />
+      <ImageModal 
+        image={selectedImage} 
+        onClose={handleCloseModal}
+        onToggleFavorite={handleToggleFavorite}
+      />
     </div>
   )
 }
