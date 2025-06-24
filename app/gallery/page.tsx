@@ -18,7 +18,8 @@ import {
   Heart,
   Filter,
   SortAsc,
-  SortDesc
+  SortDesc,
+  Info
 } from 'lucide-react'
 import { FaTwitter, FaFacebook, FaLinkedin, FaInstagram } from 'react-icons/fa'
 
@@ -296,7 +297,7 @@ const ImageCard: React.FC<{
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
+    <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
       {/* Image */}
       <div className="relative aspect-square">
         <Image
@@ -347,7 +348,7 @@ const ImageCard: React.FC<{
 
         {/* Enhanced time remaining warning */}
         {timeRemaining && timeRemaining.total > 0 && urgencyLevel !== 'safe' && (
-          <div className={`px-3 py-2 rounded-lg border text-xs font-medium flex items-center gap-2 ${urgencyStyles[urgencyLevel]}`}>
+          <div className={`px-3 py-2 rounded-xl border text-xs font-medium flex items-center gap-2 ${urgencyStyles[urgencyLevel]}`}>
             {getWarningIcon()}
             <span>{formatTimeRemaining(timeRemaining)}</span>
           </div>
@@ -359,7 +360,7 @@ const ImageCard: React.FC<{
             {/* Download */}
             <button
               onClick={() => downloadImage(image.url, `growfly-${image.id}.png`)}
-              className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
+              className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-xl transition-colors text-gray-700 dark:text-gray-300"
               title="Download"
             >
               <Download className="w-4 h-4" />
@@ -368,7 +369,7 @@ const ImageCard: React.FC<{
             {/* Copy URL */}
             <button
               onClick={copyImageUrl}
-              className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
+              className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-xl transition-colors text-gray-700 dark:text-gray-300"
               title="Copy URL"
             >
               {copiedUrl ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
@@ -377,7 +378,7 @@ const ImageCard: React.FC<{
             {/* Delete */}
             <button
               onClick={() => onDelete(image.id)}
-              className="p-2 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-800/40 rounded-lg transition-colors text-red-600 dark:text-red-400"
+              className="p-2 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-800/40 rounded-xl transition-colors text-red-600 dark:text-red-400"
               title="Delete"
             >
               <Trash2 className="w-4 h-4" />
@@ -388,7 +389,7 @@ const ImageCard: React.FC<{
           <div className="flex items-center gap-1">
             <button
               onClick={() => shareToTwitter(image.url, image.originalPrompt, image.style)}
-              className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors text-gray-700 dark:text-gray-300 hover:text-blue-500"
+              className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-xl transition-colors text-gray-700 dark:text-gray-300 hover:text-blue-500"
               title="Share to X (Twitter)"
             >
               <FaTwitter className="w-3 h-3" />
@@ -396,7 +397,7 @@ const ImageCard: React.FC<{
             
             <button
               onClick={() => shareToFacebook(image.url, image.originalPrompt, image.style)}
-              className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors text-gray-700 dark:text-gray-300 hover:text-blue-600"
+              className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-xl transition-colors text-gray-700 dark:text-gray-300 hover:text-blue-600"
               title="Share to Facebook"
             >
               <FaFacebook className="w-3 h-3" />
@@ -404,7 +405,7 @@ const ImageCard: React.FC<{
             
             <button
               onClick={() => shareToLinkedIn(image.url, image.originalPrompt, image.style, userLocation)}
-              className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors text-gray-700 dark:text-gray-300 hover:text-blue-700"
+              className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-xl transition-colors text-gray-700 dark:text-gray-300 hover:text-blue-700"
               title="Share to LinkedIn"
             >
               <FaLinkedin className="w-3 h-3" />
@@ -412,7 +413,7 @@ const ImageCard: React.FC<{
             
             <button
               onClick={() => shareToInstagram(image.url, image.originalPrompt, image.style)}
-              className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors text-gray-700 dark:text-gray-300 hover:text-pink-500"
+              className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-xl transition-colors text-gray-700 dark:text-gray-300 hover:text-pink-500"
               title="Share to Instagram"
             >
               <FaInstagram className="w-3 h-3" />
@@ -440,7 +441,7 @@ const ImageModal: React.FC<{
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-      <div className="relative max-w-4xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden">
+      <div className="relative max-w-4xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-3xl overflow-hidden">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 z-10 bg-white/90 hover:bg-white text-gray-800 p-2 rounded-full transition-colors"
@@ -464,7 +465,7 @@ const ImageModal: React.FC<{
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">Image Details</h3>
               <button
                 onClick={() => onToggleFavorite(image.id)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
               >
                 <Heart 
                   className={`w-5 h-5 transition-colors ${
@@ -503,7 +504,7 @@ const ImageModal: React.FC<{
             <div className="pt-4 space-y-2">
               <button
                 onClick={() => downloadImage(image.url, `growfly-${image.id}.png`)}
-                className="w-full bg-gray-800 hover:bg-gray-900 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                className="w-full bg-gray-800 hover:bg-gray-900 text-white py-2 px-4 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
               >
                 <Download className="w-4 h-4" />
                 Download Image
@@ -512,7 +513,7 @@ const ImageModal: React.FC<{
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => shareToTwitter(image.url, image.originalPrompt, image.style)}
-                  className="bg-gray-700 hover:bg-gray-800 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                  className="bg-gray-700 hover:bg-gray-800 text-white py-2 px-3 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
                 >
                   <FaTwitter className="w-3 h-3" />
                   X/Twitter
@@ -520,7 +521,7 @@ const ImageModal: React.FC<{
                 
                 <button
                   onClick={() => shareToLinkedIn(image.url, image.originalPrompt, image.style, userLocation)}
-                  className="bg-gray-700 hover:bg-gray-800 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                  className="bg-gray-700 hover:bg-gray-800 text-white py-2 px-3 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
                 >
                   <FaLinkedin className="w-3 h-3" />
                   LinkedIn
@@ -530,7 +531,7 @@ const ImageModal: React.FC<{
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => shareToFacebook(image.url, image.originalPrompt, image.style)}
-                  className="bg-gray-700 hover:bg-gray-800 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                  className="bg-gray-700 hover:bg-gray-800 text-white py-2 px-3 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
                 >
                   <FaFacebook className="w-3 h-3" />
                   Facebook
@@ -538,7 +539,7 @@ const ImageModal: React.FC<{
                 
                 <button
                   onClick={() => shareToInstagram(image.url, image.originalPrompt, image.style)}
-                  className="bg-gray-700 hover:bg-gray-800 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                  className="bg-gray-700 hover:bg-gray-800 text-white py-2 px-3 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
                 >
                   <FaInstagram className="w-3 h-3" />
                   Instagram
@@ -587,10 +588,10 @@ export default function GalleryPage() {
 
       const data = await response.json()
       
-      // Add expiration dates and favorite status
+      // Add expiration dates and favorite status (30 days from creation)
       const imagesWithExpiry = data.images.map((img: GeneratedImage) => ({
         ...img,
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+        expiresAt: new Date(new Date(img.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from creation
         isFavorite: false // You might want to fetch this from your backend
       }))
       
@@ -686,7 +687,7 @@ export default function GalleryPage() {
           <p className="text-red-600 dark:text-red-400">{error}</p>
           <button
             onClick={fetchImages}
-            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl transition-colors"
           >
             Try Again
           </button>
@@ -698,15 +699,34 @@ export default function GalleryPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Your AI Gallery</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            {images.length} {images.length === 1 ? 'image' : 'images'} created
+        {/* Compact Header - matching your style */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl">
+              <Eye className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Your AI Gallery</h1>
+          </div>
+          
+          <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            All your Growfly-generated images are automatically saved here. Images are stored for 30 days before being permanently deleted to save space.
             {favoriteCount > 0 && (
               <span className="text-red-500 ml-2">• {favoriteCount} favorite{favoriteCount !== 1 ? 's' : ''}</span>
             )}
           </p>
+          
+          {/* Info Banner */}
+          <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-4 flex items-start gap-3 max-w-2xl mx-auto">
+            <Info className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+            <div className="text-left">
+              <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                Auto-deletion in 30 days
+              </p>
+              <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                Download your favorites to keep them permanently. You'll see warnings as the deletion date approaches.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Search and Filter Controls */}
@@ -719,7 +739,7 @@ export default function GalleryPage() {
               placeholder="Search by prompt or style..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
@@ -728,7 +748,7 @@ export default function GalleryPage() {
             {/* Favorites Toggle */}
             <button
               onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-colors ${
+              className={`flex items-center gap-2 px-4 py-3 rounded-2xl font-medium transition-colors ${
                 showFavoritesOnly
                   ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                   : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -744,7 +764,7 @@ export default function GalleryPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
@@ -779,7 +799,7 @@ export default function GalleryPage() {
                 <p className="text-gray-600 dark:text-gray-400 mb-6">Start creating amazing AI artwork!</p>
                 <button
                   onClick={() => router.push('/dashboard')}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-medium transition-colors"
                 >
                   Create Your First Image
                 </button>
@@ -798,7 +818,7 @@ export default function GalleryPage() {
                     setSearchQuery('')
                     setShowFavoritesOnly(false)
                   }}
-                  className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-2xl font-medium transition-colors"
                 >
                   Clear Filters
                 </button>
