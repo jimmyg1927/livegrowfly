@@ -69,15 +69,16 @@ export default function LoginPage() {
 
       console.log('🔥 Routing logic:', { plan, onboarded })
 
+      // ✅ FIXED: Use window.location.href instead of router.push
       if (!onboarded) {
         console.log('🔥 Redirecting to onboarding')
-        router.push('/onboarding')
+        window.location.href = '/onboarding'
       } else if (plan !== 'free') {
         console.log('🔥 Redirecting to change-plan')
-        router.push('/change-plan')
+        window.location.href = '/change-plan'
       } else {
         console.log('🔥 Redirecting to dashboard')
-        router.push('/dashboard')
+        window.location.href = '/dashboard'
       }
     } catch (err: unknown) {
       console.error('❌ Login error:', err)
