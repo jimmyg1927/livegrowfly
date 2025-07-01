@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { API_BASE_URL } from '@lib/constants'
+import { authAPI, type LoginResponse, type User } from '@lib/apiClient' // ✅ ONLY CHANGE: Import API client
 import { 
   FaEye, 
   FaEyeSlash, 
@@ -32,27 +32,27 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      })
+      // ✅ ONLY CHANGE: Use API client instead of fetch
+      const loginResult = await authAPI.login(email, password)
+      
+      if (loginResult.error) {
+        throw new Error(loginResult.error)
+      }
 
-      const data = await res.json()
-      if (!res.ok) throw new Error(data?.error || 'Login failed')
-
-      localStorage.setItem('growfly_jwt', data.token)
-
+      const loginData = loginResult.data as LoginResponse
+      
+      // ✅ Token is automatically stored by API client - no manual localStorage needed
+      
       // Fetch the user to determine plan and onboarding state
-      const userRes = await fetch(`${API_BASE_URL}/api/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${data.token}`,
-        },
-      })
-      const user = await userRes.json()
+      const userResult = await authAPI.getMe()
+      
+      if (userResult.error) {
+        throw new Error('Failed to retrieve user.')
+      }
 
-      if (!userRes.ok || !user) throw new Error('Failed to retrieve user.')
+      const user = userResult.data as User
 
+      // ✅ EVERYTHING ELSE IDENTICAL: Same routing logic
       const plan = user.subscriptionType || 'free'
       const onboarded = user.hasCompletedOnboarding
 

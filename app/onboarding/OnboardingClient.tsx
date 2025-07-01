@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'react-hot-toast'
 import { Eye, EyeOff, CheckCircle, XCircle, ArrowRight, ArrowLeft, Sparkles, Gift, Rocket } from 'lucide-react'
-import { API_BASE_URL } from '@lib/constants'
+import { apiClient, authAPI } from '@lib/apiClient' // ✅ Import API client
 
 type FormState = {
   name: string
@@ -132,55 +132,47 @@ export default function OnboardingClient() {
     setLoading(true)
 
     try {
-      // ✅ UPDATED: Include referral code in signup request
-      const signupRes = await fetch(`${API_BASE_URL}/api/auth/signup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          password: form.password,
-          jobTitle: form.jobTitle,
-          industry: form.industry,
-          ref: form.referralCode || undefined, // Include referral code if present
-          plan, // This is now just for tracking intended plan
-        }),
+      // ✅ UPDATED: Use API client for signup
+      const signupResult = await authAPI.signup({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        jobTitle: form.jobTitle,
+        industry: form.industry,
+        ref: form.referralCode || undefined, // Include referral code if present
+        plan, // This is now just for tracking intended plan
       })
       
-      const signupData = await signupRes.json()
-      
-      if (signupRes.status === 409) {
-        toast.error('❌ That email is already registered.')
-        return
+      if (signupResult.error) {
+        if (signupResult.error === 'User already exists.') {
+          toast.error('❌ That email is already registered.')
+          return
+        }
+        throw new Error(signupResult.error)
       }
-      if (!signupRes.ok) throw new Error(signupData.error || 'Signup failed')
 
-      const token = signupData.token
-      localStorage.setItem('growfly_jwt', token)
-      document.cookie = `growfly_jwt=${token}; path=/; max-age=604800`
+      const signupData = signupResult.data
+      
+      // ✅ Token is automatically stored by API client
+      // No need for manual localStorage.setItem or cookie setting
 
-      // Save brand settings
-      const totalXP = xp
-      const settingsRes = await fetch(`${API_BASE_URL}/api/user/settings`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          brandName: form.companyName,
-          brandDescription: form.brandDescription,
-          brandVoice: form.brandVoice,
-          brandMission: form.brandMission,
-          inspiredBy: form.inspiredBy,
-          jobTitle: form.jobTitle,
-          industry: form.industry,
-          goals: form.goals,
-          totalXP,
-          hasCompletedOnboarding: true,
-        }),
+      // ✅ UPDATED: Use API client for settings
+      const settingsResult = await apiClient.put('/api/user/settings', {
+        brandName: form.companyName,
+        brandDescription: form.brandDescription,
+        brandVoice: form.brandVoice,
+        brandMission: form.brandMission,
+        inspiredBy: form.inspiredBy,
+        jobTitle: form.jobTitle,
+        industry: form.industry,
+        goals: form.goals,
+        totalXP: xp,
+        hasCompletedOnboarding: true,
       })
-      if (!settingsRes.ok) throw new Error('Failed to save settings.')
+      
+      if (settingsResult.error) {
+        throw new Error('Failed to save settings.')
+      }
 
       // Handle plan routing
       if (plan === 'free') {
@@ -194,23 +186,18 @@ export default function OnboardingClient() {
         
         router.push('/dashboard')
       } else {
-        // For paid plans, redirect to Stripe
-        const stripeRes = await fetch(`${API_BASE_URL}/api/checkout/create-checkout-session`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ planId: plan }),
+        // ✅ UPDATED: Use API client for Stripe checkout
+        const stripeResult = await apiClient.post('/api/checkout/create-checkout-session', { 
+          planId: plan 
         })
-        const { url } = await stripeRes.json()
-        if (url) {
-          // ✅ ADDED: Set tutorial trigger for paid plan users too
-          sessionStorage.setItem('justCompletedOnboarding', 'true')
-          window.location.href = url
-        } else {
+        
+        if (stripeResult.error || !stripeResult.data?.url) {
           throw new Error('Stripe session failed.')
         }
+        
+        // ✅ ADDED: Set tutorial trigger for paid plan users too
+        sessionStorage.setItem('justCompletedOnboarding', 'true')
+        window.location.href = stripeResult.data.url
       }
     } catch (err: any) {
       toast.error(`❌ ${err.message || 'Error during onboarding.'}`)
