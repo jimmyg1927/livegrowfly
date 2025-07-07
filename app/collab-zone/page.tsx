@@ -553,7 +553,10 @@ const ShareModal: React.FC<{
     try {
       const result = await onShare('')
       if (result?.link) {
-        setShareLink(result.link)
+        // Replace backend URL with frontend URL
+        const frontendUrl = 'https://app.growfly.io'
+        const linkWithFrontendUrl = result.link.replace(/https?:\/\/[^\/]+/, frontendUrl)
+        setShareLink(linkWithFrontendUrl)
       }
     } finally {
       setIsSharing(false)
@@ -757,7 +760,7 @@ const CollabZone: React.FC = () => {
   }, [activeDoc, showStatus])
 
   // Save document
-  const saveDocument = useCallback(async (doc: Document): Promise<void> => {
+  const saveDocument = useCallback(async (doc: Document, showMessage: boolean = false): Promise<void> => {
     if (!doc) return
     
     try {
@@ -776,7 +779,10 @@ const CollabZone: React.FC = () => {
         setActiveDoc(updated)
       }
       
-      showStatus('success', '💾 Document saved!')
+      // Only show message for manual saves
+      if (showMessage) {
+        showStatus('success', '💾 Document saved!')
+      }
     } catch (error) {
       showStatus('error', 'Failed to save document')
       console.error('Save document error:', error)
@@ -785,21 +791,21 @@ const CollabZone: React.FC = () => {
     }
   }, [activeDoc, showStatus])
 
-  // Auto-save effect
+  // Auto-save effect (silent)
   useEffect(() => {
     if (!activeDoc) return
     
     const timeoutId = setTimeout(() => {
-      saveDocument(activeDoc)
+      saveDocument(activeDoc, false) // false = don't show popup
     }, 2000) // Auto-save after 2 seconds of inactivity
     
     return () => clearTimeout(timeoutId)
   }, [activeDoc?.content, saveDocument])
 
-  // Handle manual save
+  // Handle manual save (with popup)
   const handleSave = useCallback((): void => {
     if (activeDoc) {
-      saveDocument(activeDoc)
+      saveDocument(activeDoc, true) // true = show popup
     }
   }, [activeDoc, saveDocument])
 
