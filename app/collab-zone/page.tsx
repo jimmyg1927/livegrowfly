@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   FileText, 
@@ -19,7 +19,13 @@ import {
   Send,
   Copy,
   Eye,
-  EyeOff
+  EyeOff,
+  Bold,
+  Italic,
+  Underline,
+  Type,
+  Palette,
+  Highlighter
 } from 'lucide-react'
 
 // TypeScript interfaces
@@ -107,6 +113,7 @@ const DocumentHeader: React.FC<{
   activeDoc: Document | null
   onSave: () => void
   onShare: () => void
+  onDownload: (format: 'pdf' | 'docx') => void
   onFullscreen: () => void
   onToggleComments: () => void
   showComments: boolean
@@ -118,6 +125,7 @@ const DocumentHeader: React.FC<{
   activeDoc, 
   onSave, 
   onShare, 
+  onDownload,
   onFullscreen, 
   onToggleComments, 
   showComments, 
@@ -125,111 +133,155 @@ const DocumentHeader: React.FC<{
   isAutoSaving, 
   onToggleDocuments, 
   showDocuments 
-}) => (
-  <motion.header 
-    initial={{ y: -20, opacity: 0 }}
-    animate={{ y: 0, opacity: 1 }}
-    className="relative bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border-b border-gray-200/50 dark:border-slate-700/50 px-6 py-4 shadow-sm"
-  >
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onToggleDocuments}
-          className={`p-3 rounded-2xl transition-all duration-200 ${
-            showDocuments 
-              ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400' 
-              : 'hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400'
-          }`}
-        >
-          <Menu className="w-5 h-5" />
-        </motion.button>
-        
+}) => {
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false)
+
+  return (
+    <motion.header 
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      className="relative bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border-b border-gray-200/50 dark:border-slate-700/50 px-6 py-4 shadow-sm"
+    >
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-            <FileText className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
-              {activeDoc?.title || 'Untitled Document'}
-            </h1>
-            <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-              {activeDoc && (
-                <span>Last updated {new Date(activeDoc.updatedAt).toLocaleString()}</span>
-              )}
-              {isAutoSaving && (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="flex items-center gap-1 text-blue-600 dark:text-blue-400"
-                >
-                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" />
-                  Saving...
-                </motion.div>
-              )}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onToggleDocuments}
+            className={`p-3 rounded-2xl transition-all duration-200 ${
+              showDocuments 
+                ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400' 
+                : 'hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400'
+            }`}
+          >
+            <Menu className="w-5 h-5" />
+          </motion.button>
+          
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <FileText className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                {activeDoc?.title || 'Untitled Document'}
+              </h1>
+              <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                {activeDoc && (
+                  <span>Last updated {new Date(activeDoc.updatedAt).toLocaleString()}</span>
+                )}
+                {isAutoSaving && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex items-center gap-1 text-blue-600 dark:text-blue-400"
+                  >
+                    <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" />
+                    Saving...
+                  </motion.div>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="flex items-center gap-3">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onToggleComments}
-          className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
-            showComments
-              ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-              : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600'
-          }`}
-        >
-          <MessageSquare className="w-4 h-4" />
-          Comments
-          {commentsCount > 0 && (
-            <motion.span 
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold"
+        <div className="flex items-center gap-3">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onToggleComments}
+            className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
+              showComments
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+                : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600'
+            }`}
+          >
+            <MessageSquare className="w-4 h-4" />
+            Comments
+            {commentsCount > 0 && (
+              <motion.span 
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold"
+              >
+                {commentsCount}
+              </motion.span>
+            )}
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onFullscreen}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-all duration-200 font-medium"
+          >
+            <Maximize2 className="w-4 h-4" />
+            Focus
+          </motion.button>
+
+          {/* Download Button with Menu */}
+          <div className="relative">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-violet-600 text-white rounded-xl hover:from-purple-700 hover:to-violet-700 transition-all duration-200 font-medium shadow-lg shadow-purple-500/30"
             >
-              {commentsCount}
-            </motion.span>
-          )}
-        </motion.button>
+              <Download className="w-4 h-4" />
+              Download
+            </motion.button>
+            
+            {showDownloadMenu && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="absolute top-full right-0 mt-2 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200/50 dark:border-slate-700/50 p-2 z-50"
+              >
+                <button
+                  onClick={() => {
+                    onDownload('pdf')
+                    setShowDownloadMenu(false)
+                  }}
+                  className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                >
+                  📄 Download as PDF
+                </button>
+                <button
+                  onClick={() => {
+                    onDownload('docx')
+                    setShowDownloadMenu(false)
+                  }}
+                  className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                >
+                  📝 Download as Word
+                </button>
+              </motion.div>
+            )}
+          </div>
 
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onFullscreen}
-          className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-all duration-200 font-medium"
-        >
-          <Maximize2 className="w-4 h-4" />
-          Focus
-        </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onShare}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium shadow-lg shadow-green-500/30"
+          >
+            <Share2 className="w-4 h-4" />
+            Share
+          </motion.button>
 
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onShare}
-          className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium shadow-lg shadow-green-500/30"
-        >
-          <Share2 className="w-4 h-4" />
-          Share
-        </motion.button>
-
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onSave}
-          className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg shadow-blue-500/30"
-        >
-          <Save className="w-4 h-4" />
-          Save
-        </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onSave}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg shadow-blue-500/30"
+          >
+            <Save className="w-4 h-4" />
+            Save
+          </motion.button>
+        </div>
       </div>
-    </div>
-  </motion.header>
-)
+    </motion.header>
+  )
+}
 
 // Documents Sidebar Component
 const DocumentsSidebar: React.FC<{
@@ -504,20 +556,193 @@ const Editor: React.FC<{
   showComments: boolean
 }> = ({ content, setContent, docId, showComments }) => {
   const [isFocused, setIsFocused] = useState<boolean>(false)
+  const [fontSize, setFontSize] = useState<string>('16')
+  const [textColor, setTextColor] = useState<string>('#000000')
+  const [highlightColor, setHighlightColor] = useState<string>('#ffff00')
+  const editorRef = useRef<HTMLDivElement>(null)
+
+  const executeCommand = (command: string, value?: string) => {
+    document.execCommand(command, false, value)
+    if (editorRef.current) {
+      setContent(editorRef.current.innerHTML)
+    }
+  }
+
+  const handleContentChange = () => {
+    if (editorRef.current) {
+      setContent(editorRef.current.innerHTML)
+    }
+  }
+
+  const formatButtons = [
+    { icon: Bold, command: 'bold', title: 'Bold (Ctrl+B)' },
+    { icon: Italic, command: 'italic', title: 'Italic (Ctrl+I)' },
+    { icon: Underline, command: 'underline', title: 'Underline (Ctrl+U)' },
+  ]
 
   return (
     <div className="h-full flex flex-col">
+      {/* Formatting Toolbar */}
+      <div className="border-b border-gray-200/50 dark:border-slate-700/50 p-4 bg-gray-50/50 dark:bg-slate-800/50">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Bold, Italic, Underline */}
+          {formatButtons.map(({ icon: Icon, command, title }, index) => (
+            <motion.button
+              key={command}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => executeCommand(command)}
+              title={title}
+              className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            >
+              <Icon className="w-4 h-4" />
+            </motion.button>
+          ))}
+
+          <div className="w-px h-6 bg-gray-300 dark:bg-slate-600 mx-2" />
+
+          {/* Font Size */}
+          <div className="flex items-center gap-2">
+            <Type className="w-4 h-4" />
+            <select
+              value={fontSize}
+              onChange={(e) => {
+                setFontSize(e.target.value)
+                executeCommand('fontSize', '3')
+                executeCommand('fontName', 'Arial')
+                if (editorRef.current) {
+                  const selection = window.getSelection()
+                  if (selection && selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0)
+                    const span = document.createElement('span')
+                    span.style.fontSize = e.target.value + 'px'
+                    try {
+                      range.surroundContents(span)
+                    } catch (e) {
+                      span.appendChild(range.extractContents())
+                      range.insertNode(span)
+                    }
+                  }
+                }
+                handleContentChange()
+              }}
+              className="px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700"
+            >
+              <option value="12">12px</option>
+              <option value="14">14px</option>
+              <option value="16">16px</option>
+              <option value="18">18px</option>
+              <option value="20">20px</option>
+              <option value="24">24px</option>
+              <option value="32">32px</option>
+            </select>
+          </div>
+
+          <div className="w-px h-6 bg-gray-300 dark:bg-slate-600 mx-2" />
+
+          {/* Text Color */}
+          <div className="flex items-center gap-2">
+            <Palette className="w-4 h-4" />
+            <input
+              type="color"
+              value={textColor}
+              onChange={(e) => {
+                setTextColor(e.target.value)
+                executeCommand('foreColor', e.target.value)
+              }}
+              className="w-8 h-8 border border-gray-300 dark:border-slate-600 rounded cursor-pointer"
+              title="Text Color"
+            />
+          </div>
+
+          {/* Highlight Color */}
+          <div className="flex items-center gap-2">
+            <Highlighter className="w-4 h-4" />
+            <input
+              type="color"
+              value={highlightColor}
+              onChange={(e) => {
+                setHighlightColor(e.target.value)
+                executeCommand('hiliteColor', e.target.value)
+              }}
+              className="w-8 h-8 border border-gray-300 dark:border-slate-600 rounded cursor-pointer"
+              title="Highlight Color"
+            />
+          </div>
+
+          <div className="w-px h-6 bg-gray-300 dark:bg-slate-600 mx-2" />
+
+          {/* Lists */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => executeCommand('insertUnorderedList')}
+            className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            title="Bullet List"
+          >
+            • List
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => executeCommand('insertOrderedList')}
+            className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            title="Numbered List"
+          >
+            1. List
+          </motion.button>
+
+          <div className="w-px h-6 bg-gray-300 dark:bg-slate-600 mx-2" />
+
+          {/* Alignment */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => executeCommand('justifyLeft')}
+            className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            title="Align Left"
+          >
+            ⬅
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => executeCommand('justifyCenter')}
+            className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            title="Align Center"
+          >
+            ↔
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => executeCommand('justifyRight')}
+            className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            title="Align Right"
+          >
+            ➡
+          </motion.button>
+        </div>
+      </div>
+
+      {/* Editor Area */}
       <div className={`flex-1 p-8 transition-all duration-300 ${isFocused ? 'bg-white dark:bg-slate-800' : ''}`}>
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
+        <div
+          ref={editorRef}
+          contentEditable
+          onInput={handleContentChange}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          placeholder="Start writing your document... ✨"
-          className="w-full h-full resize-none border-none outline-none bg-transparent text-gray-900 dark:text-white text-lg leading-relaxed font-medium placeholder-gray-400 dark:placeholder-gray-500"
+          dangerouslySetInnerHTML={{ __html: content || '' }}
+          className="w-full h-full outline-none bg-transparent text-gray-900 dark:text-white text-lg leading-relaxed font-medium [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-gray-400 [&:empty]:before:pointer-events-none"
           style={{
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            minHeight: '200px'
           }}
+          data-placeholder="Start writing your document... ✨"
         />
       </div>
     </div>
@@ -911,6 +1136,46 @@ const CollabZone: React.FC = () => {
     }
   }, [showStatus])
 
+  // Download document
+  const handleDownload = useCallback(async (format: 'pdf' | 'docx'): Promise<void> => {
+    if (!activeDoc) return
+    
+    try {
+      // Get token for authenticated request
+      const token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('growfly_jwt='))
+        ?.split('=')[1]
+
+      const response = await fetch(`${API_BASE}/collab/${activeDoc.id}/download?type=${format}`, {
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        throw new Error('Download failed')
+      }
+
+      // Create blob and download
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${activeDoc.title}.growfly.${format}`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      
+      showStatus('success', `📥 Document downloaded as ${format.toUpperCase()}!`)
+    } catch (error) {
+      showStatus('error', 'Failed to download document')
+      console.error('Download error:', error)
+    }
+  }, [activeDoc, showStatus])
+
   // Handle shared document access from URL
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
@@ -997,6 +1262,7 @@ const CollabZone: React.FC = () => {
           activeDoc={activeDoc}
           onSave={handleSave}
           onShare={() => setShowShareModal(true)}
+          onDownload={handleDownload}
           onFullscreen={() => setIsFullscreen(false)}
           onToggleComments={() => setShowComments(!showComments)}
           showComments={showComments}
@@ -1041,6 +1307,7 @@ const CollabZone: React.FC = () => {
         activeDoc={activeDoc}
         onSave={handleSave}
         onShare={() => setShowShareModal(true)}
+        onDownload={handleDownload}
         onFullscreen={() => setIsFullscreen(true)}
         onToggleComments={() => setShowComments(!showComments)}
         showComments={showComments}
