@@ -68,11 +68,19 @@ const API_BASE = 'https://glowfly-api-production.up.railway.app/api'
 
 const apiCall = async <T = any>(endpoint: string, options: RequestInit = {}): Promise<T> => {
   try {
+    // Get token from the growfly_jwt cookie
+    const token = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('growfly_jwt='))
+      ?.split('=')[1]
+    
     const response = await fetch(`${API_BASE}${endpoint}`, {
       headers: {
         'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         ...(options.headers || {}),
       },
+      credentials: 'include', // Include cookies in requests
       ...options,
     })
     
