@@ -167,14 +167,14 @@ const DocumentHeader: React.FC<{
                 {activeDoc?.title || 'Untitled Document'}
               </h1>
               {/* Fixed position status that doesn't cause layout shift */}
-              <div className="h-4 relative">
+              <div className="h-4 relative w-32">
                 <AnimatePresence>
                   {isAutoSaving && (
                     <motion.div 
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -10 }}
-                      className="absolute left-0 top-0 flex items-center gap-1 text-blue-600 dark:text-blue-400 text-xs"
+                      className="absolute left-0 top-0 flex items-center gap-1 text-blue-600 dark:text-blue-400 text-xs whitespace-nowrap"
                     >
                       <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse" />
                       Saving...
@@ -184,7 +184,7 @@ const DocumentHeader: React.FC<{
                     <motion.span 
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="absolute left-0 top-0 text-xs text-gray-400 dark:text-gray-500"
+                      className="absolute left-0 top-0 text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap"
                     >
                       Saved {new Date(activeDoc.updatedAt).toLocaleString('en-US', {
                         month: 'short',
@@ -597,13 +597,11 @@ const Editor: React.FC<{
   const [textColor, setTextColor] = useState<string>('#000000')
   const [highlightColor, setHighlightColor] = useState<string>('#ffff00')
   const editorRef = useRef<HTMLDivElement>(null)
-  const savedSelection = useRef<Range | null>(null)
 
-  // Save current selection
-  const saveSelection = useCallback(() => {
+  // Save current selection for commenting
+  const saveSelectionForComments = useCallback(() => {
     const selection = window.getSelection()
     if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
-      savedSelection.current = selection.getRangeAt(0).cloneRange()
       const text = selection.toString().trim()
       if (text && setSelectedText) {
         setSelectedText(text)
@@ -611,26 +609,11 @@ const Editor: React.FC<{
     }
   }, [setSelectedText])
 
-  // Restore selection
-  const restoreSelection = () => {
-    if (savedSelection.current) {
-      const selection = window.getSelection()
-      if (selection) {
-        selection.removeAllRanges()
-        selection.addRange(savedSelection.current)
-      }
-    }
-  }
-
   const executeCommand = (command: string, value?: string) => {
-    // Restore selection before executing command
-    restoreSelection()
     document.execCommand(command, false, value)
     if (editorRef.current) {
       setContent(editorRef.current.innerHTML)
     }
-    // Save selection after command
-    setTimeout(saveSelection, 0)
   }
 
   const handleContentChange = () => {
@@ -639,16 +622,20 @@ const Editor: React.FC<{
     }
   }
 
-  const handleSelectionChange = useCallback(() => {
-    // Only save selection if there's actually text selected
-    const selection = window.getSelection()
-    if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
-      saveSelection()
-    } else if (setSelectedText) {
-      // Clear selected text if nothing is selected
-      setSelectedText('')
-    }
-  }, [saveSelection, setSelectedText])
+  // Only update selected text when user stops selecting (not while actively selecting)
+  const handleSelectionEnd = useCallback(() => {
+    setTimeout(() => {
+      const selection = window.getSelection()
+      if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
+        const text = selection.toString().trim()
+        if (text && setSelectedText) {
+          setSelectedText(text)
+        }
+      } else if (setSelectedText) {
+        setSelectedText('')
+      }
+    }, 100) // Small delay to prevent interference
+  }, [setSelectedText])
 
   const formatButtons = [
     { icon: Bold, command: 'bold', title: 'Bold (Ctrl+B)' },
@@ -675,7 +662,6 @@ const Editor: React.FC<{
               key={command}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onMouseDown={(e) => e.preventDefault()} // Prevent losing focus
               onClick={() => executeCommand(command)}
               title={title}
               className="p-1.5 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-lg transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
@@ -691,10 +677,8 @@ const Editor: React.FC<{
             <Type className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
             <select
               value={fontSize}
-              onMouseDown={(e) => e.preventDefault()}
               onChange={(e) => {
                 setFontSize(e.target.value)
-                restoreSelection()
                 executeCommand('fontSize', '3')
                 if (editorRef.current) {
                   const selection = window.getSelection()
@@ -732,7 +716,6 @@ const Editor: React.FC<{
             <input
               type="color"
               value={textColor}
-              onMouseDown={(e) => e.preventDefault()}
               onChange={(e) => {
                 setTextColor(e.target.value)
                 executeCommand('foreColor', e.target.value)
@@ -748,7 +731,6 @@ const Editor: React.FC<{
             <input
               type="color"
               value={highlightColor}
-              onMouseDown={(e) => e.preventDefault()}
               onChange={(e) => {
                 setHighlightColor(e.target.value)
                 executeCommand('hiliteColor', e.target.value)
@@ -764,7 +746,6 @@ const Editor: React.FC<{
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('insertUnorderedList')}
             className="px-2 py-1.5 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-lg transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 text-xs font-medium"
             title="Bullet List"
@@ -775,7 +756,6 @@ const Editor: React.FC<{
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('insertOrderedList')}
             className="px-2 py-1.5 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-lg transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 text-xs font-medium"
             title="Numbered List"
@@ -826,7 +806,6 @@ const Editor: React.FC<{
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onMouseDown={(e) => e.preventDefault()}
                 onClick={handleAddCommentWithSelection}
                 className="flex items-center gap-1 px-2 py-1.5 bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 rounded-lg transition-colors text-xs font-medium"
                 title={`Comment on: "${selectedText.substring(0, 30)}..."`}
@@ -847,7 +826,7 @@ const Editor: React.FC<{
           onInput={handleContentChange}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          onMouseUp={handleSelectionChange}
+          onMouseUp={handleSelectionEnd}
           suppressContentEditableWarning={true}
           dangerouslySetInnerHTML={{ __html: content || '' }}
           className="w-full h-full outline-none bg-transparent text-gray-900 dark:text-white text-lg leading-relaxed font-medium [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-gray-400 [&:empty]:before:pointer-events-none"
