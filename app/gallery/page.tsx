@@ -23,7 +23,8 @@ import {
   Edit3,
   Save
 } from 'lucide-react'
-import { FaTwitter, FaFacebook, FaLinkedin, FaInstagram } from 'react-icons/fa'
+import { FaFacebook, FaLinkedin, FaInstagram } from 'react-icons/fa'
+import { FaXTwitter } from 'react-icons/fa6'
 
 // Use environment variable
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://glowfly-api-production.up.railway.app'
@@ -114,71 +115,129 @@ const downloadImage = async (url: string, filename: string) => {
 
 // Enhanced social sharing functions with rich content
 
-// Enhanced Twitter sharing with better content and hashtags
+// Enhanced X (Twitter) sharing with better content and hashtags
 const shareToTwitter = (imageUrl: string, prompt: string, style: string, customHashtags?: string[]) => {
-  const defaultHashtags = ['#AIArt', '#GeneratedWithGrowfly', '#AICreativity', '#DigitalArt', `#${style.replace(/\s+/g, '')}`]
-  const hashtags = customHashtags || defaultHashtags
-  const hashtagString = hashtags.join(' ')
-  
-  const text = `🎨 Just created this amazing AI artwork: "${prompt}" 
+  try {
+    // Ensure all parameters are strings and handle undefined/null values
+    const safePrompt = prompt || 'AI Generated Art'
+    const safeStyle = style || 'Digital'
+    const safeImageUrl = imageUrl || ''
+    
+    if (!safeImageUrl) {
+      alert('Unable to share: Image URL not available')
+      return
+    }
+    
+    const styleTag = safeStyle ? `#${safeStyle.replace(/\s+/g, '')}` : '#DigitalArt'
+    const defaultHashtags = ['#AIArt', '#GeneratedWithGrowfly', '#AICreativity', '#DigitalArt', styleTag]
+    const hashtags = customHashtags || defaultHashtags
+    const hashtagString = hashtags.join(' ')
+    
+    const text = `🎨 Just created this amazing AI artwork: "${safePrompt}" 
 
 ${hashtagString}
 
 ✨ Create your own at Growfly AI!`
-  
-  const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(imageUrl)}`
-  window.open(url, '_blank', 'width=550,height=420')
+    
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(safeImageUrl)}`
+    window.open(url, '_blank', 'width=550,height=420')
+  } catch (error) {
+    console.error('Error sharing to X/Twitter:', error)
+    alert('Unable to share to X/Twitter. Please try again.')
+  }
 }
 
 // Enhanced Facebook sharing with rich content
 const shareToFacebook = (imageUrl: string, prompt: string, style: string) => {
-  const text = `🎨 Check out this AI-generated masterpiece I just created!
+  try {
+    // Ensure all parameters are strings and handle undefined/null values
+    const safePrompt = prompt || 'AI Generated Art'
+    const safeStyle = style || 'Digital'
+    const safeImageUrl = imageUrl || ''
+    
+    if (!safeImageUrl) {
+      alert('Unable to share: Image URL not available')
+      return
+    }
+    
+    const text = `🎨 Check out this AI-generated masterpiece I just created!
 
-Prompt: "${prompt}"
-Style: ${style}
+Prompt: "${safePrompt}"
+Style: ${safeStyle}
 
 The future of creativity is here! 🚀
 
 #AIArt #CreativeAI #GrowflyAI`
-  
-  const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(imageUrl)}&quote=${encodeURIComponent(text)}`
-  window.open(url, '_blank', 'width=550,height=420')
+    
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(safeImageUrl)}&quote=${encodeURIComponent(text)}`
+    window.open(url, '_blank', 'width=550,height=420')
+  } catch (error) {
+    console.error('Error sharing to Facebook:', error)
+    alert('Unable to share to Facebook. Please try again.')
+  }
 }
 
 // Enhanced LinkedIn sharing with professional tone
 const shareToLinkedIn = (imageUrl: string, prompt: string, style: string, location?: string) => {
-  const locationText = location ? ` 📍 ${location}` : ''
-  const text = `🚀 Exploring the future of AI creativity with this generated artwork:
+  try {
+    // Ensure all parameters are strings and handle undefined/null values
+    const safePrompt = prompt || 'AI Generated Art'
+    const safeStyle = style || 'Digital'
+    const safeImageUrl = imageUrl || ''
+    
+    if (!safeImageUrl) {
+      alert('Unable to share: Image URL not available')
+      return
+    }
+    
+    const locationText = location ? ` 📍 ${location}` : ''
+    const text = `🚀 Exploring the future of AI creativity with this generated artwork:
 
-"${prompt}"
+"${safePrompt}"
 
-Style: ${style}
+Style: ${safeStyle}
 
 🎯 The possibilities of AI-powered design continue to amaze me. The intersection of technology and creativity is opening up incredible new opportunities for content creation and visual storytelling.
 
 What creative AI projects are you working on?
 
 #AI #CreativeAI #Innovation #Technology #DigitalTransformation #ArtificialIntelligence #GrowflyAI${locationText}`
-  
-  const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(imageUrl)}&summary=${encodeURIComponent(text)}`
-  window.open(url, '_blank', 'width=550,height=420')
+    
+    const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(safeImageUrl)}&summary=${encodeURIComponent(text)}`
+    window.open(url, '_blank', 'width=550,height=420')
+  } catch (error) {
+    console.error('Error sharing to LinkedIn:', error)
+    alert('Unable to share to LinkedIn. Please try again.')
+  }
 }
 
 // Enhanced Instagram sharing with rich caption and instructions
 const shareToInstagram = async (imageUrl: string, prompt: string, style: string, customHashtags?: string[]) => {
-  const defaultHashtags = [
-    '#AIArt', '#GeneratedWithGrowfly', '#AICreativity', '#DigitalArt', 
-    '#ArtificialIntelligence', '#CreativeAI', '#TechArt', '#Innovation',
-    `#${style.replace(/\s+/g, '')}`, '#FutureOfArt'
-  ]
-  const hashtags = customHashtags || defaultHashtags
-  const hashtagString = hashtags.join(' ')
-  
-  const caption = `🎨✨ AI-Generated Masterpiece ✨🎨
+  try {
+    // Ensure all parameters are strings and handle undefined/null values
+    const safePrompt = prompt || 'AI Generated Art'
+    const safeStyle = style || 'Digital'
+    const safeImageUrl = imageUrl || ''
+    
+    if (!safeImageUrl) {
+      alert('Unable to share: Image URL not available')
+      return
+    }
+    
+    const styleTag = safeStyle ? `#${safeStyle.replace(/\s+/g, '')}` : '#DigitalArt'
+    const defaultHashtags = [
+      '#AIArt', '#GeneratedWithGrowfly', '#AICreativity', '#DigitalArt', 
+      '#ArtificialIntelligence', '#CreativeAI', '#TechArt', '#Innovation',
+      styleTag, '#FutureOfArt'
+    ]
+    const hashtags = customHashtags || defaultHashtags
+    const hashtagString = hashtags.join(' ')
+    
+    const caption = `🎨✨ AI-Generated Masterpiece ✨🎨
 
-"${prompt}"
+"${safePrompt}"
 
-Created with @growfly.ai using ${style} style! 
+Created with @growfly.ai using ${safeStyle} style! 
 
 The future of creativity is here and it's absolutely mind-blowing! 🤯
 
@@ -186,9 +245,9 @@ ${hashtagString}
 
 👆 Link in bio to create your own AI art!`
 
-  try {
-    await navigator.clipboard.writeText(caption)
-    alert(`🎨 Instagram caption copied to clipboard!
+    try {
+      await navigator.clipboard.writeText(caption)
+      alert(`🎨 Instagram caption copied to clipboard!
 
 📱 To share on Instagram:
 1. Save this image to your device (long press on mobile)
@@ -200,9 +259,13 @@ ${hashtagString}
 7. Post and watch the magic happen! ✨
 
 Caption includes optimized hashtags and call-to-action!`)
+    } catch (clipboardError) {
+      const fallbackText = `Caption for Instagram:\n\n${caption}\n\nPlease copy this text manually.`
+      alert(fallbackText)
+    }
   } catch (error) {
-    const fallbackText = `Caption for Instagram:\n\n${caption}\n\nPlease copy this text manually.`
-    alert(fallbackText)
+    console.error('Error sharing to Instagram:', error)
+    alert('Unable to prepare Instagram share. Please try again.')
   }
 }
 
@@ -324,14 +387,24 @@ const ImageCard: React.FC<{
     <div className="bg-gradient-to-br from-white via-white to-gray-50/50 dark:from-gray-800 dark:via-gray-800 dark:to-gray-700/50 rounded-xl shadow-lg hover:shadow-2xl overflow-hidden border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 backdrop-blur-sm">
       {/* Image */}
       <div className="relative aspect-square">
-        <Image
-          src={image.url}
-          alt={displayName}
-          fill
-          className="object-cover"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          onError={() => console.error('Image failed to load:', image.url)}
-        />
+        {image.url ? (
+          <Image
+            src={image.url}
+            alt={displayName}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            onError={(e) => {
+              console.error('Image failed to load:', image.url)
+              // Hide the broken image
+              e.currentTarget.style.display = 'none'
+            }}
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+            <span className="text-gray-400 text-sm">Image not available</span>
+          </div>
+        )}
         
         {/* Favorite button - top right */}
         <button
@@ -453,7 +526,7 @@ const ImageCard: React.FC<{
               className="p-2 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-blue-100 hover:to-blue-200 dark:from-gray-700 dark:to-gray-600 dark:hover:from-blue-900/30 dark:hover:to-blue-800/30 rounded-lg transition-all duration-200 text-gray-700 dark:text-gray-300 hover:text-blue-500 hover:scale-105 shadow-sm"
               title="Share to X (Twitter)"
             >
-              <FaTwitter className="w-3 h-3" />
+              <FaXTwitter className="w-3 h-3" />
             </button>
             
             <button
@@ -514,13 +587,23 @@ const ImageModal: React.FC<{
         
         <div className="flex flex-col lg:flex-row">
           <div className="relative lg:w-2/3">
-            <Image
-              src={image.url}
-              alt={displayName}
-              width={800}
-              height={800}
-              className="w-full h-auto object-contain rounded-l-2xl"
-            />
+            {image.url ? (
+              <Image
+                src={image.url}
+                alt={displayName}
+                width={800}
+                height={800}
+                className="w-full h-auto object-contain rounded-l-2xl"
+                onError={(e) => {
+                  console.error('Modal image failed to load:', image.url)
+                  e.currentTarget.style.display = 'none'
+                }}
+              />
+            ) : (
+              <div className="w-full h-96 bg-gray-200 dark:bg-gray-700 flex items-center justify-center rounded-l-2xl">
+                <span className="text-gray-400">Image not available</span>
+              </div>
+            )}
           </div>
           
           <div className="lg:w-1/3 p-8 space-y-6">
@@ -580,7 +663,7 @@ const ImageModal: React.FC<{
                   onClick={() => shareToTwitter(image.url, displayName, image.style)}
                   className="bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white py-3 px-3 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2 hover:scale-105"
                 >
-                  <FaTwitter className="w-4 h-4" />
+                  <FaXTwitter className="w-4 h-4" />
                   X/Twitter
                 </button>
                 

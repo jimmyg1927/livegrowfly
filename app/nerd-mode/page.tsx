@@ -591,7 +591,7 @@ export default function NerdModePage() {
           </div>
         </motion.section>
 
-        {/* Business Quick Wins Section */}
+        {/* Business Quick Wins Section - FIXED */}
         <motion.section 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -609,67 +609,157 @@ export default function NerdModePage() {
             Ready-to-use prompts for common business tasks across different regions and industries.
           </p>
 
-          <div className="grid md:grid-cols-3 gap-3">
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-3 border border-blue-200 dark:border-blue-700">
-              <div className="flex items-center gap-2 mb-2">
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-4 border border-blue-200 dark:border-blue-700">
+              <div className="flex items-center gap-2 mb-3">
                 <PoundSterling className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 <h4 className="font-semibold text-blue-900 dark:text-blue-300 text-sm">UK/EU Business</h4>
               </div>
-              <div className="space-y-2 text-xs">
-                <button 
-                  onClick={() => handleCopy("Generate a professional invoice template with UK VAT requirements and payment terms.")}
-                  className="w-full text-left text-blue-800 dark:text-blue-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colours duration-200"
-                >
-                  "Generate UK VAT invoice template →"
-                </button>
-                <button 
-                  onClick={() => handleCopy("Write a GDPR-compliant privacy policy for a small e-commerce business.")}
-                  className="w-full text-left text-blue-800 dark:text-blue-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colours duration-200"
-                >
-                  "Create GDPR privacy policy →"
-                </button>
+              <div className="space-y-3">
+                <div className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-gray-200 dark:border-slate-600">
+                  <div className="flex items-start justify-between">
+                    <p className="text-xs text-gray-800 dark:text-gray-200 flex-1 pr-2">
+                      "Generate a professional invoice template with UK VAT requirements and payment terms."
+                    </p>
+                    <button
+                      onClick={() => handleCopy("Generate a professional invoice template with UK VAT requirements and payment terms.")}
+                      className={`flex-shrink-0 p-1 rounded-lg transition-all duration-200 ${
+                        copiedPrompt === "Generate a professional invoice template with UK VAT requirements and payment terms."
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                          : 'bg-gray-100 dark:bg-slate-600 text-gray-600 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400'
+                      }`}
+                    >
+                      {copiedPrompt === "Generate a professional invoice template with UK VAT requirements and payment terms." ? (
+                        <Check className="w-3 h-3" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <div className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-gray-200 dark:border-slate-600">
+                  <div className="flex items-start justify-between">
+                    <p className="text-xs text-gray-800 dark:text-gray-200 flex-1 pr-2">
+                      "Write a GDPR-compliant privacy policy for a small e-commerce business."
+                    </p>
+                    <button
+                      onClick={() => handleCopy("Write a GDPR-compliant privacy policy for a small e-commerce business.")}
+                      className={`flex-shrink-0 p-1 rounded-lg transition-all duration-200 ${
+                        copiedPrompt === "Write a GDPR-compliant privacy policy for a small e-commerce business."
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                          : 'bg-gray-100 dark:bg-slate-600 text-gray-600 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400'
+                      }`}
+                    >
+                      {copiedPrompt === "Write a GDPR-compliant privacy policy for a small e-commerce business." ? (
+                        <Check className="w-3 h-3" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-3 border border-green-200 dark:border-green-700">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-4 border border-green-200 dark:border-green-700">
+              <div className="flex items-center gap-2 mb-3">
                 <Building2 className="w-4 h-4 text-green-600 dark:text-green-400" />
                 <h4 className="font-semibold text-green-900 dark:text-green-300 text-sm">US Business</h4>
               </div>
-              <div className="space-y-2 text-xs">
-                <button 
-                  onClick={() => handleCopy("Generate sales tax guidance for my US LLC across different states.")}
-                  className="w-full text-left text-green-800 dark:text-green-300 hover:text-green-600 dark:hover:text-green-400 transition-colours duration-200"
-                >
-                  "US sales tax guidance →"
-                </button>
-                <button 
-                  onClick={() => handleCopy("Create employment handbook sections for US remote workers.")}
-                  className="w-full text-left text-green-800 dark:text-green-300 hover:text-green-600 dark:hover:text-green-400 transition-colours duration-200"
-                >
-                  "US employment handbook →"
-                </button>
+              <div className="space-y-3">
+                <div className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-gray-200 dark:border-slate-600">
+                  <div className="flex items-start justify-between">
+                    <p className="text-xs text-gray-800 dark:text-gray-200 flex-1 pr-2">
+                      "Generate sales tax guidance for my US LLC across different states."
+                    </p>
+                    <button
+                      onClick={() => handleCopy("Generate sales tax guidance for my US LLC across different states.")}
+                      className={`flex-shrink-0 p-1 rounded-lg transition-all duration-200 ${
+                        copiedPrompt === "Generate sales tax guidance for my US LLC across different states."
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                          : 'bg-gray-100 dark:bg-slate-600 text-gray-600 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400'
+                      }`}
+                    >
+                      {copiedPrompt === "Generate sales tax guidance for my US LLC across different states." ? (
+                        <Check className="w-3 h-3" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <div className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-gray-200 dark:border-slate-600">
+                  <div className="flex items-start justify-between">
+                    <p className="text-xs text-gray-800 dark:text-gray-200 flex-1 pr-2">
+                      "Create employment handbook sections for US remote workers."
+                    </p>
+                    <button
+                      onClick={() => handleCopy("Create employment handbook sections for US remote workers.")}
+                      className={`flex-shrink-0 p-1 rounded-lg transition-all duration-200 ${
+                        copiedPrompt === "Create employment handbook sections for US remote workers."
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                          : 'bg-gray-100 dark:bg-slate-600 text-gray-600 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400'
+                      }`}
+                    >
+                      {copiedPrompt === "Create employment handbook sections for US remote workers." ? (
+                        <Check className="w-3 h-3" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-2xl p-3 border border-purple-200 dark:border-purple-700">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-2xl p-4 border border-purple-200 dark:border-purple-700">
+              <div className="flex items-center gap-2 mb-3">
                 <Globe className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                 <h4 className="font-semibold text-purple-900 dark:text-purple-300 text-sm">Global Business</h4>
               </div>
-              <div className="space-y-2 text-xs">
-                <button 
-                  onClick={() => handleCopy("Create international payment terms for B2B contracts across multiple currencies.")}
-                  className="w-full text-left text-purple-800 dark:text-purple-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colours duration-200"
-                >
-                  "International payment terms →"
-                </button>
-                <button 
-                  onClick={() => handleCopy("Generate cultural adaptation strategy for expanding into European markets.")}
-                  className="w-full text-left text-purple-800 dark:text-purple-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colours duration-200"
-                >
-                  "Market expansion strategy →"
-                </button>
+              <div className="space-y-3">
+                <div className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-gray-200 dark:border-slate-600">
+                  <div className="flex items-start justify-between">
+                    <p className="text-xs text-gray-800 dark:text-gray-200 flex-1 pr-2">
+                      "Create international payment terms for B2B contracts across multiple currencies."
+                    </p>
+                    <button
+                      onClick={() => handleCopy("Create international payment terms for B2B contracts across multiple currencies.")}
+                      className={`flex-shrink-0 p-1 rounded-lg transition-all duration-200 ${
+                        copiedPrompt === "Create international payment terms for B2B contracts across multiple currencies."
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                          : 'bg-gray-100 dark:bg-slate-600 text-gray-600 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400'
+                      }`}
+                    >
+                      {copiedPrompt === "Create international payment terms for B2B contracts across multiple currencies." ? (
+                        <Check className="w-3 h-3" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <div className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-gray-200 dark:border-slate-600">
+                  <div className="flex items-start justify-between">
+                    <p className="text-xs text-gray-800 dark:text-gray-200 flex-1 pr-2">
+                      "Generate cultural adaptation strategy for expanding into European markets."
+                    </p>
+                    <button
+                      onClick={() => handleCopy("Generate cultural adaptation strategy for expanding into European markets.")}
+                      className={`flex-shrink-0 p-1 rounded-lg transition-all duration-200 ${
+                        copiedPrompt === "Generate cultural adaptation strategy for expanding into European markets."
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                          : 'bg-gray-100 dark:bg-slate-600 text-gray-600 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400'
+                      }`}
+                    >
+                      {copiedPrompt === "Generate cultural adaptation strategy for expanding into European markets." ? (
+                        <Check className="w-3 h-3" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -814,7 +904,7 @@ export default function NerdModePage() {
           </div>
         </motion.section>
 
-        {/* Prompt Library */}
+        {/* Prompt Library - FIXED */}
         <motion.section 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -840,7 +930,7 @@ export default function NerdModePage() {
                 transition={{ duration: 0.3 }}
               >
                 <button
-                  className="w-full p-4 text-left flex justify-between items-center hover:bg-gray-50 dark:hover:bg-slate-700 transition-colours duration-200"
+                  className="w-full p-4 text-left flex justify-between items-center hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors duration-200"
                   onClick={() => toggleSection(category)}
                 >
                   <div className="flex items-center gap-3">
