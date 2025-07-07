@@ -48,7 +48,9 @@ export default function LoginPage() {
       if (!res.ok) throw new Error(data?.error || 'Login failed')
 
       localStorage.setItem('growfly_jwt', data.token)
-      console.log('🔥 Token stored, fetching user...')
+      // ✅ ADDED: Set cookie for middleware
+      document.cookie = `growfly_jwt=${data.token}; path=/; max-age=2592000; SameSite=Lax`
+      console.log('🔥 Token stored + cookie set, fetching user...')
 
       // Fetch the user to determine plan and onboarding state
       const userRes = await fetch(`${API_BASE_URL}/api/auth/me`, {
@@ -69,17 +71,20 @@ export default function LoginPage() {
 
       console.log('🔥 Routing logic:', { plan, onboarded })
 
-      // ✅ FIXED: Use window.location.href instead of router.push
-      if (!onboarded) {
-        console.log('🔥 Redirecting to onboarding')
-        window.location.href = '/onboarding'
-      } else if (plan !== 'free') {
-        console.log('🔥 Redirecting to change-plan')
-        window.location.href = '/change-plan'
-      } else {
-        console.log('🔥 Redirecting to dashboard')
-        window.location.href = '/dashboard'
-      }
+      // ✅ ADDED: Delay before redirect to ensure cookie is set
+      setTimeout(() => {
+        if (!onboarded) {
+          console.log('🔥 Redirecting to onboarding')
+          window.location.href = '/onboarding'
+        } else if (plan !== 'free') {
+          console.log('🔥 Redirecting to change-plan')
+          window.location.href = '/change-plan'
+        } else {
+          console.log('🔥 Redirecting to dashboard')
+          window.location.href = '/dashboard'
+        }
+      }, 100) // 100ms delay
+
     } catch (err: unknown) {
       console.error('❌ Login error:', err)
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred'
