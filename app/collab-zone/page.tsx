@@ -49,6 +49,7 @@ interface Comment {
   resolved: boolean
   isRead: boolean
   createdAt: string
+  selectedText?: string
   user?: {
     id: string
     name?: string
@@ -140,7 +141,7 @@ const DocumentHeader: React.FC<{
     <motion.header 
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="relative bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border-b border-gray-200/50 dark:border-slate-700/50 px-6 py-4 shadow-sm"
+      className="relative bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border-b border-gray-200/50 dark:border-slate-700/50 px-6 py-3 shadow-sm"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -148,60 +149,70 @@ const DocumentHeader: React.FC<{
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onToggleDocuments}
-            className={`p-3 rounded-2xl transition-all duration-200 ${
+            className={`p-2 rounded-xl transition-all duration-200 ${
               showDocuments 
                 ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400' 
                 : 'hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400'
             }`}
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="w-4 h-4" />
           </motion.button>
           
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <FileText className="w-6 h-6 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <FileText className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
                 {activeDoc?.title || 'Untitled Document'}
               </h1>
-              <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-                {activeDoc && (
-                  <span>Last updated {new Date(activeDoc.updatedAt).toLocaleString()}</span>
-                )}
-                {isAutoSaving && (
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="flex items-center gap-1 text-blue-600 dark:text-blue-400"
-                  >
-                    <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" />
-                    Saving...
-                  </motion.div>
-                )}
+              {/* Fixed position status that doesn't cause layout shift */}
+              <div className="h-4 relative">
+                <AnimatePresence>
+                  {isAutoSaving && (
+                    <motion.div 
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      className="absolute left-0 top-0 flex items-center gap-1 text-blue-600 dark:text-blue-400 text-xs"
+                    >
+                      <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse" />
+                      Saving...
+                    </motion.div>
+                  )}
+                  {!isAutoSaving && activeDoc && (
+                    <motion.span 
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="absolute left-0 top-0 text-xs text-gray-500 dark:text-gray-400"
+                    >
+                      Last updated {new Date(activeDoc.updatedAt).toLocaleString()}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onToggleComments}
-            className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
+            className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all duration-200 text-sm ${
               showComments
                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
                 : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600'
             }`}
           >
-            <MessageSquare className="w-4 h-4" />
+            <MessageSquare className="w-3.5 h-3.5" />
             Comments
             {commentsCount > 0 && (
               <motion.span 
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold"
+                className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold"
               >
                 {commentsCount}
               </motion.span>
@@ -212,9 +223,9 @@ const DocumentHeader: React.FC<{
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onFullscreen}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-all duration-200 font-medium"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-all duration-200 font-medium text-sm"
           >
-            <Maximize2 className="w-4 h-4" />
+            <Maximize2 className="w-3.5 h-3.5" />
             Focus
           </motion.button>
 
@@ -224,9 +235,9 @@ const DocumentHeader: React.FC<{
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowDownloadMenu(!showDownloadMenu)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-violet-600 text-white rounded-xl hover:from-purple-700 hover:to-violet-700 transition-all duration-200 font-medium shadow-lg shadow-purple-500/30"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-violet-600 text-white rounded-lg hover:from-purple-700 hover:to-violet-700 transition-all duration-200 font-medium shadow-lg shadow-purple-500/30 text-sm"
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-3.5 h-3.5" />
               Download
             </motion.button>
             
@@ -234,14 +245,14 @@ const DocumentHeader: React.FC<{
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="absolute top-full right-0 mt-2 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200/50 dark:border-slate-700/50 p-2 z-50"
+                className="absolute top-full right-0 mt-2 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200/50 dark:border-slate-700/50 p-2 z-50 min-w-[150px]"
               >
                 <button
                   onClick={() => {
                     onDownload('pdf')
                     setShowDownloadMenu(false)
                   }}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                  className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-sm"
                 >
                   📄 Download as PDF
                 </button>
@@ -250,7 +261,7 @@ const DocumentHeader: React.FC<{
                     onDownload('docx')
                     setShowDownloadMenu(false)
                   }}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                  className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-sm"
                 >
                   📝 Download as Word
                 </button>
@@ -262,9 +273,9 @@ const DocumentHeader: React.FC<{
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onShare}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium shadow-lg shadow-green-500/30"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium shadow-lg shadow-green-500/30 text-sm"
           >
-            <Share2 className="w-4 h-4" />
+            <Share2 className="w-3.5 h-3.5" />
             Share
           </motion.button>
 
@@ -272,9 +283,9 @@ const DocumentHeader: React.FC<{
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onSave}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg shadow-blue-500/30"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg shadow-blue-500/30 text-sm"
           >
-            <Save className="w-4 h-4" />
+            <Save className="w-3.5 h-3.5" />
             Save
           </motion.button>
         </div>
@@ -404,16 +415,18 @@ const CommentsSidebar: React.FC<{
   isVisible: boolean
   comments: Comment[]
   activeDocId: string | null
-  onAddComment: (text: string, from: number, to: number) => Promise<void>
+  onAddComment: (text: string, from: number, to: number, selectedText?: string) => Promise<void>
   onDeleteComment: (commentId: string) => Promise<void>
   onClose: () => void
+  selectedText?: string
 }> = ({ 
   isVisible, 
   comments, 
   activeDocId, 
   onAddComment, 
   onDeleteComment, 
-  onClose 
+  onClose,
+  selectedText = ''
 }) => {
   const [newComment, setNewComment] = useState<string>('')
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
@@ -427,7 +440,7 @@ const CommentsSidebar: React.FC<{
     
     setIsSubmitting(true)
     try {
-      await onAddComment(newComment, 0, 0)
+      await onAddComment(newComment, 0, 0, selectedText)
       setNewComment('')
     } finally {
       setIsSubmitting(false)
@@ -463,10 +476,18 @@ const CommentsSidebar: React.FC<{
 
       <div className="p-6 border-b border-gray-200/50 dark:border-slate-700/50">
         <div className="space-y-4">
+          {/* Selected text context */}
+          {selectedText && selectedText.trim() && (
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border-l-4 border-blue-500">
+              <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mb-1">Commenting on selected text:</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300 italic">"{selectedText}"</p>
+            </div>
+          )}
+          
           <textarea
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Add a comment..."
+            placeholder={selectedText && selectedText.trim() ? "Add your comment about the selected text..." : "Add a comment..."}
             className="w-full p-4 bg-gray-50/80 dark:bg-slate-700/80 border border-gray-200/50 dark:border-slate-600/50 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all duration-200 text-sm leading-relaxed"
             rows={3}
             onKeyDown={(e) => {
@@ -487,7 +508,7 @@ const CommentsSidebar: React.FC<{
             ) : (
               <Send className="w-4 h-4" />
             )}
-            {isSubmitting ? 'Adding...' : 'Add Comment'}
+            {isSubmitting ? 'Adding...' : (selectedText && selectedText.trim()) ? 'Add Comment on Selection' : 'Add Comment'}
           </motion.button>
         </div>
       </div>
@@ -500,7 +521,7 @@ const CommentsSidebar: React.FC<{
                 <MessageSquare className="w-8 h-8 text-gray-400" />
               </div>
               <p className="text-gray-500 dark:text-gray-400 font-medium">No comments yet</p>
-              <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Start the conversation by adding a comment</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Select text and add a comment to start collaborating</p>
             </div>
           ) : (
             docComments.map((comment, index) => (
@@ -511,6 +532,14 @@ const CommentsSidebar: React.FC<{
                 transition={{ delay: index * 0.05 }}
                 className="group p-4 bg-gray-50/80 dark:bg-slate-700/80 rounded-2xl border border-gray-200/50 dark:border-slate-600/50"
               >
+                {/* Selected text context (if available) */}
+                {comment.selectedText && (
+                  <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border-l-4 border-blue-500">
+                    <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mb-1">Commenting on:</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 italic">"{comment.selectedText}"</p>
+                  </div>
+                )}
+                
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center">
@@ -554,18 +583,49 @@ const Editor: React.FC<{
   setContent: (content: string) => void
   docId: string
   showComments: boolean
-}> = ({ content, setContent, docId, showComments }) => {
+  selectedText?: string
+  setSelectedText?: (text: string) => void
+}> = ({ content, setContent, docId, showComments, selectedText = '', setSelectedText = () => {} }) => {
   const [isFocused, setIsFocused] = useState<boolean>(false)
   const [fontSize, setFontSize] = useState<string>('16')
   const [textColor, setTextColor] = useState<string>('#000000')
   const [highlightColor, setHighlightColor] = useState<string>('#ffff00')
+  const [selectionRange, setSelectionRange] = useState<{ start: number; end: number } | null>(null)
   const editorRef = useRef<HTMLDivElement>(null)
+  const savedSelection = useRef<Range | null>(null)
+
+  // Save current selection
+  const saveSelection = () => {
+    const selection = window.getSelection()
+    if (selection && selection.rangeCount > 0) {
+      savedSelection.current = selection.getRangeAt(0).cloneRange()
+      const text = selection.toString()
+      if (setSelectedText) {
+        setSelectedText(text)
+      }
+    }
+  }
+
+  // Restore selection
+  const restoreSelection = () => {
+    if (savedSelection.current) {
+      const selection = window.getSelection()
+      if (selection) {
+        selection.removeAllRanges()
+        selection.addRange(savedSelection.current)
+      }
+    }
+  }
 
   const executeCommand = (command: string, value?: string) => {
+    // Restore selection before executing command
+    restoreSelection()
     document.execCommand(command, false, value)
     if (editorRef.current) {
       setContent(editorRef.current.innerHTML)
     }
+    // Save selection after command
+    setTimeout(saveSelection, 0)
   }
 
   const handleContentChange = () => {
@@ -574,42 +634,56 @@ const Editor: React.FC<{
     }
   }
 
+  const handleSelectionChange = () => {
+    saveSelection()
+  }
+
   const formatButtons = [
     { icon: Bold, command: 'bold', title: 'Bold (Ctrl+B)' },
     { icon: Italic, command: 'italic', title: 'Italic (Ctrl+I)' },
     { icon: Underline, command: 'underline', title: 'Underline (Ctrl+U)' },
   ]
 
+  // Add text selection for comments
+  const handleAddCommentWithSelection = () => {
+    if (selectedText && selectedText.trim()) {
+      // This is handled by the parent component through selectedText state
+      console.log('Adding comment for text:', selectedText)
+    }
+  }
+
   return (
     <div className="h-full flex flex-col">
       {/* Formatting Toolbar */}
-      <div className="border-b border-gray-200/50 dark:border-slate-700/50 p-4 bg-gray-50/50 dark:bg-slate-800/50">
-        <div className="flex items-center gap-2 flex-wrap">
+      <div className="border-b border-gray-200/50 dark:border-slate-700/50 p-3 bg-gray-50/50 dark:bg-slate-800/50">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {/* Bold, Italic, Underline */}
           {formatButtons.map(({ icon: Icon, command, title }, index) => (
             <motion.button
               key={command}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onMouseDown={(e) => e.preventDefault()} // Prevent losing focus
               onClick={() => executeCommand(command)}
               title={title}
-              className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              className="p-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors text-blue-600 dark:text-blue-400"
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-3.5 h-3.5" />
             </motion.button>
           ))}
 
-          <div className="w-px h-6 bg-gray-300 dark:bg-slate-600 mx-2" />
+          <div className="w-px h-5 bg-gray-300 dark:bg-slate-600 mx-1" />
 
           {/* Font Size */}
-          <div className="flex items-center gap-2">
-            <Type className="w-4 h-4" />
+          <div className="flex items-center gap-1.5">
+            <Type className="w-3.5 h-3.5" />
             <select
               value={fontSize}
+              onMouseDown={(e) => e.preventDefault()}
               onChange={(e) => {
                 setFontSize(e.target.value)
+                restoreSelection()
                 executeCommand('fontSize', '3')
-                executeCommand('fontName', 'Arial')
                 if (editorRef.current) {
                   const selection = window.getSelection()
                   if (selection && selection.rangeCount > 0) {
@@ -626,7 +700,7 @@ const Editor: React.FC<{
                 }
                 handleContentChange()
               }}
-              className="px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700"
+              className="px-2 py-1 text-xs border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 w-16"
             >
               <option value="12">12px</option>
               <option value="14">14px</option>
@@ -638,46 +712,49 @@ const Editor: React.FC<{
             </select>
           </div>
 
-          <div className="w-px h-6 bg-gray-300 dark:bg-slate-600 mx-2" />
+          <div className="w-px h-5 bg-gray-300 dark:bg-slate-600 mx-1" />
 
           {/* Text Color */}
-          <div className="flex items-center gap-2">
-            <Palette className="w-4 h-4" />
+          <div className="flex items-center gap-1.5">
+            <Palette className="w-3.5 h-3.5" />
             <input
               type="color"
               value={textColor}
+              onMouseDown={(e) => e.preventDefault()}
               onChange={(e) => {
                 setTextColor(e.target.value)
                 executeCommand('foreColor', e.target.value)
               }}
-              className="w-8 h-8 border border-gray-300 dark:border-slate-600 rounded cursor-pointer"
+              className="w-6 h-6 border border-gray-300 dark:border-slate-600 rounded-lg cursor-pointer"
               title="Text Color"
             />
           </div>
 
           {/* Highlight Color */}
-          <div className="flex items-center gap-2">
-            <Highlighter className="w-4 h-4" />
+          <div className="flex items-center gap-1.5">
+            <Highlighter className="w-3.5 h-3.5" />
             <input
               type="color"
               value={highlightColor}
+              onMouseDown={(e) => e.preventDefault()}
               onChange={(e) => {
                 setHighlightColor(e.target.value)
                 executeCommand('hiliteColor', e.target.value)
               }}
-              className="w-8 h-8 border border-gray-300 dark:border-slate-600 rounded cursor-pointer"
+              className="w-6 h-6 border border-gray-300 dark:border-slate-600 rounded-lg cursor-pointer"
               title="Highlight Color"
             />
           </div>
 
-          <div className="w-px h-6 bg-gray-300 dark:bg-slate-600 mx-2" />
+          <div className="w-px h-5 bg-gray-300 dark:bg-slate-600 mx-1" />
 
           {/* Lists */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('insertUnorderedList')}
-            className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            className="px-2 py-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors text-blue-600 dark:text-blue-400 text-xs font-medium"
             title="Bullet List"
           >
             • List
@@ -686,21 +763,23 @@ const Editor: React.FC<{
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('insertOrderedList')}
-            className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            className="px-2 py-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors text-blue-600 dark:text-blue-400 text-xs font-medium"
             title="Numbered List"
           >
             1. List
           </motion.button>
 
-          <div className="w-px h-6 bg-gray-300 dark:bg-slate-600 mx-2" />
+          <div className="w-px h-5 bg-gray-300 dark:bg-slate-600 mx-1" />
 
           {/* Alignment */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('justifyLeft')}
-            className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors text-blue-600 dark:text-blue-400"
             title="Align Left"
           >
             ⬅
@@ -709,8 +788,9 @@ const Editor: React.FC<{
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('justifyCenter')}
-            className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors text-blue-600 dark:text-blue-400"
             title="Align Center"
           >
             ↔
@@ -719,12 +799,31 @@ const Editor: React.FC<{
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('justifyRight')}
-            className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors text-blue-600 dark:text-blue-400"
             title="Align Right"
           >
             ➡
           </motion.button>
+
+          {/* Comment on Selection */}
+          {selectedText && selectedText.trim() && (
+            <>
+              <div className="w-px h-5 bg-gray-300 dark:bg-slate-600 mx-1" />
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={handleAddCommentWithSelection}
+                className="flex items-center gap-1 px-2 py-1.5 bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 rounded-lg transition-colors text-xs font-medium"
+                title={`Comment on: "${selectedText.substring(0, 30)}..."`}
+              >
+                <MessageSquare className="w-3 h-3" />
+                Comment on "{selectedText.substring(0, 20)}..."
+              </motion.button>
+            </>
+          )}
         </div>
       </div>
 
@@ -736,6 +835,8 @@ const Editor: React.FC<{
           onInput={handleContentChange}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
+          onMouseUp={handleSelectionChange}
+          onKeyUp={handleSelectionChange}
           dangerouslySetInnerHTML={{ __html: content || '' }}
           className="w-full h-full outline-none bg-transparent text-gray-900 dark:text-white text-lg leading-relaxed font-medium [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-gray-400 [&:empty]:before:pointer-events-none"
           style={{
@@ -953,6 +1054,7 @@ const CollabZone: React.FC = () => {
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false)
   const [isAutoSaving, setIsAutoSaving] = useState<boolean>(false)
   const [statusMsg, setStatusMsg] = useState<StatusMessage | null>(null)
+  const [selectedText, setSelectedText] = useState<string>('')
 
   // Status message helper
   const showStatus = useCallback((type: 'success' | 'error', text: string): void => {
@@ -1101,7 +1203,7 @@ const CollabZone: React.FC = () => {
   }, [activeDoc, showStatus])
 
   // Add comment
-  const handleAddComment = useCallback(async (text: string, from: number, to: number): Promise<void> => {
+  const handleAddComment = useCallback(async (text: string, from: number, to: number, selectedText?: string): Promise<void> => {
     if (!activeDoc) return
     
     try {
@@ -1111,17 +1213,19 @@ const CollabZone: React.FC = () => {
           docId: activeDoc.id,
           text,
           from: from || 0,
-          to: to || 0
+          to: to || 0,
+          selectedText: selectedText || undefined
         })
       })
       
       setComments(prev => [...prev, comment])
+      setSelectedText('') // Clear selected text after commenting
       showStatus('success', '💬 Comment added!')
     } catch (error) {
       showStatus('error', 'Failed to add comment')
       console.error('Add comment error:', error)
     }
-  }, [activeDoc, showStatus])
+  }, [activeDoc, showStatus, setSelectedText])
 
   // Delete comment
   const handleDeleteComment = useCallback(async (commentId: string): Promise<void> => {
@@ -1293,6 +1397,7 @@ const CollabZone: React.FC = () => {
               onAddComment={handleAddComment}
               onDeleteComment={handleDeleteComment}
               onClose={() => setShowComments(false)}
+              selectedText={selectedText}
             />
           )}
         </AnimatePresence>
@@ -1372,6 +1477,8 @@ const CollabZone: React.FC = () => {
                   setContent={updateActiveDocContent}
                   docId={activeDoc.id}
                   showComments={false}
+                  selectedText={selectedText}
+                  setSelectedText={setSelectedText}
                 />
               </div>
             </div>
