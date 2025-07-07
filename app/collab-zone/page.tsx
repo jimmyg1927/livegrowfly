@@ -598,17 +598,6 @@ const Editor: React.FC<{
   const [highlightColor, setHighlightColor] = useState<string>('#ffff00')
   const editorRef = useRef<HTMLDivElement>(null)
 
-  // Save current selection for commenting
-  const saveSelectionForComments = useCallback(() => {
-    const selection = window.getSelection()
-    if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
-      const text = selection.toString().trim()
-      if (text && setSelectedText) {
-        setSelectedText(text)
-      }
-    }
-  }, [setSelectedText])
-
   const executeCommand = (command: string, value?: string) => {
     document.execCommand(command, false, value)
     if (editorRef.current) {
@@ -622,33 +611,19 @@ const Editor: React.FC<{
     }
   }
 
-  // Only update selected text when user stops selecting (not while actively selecting)
-  const handleSelectionEnd = useCallback(() => {
+  // Simple selection detection for comments
+  const handleMouseUp = () => {
     setTimeout(() => {
       const selection = window.getSelection()
-      if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
+      if (selection && !selection.isCollapsed) {
         const text = selection.toString().trim()
-        if (text && setSelectedText) {
+        if (text && text.length > 0 && setSelectedText) {
           setSelectedText(text)
         }
       } else if (setSelectedText) {
         setSelectedText('')
       }
-    }, 100) // Small delay to prevent interference
-  }, [setSelectedText])
-
-  const formatButtons = [
-    { icon: Bold, command: 'bold', title: 'Bold (Ctrl+B)' },
-    { icon: Italic, command: 'italic', title: 'Italic (Ctrl+I)' },
-    { icon: Underline, command: 'underline', title: 'Underline (Ctrl+U)' },
-  ]
-
-  // Add text selection for comments
-  const handleAddCommentWithSelection = () => {
-    if (selectedText && selectedText.trim()) {
-      // This is handled by the parent component through selectedText state
-      console.log('Adding comment for text:', selectedText)
-    }
+    }, 50)
   }
 
   return (
@@ -657,18 +632,29 @@ const Editor: React.FC<{
       <div className="border-b border-gray-200/50 dark:border-slate-700/50 p-3 bg-gray-50/50 dark:bg-slate-800/50">
         <div className="flex items-center gap-1.5 flex-wrap">
           {/* Bold, Italic, Underline */}
-          {formatButtons.map(({ icon: Icon, command, title }, index) => (
-            <motion.button
-              key={command}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => executeCommand(command)}
-              title={title}
-              className="p-1.5 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-lg transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-            >
-              <Icon className="w-3.5 h-3.5" />
-            </motion.button>
-          ))}
+          <button
+            onClick={() => executeCommand('bold')}
+            title="Bold (Ctrl+B)"
+            className="p-2 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-lg transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-slate-600"
+          >
+            <Bold className="w-4 h-4" />
+          </button>
+          
+          <button
+            onClick={() => executeCommand('italic')}
+            title="Italic (Ctrl+I)"
+            className="p-2 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-lg transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-slate-600"
+          >
+            <Italic className="w-4 h-4" />
+          </button>
+          
+          <button
+            onClick={() => executeCommand('underline')}
+            title="Underline (Ctrl+U)"
+            className="p-2 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-lg transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-slate-600"
+          >
+            <Underline className="w-4 h-4" />
+          </button>
 
           <div className="w-px h-5 bg-gray-300 dark:bg-slate-600 mx-1" />
 
@@ -696,7 +682,7 @@ const Editor: React.FC<{
                 }
                 handleContentChange()
               }}
-              className="px-2 py-1 text-xs border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 w-16"
+              className="px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-300 w-20"
             >
               <option value="12">12px</option>
               <option value="14">14px</option>
@@ -720,7 +706,7 @@ const Editor: React.FC<{
                 setTextColor(e.target.value)
                 executeCommand('foreColor', e.target.value)
               }}
-              className="w-6 h-6 border border-gray-300 dark:border-slate-600 rounded-lg cursor-pointer"
+              className="w-8 h-8 border border-gray-300 dark:border-slate-600 rounded-lg cursor-pointer bg-white dark:bg-slate-700"
               title="Text Color"
             />
           </div>
@@ -735,7 +721,7 @@ const Editor: React.FC<{
                 setHighlightColor(e.target.value)
                 executeCommand('hiliteColor', e.target.value)
               }}
-              className="w-6 h-6 border border-gray-300 dark:border-slate-600 rounded-lg cursor-pointer"
+              className="w-8 h-8 border border-gray-300 dark:border-slate-600 rounded-lg cursor-pointer bg-white dark:bg-slate-700"
               title="Highlight Color"
             />
           </div>
@@ -803,16 +789,19 @@ const Editor: React.FC<{
           {selectedText && selectedText.trim() && (
             <>
               <div className="w-px h-5 bg-gray-300 dark:bg-slate-600 mx-1" />
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleAddCommentWithSelection}
-                className="flex items-center gap-1 px-2 py-1.5 bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 rounded-lg transition-colors text-xs font-medium"
+              <button
+                onClick={() => {
+                  // Trigger parent component to open comments
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('openComments', { detail: { selectedText } }))
+                  }
+                }}
+                className="flex items-center gap-1 px-3 py-2 bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 rounded-lg transition-colors text-sm font-medium border border-green-300 dark:border-green-700 hover:bg-green-200 dark:hover:bg-green-900/70"
                 title={`Comment on: "${selectedText.substring(0, 30)}..."`}
               >
-                <MessageSquare className="w-3 h-3" />
+                <MessageSquare className="w-4 h-4" />
                 Comment on "{selectedText.substring(0, 20)}..."
-              </motion.button>
+              </button>
             </>
           )}
         </div>
@@ -826,10 +815,10 @@ const Editor: React.FC<{
           onInput={handleContentChange}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          onMouseUp={handleSelectionEnd}
+          onMouseUp={handleMouseUp}
           suppressContentEditableWarning={true}
           dangerouslySetInnerHTML={{ __html: content || '' }}
-          className="w-full h-full outline-none bg-transparent text-gray-900 dark:text-white text-lg leading-relaxed font-medium [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-gray-400 [&:empty]:before:pointer-events-none"
+          className="w-full h-full outline-none bg-transparent text-gray-900 dark:text-white text-lg leading-relaxed font-medium [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-gray-400 [&:empty]:before:pointer-events-none selection:bg-blue-200 dark:selection:bg-blue-800"
           style={{
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             minHeight: '200px'
@@ -1305,7 +1294,20 @@ const CollabZone: React.FC = () => {
       }
     }
     
+    // Handle comment button clicks from editor
+    const handleOpenComments = (event: any) => {
+      if (event.detail?.selectedText) {
+        setSelectedText(event.detail.selectedText)
+        setShowComments(true)
+      }
+    }
+    
+    window.addEventListener('openComments', handleOpenComments)
     loadData()
+    
+    return () => {
+      window.removeEventListener('openComments', handleOpenComments)
+    }
   }, [loadDocuments])
 
   // Load comments when active document changes
