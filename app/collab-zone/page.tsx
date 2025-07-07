@@ -64,7 +64,7 @@ interface ApiResponse<T = any> {
 }
 
 // API helper functions
-const API_BASE = '/api'
+const API_BASE = 'https://glowfly-api-production.up.railway.app/api'
 
 const apiCall = async <T = any>(endpoint: string, options: RequestInit = {}): Promise<T> => {
   try {
