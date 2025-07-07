@@ -342,7 +342,7 @@ function DocumentsSidebar({
               <button
                 key={id}
                 onClick={() => setActiveTab(id as any)}
-                className={`flex-1 flex items-center justify-center gap-1 px-2 py-2 rounded-md font-semibold transition-all duration-200 text-xs ${
+                className={`flex-1 flex items-center justify-center gap-1 px-2 py-2 rounded-lg font-semibold transition-all duration-200 text-xs ${
                   activeTab === id
                     ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm shadow-blue-500/10'
                     : 'text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white/50 dark:hover:bg-slate-700/50'
@@ -396,7 +396,7 @@ function DocumentsSidebar({
                           e.stopPropagation()
                           onDeleteDoc(doc.id)
                         }}
-                        className="p-1.5 hover:bg-gradient-to-r hover:from-red-100 hover:to-pink-100 dark:hover:from-red-900/30 dark:hover:to-pink-900/30 rounded-md text-gray-400 hover:text-red-500 transition-all duration-200 hover:scale-110"
+                        className="p-1.5 hover:bg-gradient-to-r hover:from-red-100 hover:to-pink-100 dark:hover:from-red-900/30 dark:hover:to-pink-900/30 rounded-lg text-gray-400 hover:text-red-500 transition-all duration-200 hover:scale-110"
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>
@@ -413,7 +413,7 @@ function DocumentsSidebar({
                     {doc.isShared && (
                       <>
                         <span className="text-gray-300 dark:text-gray-600">•</span>
-                        <div className="flex items-center gap-1 px-1.5 py-0.5 bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-md">
+                        <div className="flex items-center gap-1 px-1.5 py-0.5 bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-lg">
                           <Users className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
                           <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Shared</span>
                         </div>
@@ -564,7 +564,7 @@ function CommentsSidebar({
                     </div>
                     <button
                       onClick={() => onDeleteComment(comment.id)}
-                      className="p-1.5 hover:bg-gradient-to-r hover:from-red-100 hover:to-pink-100 dark:hover:from-red-900/30 dark:hover:to-pink-900/30 rounded-md text-gray-400 hover:text-red-500 transition-all duration-200 hover:scale-110"
+                      className="p-1.5 hover:bg-gradient-to-r hover:from-red-100 hover:to-pink-100 dark:hover:from-red-900/30 dark:hover:to-pink-900/30 rounded-lg text-gray-400 hover:text-red-500 transition-all duration-200 hover:scale-110"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -583,7 +583,7 @@ function CommentsSidebar({
                   </p>
 
                   {comment.resolved && (
-                    <div className="mt-2 flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs font-semibold bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-md px-2 py-1">
+                    <div className="mt-2 flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs font-semibold bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-lg px-2 py-1">
                       <CheckCircle className="w-3 h-3" />
                       <span>✅ Resolved</span>
                     </div>

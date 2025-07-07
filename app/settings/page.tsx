@@ -387,30 +387,30 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-50 dark:from-slate-900 dark:via-blue-900 dark:to-slate-900 px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-50 dark:from-slate-900 dark:via-blue-900 dark:to-slate-900 px-4 py-6">
       <div className="max-w-5xl mx-auto">
         
         {/* ✅ FIXED: Header without back button */}
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Account Settings</h1>
-          <p className="text-gray-600 dark:text-gray-400">Manage your profile and account preferences</p>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Account Settings</h1>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">Manage your profile and account preferences</p>
         </div>
 
-        <div className="space-y-8">
+        <div className="space-y-6">
           
           {/* ✅ ENHANCED: Improved Tutorial Section */}
-          <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-xl border border-gray-200 dark:border-slate-700">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mr-4">
-                <BookOpen className="w-6 h-6 text-white" />
+          <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-xl border border-gray-200 dark:border-slate-700">
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mr-3">
+                <BookOpen className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Getting Started</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Master Growfly with our interactive tour</p>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Getting Started</h2>
+                <p className="text-xs text-gray-600 dark:text-gray-400">Master Growfly with our interactive tour</p>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-purple-900/20 dark:via-pink-900/20 dark:to-blue-900/20 rounded-2xl p-8 border border-purple-200 dark:border-purple-700 relative overflow-hidden">
+            <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-purple-900/20 dark:via-pink-900/20 dark:to-blue-900/20 rounded-2xl p-6 border border-purple-200 dark:border-purple-700 relative overflow-hidden">
               {/* Background decoration */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-200/30 to-pink-200/30 dark:from-purple-700/20 dark:to-pink-700/20 rounded-full -translate-y-16 translate-x-16"></div>
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-blue-200/30 to-purple-200/30 dark:from-blue-700/20 dark:to-purple-700/20 rounded-full translate-y-12 -translate-x-12"></div>
@@ -418,35 +418,35 @@ export default function SettingsPage() {
               <div className="relative">
                 <div className="flex items-start justify-between gap-6">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                        <Play className="w-5 h-5 text-white" />
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                        <Play className="w-4 h-4 text-white" />
                       </div>
-                      <h3 className="text-xl font-bold text-purple-800 dark:text-purple-300">Take the Growfly Tour</h3>
+                      <h3 className="text-lg font-bold text-purple-800 dark:text-purple-300">Take the Growfly Tour</h3>
                     </div>
                     
-                    <p className="text-purple-700 dark:text-purple-300 mb-6 leading-relaxed">
+                    <p className="text-purple-700 dark:text-purple-300 mb-4 leading-relaxed text-sm">
                       Discover powerful features designed specifically for your business growth. 
                       Our interactive tour shows you exactly how to maximize your results with Growfly.
                     </p>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                      <div className="flex items-center gap-2 text-sm text-purple-600 dark:text-purple-400">
-                        <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                      <div className="flex items-center gap-2 text-xs text-purple-600 dark:text-purple-400">
+                        <div className="w-5 h-5 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
                           <span className="text-xs font-bold">🚀</span>
                         </div>
                         <span>Interactive walkthrough</span>
                       </div>
                       
-                      <div className="flex items-center gap-2 text-sm text-purple-600 dark:text-purple-400">
-                        <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                      <div className="flex items-center gap-2 text-xs text-purple-600 dark:text-purple-400">
+                        <div className="w-5 h-5 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
                           <span className="text-xs font-bold">⏱️</span>
                         </div>
                         <span>Just 2-3 minutes</span>
                       </div>
                       
-                      <div className="flex items-center gap-2 text-sm text-purple-600 dark:text-purple-400">
-                        <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                      <div className="flex items-center gap-2 text-xs text-purple-600 dark:text-purple-400">
+                        <div className="w-5 h-5 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
                           <span className="text-xs font-bold">💡</span>
                         </div>
                         <span>Pro tips included</span>
@@ -457,19 +457,19 @@ export default function SettingsPage() {
                       <button
                         type="button"
                         onClick={handleStartTutorial}
-                        className="group bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-3"
+                        className="group bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2 text-sm"
                       >
-                        <Play className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                        <Play className="w-4 h-4 group-hover:scale-110 transition-transform" />
                         Start Interactive Tour
-                        <Sparkles className="w-4 h-4 opacity-75" />
+                        <Sparkles className="w-3 h-3 opacity-75" />
                       </button>
                       
                       <Link
                         href="/dashboard"
-                        className="group bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 text-purple-700 dark:text-purple-300 border-2 border-purple-200 dark:border-purple-700 px-6 py-4 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2"
+                        className="group bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 text-purple-700 dark:text-purple-300 border-2 border-purple-200 dark:border-purple-700 px-5 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 text-sm"
                       >
                         Skip to Dashboard
-                        <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                        <ArrowUpRight className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                       </Link>
                     </div>
                   </div>
@@ -477,16 +477,16 @@ export default function SettingsPage() {
 
                 {/* Tutorial completion status */}
                 {localStorage.getItem('growfly-tutorial-completed') === 'true' && (
-                  <div className="mt-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-700">
+                  <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-700">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                        <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="w-6 h-6 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                        <svg className="w-3 h-3 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-green-800 dark:text-green-300">Tour Completed!</h4>
-                        <p className="text-sm text-green-600 dark:text-green-400">Great job! You can retake the tour anytime to refresh your knowledge.</p>
+                        <h4 className="font-semibold text-green-800 dark:text-green-300 text-sm">Tour Completed!</h4>
+                        <p className="text-xs text-green-600 dark:text-green-400">Great job! You can retake the tour anytime to refresh your knowledge.</p>
                       </div>
                     </div>
                   </div>
@@ -496,14 +496,14 @@ export default function SettingsPage() {
 
             {/* ✅ ENHANCED: Development debug section */}
             {process.env.NODE_ENV === 'development' && (
-              <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-700">
-                <h4 className="text-sm font-semibold text-yellow-800 dark:text-yellow-300 mb-3">🔧 Tutorial Debug (Development)</h4>
-                <div className="text-xs text-yellow-700 dark:text-yellow-400 space-y-2 mb-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>Tutorial completed: <code className="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">{localStorage.getItem('growfly-tutorial-completed') || 'false'}</code></div>
-                    <div>Onboarding flag: <code className="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">{sessionStorage.getItem('justCompletedOnboarding') || 'false'}</code></div>
-                    <div>Force tutorial: <code className="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">{localStorage.getItem('force-tutorial-start') || 'false'}</code></div>
-                    <div>Tutorial source: <code className="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">{sessionStorage.getItem('tutorial-source') || 'none'}</code></div>
+              <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-700">
+                <h4 className="text-xs font-semibold text-yellow-800 dark:text-yellow-300 mb-2">🔧 Tutorial Debug (Development)</h4>
+                <div className="text-xs text-yellow-700 dark:text-yellow-400 space-y-1 mb-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>Tutorial completed: <code className="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded text-xs">{localStorage.getItem('growfly-tutorial-completed') || 'false'}</code></div>
+                    <div>Onboarding flag: <code className="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded text-xs">{sessionStorage.getItem('justCompletedOnboarding') || 'false'}</code></div>
+                    <div>Force tutorial: <code className="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded text-xs">{localStorage.getItem('force-tutorial-start') || 'false'}</code></div>
+                    <div>Tutorial source: <code className="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded text-xs">{sessionStorage.getItem('tutorial-source') || 'none'}</code></div>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -514,7 +514,7 @@ export default function SettingsPage() {
                       localStorage.removeItem('force-tutorial-start')
                       alert('Flags reset! Navigate to dashboard to test new user flow.')
                     }}
-                    className="text-xs bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 px-3 py-1 rounded-lg hover:bg-yellow-300 dark:hover:bg-yellow-700 transition-colors"
+                    className="text-xs bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded-lg hover:bg-yellow-300 dark:hover:bg-yellow-700 transition-colors"
                   >
                     Reset as New User
                   </button>
@@ -523,13 +523,13 @@ export default function SettingsPage() {
                       console.log('🎯 Testing force tutorial event')
                       window.dispatchEvent(new CustomEvent('startGrowflyTour', { detail: { force: true, source: 'debug' } }))
                     }}
-                    className="text-xs bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-200 px-3 py-1 rounded-lg hover:bg-purple-300 dark:hover:bg-purple-700 transition-colors"
+                    className="text-xs bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-200 px-2 py-1 rounded-lg hover:bg-purple-300 dark:hover:bg-purple-700 transition-colors"
                   >
                     Test Event Trigger
                   </button>
                   <button
                     onClick={() => router.push('/dashboard?tutorial=start&debug=true')}
-                    className="text-xs bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-lg hover:bg-blue-300 dark:hover:bg-blue-700 transition-colors"
+                    className="text-xs bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-lg hover:bg-blue-300 dark:hover:bg-blue-700 transition-colors"
                   >
                     Direct Navigation
                   </button>
@@ -539,7 +539,7 @@ export default function SettingsPage() {
                       alert('Tutorial marked as completed')
                       window.location.reload()
                     }}
-                    className="text-xs bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 px-3 py-1 rounded-lg hover:bg-green-300 dark:hover:bg-green-700 transition-colors"
+                    className="text-xs bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 px-2 py-1 rounded-lg hover:bg-green-300 dark:hover:bg-green-700 transition-colors"
                   >
                     Mark Completed
                   </button>
@@ -549,55 +549,55 @@ export default function SettingsPage() {
           </div>
           
           {/* Account Information */}
-          <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-xl border border-gray-200 dark:border-slate-700">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-4">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-xl border border-gray-200 dark:border-slate-700">
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Account Information</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Account Information</h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Email (Read Only) */}
-              <div className="space-y-3">
-                <label className="block text-base font-semibold text-gray-900 dark:text-white">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-900 dark:text-white">
                   Email Address
                 </label>
                 <input 
                   type="email" 
                   disabled 
                   value={user.email} 
-                  className="w-full bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 rounded-xl p-5 border border-gray-200 dark:border-slate-600 cursor-not-allowed text-base"
+                  className="w-full bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 rounded-xl p-4 border border-gray-200 dark:border-slate-600 cursor-not-allowed text-sm"
                 />
-                <p className="text-sm text-gray-500 dark:text-gray-400">Email cannot be changed</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Email cannot be changed</p>
               </div>
 
               {/* Subscription Plan */}
-              <div className="space-y-3">
-                <label className="block text-base font-semibold text-gray-900 dark:text-white">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-900 dark:text-white">
                   Current Plan
                 </label>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   <input 
                     type="text" 
                     disabled 
                     value={user.subscriptionType || 'Free'} 
-                    className="flex-1 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 rounded-xl p-5 border border-gray-200 dark:border-slate-600 cursor-not-allowed capitalize text-base"
+                    className="flex-1 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 rounded-xl p-4 border border-gray-200 dark:border-slate-600 cursor-not-allowed capitalize text-sm"
                   />
                   <Link 
                     href="/change-plan"
-                    className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-4 rounded-xl text-sm font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                    className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-5 py-3 rounded-xl text-xs font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
                   >
-                    Upgrade <ArrowUpRight className="w-5 h-5" />
+                    Upgrade <ArrowUpRight className="w-4 h-4" />
                   </Link>
                 </div>
               </div>
 
               {/* Name */}
-              <div className="space-y-3">
-                <label className="block text-base font-semibold text-gray-900 dark:text-white">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-900 dark:text-white">
                   Full Name
                 </label>
                 <input 
@@ -605,13 +605,13 @@ export default function SettingsPage() {
                   value={form.name} 
                   onChange={handleChange} 
                   placeholder="Enter your full name"
-                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-5 text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-4 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
                 />
               </div>
 
               {/* LinkedIn */}
-              <div className="space-y-3">
-                <label className="block text-base font-semibold text-gray-900 dark:text-white">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-900 dark:text-white">
                   LinkedIn Profile
                 </label>
                 <input 
@@ -619,16 +619,16 @@ export default function SettingsPage() {
                   value={form.linkedIn} 
                   onChange={handleChange} 
                   placeholder="https://linkedin.com/in/yourprofile"
-                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-5 text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-4 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
                 />
-                <p className="text-sm text-blue-600 dark:text-blue-400">
+                <p className="text-xs text-blue-600 dark:text-blue-400">
                   💡 Adding your LinkedIn helps us provide better networking suggestions
                 </p>
               </div>
 
               {/* Job Title */}
-              <div className="space-y-3">
-                <label className="block text-base font-semibold text-gray-900 dark:text-white">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-900 dark:text-white">
                   Job Title
                 </label>
                 <input 
@@ -636,13 +636,13 @@ export default function SettingsPage() {
                   value={form.jobTitle} 
                   onChange={handleChange} 
                   placeholder="e.g. Marketing Manager"
-                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-5 text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-4 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
                 />
               </div>
 
               {/* Industry */}
-              <div className="space-y-3">
-                <label className="block text-base font-semibold text-gray-900 dark:text-white">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-900 dark:text-white">
                   Industry
                 </label>
                 <input 
@@ -650,57 +650,57 @@ export default function SettingsPage() {
                   value={form.industry} 
                   onChange={handleChange} 
                   placeholder="e.g. Technology, Healthcare, Finance"
-                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-5 text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-4 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
                 />
               </div>
 
               {/* About You */}
-              <div className="md:col-span-2 space-y-3">
-                <label className="block text-base font-semibold text-gray-900 dark:text-white">
+              <div className="md:col-span-2 space-y-2">
+                <label className="block text-sm font-semibold text-gray-900 dark:text-white">
                   About You
                 </label>
                 <textarea 
                   name="narrative" 
-                  rows={5} 
+                  rows={4} 
                   value={form.narrative} 
                   onChange={handleChange} 
                   placeholder="Tell us about yourself, your background, and what you do..."
-                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-5 text-base resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-4 text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
                 />
               </div>
 
               {/* Goals */}
-              <div className="md:col-span-2 space-y-3">
-                <label className="block text-base font-semibold text-gray-900 dark:text-white">
+              <div className="md:col-span-2 space-y-2">
+                <label className="block text-sm font-semibold text-gray-900 dark:text-white">
                   What do you aim to get from using Growfly?
                 </label>
                 <textarea
                   name="goals"
-                  rows={5}
+                  rows={4}
                   placeholder="This helps us tailor your experience and provide better recommendations..."
                   value={form.goals}
                   onChange={handleChange}
-                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-5 text-base resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-4 text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
                 />
               </div>
             </div>
           </div>
 
           {/* Security Settings */}
-          <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-xl border border-gray-200 dark:border-slate-700">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-4">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-xl border border-gray-200 dark:border-slate-700">
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-3">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Security Settings</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Security Settings</h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* New Password */}
-              <div className="space-y-3">
-                <label className="block text-base font-semibold text-gray-900 dark:text-white">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-900 dark:text-white">
                   New Password
                 </label>
                 <input
@@ -709,10 +709,10 @@ export default function SettingsPage() {
                   value={form.password}
                   onChange={handleChange}
                   placeholder="Leave blank to keep current password"
-                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-5 text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-4 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
                 />
                 {form.password && (
-                  <p className={`text-sm font-medium ${
+                  <p className={`text-xs font-medium ${
                     passwordStrength === 'Strong' ? 'text-green-600 dark:text-green-400' :
                     passwordStrength === 'Moderate' ? 'text-yellow-600 dark:text-yellow-400' :
                     'text-red-600 dark:text-red-400'
@@ -723,8 +723,8 @@ export default function SettingsPage() {
               </div>
 
               {/* Confirm Password */}
-              <div className="space-y-3">
-                <label className="block text-base font-semibold text-gray-900 dark:text-white">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-900 dark:text-white">
                   Confirm New Password
                 </label>
                 <input
@@ -733,19 +733,19 @@ export default function SettingsPage() {
                   value={form.confirmPassword}
                   onChange={handleChange}
                   placeholder="Confirm your new password"
-                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-5 text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white p-4 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
                 />
               </div>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-6 pt-6">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4">
             <button
               type="button"
               onClick={handleSubmit}
               disabled={saving}
-              className={`inline-flex items-center gap-3 px-10 py-5 rounded-2xl text-base font-bold transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
+              className={`inline-flex items-center gap-2 px-8 py-4 rounded-2xl text-sm font-bold transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
                 saveSuccess 
                   ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-emerald-200 dark:shadow-emerald-900/30' 
                   : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-blue-200 dark:shadow-blue-900/30'
@@ -753,19 +753,19 @@ export default function SettingsPage() {
             >
               {saving ? (
                 <>
-                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <Loader2 className="h-5 w-5 animate-spin" />
                   Saving Changes...
                 </>
               ) : saveSuccess ? (
                 <>
-                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                   Changes Saved!
                 </>
               ) : (
                 <>
-                  <Save className="h-6 w-6" />
+                  <Save className="h-5 w-5" />
                   Save Changes
                 </>
               )}
@@ -774,24 +774,24 @@ export default function SettingsPage() {
             <button
               type="button"
               onClick={handleBillingPortal}
-              className="inline-flex items-center gap-3 bg-gradient-to-r from-slate-700 to-gray-800 dark:from-gray-700 dark:to-slate-600 hover:from-slate-800 hover:to-gray-900 dark:hover:from-gray-600 dark:hover:to-slate-500 text-white px-8 py-5 rounded-2xl text-base font-bold transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-slate-700 to-gray-800 dark:from-gray-700 dark:to-slate-600 hover:from-slate-800 hover:to-gray-900 dark:hover:from-gray-600 dark:hover:to-slate-500 text-white px-6 py-4 rounded-2xl text-sm font-bold transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105"
             >
-              <CreditCard className="h-6 w-6" />
+              <CreditCard className="h-5 w-5" />
               Manage Billing & Invoices
-              <ExternalLink className="h-5 w-5" />
+              <ExternalLink className="h-4 w-4" />
             </button>
           </div>
 
           {/* Success Message */}
           {saveSuccess && (
-            <div className="mt-8 p-6 bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/30 dark:to-green-900/30 text-emerald-800 dark:text-emerald-300 rounded-2xl border border-emerald-200 dark:border-emerald-800 shadow-lg">
+            <div className="mt-6 p-5 bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/30 dark:to-green-900/30 text-emerald-800 dark:text-emerald-300 rounded-2xl border border-emerald-200 dark:border-emerald-800 shadow-lg">
               <div className="flex items-center justify-center gap-3">
-                <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-6 h-6 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <span className="font-semibold text-lg">Your settings have been updated successfully!</span>
+                <span className="font-semibold text-base">Your settings have been updated successfully!</span>
               </div>
             </div>
           )}
@@ -801,54 +801,54 @@ export default function SettingsPage() {
             <div className="bg-gradient-to-r from-gray-50 to-slate-50 dark:from-slate-800/50 dark:to-slate-700/50 rounded-2xl border border-gray-200 dark:border-slate-600 shadow-sm overflow-hidden">
               <button
                 onClick={() => setShowUsageDetails(!showUsageDetails)}
-                className="w-full p-5 flex items-center justify-between text-left hover:bg-gradient-to-r hover:from-gray-100 hover:to-slate-100 dark:hover:from-slate-700/70 dark:hover:to-slate-600/70 transition-all duration-200"
+                className="w-full p-4 flex items-center justify-between text-left hover:bg-gradient-to-r hover:from-gray-100 hover:to-slate-100 dark:hover:from-slate-700/70 dark:hover:to-slate-600/70 transition-all duration-200"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                    <BarChart3 className="w-5 h-5 text-white" />
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <BarChart3 className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-gray-900 dark:text-white">Usage Overview</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Usage Overview</h3>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
                       {usageData.promptLimit === -1 ? 'Unlimited' : `${usageData.promptsUsed}/${usageData.promptLimit}`} prompts • 
                       {usageData.dailyImages.limit === -1 ? ' Unlimited' : ` ${usageData.dailyImages.remaining}/${usageData.dailyImages.limit}`} images today
                     </p>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <div className="text-right">
                     <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       {user.subscriptionType || 'Free'} Plan
                     </div>
-                    <div className="text-sm font-bold text-gray-900 dark:text-white">
+                    <div className="text-xs font-bold text-gray-900 dark:text-white">
                       {showUsageDetails ? 'Hide Details' : 'View Details'}
                     </div>
                   </div>
-                  <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${showUsageDetails ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${showUsageDetails ? 'rotate-180' : ''}`} />
                 </div>
               </button>
 
               {showUsageDetails && (
-                <div className="px-5 pb-5 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+                <div className="px-4 pb-4 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     {/* Enhanced Prompt Usage Card */}
-                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-700 shadow-sm">
-                      <div className="flex items-center justify-between mb-3">
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-3 border border-blue-200 dark:border-blue-700 shadow-sm">
+                      <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                            <span className="text-white text-sm font-bold">💬</span>
+                          <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                            <span className="text-white text-xs font-bold">💬</span>
                           </div>
-                          <span className="font-semibold text-blue-800 dark:text-blue-300">Chat Prompts</span>
+                          <span className="font-semibold text-blue-800 dark:text-blue-300 text-sm">Chat Prompts</span>
                         </div>
-                        <span className="font-bold text-blue-900 dark:text-blue-200 text-lg">
+                        <span className="font-bold text-blue-900 dark:text-blue-200 text-sm">
                           {usageData.promptsUsed}/{usageData.promptLimit === -1 ? '∞' : usageData.promptLimit}
                         </span>
                       </div>
                       
                       {usageData.promptLimit !== -1 ? (
                         <>
-                          <div className="relative w-full h-3 bg-blue-200 dark:bg-blue-800 rounded-full overflow-hidden mb-2">
+                          <div className="relative w-full h-2 bg-blue-200 dark:bg-blue-800 rounded-full overflow-hidden mb-2">
                             <div 
                               className={`absolute top-0 left-0 h-full bg-gradient-to-r ${getPromptUsageColor()} rounded-full transition-all duration-500 ease-out shadow-sm`}
                               style={{ width: `${Math.min(getPromptUsagePercentage(), 100)}%` }}
@@ -860,30 +860,30 @@ export default function SettingsPage() {
                           </div>
                         </>
                       ) : (
-                        <div className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-2 font-medium">
-                          <Sparkles className="w-4 h-4" />
+                        <div className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-2 font-medium">
+                          <Sparkles className="w-3 h-3" />
                           Unlimited prompts available
                         </div>
                       )}
                     </div>
 
                     {/* Enhanced Image Usage Card */}
-                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-700 shadow-sm">
-                      <div className="flex items-center justify-between mb-3">
+                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-3 border border-purple-200 dark:border-purple-700 shadow-sm">
+                      <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
-                            <Palette className="w-4 h-4 text-white" />
+                          <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
+                            <Palette className="w-3 h-3 text-white" />
                           </div>
-                          <span className="font-semibold text-purple-800 dark:text-purple-300">Images Today</span>
+                          <span className="font-semibold text-purple-800 dark:text-purple-300 text-sm">Images Today</span>
                         </div>
-                        <span className="font-bold text-purple-900 dark:text-purple-200 text-lg">
+                        <span className="font-bold text-purple-900 dark:text-purple-200 text-sm">
                           {usageData.dailyImages.remaining}/{usageData.dailyImages.limit === -1 ? '∞' : usageData.dailyImages.limit}
                         </span>
                       </div>
                       
                       {usageData.dailyImages.limit !== -1 ? (
                         <>
-                          <div className="relative w-full h-3 bg-purple-200 dark:bg-purple-800 rounded-full overflow-hidden mb-2">
+                          <div className="relative w-full h-2 bg-purple-200 dark:bg-purple-800 rounded-full overflow-hidden mb-2">
                             <div 
                               className={`absolute top-0 left-0 h-full bg-gradient-to-r ${getImageUsageColor()} rounded-full transition-all duration-500 ease-out shadow-sm`}
                               style={{ width: `${Math.min(getImageUsagePercentage(), 100)}%` }}
@@ -895,8 +895,8 @@ export default function SettingsPage() {
                           </div>
                         </>
                       ) : (
-                        <div className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-2 font-medium">
-                          <Sparkles className="w-4 h-4" />
+                        <div className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-2 font-medium">
+                          <Sparkles className="w-3 h-3" />
                           Unlimited images available
                         </div>
                       )}
@@ -904,20 +904,20 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Enhanced upgrade prompt */}
-                  <div className="mt-5 p-4 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-xl border border-indigo-200 dark:border-indigo-700">
+                  <div className="mt-4 p-3 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-xl border border-indigo-200 dark:border-indigo-700">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-lg flex items-center justify-center">
-                          <ArrowUpRight className="w-5 h-5 text-white" />
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-lg flex items-center justify-center">
+                          <ArrowUpRight className="w-4 h-4 text-white" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-indigo-800 dark:text-indigo-300">Need more capacity?</h4>
-                          <p className="text-sm text-indigo-600 dark:text-indigo-400">Upgrade for higher limits and unlimited access.</p>
+                          <h4 className="font-bold text-indigo-800 dark:text-indigo-300 text-sm">Need more capacity?</h4>
+                          <p className="text-xs text-indigo-600 dark:text-indigo-400">Upgrade for higher limits and unlimited access.</p>
                         </div>
                       </div>
                       <Link 
                         href="/change-plan"
-                        className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl text-sm font-bold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                        className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                       >
                         Upgrade Plan
                       </Link>
@@ -926,8 +926,8 @@ export default function SettingsPage() {
 
                   {/* ✅ DEBUGGING: Show API response in development */}
                   {process.env.NODE_ENV === 'development' && (
-                    <div className="mt-5 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-700">
-                      <h4 className="text-sm font-bold text-yellow-800 dark:text-yellow-300 mb-2">🔍 API Debug Info</h4>
+                    <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-700">
+                      <h4 className="text-xs font-bold text-yellow-800 dark:text-yellow-300 mb-2">🔍 API Debug Info</h4>
                       <div className="text-xs text-yellow-700 dark:text-yellow-400 space-y-1">
                         <div><strong>API Endpoint:</strong> /api/user/settings</div>
                         <div><strong>promptsUsed from API:</strong> {user.promptsUsed ?? 'undefined'}</div>

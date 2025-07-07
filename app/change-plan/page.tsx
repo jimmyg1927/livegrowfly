@@ -280,8 +280,8 @@ export default function ChangePlanPage() {
               >
                 {/* Popular Badge */}
                 {plan.popular && (
-                  <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-20">
-                    <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                  <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 z-20">
+                    <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black text-[9px] font-bold px-2 py-0.5 rounded-full shadow-lg whitespace-nowrap">
                       MOST POPULAR
                     </div>
                   </div>

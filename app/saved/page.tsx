@@ -202,15 +202,15 @@ export default function SavedPage() {
   }, {});
 
   const ItemCard = ({ item }: { item: SavedItem }) => (
-    <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-5 shadow-sm hover:shadow-lg transition-all duration-200 hover:scale-[1.02] relative">
+    <div className="bg-gradient-to-br from-white via-white to-gray-50/50 dark:from-slate-800 dark:via-slate-800 dark:to-slate-700/50 border border-gray-200/50 dark:border-slate-700/50 rounded-xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 relative backdrop-blur-sm">
       {/* Pin/Favorite buttons */}
-      <div className="absolute top-3 right-3 flex gap-2">
+      <div className="absolute top-4 right-4 flex gap-2">
         <button
           onClick={() => handlePin(item.id)}
-          className={`p-1 rounded-full transition-colors ${
+          className={`p-2 rounded-lg transition-all duration-200 hover:scale-110 ${
             item.isPinned
-              ? 'text-blue-600 hover:text-blue-700'
-              : 'text-gray-400 hover:text-blue-600'
+              ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 hover:text-blue-700 shadow-md'
+              : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'
           }`}
           title={item.isPinned ? 'Unpin' : 'Pin'}
         >
@@ -218,10 +218,10 @@ export default function SavedPage() {
         </button>
         <button
           onClick={() => handleFavorite(item.id)}
-          className={`p-1 rounded-full transition-colors ${
+          className={`p-2 rounded-lg transition-all duration-200 hover:scale-110 ${
             item.isFavorite
-              ? 'text-yellow-500 hover:text-yellow-600'
-              : 'text-gray-400 hover:text-yellow-500'
+              ? 'text-yellow-500 bg-yellow-50 dark:bg-yellow-900/30 hover:text-yellow-600 shadow-md'
+              : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20'
           }`}
           title={item.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
         >
@@ -231,7 +231,7 @@ export default function SavedPage() {
 
       {editingId === item.id ? (
         <input
-          className="mb-3 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="mb-4 w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
           value={editedTitle}
           onChange={(e) => setEditedTitle(e.target.value)}
           onBlur={() => handleRename(item.id)}
@@ -240,7 +240,7 @@ export default function SavedPage() {
         />
       ) : (
         <h3
-          className="text-lg font-semibold cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors pr-16 mb-2"
+          className="text-lg font-bold cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors pr-20 mb-3 line-clamp-2 leading-tight"
           onClick={() => {
             setEditingId(item.id);
             setEditedTitle(item.title);
@@ -251,31 +251,36 @@ export default function SavedPage() {
         </h3>
       )}
 
-      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 flex items-center gap-2">
-        <FiClock className="w-4 h-4" />
-        {format(new Date(item.createdAt), 'PPp')}
+      <div className="flex items-center gap-2 mb-4 text-sm text-gray-500 dark:text-gray-400">
+        <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-100 dark:bg-slate-700 rounded-lg">
+          <FiClock className="w-3.5 h-3.5" />
+          <span className="font-medium">{format(new Date(item.createdAt), 'MMM d, yyyy')}</span>
+        </div>
+        <div className="text-xs text-gray-400">
+          {format(new Date(item.createdAt), 'h:mm a')}
+        </div>
+      </div>
+
+      <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap mb-6 line-clamp-3 leading-relaxed">
+        {item.content.slice(0, 180)}...
       </p>
 
-      <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap mb-4 line-clamp-3">
-        {item.content.slice(0, 150)}...
-      </p>
-
-      <div className="flex flex-wrap gap-2 justify-between items-center">
+      <div className="flex flex-wrap gap-3 justify-between items-center">
         <div className="flex gap-2 flex-wrap">
           <Dialog>
             <DialogTrigger asChild>
               <button
                 onClick={() => setSelected(item)}
-                className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors"
+                className="flex items-center gap-2 text-xs font-semibold px-4 py-2.5 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105"
               >
-                <FiMaximize2 className="w-4 h-4" /> View Full
+                <FiMaximize2 className="w-3.5 h-3.5" /> View Full
               </button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-white dark:bg-slate-800">
+            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto bg-white dark:bg-slate-800 rounded-xl">
               <DialogHeader>
-                <DialogTitle className="text-gray-900 dark:text-white">{selected?.title}</DialogTitle>
+                <DialogTitle className="text-gray-900 dark:text-white text-xl font-bold">{selected?.title}</DialogTitle>
               </DialogHeader>
-              <div className="text-sm whitespace-pre-wrap mt-4 text-gray-700 dark:text-gray-300 leading-relaxed">
+              <div className="text-sm whitespace-pre-wrap mt-6 text-gray-700 dark:text-gray-300 leading-relaxed">
                 {selected?.content}
               </div>
             </DialogContent>
@@ -283,71 +288,71 @@ export default function SavedPage() {
 
           <button
             onClick={() => handleShareToCollab(item)}
-            className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white transition-all duration-200"
+            className="flex items-center gap-2 text-xs font-semibold px-4 py-2.5 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105"
             title="Share to Collab Zone for editing and collaboration"
           >
-            <FaShareSquare className="w-4 h-4" /> Share to Collab Zone
+            <FaShareSquare className="w-3.5 h-3.5" /> Share to Collab
           </button>
         </div>
 
         <button
           onClick={() => handleDelete(item.id)}
-          className="flex items-center gap-1 text-xs px-3 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors"
+          className="flex items-center gap-2 text-xs font-semibold px-4 py-2.5 rounded-lg bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105"
           title="Delete this saved response"
         >
-          <FiTrash2 className="w-4 h-4" /> Delete
+          <FiTrash2 className="w-3.5 h-3.5" /> Delete
         </button>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-gray-900 dark:text-white transition-colors duration-300">
-      <div className="p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/50 dark:from-slate-900 dark:via-slate-800/50 dark:to-slate-900 text-gray-900 dark:text-white transition-colors duration-300">
+      <div className="p-6 space-y-8">
         
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 dark:from-white dark:via-blue-200 dark:to-indigo-200 bg-clip-text text-transparent mb-3">
               📁 Saved Responses
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-lg text-gray-600 dark:text-gray-400 font-medium">
               Your personal collection of saved AI responses
             </p>
           </div>
-          <div className="text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-slate-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-slate-700">
-            {saved.length} saved {saved.length === 1 ? 'response' : 'responses'}
+          <div className="text-sm text-gray-600 dark:text-gray-400 bg-gradient-to-r from-white to-gray-50 dark:from-slate-800 dark:to-slate-700 px-6 py-3 rounded-xl border border-gray-200/50 dark:border-slate-700/50 shadow-lg">
+            <span className="font-bold text-blue-600 dark:text-blue-400">{saved.length}</span> saved {saved.length === 1 ? 'response' : 'responses'}
           </div>
         </div>
 
         {/* Helpful Tooltip */}
         {showTooltip && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 relative">
+          <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 border border-blue-200/50 dark:border-blue-800/50 rounded-xl p-6 relative shadow-lg backdrop-blur-sm">
             <button
               onClick={dismissTooltip}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1 hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-lg transition-all duration-200"
             >
               <FiX className="w-5 h-5" />
             </button>
-            <div className="flex items-start gap-3">
-              <div className="text-2xl">💡</div>
+            <div className="flex items-start gap-4">
+              <div className="text-3xl">💡</div>
               <div>
-                <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                <h3 className="font-bold text-xl text-blue-900 dark:text-blue-100 mb-3">
                   Why Save & Pin Responses?
                 </h3>
-                <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
+                <p className="text-blue-800 dark:text-blue-200 mb-4 leading-relaxed">
                   Bookmark your favorite AI responses to easily find them later! Pin important ones to keep them at the top, 
                   and use the star system to mark your absolute favorites.
                 </p>
-                <div className="flex items-center gap-4 text-xs text-blue-700 dark:text-blue-300">
-                  <span className="flex items-center gap-1">
-                    <FaBookmark className="w-3 h-3" /> Pin for quick access
+                <div className="flex items-center gap-6 text-sm text-blue-700 dark:text-blue-300">
+                  <span className="flex items-center gap-2 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <FaBookmark className="w-3.5 h-3.5" /> Pin for quick access
                   </span>
-                  <span className="flex items-center gap-1">
-                    <FaStar className="w-3 h-3 text-yellow-500" /> Star your favorites
+                  <span className="flex items-center gap-2 px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+                    <FaStar className="w-3.5 h-3.5 text-yellow-600" /> Star your favorites
                   </span>
-                  <span className="flex items-center gap-1">
-                    <FaShareSquare className="w-3 h-3" /> Share to Collab Zone for editing & sharing
+                  <span className="flex items-center gap-2 px-3 py-1 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                    <FaShareSquare className="w-3.5 h-3.5" /> Share to Collab Zone
                   </span>
                 </div>
               </div>
@@ -356,28 +361,28 @@ export default function SavedPage() {
         )}
 
         {/* Search and Filters */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-gray-200 dark:border-slate-700 shadow-sm">
-          <div className="flex flex-col md:flex-row gap-4 items-center">
+        <div className="bg-gradient-to-r from-white via-white to-gray-50/50 dark:from-slate-800 dark:via-slate-800 dark:to-slate-700/50 rounded-xl p-6 border border-gray-200/50 dark:border-slate-700/50 shadow-lg backdrop-blur-sm">
+          <div className="flex flex-col lg:flex-row gap-4 items-center">
             {/* Search */}
-            <div className="relative flex-1">
-              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <div className="relative flex-1 w-full">
+              <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Search saved responses..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200"
               />
             </div>
 
             {/* Filters */}
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-3 items-center flex-wrap">
               <select
                 value={filterBy}
                 onChange={(e) => setFilterBy(e.target.value as 'all' | 'pinned' | 'favorites')}
-                className="px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm min-w-[120px]"
               >
-                <option value="all">All</option>
+                <option value="all">All Items</option>
                 <option value="pinned">Pinned</option>
                 <option value="favorites">Favorites</option>
               </select>
@@ -385,30 +390,30 @@ export default function SavedPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as 'date' | 'title' | 'favorites')}
-                className="px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm min-w-[140px]"
               >
                 <option value="date">Sort by Date</option>
                 <option value="title">Sort by Title</option>
                 <option value="favorites">Sort by Favorites</option>
               </select>
 
-              <div className="flex gap-1 bg-gray-100 dark:bg-slate-700 rounded-lg p-1">
+              <div className="flex gap-1 bg-gray-100 dark:bg-slate-700 rounded-lg p-1 shadow-sm">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded transition-colors ${
+                  className={`p-3 rounded-lg transition-all duration-200 ${
                     viewMode === 'grid'
-                      ? 'bg-white dark:bg-slate-600 text-blue-600 shadow-sm'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-blue-600'
+                      ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-blue-600 hover:bg-white dark:hover:bg-slate-600'
                   }`}
                 >
                   <FiGrid className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-2 rounded transition-colors ${
+                  className={`p-3 rounded-lg transition-all duration-200 ${
                     viewMode === 'list'
-                      ? 'bg-white dark:bg-slate-600 text-blue-600 shadow-sm'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-blue-600'
+                      ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-blue-600 hover:bg-white dark:hover:bg-slate-600'
                   }`}
                 >
                   <FiList className="w-4 h-4" />
@@ -421,37 +426,39 @@ export default function SavedPage() {
         {/* Content */}
         {loading ? (
           <div className="flex items-center justify-center h-64">
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
-              <p className="text-gray-600 dark:text-gray-400">Loading your saved responses...</p>
+            <div className="flex flex-col items-center gap-6">
+              <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+              <p className="text-gray-600 dark:text-gray-400 text-lg font-medium">Loading your saved responses...</p>
             </div>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4">📭</div>
-            <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
+          <div className="text-center py-20">
+            <div className="text-8xl mb-6">📭</div>
+            <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">
               No saved responses found
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-gray-600 dark:text-gray-400 mb-8 text-lg max-w-md mx-auto leading-relaxed">
               Start saving responses from the dashboard to build your collection!
             </p>
             <button
               onClick={() => router.push('/dashboard')}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-2xl transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-8 py-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold text-lg"
             >
               Go to Dashboard
             </button>
           </div>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-10">
             {/* Pinned Items */}
             {pinnedItems.length > 0 && (
               <div>
-                <h2 className="text-xl font-semibold text-blue-600 dark:text-blue-400 mb-4 flex items-center gap-2">
-                  <FiBookmark className="w-5 h-5" />
+                <h2 className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-6 flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <FiBookmark className="w-6 h-6" />
+                  </div>
                   Pinned ({pinnedItems.length})
                 </h2>
-                <div className={`grid gap-4 ${
+                <div className={`grid gap-6 ${
                   viewMode === 'grid' 
                     ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
                     : 'grid-cols-1'
@@ -466,11 +473,13 @@ export default function SavedPage() {
             {/* Regular Items by Date */}
             {Object.entries(grouped).map(([date, items]) => (
               <div key={date}>
-                <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-                  <FiCalendar className="w-5 h-5" />
+                <h2 className="text-xl font-bold text-gray-700 dark:text-gray-300 mb-6 flex items-center gap-3">
+                  <div className="p-2 bg-gray-100 dark:bg-slate-700 rounded-lg">
+                    <FiCalendar className="w-5 h-5" />
+                  </div>
                   {date} ({items.length})
                 </h2>
-                <div className={`grid gap-4 ${
+                <div className={`grid gap-6 ${
                   viewMode === 'grid' 
                     ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
                     : 'grid-cols-1'
