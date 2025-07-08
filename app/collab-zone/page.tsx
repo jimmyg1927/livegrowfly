@@ -25,7 +25,12 @@ import {
   Underline,
   Type,
   Palette,
-  Highlighter
+  Highlighter,
+  List,
+  ListOrdered,
+  AlignLeft,
+  AlignCenter,
+  AlignRight
 } from 'lucide-react'
 
 // TypeScript interfaces
@@ -596,213 +601,106 @@ const Editor: React.FC<{
   const [fontSize, setFontSize] = useState<string>('16')
   const [textColor, setTextColor] = useState<string>('#000000')
   const [highlightColor, setHighlightColor] = useState<string>('#ffff00')
-  const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set())
-  const [savedSelection, setSavedSelection] = useState<Range | null>(null)
   const editorRef = useRef<HTMLDivElement>(null)
 
-  // Save current selection
-  const saveSelection = useCallback((): Range | null => {
-    const selection = window.getSelection()
-    if (selection && selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0)
-      setSavedSelection(range.cloneRange())
-      return range
-    }
-    return null
-  }, [])
-
-  // Restore saved selection
-  const restoreSelection = useCallback((): void => {
-    if (savedSelection) {
-      const selection = window.getSelection()
-      if (selection) {
-        selection.removeAllRanges()
-        selection.addRange(savedSelection)
-      }
-    }
-  }, [savedSelection])
-
-  // Check what formatting is currently active
-  const updateActiveFormats = useCallback((): void => {
-    const formats = new Set<string>()
-    
-    try {
-      if (document.queryCommandState('bold')) formats.add('bold')
-      if (document.queryCommandState('italic')) formats.add('italic')
-      if (document.queryCommandState('underline')) formats.add('underline')
-      if (document.queryCommandState('insertUnorderedList')) formats.add('bulletList')
-      if (document.queryCommandState('insertOrderedList')) formats.add('numberList')
-      if (document.queryCommandState('justifyLeft')) formats.add('alignLeft')
-      if (document.queryCommandState('justifyCenter')) formats.add('alignCenter')
-      if (document.queryCommandState('justifyRight')) formats.add('alignRight')
-    } catch (e) {
-      // Some browsers may throw errors for certain commands
-      console.debug('Error checking command state:', e)
-    }
-    
-    setActiveFormats(formats)
-  }, [])
-
-  const executeCommand = useCallback((command: string, value?: string): void => {
-    // Restore selection before executing command
-    restoreSelection()
-    
-    // Execute the formatting command
+  // Simple formatting command execution
+  const executeCommand = (command: string, value?: string) => {
     document.execCommand(command, false, value)
-    
-    // Update content and active formats
     if (editorRef.current) {
       setContent(editorRef.current.innerHTML)
     }
-    
-    // Update active formats after a short delay to let the DOM update
-    setTimeout(updateActiveFormats, 10)
-  }, [restoreSelection, setContent, updateActiveFormats])
+  }
 
-  const handleContentChange = useCallback((): void => {
+  const handleContentChange = () => {
     if (editorRef.current) {
       setContent(editorRef.current.innerHTML)
     }
-    updateActiveFormats()
-  }, [setContent, updateActiveFormats])
+  }
 
-  // Handle selection changes for comments and formatting state
-  const handleSelectionChange = useCallback((): void => {
+  // Simple selection detection for comments
+  const handleSelectionChange = () => {
     const selection = window.getSelection()
-    if (selection && selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0)
-      
-      // Update active formatting state
-      updateActiveFormats()
-      
-      // Handle text selection for comments
-      if (!selection.isCollapsed) {
-        const text = selection.toString().trim()
-        if (text && text.length > 0) {
-          setSavedSelection(range.cloneRange())
-          if (setSelectedText) {
-            setSelectedText(text)
-          }
-        }
-      } else if (setSelectedText) {
-        setSelectedText('')
+    if (selection && !selection.isCollapsed) {
+      const text = selection.toString().trim()
+      if (text && text.length > 0 && setSelectedText) {
+        setSelectedText(text)
       }
+    } else if (setSelectedText) {
+      setSelectedText('')
     }
-  }, [updateActiveFormats, setSelectedText])
-
-  // Set up selection change listener
-  useEffect(() => {
-    document.addEventListener('selectionchange', handleSelectionChange)
-    return () => {
-      document.removeEventListener('selectionchange', handleSelectionChange)
-    }
-  }, [handleSelectionChange])
-
-  // Button component for consistent styling
-  const FormatButton: React.FC<{
-    onClick: () => void
-    isActive?: boolean
-    title: string
-    children: React.ReactNode
-    className?: string
-  }> = ({ onClick, isActive = false, title, children, className = '' }) => (
-    <motion.button
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      onMouseDown={(e) => e.preventDefault()} // Prevent losing selection
-      onClick={(e) => {
-        e.preventDefault()
-        onClick()
-      }}
-      title={title}
-      className={`
-        p-2 rounded-lg transition-all duration-200 text-sm font-medium min-w-[2.5rem] flex items-center justify-center
-        ${isActive 
-          ? 'bg-blue-600 text-white shadow-md' 
-          : 'text-gray-600 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:text-blue-600 dark:hover:text-blue-400'
-        }
-        ${className}
-      `}
-    >
-      {children}
-    </motion.button>
-  )
+  }
 
   return (
     <div className="h-full flex flex-col">
       {/* Formatting Toolbar */}
-      <div className="border-b border-gray-200/50 dark:border-slate-700/50 p-3 bg-gray-50/50 dark:bg-slate-800/50">
-        <div className="flex items-center gap-1.5 flex-wrap">
+      <div className="border-b border-gray-200/50 dark:border-slate-700/50 p-3 bg-white/50 dark:bg-slate-800/50">
+        <div className="flex items-center gap-1 flex-wrap">
           {/* Bold, Italic, Underline */}
-          <FormatButton
+          <button
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('bold')}
-            isActive={activeFormats.has('bold')}
-            title="Bold (Ctrl+B)"
+            title="Bold"
+            className="p-2 text-gray-500 dark:text-gray-400 hover:text-white hover:bg-blue-500 rounded-lg transition-all duration-200"
           >
             <Bold className="w-4 h-4" />
-          </FormatButton>
+          </button>
           
-          <FormatButton
+          <button
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('italic')}
-            isActive={activeFormats.has('italic')}
-            title="Italic (Ctrl+I)"
+            title="Italic"
+            className="p-2 text-gray-500 dark:text-gray-400 hover:text-white hover:bg-blue-500 rounded-lg transition-all duration-200"
           >
             <Italic className="w-4 h-4" />
-          </FormatButton>
+          </button>
           
-          <FormatButton
+          <button
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('underline')}
-            isActive={activeFormats.has('underline')}
-            title="Underline (Ctrl+U)"
+            title="Underline"
+            className="p-2 text-gray-500 dark:text-gray-400 hover:text-white hover:bg-blue-500 rounded-lg transition-all duration-200"
           >
             <Underline className="w-4 h-4" />
-          </FormatButton>
+          </button>
 
           <div className="w-px h-5 bg-gray-300 dark:bg-slate-600 mx-1" />
 
           {/* Font Size */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <Type className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
             <select
               value={fontSize}
               onChange={(e) => {
                 setFontSize(e.target.value)
-                saveSelection()
-                if (savedSelection) {
-                  restoreSelection()
-                  const span = document.createElement('span')
-                  span.style.fontSize = e.target.value + 'px'
-                  try {
-                    if (savedSelection.surroundContents) {
-                      savedSelection.surroundContents(span)
-                    } else {
-                      span.appendChild(savedSelection.extractContents())
-                      savedSelection.insertNode(span)
-                    }
-                  } catch (e) {
-                    // Fallback for complex selections
-                    document.execCommand('fontSize', false, '3')
-                  }
+                executeCommand('fontSize', '7')
+                const selection = window.getSelection()
+                if (selection && selection.rangeCount > 0) {
+                  document.execCommand('removeFormat', false, undefined)
+                  document.execCommand('fontSize', false, '7')
+                  const fontElements = document.querySelectorAll('font[size="7"]')
+                  fontElements.forEach(el => {
+                    el.removeAttribute('size')
+                    ;(el as HTMLElement).style.fontSize = e.target.value + 'px'
+                  })
                   handleContentChange()
                 }
               }}
-              onMouseDown={(e) => e.preventDefault()}
-              className="px-3 py-2 text-sm rounded-lg bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-300 w-20 border-0 focus:ring-2 focus:ring-blue-500/20"
+              className="px-2 py-1 text-sm rounded-lg bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-slate-600 focus:ring-1 focus:ring-blue-500/50 w-16"
             >
-              <option value="12">12px</option>
-              <option value="14">14px</option>
-              <option value="16">16px</option>
-              <option value="18">18px</option>
-              <option value="20">20px</option>
-              <option value="24">24px</option>
-              <option value="32">32px</option>
+              <option value="12">12</option>
+              <option value="14">14</option>
+              <option value="16">16</option>
+              <option value="18">18</option>
+              <option value="20">20</option>
+              <option value="24">24</option>
+              <option value="32">32</option>
             </select>
           </div>
 
           <div className="w-px h-5 bg-gray-300 dark:bg-slate-600 mx-1" />
 
           {/* Text Color */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <Palette className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
             <input
               type="color"
@@ -811,14 +709,13 @@ const Editor: React.FC<{
                 setTextColor(e.target.value)
                 executeCommand('foreColor', e.target.value)
               }}
-              onMouseDown={(e) => e.preventDefault()}
-              className="w-8 h-8 rounded-lg cursor-pointer bg-white dark:bg-slate-700 border-0"
+              className="w-6 h-6 rounded border border-gray-200 dark:border-slate-600 cursor-pointer"
               title="Text Color"
             />
           </div>
 
           {/* Highlight Color */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <Highlighter className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
             <input
               type="color"
@@ -827,8 +724,7 @@ const Editor: React.FC<{
                 setHighlightColor(e.target.value)
                 executeCommand('hiliteColor', e.target.value)
               }}
-              onMouseDown={(e) => e.preventDefault()}
-              className="w-8 h-8 rounded-lg cursor-pointer bg-white dark:bg-slate-700 border-0"
+              className="w-6 h-6 rounded border border-gray-200 dark:border-slate-600 cursor-pointer"
               title="Highlight Color"
             />
           </div>
@@ -836,58 +732,59 @@ const Editor: React.FC<{
           <div className="w-px h-5 bg-gray-300 dark:bg-slate-600 mx-1" />
 
           {/* Lists */}
-          <FormatButton
+          <button
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('insertUnorderedList')}
-            isActive={activeFormats.has('bulletList')}
+            className="p-2 text-gray-500 dark:text-gray-400 hover:text-white hover:bg-blue-500 rounded-lg transition-all duration-200"
             title="Bullet List"
-            className="px-3"
           >
-            • List
-          </FormatButton>
+            <List className="w-4 h-4" />
+          </button>
 
-          <FormatButton
+          <button
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('insertOrderedList')}
-            isActive={activeFormats.has('numberList')}
+            className="p-2 text-gray-500 dark:text-gray-400 hover:text-white hover:bg-blue-500 rounded-lg transition-all duration-200"
             title="Numbered List"
-            className="px-3"
           >
-            1. List
-          </FormatButton>
+            <ListOrdered className="w-4 h-4" />
+          </button>
 
           <div className="w-px h-5 bg-gray-300 dark:bg-slate-600 mx-1" />
 
           {/* Alignment */}
-          <FormatButton
+          <button
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('justifyLeft')}
-            isActive={activeFormats.has('alignLeft')}
+            className="p-2 text-gray-500 dark:text-gray-400 hover:text-white hover:bg-blue-500 rounded-lg transition-all duration-200"
             title="Align Left"
           >
-            ⬅
-          </FormatButton>
+            <AlignLeft className="w-4 h-4" />
+          </button>
 
-          <FormatButton
+          <button
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('justifyCenter')}
-            isActive={activeFormats.has('alignCenter')}
+            className="p-2 text-gray-500 dark:text-gray-400 hover:text-white hover:bg-blue-500 rounded-lg transition-all duration-200"
             title="Align Center"
           >
-            ↔
-          </FormatButton>
+            <AlignCenter className="w-4 h-4" />
+          </button>
 
-          <FormatButton
+          <button
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('justifyRight')}
-            isActive={activeFormats.has('alignRight')}
+            className="p-2 text-gray-500 dark:text-gray-400 hover:text-white hover:bg-blue-500 rounded-lg transition-all duration-200"
             title="Align Right"
           >
-            ➡
-          </FormatButton>
+            <AlignRight className="w-4 h-4" />
+          </button>
 
           {/* Comment on Selection */}
           {selectedText && selectedText.trim() && (
             <>
               <div className="w-px h-5 bg-gray-300 dark:bg-slate-600 mx-1" />
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+              <button
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   // Trigger parent component to open comments
@@ -895,12 +792,12 @@ const Editor: React.FC<{
                     window.dispatchEvent(new CustomEvent('openComments', { detail: { selectedText } }))
                   }
                 }}
-                className="flex items-center gap-1 px-3 py-2 bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 rounded-lg transition-colors text-sm font-medium hover:bg-green-200 dark:hover:bg-green-900/70"
+                className="flex items-center gap-1 px-2 py-1 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg text-xs font-medium hover:bg-green-100 dark:hover:bg-green-900/30 border border-green-200 dark:border-green-800"
                 title={`Comment on: "${selectedText.substring(0, 30)}..."`}
               >
-                <MessageSquare className="w-4 h-4" />
-                Comment on "{selectedText.substring(0, 20)}..."
-              </motion.button>
+                <MessageSquare className="w-3 h-3" />
+                Comment
+              </button>
             </>
           )}
         </div>
@@ -914,10 +811,8 @@ const Editor: React.FC<{
           onInput={handleContentChange}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          onMouseUp={() => {
-            // Save selection on mouse up for better UX
-            setTimeout(saveSelection, 10)
-          }}
+          onMouseUp={handleSelectionChange}
+          onKeyUp={handleSelectionChange}
           suppressContentEditableWarning={true}
           dangerouslySetInnerHTML={{ __html: content || '' }}
           className="w-full h-full outline-none bg-transparent text-gray-900 dark:text-white text-lg leading-relaxed font-medium [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-gray-400 [&:empty]:before:pointer-events-none selection:bg-blue-200 dark:selection:bg-blue-800"
