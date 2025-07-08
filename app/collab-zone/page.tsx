@@ -1873,7 +1873,7 @@ const CollabZone: React.FC = () => {
                 >
                   <button
                     onClick={handleNewDoc}
-                    className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-bold shadow-xl shadow-blue-500/30 hover:scale-105 text-base"
+                    className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-601 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-bold shadow-xl shadow-blue-500/30 hover:scale-105 text-base"
                   >
                     <Plus className="w-5 h-5" />
                     Create Document
