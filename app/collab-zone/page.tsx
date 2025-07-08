@@ -604,12 +604,12 @@ const Editor: React.FC<{
   const [isFormatActive, setIsFormatActive] = useState<{ [key: string]: boolean }>({})
   const editorRef = useRef<HTMLDivElement>(null)
 
-  // Store selection info for preservation
-  const [selectionInfo, setSelectionInfo] = useState<{
-    start: number
-    end: number
-    text: string
-  } | null>(null)
+  // Initialize editor content only once
+  useEffect(() => {
+    if (editorRef.current && content) {
+      editorRef.current.innerHTML = content
+    }
+  }, [docId]) // Only when document changes, not on every content update
 
   // Utility: Show notifications
   const showNotification = useCallback((message: string, type: 'success' | 'warning' | 'error') => {
@@ -635,245 +635,6 @@ const Editor: React.FC<{
       }
     }, 3000)
   }, [])
-
-  // Safe document command execution for structural changes
-  const safeExecuteCommand = useCallback((command: string, value?: string) => {
-    try {
-      const result = document.execCommand(command, false, value)
-      if (editorRef.current) {
-        setContent(editorRef.current.innerHTML)
-        updateActiveStates()
-      }
-      return result
-    } catch (error) {
-      console.error(`Command ${command} failed:`, error)
-      return false
-    }
-  }, [setContent])
-
-  // Utility: Get current selection details
-  const getSelectionInfo = useCallback(() => {
-    const selection = window.getSelection()
-    if (!selection || selection.rangeCount === 0 || !editorRef.current) return null
-
-    try {
-      const range = selection.getRangeAt(0)
-      const preSelectionRange = document.createRange()
-      preSelectionRange.selectNodeContents(editorRef.current)
-      preSelectionRange.setEnd(range.startContainer, range.startOffset)
-      
-      const start = preSelectionRange.toString().length
-      const text = range.toString()
-      const end = start + text.length
-
-      return { start, end, text }
-    } catch (error) {
-      console.error('Selection info error:', error)
-      return null
-    }
-  }, [])
-
-  // Utility: Restore selection by character position
-  const restoreSelection = useCallback((start: number, end: number) => {
-    if (!editorRef.current) return
-
-    try {
-      const walker = document.createTreeWalker(
-        editorRef.current,
-        NodeFilter.SHOW_TEXT,
-        null
-      )
-
-      let charIndex = 0
-      let startNode: Text | null = null
-      let endNode: Text | null = null
-      let startOffset = 0
-      let endOffset = 0
-
-      while (walker.nextNode()) {
-        const textNode = walker.currentNode as Text
-        const textLength = textNode.textContent?.length || 0
-
-        if (startNode === null && charIndex + textLength >= start) {
-          startNode = textNode
-          startOffset = start - charIndex
-        }
-
-        if (charIndex + textLength >= end) {
-          endNode = textNode
-          endOffset = end - charIndex
-          break
-        }
-
-        charIndex += textLength
-      }
-
-      if (startNode && endNode) {
-        const range = document.createRange()
-        range.setStart(startNode, startOffset)
-        range.setEnd(endNode, endOffset)
-        
-        const selection = window.getSelection()
-        selection?.removeAllRanges()
-        selection?.addRange(range)
-      }
-    } catch (error) {
-      console.error('Restore selection error:', error)
-    }
-  }, [])
-
-  // Utility: Apply formatting to HTML string with better error handling
-  const applyFormattingToHTML = useCallback((html: string, format: string, value?: string, selectionStart?: number, selectionEnd?: number): string => {
-    if (!selectionStart || !selectionEnd || selectionStart >= selectionEnd) return html
-
-    try {
-      // Convert HTML to temporary div for manipulation
-      const tempDiv = document.createElement('div')
-      tempDiv.innerHTML = html
-
-      // Get text content and find position
-      const textContent = tempDiv.textContent || ''
-      const selectedText = textContent.substring(selectionStart, selectionEnd)
-      
-      if (!selectedText.trim()) return html
-
-      // Create wrapper based on format
-      let wrapper = ''
-      switch (format) {
-        case 'bold':
-          wrapper = `<strong>${selectedText}</strong>`
-          break
-        case 'italic':
-          wrapper = `<em>${selectedText}</em>`
-          break
-        case 'underline':
-          wrapper = `<u>${selectedText}</u>`
-          break
-        case 'highlight':
-          wrapper = `<span style="background-color: ${value || '#ffff00'}; padding: 2px 4px; border-radius: 3px;">${selectedText}</span>`
-          break
-        case 'color':
-          wrapper = `<span style="color: ${value || '#000000'};">${selectedText}</span>`
-          break
-        case 'fontSize':
-          wrapper = `<span style="font-size: ${value || '16'}px;">${selectedText}</span>`
-          break
-        default:
-          return html
-      }
-
-      // Replace the selected text with wrapped version
-      const beforeText = textContent.substring(0, selectionStart)
-      const afterText = textContent.substring(selectionEnd)
-      
-      // Rebuild HTML by replacing text content
-      const walker = document.createTreeWalker(
-        tempDiv,
-        NodeFilter.SHOW_TEXT,
-        null
-      )
-
-      let currentIndex = 0
-      const textNodes: Text[] = []
-      
-      while (walker.nextNode()) {
-        textNodes.push(walker.currentNode as Text)
-      }
-
-      // Find the text nodes that contain our selection
-      let processedNodes = 0
-      for (const textNode of textNodes) {
-        const nodeLength = textNode.textContent?.length || 0
-        const nodeStart = currentIndex
-        const nodeEnd = currentIndex + nodeLength
-
-        if (nodeStart <= selectionStart && nodeEnd >= selectionEnd) {
-          // Selection is entirely within this node
-          const nodeText = textNode.textContent || ''
-          const before = nodeText.substring(0, selectionStart - nodeStart)
-          const after = nodeText.substring(selectionEnd - nodeStart)
-          
-          const newHTML = before + wrapper + after
-          const tempSpan = document.createElement('span')
-          tempSpan.innerHTML = newHTML
-          
-          // Replace the text node with new content
-          const parent = textNode.parentNode
-          if (parent) {
-            while (tempSpan.firstChild) {
-              parent.insertBefore(tempSpan.firstChild, textNode)
-            }
-            parent.removeChild(textNode)
-          }
-          break
-        }
-        
-        currentIndex = nodeEnd
-        processedNodes++
-        
-        // Safety check to prevent infinite loops
-        if (processedNodes > 1000) {
-          console.warn('Too many text nodes processed, breaking loop')
-          break
-        }
-      }
-
-      return tempDiv.innerHTML
-    } catch (error) {
-      console.error('Error applying formatting:', error)
-      return html
-    }
-  }, [])
-
-  // Main formatting function with better error handling
-  const applyFormatting = useCallback((format: string, value?: string) => {
-    if (!editorRef.current) {
-      console.warn('Editor ref not available')
-      return
-    }
-
-    try {
-      const selection = getSelectionInfo()
-      if (!selection || !selection.text.trim()) {
-        // Show notification for no selection
-        showNotification('⚠️ Please select text to format', 'warning')
-        return
-      }
-
-      // Apply formatting to current content
-      const newHTML = applyFormattingToHTML(
-        editorRef.current.innerHTML, 
-        format, 
-        value, 
-        selection.start, 
-        selection.end
-      )
-
-      // Update content
-      setContent(newHTML)
-      editorRef.current.innerHTML = newHTML
-
-      // Show success notification
-      const formatNames: { [key: string]: string } = {
-        bold: 'Bold',
-        italic: 'Italic', 
-        underline: 'Underline',
-        highlight: 'Highlight',
-        color: 'Text Color',
-        fontSize: 'Font Size'
-      }
-      showNotification(`✅ ${formatNames[format] || 'Formatting'} applied!`, 'success')
-
-      // Restore selection
-      setTimeout(() => {
-        restoreSelection(selection.start, selection.end)
-        editorRef.current?.focus()
-      }, 50)
-    } catch (error) {
-      console.error('Formatting error:', error)
-      showNotification('❌ Formatting failed', 'error')
-    }
-  }, [getSelectionInfo, showNotification, applyFormattingToHTML, restoreSelection, setContent])
 
   // Check which formatting options are currently active
   const updateActiveStates = useCallback(() => {
@@ -938,7 +699,112 @@ const Editor: React.FC<{
     }
   }, [setIsFormatActive])
 
-  // Content change handler
+  // Safe document command execution for structural changes
+  const safeExecuteCommand = useCallback((command: string, value?: string) => {
+    try {
+      const result = document.execCommand(command, false, value)
+      // Let the contentEditable handle its own DOM changes
+      // Just update our state to reflect the new content
+      setTimeout(() => {
+        if (editorRef.current) {
+          setContent(editorRef.current.innerHTML)
+          updateActiveStates()
+        }
+      }, 0)
+      return result
+    } catch (error) {
+      console.error(`Command ${command} failed:`, error)
+      return false
+    }
+  }, [setContent, updateActiveStates])
+
+  // Utility: Get current selection details for commenting
+  const getSelectionInfo = useCallback(() => {
+    const selection = window.getSelection()
+    if (!selection || selection.rangeCount === 0 || !editorRef.current) return null
+
+    try {
+      const range = selection.getRangeAt(0)
+      const preSelectionRange = document.createRange()
+      preSelectionRange.selectNodeContents(editorRef.current)
+      preSelectionRange.setEnd(range.startContainer, range.startOffset)
+      
+      const start = preSelectionRange.toString().length
+      const text = range.toString()
+      const end = start + text.length
+
+      return { start, end, text }
+    } catch (error) {
+      console.error('Selection info error:', error)
+      return null
+    }
+  }, [])
+
+  // Simplified formatting function using document.execCommand
+  const applyFormatting = useCallback((format: string, value?: string) => {
+    if (!editorRef.current) {
+      console.warn('Editor ref not available')
+      return
+    }
+
+    const selection = window.getSelection()
+    if (!selection || selection.isCollapsed) {
+      showNotification('⚠️ Please select text to format', 'warning')
+      return
+    }
+
+    try {
+      // Use document.execCommand for formatting
+      let success = false
+      switch (format) {
+        case 'fontSize':
+          success = document.execCommand('fontSize', false, '1')
+          if (success && value) {
+            // Apply custom font size via CSS
+            const selectedElement = selection.getRangeAt(0).commonAncestorContainer
+            if (selectedElement.nodeType === Node.TEXT_NODE && selectedElement.parentElement) {
+              selectedElement.parentElement.style.fontSize = `${value}px`
+            }
+          }
+          break
+        case 'color':
+          success = document.execCommand('foreColor', false, value || '#000000')
+          break
+        case 'highlight':
+          success = document.execCommand('hiliteColor', false, value || '#ffff00')
+          break
+        default:
+          success = document.execCommand(format, false, value)
+      }
+
+      if (success) {
+        const formatNames: { [key: string]: string } = {
+          bold: 'Bold',
+          italic: 'Italic', 
+          underline: 'Underline',
+          highlight: 'Highlight',
+          color: 'Text Color',
+          fontSize: 'Font Size'
+        }
+        showNotification(`✅ ${formatNames[format] || 'Formatting'} applied!`, 'success')
+        
+        // Update content state
+        setTimeout(() => {
+          if (editorRef.current) {
+            setContent(editorRef.current.innerHTML)
+            updateActiveStates()
+          }
+        }, 0)
+      } else {
+        showNotification('❌ Formatting failed', 'error')
+      }
+    } catch (error) {
+      console.error('Formatting error:', error)
+      showNotification('❌ Formatting failed', 'error')
+    }
+  }, [showNotification, setContent, updateActiveStates])
+
+  // Content change handler - only read from editor, don't write to it
   const handleContentChange = useCallback(() => {
     if (editorRef.current) {
       setContent(editorRef.current.innerHTML)
@@ -986,7 +852,7 @@ const Editor: React.FC<{
           {/* Bold, Italic, Underline */}
           <button
             onMouseDown={(e) => e.preventDefault()}
-            onClick={() => safeExecuteCommand('bold')}
+            onClick={() => applyFormatting('bold')}
             title="Bold"
             className={`p-2.5 rounded-xl transition-all duration-200 ${
               isFormatActive.bold
@@ -999,7 +865,7 @@ const Editor: React.FC<{
           
           <button
             onMouseDown={(e) => e.preventDefault()}
-            onClick={() => safeExecuteCommand('italic')}
+            onClick={() => applyFormatting('italic')}
             title="Italic"
             className={`p-2.5 rounded-xl transition-all duration-200 ${
               isFormatActive.italic
@@ -1012,7 +878,7 @@ const Editor: React.FC<{
           
           <button
             onMouseDown={(e) => e.preventDefault()}
-            onClick={() => safeExecuteCommand('underline')}
+            onClick={() => applyFormatting('underline')}
             title="Underline"
             className={`p-2.5 rounded-xl transition-all duration-200 ${
               isFormatActive.underline
@@ -1053,7 +919,7 @@ const Editor: React.FC<{
               value={textColor}
               onChange={(e) => {
                 setTextColor(e.target.value)
-                safeExecuteCommand('foreColor', e.target.value)
+                applyFormatting('foreColor', e.target.value)
               }}
               className="w-8 h-8 rounded-xl cursor-pointer bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600"
               title="Text Color"
@@ -1068,7 +934,7 @@ const Editor: React.FC<{
               value={highlightColor}
               onChange={(e) => {
                 setHighlightColor(e.target.value)
-                safeExecuteCommand('hiliteColor', e.target.value)
+                applyFormatting('hiliteColor', e.target.value)
               }}
               className="w-8 h-8 rounded-xl cursor-pointer bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600"
               title="Highlight Color - Select text first, then choose color"
@@ -1080,7 +946,7 @@ const Editor: React.FC<{
           {/* Lists */}
           <button
             onMouseDown={(e) => e.preventDefault()}
-            onClick={() => safeExecuteCommand('insertUnorderedList')}
+            onClick={() => applyFormatting('insertUnorderedList')}
             className={`p-2.5 rounded-xl transition-all duration-200 ${
               isFormatActive.insertUnorderedList
                 ? 'bg-blue-600 text-white shadow-md'
@@ -1093,7 +959,7 @@ const Editor: React.FC<{
 
           <button
             onMouseDown={(e) => e.preventDefault()}
-            onClick={() => safeExecuteCommand('insertOrderedList')}
+            onClick={() => applyFormatting('insertOrderedList')}
             className={`p-2.5 rounded-xl transition-all duration-200 ${
               isFormatActive.insertOrderedList
                 ? 'bg-blue-600 text-white shadow-md'
@@ -1109,7 +975,7 @@ const Editor: React.FC<{
           {/* Alignment */}
           <button
             onMouseDown={(e) => e.preventDefault()}
-            onClick={() => safeExecuteCommand('justifyLeft')}
+            onClick={() => applyFormatting('justifyLeft')}
             className={`p-2.5 rounded-xl transition-all duration-200 ${
               isFormatActive.justifyLeft
                 ? 'bg-blue-600 text-white shadow-md'
@@ -1122,7 +988,7 @@ const Editor: React.FC<{
 
           <button
             onMouseDown={(e) => e.preventDefault()}
-            onClick={() => safeExecuteCommand('justifyCenter')}
+            onClick={() => applyFormatting('justifyCenter')}
             className={`p-2.5 rounded-xl transition-all duration-200 ${
               isFormatActive.justifyCenter
                 ? 'bg-blue-600 text-white shadow-md'
@@ -1135,7 +1001,7 @@ const Editor: React.FC<{
 
           <button
             onMouseDown={(e) => e.preventDefault()}
-            onClick={() => safeExecuteCommand('justifyRight')}
+            onClick={() => applyFormatting('justifyRight')}
             className={`p-2.5 rounded-xl transition-all duration-200 ${
               isFormatActive.justifyRight
                 ? 'bg-blue-600 text-white shadow-md'
@@ -1180,7 +1046,6 @@ const Editor: React.FC<{
           onMouseUp={handleSelectionChange}
           onKeyUp={handleSelectionChange}
           suppressContentEditableWarning={true}
-          dangerouslySetInnerHTML={{ __html: content || '' }}
           className="w-full h-full outline-none bg-transparent text-gray-900 dark:text-white text-lg leading-relaxed font-medium [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-gray-400 [&:empty]:before:pointer-events-none selection:bg-blue-200 dark:selection:bg-blue-800"
           style={{
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
@@ -1873,7 +1738,7 @@ const CollabZone: React.FC = () => {
                 >
                   <button
                     onClick={handleNewDoc}
-                    className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-601 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-bold shadow-xl shadow-blue-500/30 hover:scale-105 text-base"
+                    className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-bold shadow-xl shadow-blue-500/30 hover:scale-105 text-base"
                   >
                     <Plus className="w-5 h-5" />
                     Create Document
