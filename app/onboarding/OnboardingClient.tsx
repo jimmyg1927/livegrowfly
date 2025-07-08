@@ -122,42 +122,87 @@ export default function OnboardingClient() {
   }
 
   const handleSubmit = async () => {
-    if (submittingRef.current) return
+    console.log('🚀 === ONBOARDING SUBMIT STARTED ===')
+    console.log('🚀 Plan:', plan)
+    console.log('🚀 Form data:', form)
+    console.log('🚀 Has referral code:', hasReferralCode)
+    console.log('🚀 Submitting ref current:', submittingRef.current)
+    
+    // Check current auth state
+    console.log('🔍 Current localStorage token:', localStorage.getItem('growfly_jwt'))
+    console.log('🔍 Current cookies:', document.cookie)
+    console.log('🔍 Current URL params:', window.location.search)
+    console.log('🔍 Current URL:', window.location.href)
+
+    if (submittingRef.current) {
+      console.log('⚠️ Already submitting, returning early')
+      return
+    }
     submittingRef.current = true
 
     if (!validateStep()) {
+      console.log('❌ Validation failed, returning early')
       submittingRef.current = false
       return
     }
+    
+    console.log('✅ Validation passed, setting loading to true')
     setLoading(true)
 
     try {
-      // ✅ UPDATED: Use API client for signup
-      const signupResult = await authAPI.signup({
+      console.log('🔥 === STARTING SIGNUP API CALL ===')
+      const signupPayload = {
         name: form.name,
         email: form.email,
         password: form.password,
         jobTitle: form.jobTitle,
         industry: form.industry,
-        ref: form.referralCode || undefined, // Include referral code if present
-        plan, // This is now just for tracking intended plan
-      })
+        ref: form.referralCode || undefined,
+        plan,
+      }
+      console.log('🔥 Signup payload:', signupPayload)
+
+      // ✅ UPDATED: Use API client for signup
+      const signupResult = await authAPI.signup(signupPayload)
+      
+      console.log('🔥 === SIGNUP API RESPONSE ===')
+      console.log('🔥 Signup result:', signupResult)
+      console.log('🔥 Signup error:', signupResult.error)
+      console.log('🔥 Signup data:', signupResult.data)
       
       if (signupResult.error) {
+        console.log('❌ === SIGNUP ERROR HANDLING ===')
+        console.log('❌ Error type:', signupResult.error)
+        
         if (signupResult.error === 'User already exists.') {
+          console.log('❌ User already exists - showing toast and returning')
           toast.error('❌ That email is already registered.')
+          submittingRef.current = false
+          setLoading(false)
           return
         }
+        console.log('❌ Throwing signup error:', signupResult.error)
         throw new Error(signupResult.error)
       }
 
       const signupData = signupResult.data
+      console.log('✅ === SIGNUP SUCCESS ===')
+      console.log('✅ Signup data:', signupData)
+      console.log('✅ Token in response:', signupData?.token ? 'YES' : 'NO')
+      console.log('✅ Token value:', signupData?.token)
       
       // ✅ Token is automatically stored by API client
       // No need for manual localStorage.setItem or cookie setting
+      console.log('ℹ️ Token should be automatically stored by API client')
+      
+      // Check if token was actually stored
+      setTimeout(() => {
+        console.log('🔍 Post-signup localStorage token:', localStorage.getItem('growfly_jwt'))
+        console.log('🔍 Post-signup cookies:', document.cookie)
+      }, 100)
 
-      // ✅ UPDATED: Use API client for settings
-      const settingsResult = await apiClient.put('/api/user/settings', {
+      console.log('🔧 === STARTING SETTINGS API CALL ===')
+      const settingsPayload = {
         brandName: form.companyName,
         brandDescription: form.brandDescription,
         brandVoice: form.brandVoice,
@@ -168,40 +213,86 @@ export default function OnboardingClient() {
         goals: form.goals,
         totalXP: xp,
         hasCompletedOnboarding: true,
-      })
+      }
+      console.log('🔧 Settings payload:', settingsPayload)
+
+      // ✅ UPDATED: Use API client for settings
+      const settingsResult = await apiClient.put('/api/user/settings', settingsPayload)
+      
+      console.log('🔧 === SETTINGS API RESPONSE ===')
+      console.log('🔧 Settings result:', settingsResult)
+      console.log('🔧 Settings error:', settingsResult.error)
+      console.log('🔧 Settings data:', settingsResult.data)
       
       if (settingsResult.error) {
+        console.log('❌ Settings failed:', settingsResult.error)
         throw new Error('Failed to save settings.')
       }
 
+      console.log('✅ Settings saved successfully')
+
       // Handle plan routing
+      console.log('🎯 === PLAN ROUTING LOGIC ===')
+      console.log('🎯 Plan:', plan)
+      console.log('🎯 Has referral code:', hasReferralCode)
+
       if (plan === 'free') {
+        console.log('🎯 === FREE PLAN FLOW ===')
         const welcomeMessage = hasReferralCode 
           ? '🎉 Welcome to Growfly! You have 40 prompts to get started!' 
           : '🎉 Welcome to Growfly!'
+        console.log('🎯 Welcome message:', welcomeMessage)
         toast.success(welcomeMessage)
         
         // ✅ ADDED: Set tutorial trigger for new users
+        console.log('🎯 Setting tutorial trigger in sessionStorage')
         sessionStorage.setItem('justCompletedOnboarding', 'true')
         
+        console.log('🎯 About to navigate to dashboard, current URL:', window.location.href)
+        console.log('🎯 Redirecting to /dashboard via router.push')
         router.push('/dashboard')
       } else {
+        console.log('🎯 === PAID PLAN FLOW ===')
+        console.log('🎯 Creating Stripe checkout session for plan:', plan)
+        
         // ✅ UPDATED: Use API client for Stripe checkout
         const stripeResult = await apiClient.post('/api/checkout/create-checkout-session', { 
           planId: plan 
         })
         
+        console.log('🎯 === STRIPE CHECKOUT RESPONSE ===')
+        console.log('🎯 Stripe result:', stripeResult)
+        console.log('🎯 Stripe error:', stripeResult.error)
+        console.log('🎯 Stripe data:', stripeResult.data)
+        console.log('🎯 Stripe URL:', stripeResult.data?.url)
+        
         if (stripeResult.error || !stripeResult.data?.url) {
+          console.log('❌ Stripe session failed')
           throw new Error('Stripe session failed.')
         }
         
         // ✅ ADDED: Set tutorial trigger for paid plan users too
+        console.log('🎯 Setting tutorial trigger in sessionStorage for paid user')
         sessionStorage.setItem('justCompletedOnboarding', 'true')
+        
+        console.log('🎯 About to redirect to Stripe, current URL:', window.location.href)
+        console.log('🎯 Redirecting to Stripe checkout:', stripeResult.data.url)
         window.location.href = stripeResult.data.url
       }
+
+      console.log('✅ === ONBOARDING FLOW COMPLETED SUCCESSFULLY ===')
+
     } catch (err: any) {
+      console.log('❌ === ONBOARDING ERROR CAUGHT ===')
+      console.log('❌ Error object:', err)
+      console.log('❌ Error message:', err.message)
+      console.log('❌ Error stack:', err.stack)
+      console.log('❌ Error name:', err.name)
       toast.error(`❌ ${err.message || 'Error during onboarding.'}`)
     } finally {
+      console.log('🏁 === ONBOARDING FINALLY BLOCK ===')
+      console.log('🏁 Setting loading to false')
+      console.log('🏁 Setting submittingRef to false')
       setLoading(false)
       submittingRef.current = false
     }
