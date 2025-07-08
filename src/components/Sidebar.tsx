@@ -16,16 +16,15 @@ import {
   HiOutlineShieldCheck,
   HiOutlineAdjustments,
   HiOutlineMenuAlt2,
-  HiOutlineMail, // Added for email icon
+  HiOutlineMail,
 } from 'react-icons/hi'
 import { FaImages } from 'react-icons/fa'
 
-// ✅ UPDATED: Gallery component with data-tutorial attribute for tutorial targeting
+// ✅ Gallery component
 const SimpleImageGallery: React.FC<{
   isCollapsed: boolean
 }> = ({ isCollapsed }) => {
   if (isCollapsed) {
-    // Collapsed state - show icon only with tooltip
     return (
       <Link
         href="/gallery"
@@ -36,7 +35,6 @@ const SimpleImageGallery: React.FC<{
       >
         <FaImages className="h-5 w-5 flex-shrink-0" />
         
-        {/* Tooltip for collapsed state */}
         <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
           Image Gallery
         </div>
@@ -44,7 +42,6 @@ const SimpleImageGallery: React.FC<{
     )
   }
 
-  // Expanded state - simple link only
   return (
     <Link
       href="/gallery"
@@ -58,7 +55,7 @@ const SimpleImageGallery: React.FC<{
   )
 }
 
-// ✅ UPDATED: Navigation items with data-tutorial attributes for tutorial targeting
+// ✅ Primary Navigation
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: HiOutlineHome, dataNa: 'dashboard', tutorialTarget: 'Dashboard' },
   { name: 'Collab Zone', href: '/collab-zone', icon: HiOutlineUserGroup, dataNa: 'collab-zone', tutorialTarget: 'Collab Zone' },
@@ -66,15 +63,15 @@ const navItems = [
   { name: 'Wishlist', href: '/wishlist', icon: HiOutlineHeart, dataNa: 'wishlist', tutorialTarget: 'Wishlist' },
 ]
 
-// Secondary features - less frequently used
+// ✅ Secondary features
 const secondaryItems = [
   { name: 'Education Hub', href: '/nerd-mode', icon: HiOutlineLightBulb, dataNa: 'education-hub' },
   { name: 'Refer a Friend', href: '/refer', icon: HiOutlineUserAdd, dataNa: 'refer' },
   { name: 'Change Plan', href: '/change-plan', icon: HiOutlineCurrencyPound, dataNa: 'change-plan' },
 ]
 
-// ✅ NEW: Email item positioned above settings
-const emailItems = [
+// ✅ NEW: Email and Trusted Partners together
+const comingSoonItems = [
   { 
     name: 'Email', 
     href: '/email', 
@@ -83,12 +80,6 @@ const emailItems = [
     tutorialTarget: 'Email',
     isComingSoon: true 
   },
-]
-
-// ✅ UPDATED: Settings group with Trusted Partners having Soon badge
-const settingsItems = [
-  { name: 'Settings', href: '/settings', icon: HiOutlineCog, dataNa: 'settings' },
-  { name: 'Brand Settings', href: '/brand-settings', icon: HiOutlineAdjustments, dataNa: 'brand-settings' },
   { 
     name: 'Trusted Partners', 
     href: '/trusted-partners', 
@@ -98,11 +89,16 @@ const settingsItems = [
   },
 ]
 
+// ✅ Settings items (just the core settings)
+const settingsItems = [
+  { name: 'Settings', href: '/settings', icon: HiOutlineCog, dataNa: 'settings' },
+  { name: 'Brand Settings', href: '/brand-settings', icon: HiOutlineAdjustments, dataNa: 'brand-settings' },
+]
+
 export default function Sidebar() {
   const pathname = usePathname() || ''
   const [isCollapsed, setIsCollapsed] = useState(false)
 
-  // ✅ UPDATED: Added 404 routes to hidden routes
   const hiddenRoutes = [
     '/onboarding',
     '/signup',
@@ -116,7 +112,6 @@ export default function Sidebar() {
     '/not-found',
   ]
   
-  // ✅ Also check if current pathname is a 404 page (Next.js sometimes uses different patterns)
   const is404Page = pathname === '/404' || pathname === '/not-found' || 
                    document?.title?.includes('404') || document?.title?.includes('Not Found')
   
@@ -194,7 +189,6 @@ export default function Sidebar() {
             />
           </Link>
           
-          {/* ✅ UPDATED: More Subtle and Friendly Collapse Toggle */}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className={`hidden sm:block absolute -right-1 top-1/2 transform -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white/70 hover:text-white rounded-lg p-1.5 transition-all duration-200 hover:shadow-sm ${
@@ -217,20 +211,20 @@ export default function Sidebar() {
           {/* Primary Navigation */}
           <NavSection items={navItems} />
           
-          {/* ✅ SIMPLIFIED: Gallery - just a simple link, no quick preview */}
+          {/* Gallery */}
           <SimpleImageGallery isCollapsed={isCollapsed} />
           
           {/* Secondary Features */}
           <NavSection items={secondaryItems} showDivider={true} />
           
-          {/* ✅ NEW: Email Section - positioned above settings */}
-          <NavSection items={emailItems} showDivider={true} />
+          {/* ✅ NEW: Coming Soon Features (Email + Trusted Partners) */}
+          <NavSection items={comingSoonItems} showDivider={true} />
           
-          {/* ✅ UPDATED: Settings Group - Trusted Partners now has Soon badge */}
-          <NavSection items={settingsItems} showDivider={false} />
+          {/* ✅ Settings (Settings + Brand Settings) */}
+          <NavSection items={settingsItems} showDivider={true} />
         </nav>
 
-        {/* ✅ UPDATED: Logout Button with Better rounded Corners */}
+        {/* Logout Button */}
         <div className={`w-full pt-4 border-t border-white/10 transition-all duration-200 ${isCollapsed ? 'px-2' : 'px-2 sm:px-4'}`}>
           <button
             onClick={() => {
@@ -247,7 +241,6 @@ export default function Sidebar() {
               Logout
             </span>
             
-            {/* Tooltip for collapsed state */}
             {isCollapsed && (
               <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
                 Logout

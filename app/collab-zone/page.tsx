@@ -596,7 +596,9 @@ const Editor: React.FC<{
   showComments: boolean
   selectedText?: string
   setSelectedText?: (text: string) => void
-}> = ({ content, setContent, docId, showComments, selectedText = '', setSelectedText = () => {} }) => {
+  comments?: Comment[]
+  setShowComments?: (show: boolean) => void
+}> = ({ content, setContent, docId, showComments, selectedText = '', setSelectedText = () => {}, comments = [], setShowComments = () => {} }) => {
   const [isFocused, setIsFocused] = useState<boolean>(false)
   const [fontSize, setFontSize] = useState<string>('16')
   const [textColor, setTextColor] = useState<string>('#000000')
@@ -613,8 +615,54 @@ const Editor: React.FC<{
         return
       }
 
-      // Execute the command
-      document.execCommand(command, false, value)
+      // Special handling for highlight color
+      if (command === 'hiliteColor') {
+        if (selection.isCollapsed) {
+          // Create a temporary notification
+          const notification = document.createElement('div')
+          notification.innerHTML = '⚠️ Please select text first to highlight'
+          notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #fef3c7;
+            color: #92400e;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid #fbbf24;
+            z-index: 9999;
+            font-weight: 500;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          `
+          document.body.appendChild(notification)
+          setTimeout(() => {
+            document.body.removeChild(notification)
+          }, 3000)
+          return
+        }
+        
+        // Try backColor first (more reliable)
+        const success = document.execCommand('backColor', false, value)
+        if (!success) {
+          // Fallback: wrap in span with background color
+          try {
+            const range = selection.getRangeAt(0)
+            const span = document.createElement('span')
+            span.style.backgroundColor = value || '#ffff00'
+            span.style.padding = '2px 4px'
+            span.style.borderRadius = '3px'
+            span.className = 'highlighted-text'
+            
+            range.surroundContents(span)
+            selection.removeAllRanges()
+          } catch (fallbackError) {
+            console.error('Highlight fallback failed:', fallbackError)
+          }
+        }
+      } else {
+        // Execute normal commands
+        document.execCommand(command, false, value)
+      }
       
       // Update content
       if (editorRef.current) {
@@ -682,6 +730,43 @@ const Editor: React.FC<{
       document.removeEventListener('selectionchange', handleSelectionChange)
     }
   }, [setSelectedText])
+
+  // Add comment indicators to highlighted text
+  useEffect(() => {
+    if (!editorRef.current) return
+    
+    const addCommentIndicators = () => {
+      const highlightedElements = editorRef.current?.querySelectorAll('.highlighted-text, [style*="background-color"]')
+      
+      highlightedElements?.forEach((element: any) => {
+        const text = element.textContent?.trim()
+        if (!text) return
+        
+        // Check if this highlighted text has comments
+        const hasComments = comments.some(comment => 
+          comment.selectedText && comment.selectedText.includes(text)
+        )
+        
+        if (hasComments && !element.querySelector('.comment-indicator')) {
+          const indicator = document.createElement('span')
+          indicator.className = 'comment-indicator'
+          indicator.innerHTML = ' <sup style="color: #3b82f6; cursor: pointer; font-weight: bold; font-size: 0.75em;">*</sup>'
+          indicator.onclick = (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            setSelectedText(text)
+            setShowComments(true)
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('openComments', { detail: { selectedText: text } }))
+            }
+          }
+          element.appendChild(indicator)
+        }
+      })
+    }
+    
+    addCommentIndicators()
+  }, [comments, content, setSelectedText, setShowComments])
 
   // Enhanced font size handling
   const handleFontSizeChange = (newSize: string) => {
@@ -798,7 +883,7 @@ const Editor: React.FC<{
                 executeCommand('hiliteColor', e.target.value)
               }}
               className="w-8 h-8 rounded-xl cursor-pointer bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600"
-              title="Highlight Color"
+              title="Highlight Color - Select text first, then choose color"
             />
           </div>
 
@@ -908,7 +993,7 @@ const Editor: React.FC<{
           onKeyUp={handleSelectionChange}
           suppressContentEditableWarning={true}
           dangerouslySetInnerHTML={{ __html: content || '' }}
-          className="w-full h-full outline-none bg-transparent text-gray-900 dark:text-white text-lg leading-relaxed font-medium [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-gray-400 [&:empty]:before:pointer-events-none selection:bg-blue-200 dark:selection:bg-blue-800"
+          className="w-full h-full outline-none bg-transparent text-gray-900 dark:text-white text-lg leading-relaxed font-medium [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-gray-400 [&:empty]:before:pointer-events-none selection:bg-blue-200 dark:selection:bg-blue-800 [&_.highlighted-text]:rounded-md [&_.highlighted-text]:px-1 [&_.comment-indicator_sup]:cursor-pointer [&_.comment-indicator_sup]:text-blue-600 [&_.comment-indicator_sup]:hover:scale-110 [&_.comment-indicator_sup]:transition-transform"
           style={{
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             minHeight: '200px'
@@ -1467,6 +1552,8 @@ const CollabZone: React.FC = () => {
               setContent={updateActiveDocContent}
               docId={activeDoc.id}
               showComments={false}
+              comments={comments}
+              setShowComments={setShowComments}
             />
           </div>
         </div>
@@ -1562,6 +1649,8 @@ const CollabZone: React.FC = () => {
                   showComments={false}
                   selectedText={selectedText}
                   setSelectedText={setSelectedText}
+                  comments={comments}
+                  setShowComments={setShowComments}
                 />
               </div>
             </div>
