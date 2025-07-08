@@ -16,6 +16,7 @@ import {
   HiOutlineShieldCheck,
   HiOutlineAdjustments,
   HiOutlineMenuAlt2,
+  HiOutlineMail, // Added for email icon
 } from 'react-icons/hi'
 import { FaImages } from 'react-icons/fa'
 
@@ -70,6 +71,18 @@ const secondaryItems = [
   { name: 'Education Hub', href: '/nerd-mode', icon: HiOutlineLightBulb, dataNa: 'education-hub' },
   { name: 'Refer a Friend', href: '/refer', icon: HiOutlineUserAdd, dataNa: 'refer' },
   { name: 'Change Plan', href: '/change-plan', icon: HiOutlineCurrencyPound, dataNa: 'change-plan' },
+]
+
+// ✅ NEW: Email item positioned above settings
+const emailItems = [
+  { 
+    name: 'Email', 
+    href: '/email', 
+    icon: HiOutlineMail, 
+    dataNa: 'email', 
+    tutorialTarget: 'Email',
+    isComingSoon: true 
+  },
 ]
 
 // Settings group - typically accessed less often
@@ -129,10 +142,23 @@ export default function Sidebar() {
               {item.name}
             </span>
             
+            {/* Coming Soon Badge for Email */}
+            {item.isComingSoon && !isCollapsed && (
+              <div className="px-2 py-0.5 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs rounded-full font-semibold shadow-sm">
+                Soon
+              </div>
+            )}
+            
+            {/* Coming soon badge for collapsed state */}
+            {item.isComingSoon && isCollapsed && (
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full border border-white/20 animate-pulse"></div>
+            )}
+            
             {/* Tooltip for collapsed state */}
             {isCollapsed && (
               <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
                 {item.name}
+                {item.isComingSoon && <div className="text-yellow-400 text-xs">Coming Soon</div>}
               </div>
             )}
           </Link>
@@ -191,8 +217,11 @@ export default function Sidebar() {
           {/* Secondary Features */}
           <NavSection items={secondaryItems} showDivider={true} />
           
+          {/* ✅ NEW: Email Section - positioned above settings */}
+          <NavSection items={emailItems} showDivider={true} />
+          
           {/* Settings Group */}
-          <NavSection items={settingsItems} showDivider={true} />
+          <NavSection items={settingsItems} showDivider={false} />
         </nav>
 
         {/* ✅ UPDATED: Logout Button with Better rounded Corners */}
