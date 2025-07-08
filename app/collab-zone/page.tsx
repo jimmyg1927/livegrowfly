@@ -211,7 +211,7 @@ const DocumentHeader: React.FC<{
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onToggleComments}
-            className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all duration-200 text-sm ${
+            className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-medium transition-all duration-200 text-sm ${
               showComments
                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
                 : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600'
@@ -234,7 +234,7 @@ const DocumentHeader: React.FC<{
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onFullscreen}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-all duration-200 font-medium text-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-all duration-200 font-medium text-sm"
           >
             <Maximize2 className="w-3.5 h-3.5" />
             Focus
@@ -246,7 +246,7 @@ const DocumentHeader: React.FC<{
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowDownloadMenu(!showDownloadMenu)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-violet-600 text-white rounded-lg hover:from-purple-700 hover:to-violet-700 transition-all duration-200 font-medium shadow-lg shadow-purple-500/30 text-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-violet-600 text-white rounded-xl hover:from-purple-700 hover:to-violet-700 transition-all duration-200 font-medium shadow-lg shadow-purple-500/30 text-sm"
             >
               <Download className="w-3.5 h-3.5" />
               Download
@@ -263,7 +263,7 @@ const DocumentHeader: React.FC<{
                     onDownload('pdf')
                     setShowDownloadMenu(false)
                   }}
-                  className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-sm"
+                  className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-colors text-sm"
                 >
                   📄 Download as PDF
                 </button>
@@ -272,7 +272,7 @@ const DocumentHeader: React.FC<{
                     onDownload('docx')
                     setShowDownloadMenu(false)
                   }}
-                  className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-sm"
+                  className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-colors text-sm"
                 >
                   📝 Download as Word
                 </button>
@@ -284,7 +284,7 @@ const DocumentHeader: React.FC<{
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onShare}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium shadow-lg shadow-green-500/30 text-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium shadow-lg shadow-green-500/30 text-sm"
           >
             <Share2 className="w-3.5 h-3.5" />
             Share
@@ -294,7 +294,7 @@ const DocumentHeader: React.FC<{
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onSave}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg shadow-blue-500/30 text-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg shadow-blue-500/30 text-sm"
           >
             <Save className="w-3.5 h-3.5" />
             Save
@@ -601,32 +601,107 @@ const Editor: React.FC<{
   const [fontSize, setFontSize] = useState<string>('16')
   const [textColor, setTextColor] = useState<string>('#000000')
   const [highlightColor, setHighlightColor] = useState<string>('#ffff00')
+  const [isFormatActive, setIsFormatActive] = useState<{ [key: string]: boolean }>({})
   const editorRef = useRef<HTMLDivElement>(null)
 
-  // Simple formatting command execution
+  // Enhanced formatting command execution
   const executeCommand = (command: string, value?: string) => {
-    document.execCommand(command, false, value)
-    if (editorRef.current) {
-      setContent(editorRef.current.innerHTML)
+    try {
+      const selection = window.getSelection()
+      if (!selection || selection.rangeCount === 0) {
+        editorRef.current?.focus()
+        return
+      }
+
+      // Execute the command
+      document.execCommand(command, false, value)
+      
+      // Update content
+      if (editorRef.current) {
+        setContent(editorRef.current.innerHTML)
+      }
+
+      // Check active formatting
+      updateActiveStates()
+      
+      // Restore selection if possible
+      editorRef.current?.focus()
+    } catch (error) {
+      console.error('Command execution error:', error)
+    }
+  }
+
+  // Check which formatting options are currently active
+  const updateActiveStates = () => {
+    try {
+      const newActiveStates = {
+        bold: document.queryCommandState('bold'),
+        italic: document.queryCommandState('italic'),
+        underline: document.queryCommandState('underline'),
+        insertUnorderedList: document.queryCommandState('insertUnorderedList'),
+        insertOrderedList: document.queryCommandState('insertOrderedList'),
+        justifyLeft: document.queryCommandState('justifyLeft'),
+        justifyCenter: document.queryCommandState('justifyCenter'),
+        justifyRight: document.queryCommandState('justifyRight')
+      }
+      setIsFormatActive(newActiveStates)
+    } catch (error) {
+      console.error('Error checking command states:', error)
     }
   }
 
   const handleContentChange = () => {
     if (editorRef.current) {
       setContent(editorRef.current.innerHTML)
+      updateActiveStates()
     }
   }
 
-  // Simple selection detection for comments
+  // Enhanced selection detection for comments
   const handleSelectionChange = () => {
+    try {
+      const selection = window.getSelection()
+      if (selection && !selection.isCollapsed && editorRef.current?.contains(selection.anchorNode)) {
+        const text = selection.toString().trim()
+        if (text && text.length > 0 && setSelectedText) {
+          setSelectedText(text)
+        }
+      } else if (setSelectedText) {
+        setSelectedText('')
+      }
+      updateActiveStates()
+    } catch (error) {
+      console.error('Selection change error:', error)
+    }
+  }
+
+  // Listen for selection changes on the document
+  useEffect(() => {
+    document.addEventListener('selectionchange', handleSelectionChange)
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange)
+    }
+  }, [setSelectedText])
+
+  // Enhanced font size handling
+  const handleFontSizeChange = (newSize: string) => {
+    setFontSize(newSize)
     const selection = window.getSelection()
     if (selection && !selection.isCollapsed) {
-      const text = selection.toString().trim()
-      if (text && text.length > 0 && setSelectedText) {
-        setSelectedText(text)
+      // Wrap selected text in a span with the new font size
+      try {
+        document.execCommand('fontSize', false, '7') // Temporary size
+        const fontElements = editorRef.current?.querySelectorAll('font[size="7"]')
+        fontElements?.forEach(el => {
+          const span = document.createElement('span')
+          span.style.fontSize = newSize + 'px'
+          span.innerHTML = el.innerHTML
+          el.parentNode?.replaceChild(span, el)
+        })
+        handleContentChange()
+      } catch (error) {
+        console.error('Font size change error:', error)
       }
-    } else if (setSelectedText) {
-      setSelectedText('')
     }
   }
 
@@ -640,8 +715,11 @@ const Editor: React.FC<{
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('bold')}
             title="Bold"
-            style={{ background: 'none', border: 'none' }}
-            className="p-2.5 text-gray-600 dark:text-gray-400 hover:text-white hover:bg-blue-500 rounded-xl transition-all duration-200"
+            className={`p-2.5 rounded-xl transition-all duration-200 ${
+              isFormatActive.bold
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-blue-600 hover:text-white'
+            }`}
           >
             <Bold className="w-4 h-4" />
           </button>
@@ -650,8 +728,11 @@ const Editor: React.FC<{
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('italic')}
             title="Italic"
-            style={{ background: 'none', border: 'none' }}
-            className="p-2.5 text-gray-600 dark:text-gray-400 hover:text-white hover:bg-blue-500 rounded-xl transition-all duration-200"
+            className={`p-2.5 rounded-xl transition-all duration-200 ${
+              isFormatActive.italic
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-blue-600 hover:text-white'
+            }`}
           >
             <Italic className="w-4 h-4" />
           </button>
@@ -660,8 +741,11 @@ const Editor: React.FC<{
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('underline')}
             title="Underline"
-            style={{ background: 'none', border: 'none' }}
-            className="p-2.5 text-gray-600 dark:text-gray-400 hover:text-white hover:bg-blue-500 rounded-xl transition-all duration-200"
+            className={`p-2.5 rounded-xl transition-all duration-200 ${
+              isFormatActive.underline
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-blue-600 hover:text-white'
+            }`}
           >
             <Underline className="w-4 h-4" />
           </button>
@@ -673,21 +757,7 @@ const Editor: React.FC<{
             <Type className="w-4 h-4 text-gray-500 dark:text-gray-400" />
             <select
               value={fontSize}
-              onChange={(e) => {
-                setFontSize(e.target.value)
-                executeCommand('fontSize', '7')
-                const selection = window.getSelection()
-                if (selection && selection.rangeCount > 0) {
-                  document.execCommand('removeFormat', false, undefined)
-                  document.execCommand('fontSize', false, '7')
-                  const fontElements = document.querySelectorAll('font[size="7"]')
-                  fontElements.forEach(el => {
-                    el.removeAttribute('size')
-                    ;(el as HTMLElement).style.fontSize = e.target.value + 'px'
-                  })
-                  handleContentChange()
-                }
-              }}
+              onChange={(e) => handleFontSizeChange(e.target.value)}
               className="px-3 py-2 text-sm rounded-xl bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-slate-600 focus:ring-1 focus:ring-blue-500/50"
             >
               <option value="12">12px</option>
@@ -738,8 +808,11 @@ const Editor: React.FC<{
           <button
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('insertUnorderedList')}
-            style={{ background: 'none', border: 'none' }}
-            className="p-2.5 text-gray-600 dark:text-gray-400 hover:text-white hover:bg-blue-500 rounded-xl transition-all duration-200"
+            className={`p-2.5 rounded-xl transition-all duration-200 ${
+              isFormatActive.insertUnorderedList
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-blue-600 hover:text-white'
+            }`}
             title="Bullet List"
           >
             <List className="w-4 h-4" />
@@ -748,8 +821,11 @@ const Editor: React.FC<{
           <button
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('insertOrderedList')}
-            style={{ background: 'none', border: 'none' }}
-            className="p-2.5 text-gray-600 dark:text-gray-400 hover:text-white hover:bg-blue-500 rounded-xl transition-all duration-200"
+            className={`p-2.5 rounded-xl transition-all duration-200 ${
+              isFormatActive.insertOrderedList
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-blue-600 hover:text-white'
+            }`}
             title="Numbered List"
           >
             <ListOrdered className="w-4 h-4" />
@@ -761,8 +837,11 @@ const Editor: React.FC<{
           <button
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('justifyLeft')}
-            style={{ background: 'none', border: 'none' }}
-            className="p-2.5 text-gray-600 dark:text-gray-400 hover:text-white hover:bg-blue-500 rounded-xl transition-all duration-200"
+            className={`p-2.5 rounded-xl transition-all duration-200 ${
+              isFormatActive.justifyLeft
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-blue-600 hover:text-white'
+            }`}
             title="Align Left"
           >
             <AlignLeft className="w-4 h-4" />
@@ -771,8 +850,11 @@ const Editor: React.FC<{
           <button
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('justifyCenter')}
-            style={{ background: 'none', border: 'none' }}
-            className="p-2.5 text-gray-600 dark:text-gray-400 hover:text-white hover:bg-blue-500 rounded-xl transition-all duration-200"
+            className={`p-2.5 rounded-xl transition-all duration-200 ${
+              isFormatActive.justifyCenter
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-blue-600 hover:text-white'
+            }`}
             title="Align Center"
           >
             <AlignCenter className="w-4 h-4" />
@@ -781,8 +863,11 @@ const Editor: React.FC<{
           <button
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('justifyRight')}
-            style={{ background: 'none', border: 'none' }}
-            className="p-2.5 text-gray-600 dark:text-gray-400 hover:text-white hover:bg-blue-500 rounded-xl transition-all duration-200"
+            className={`p-2.5 rounded-xl transition-all duration-200 ${
+              isFormatActive.justifyRight
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-blue-600 hover:text-white'
+            }`}
             title="Align Right"
           >
             <AlignRight className="w-4 h-4" />

@@ -85,11 +85,17 @@ const emailItems = [
   },
 ]
 
-// Settings group - typically accessed less often
+// ✅ UPDATED: Settings group with Trusted Partners having Soon badge
 const settingsItems = [
   { name: 'Settings', href: '/settings', icon: HiOutlineCog, dataNa: 'settings' },
   { name: 'Brand Settings', href: '/brand-settings', icon: HiOutlineAdjustments, dataNa: 'brand-settings' },
-  { name: 'Trusted Partners', href: '/trusted-partners', icon: HiOutlineShieldCheck, dataNa: 'trusted-partners' },
+  { 
+    name: 'Trusted Partners', 
+    href: '/trusted-partners', 
+    icon: HiOutlineShieldCheck, 
+    dataNa: 'trusted-partners',
+    isComingSoon: true 
+  },
 ]
 
 export default function Sidebar() {
@@ -142,7 +148,7 @@ export default function Sidebar() {
               {item.name}
             </span>
             
-            {/* Coming Soon Badge for Email */}
+            {/* Coming Soon Badge for items with isComingSoon */}
             {item.isComingSoon && !isCollapsed && (
               <div className="px-2 py-0.5 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs rounded-full font-semibold shadow-sm">
                 Soon
@@ -220,7 +226,7 @@ export default function Sidebar() {
           {/* ✅ NEW: Email Section - positioned above settings */}
           <NavSection items={emailItems} showDivider={true} />
           
-          {/* Settings Group */}
+          {/* ✅ UPDATED: Settings Group - Trusted Partners now has Soon badge */}
           <NavSection items={settingsItems} showDivider={false} />
         </nav>
 
