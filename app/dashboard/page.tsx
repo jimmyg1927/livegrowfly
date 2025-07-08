@@ -1,2672 +1,1714 @@
-'use client'
+"use client"
 
-import React, { useEffect, useState, useRef, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Image from 'next/image'
-import { HiThumbUp, HiThumbDown, HiX, HiChevronDown, HiChevronUp } from 'react-icons/hi'
-import {
-  FaRegBookmark,
-  FaShareSquare,
-  FaFileDownload,
-  FaRocket,
-  FaChartLine,
-  FaBrain,
-  FaUsers,
-  FaFilePdf,
-  FaFileImage,
-  FaFileAlt,
-  FaTimes,
-  FaPaperclip,
-  FaFileExcel,
-  FaPalette,
-  FaSpinner,
-  FaMagic,
-  FaCheck,
-  FaImages,
-  FaQuestionCircle,
-  FaCopy,
-  FaExclamationTriangle,
-  FaWifi,
-  FaPlug,
-} from 'react-icons/fa'
-import SaveModal from '@/components/SaveModal'
-import FeedbackModal from '@/components/FeedbackModal'
-import streamChat from '@lib/streamChat'
-import { useUserStore } from '@lib/store'
-import GrowflyTutorial from '@/components/tutorial/GrowflyTutorial'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { 
+  FileText, 
+  Plus, 
+  CheckCircle, 
+  AlertCircle,
+  Share2,
+  MessageSquare,
+  Maximize2,
+  Minimize2,
+  Save,
+  Download,
+  Menu,
+  X,
+  Trash2,
+  Send,
+  Copy,
+  Eye,
+  EyeOff,
+  Bold,
+  Italic,
+  Underline,
+  Type,
+  Palette,
+  Highlighter,
+  List,
+  ListOrdered,
+  AlignLeft,
+  AlignCenter,
+  AlignRight
+} from 'lucide-react'
 
-// Use environment variable directly instead of importing from constants
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://glowfly-api-production.up.railway.app'
-
-type Message = {
+// TypeScript interfaces
+interface Document {
   id: string
-  role: 'user' | 'assistant'
+  title: string
   content: string
-  imageUrl?: string
-  followUps?: string[]
-  files?: UploadedFile[]
-  generatedImage?: GeneratedImage
-}
-
-interface UploadedFile {
-  id: string
-  name: string
-  type: string
-  size: number
-  url?: string
-  preview?: string
-  content?: string
-  file?: File
-}
-
-interface GeneratedImage {
-  id: string
-  url: string
-  originalPrompt: string
-  revisedPrompt: string
-  size: string
-  style: string
+  userId: string
   createdAt: string
+  updatedAt: string
 }
 
-interface ImageUsage {
-  subscriptionType: string
-  subscriptionName: string
-  totalPrompts: {
-    used: number
-    limit: number
-    remaining: number
+interface Comment {
+  id: string
+  docId: string
+  documentId?: string
+  userId: string
+  text: string
+  from: number
+  to: number
+  resolved: boolean
+  isRead: boolean
+  createdAt: string
+  selectedText?: string
+  user?: {
+    id: string
+    name?: string
+    email: string
   }
-  dailyImages: {
-    used: number
-    limit: number
-    remaining: number
-  }
-  monthlyImages: {
-    used: number
-    limit: number
-    remaining: number
-  }
-  canGenerate: boolean
-  blockedReason?: string
-  _fallback?: boolean
 }
 
-const PROMPT_LIMITS: Record<string, number> = {
-  free: 20,
-  personal: 400,
-  business: 2000,
+interface StatusMessage {
+  type: 'success' | 'error'
+  text: string
 }
 
-const IMAGE_LIMITS: Record<string, { daily: number; monthly: number }> = {
-  free: { daily: 2, monthly: 10 },
-  personal: { daily: 10, monthly: 50 },
-  business: { daily: 30, monthly: 150 },
+interface ApiResponse<T = any> {
+  success?: boolean
+  error?: string
+  message?: string
+  link?: string
+  data?: T
 }
 
-const MAX_PERSISTENT_MESSAGES = 10
+// API helper functions
+const API_BASE = 'https://glowfly-api-production.up.railway.app/api'
 
-// Enhanced Error Boundary Component
-interface ErrorBoundaryState {
-  hasError: boolean
-  error: Error | null
-  errorInfo: React.ErrorInfo | null
-}
-
-interface ErrorBoundaryProps {
-  children: React.ReactNode
-}
-
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props)
-    this.state = { hasError: false, error: null, errorInfo: null }
-  }
-
-  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
-    return { hasError: true }
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    this.setState({
-      error: error,
-      errorInfo: errorInfo
+const apiCall = async <T = any>(endpoint: string, options: RequestInit = {}): Promise<T> => {
+  try {
+    // Get token from the growfly_jwt cookie
+    const token = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('growfly_jwt='))
+      ?.split('=')[1]
+    
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        ...(options.headers || {}),
+      },
+      credentials: 'include', // Include cookies in requests
+      ...options,
     })
-    console.error('Dashboard Error Boundary caught an error:', error, errorInfo)
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-          <div className="text-center max-w-md mx-4">
-            <div className="text-6xl mb-4">⚠️</div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              Something went wrong
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              We encountered an unexpected error. Please refresh the page or try again later.
-            </p>
-            <div className="space-y-3">
-              <button
-                onClick={() => window.location.reload()}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-              >
-                Refresh Page
-              </button>
-              <button
-                onClick={() => this.setState({ hasError: false, error: null, errorInfo: null })}
-                className="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-              >
-                Try Again
-              </button>
-            </div>
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <details className="mt-6 text-left">
-                <summary className="cursor-pointer text-sm text-gray-500">Error Details</summary>
-                <pre className="mt-2 text-xs bg-gray-100 dark:bg-gray-800 p-3 rounded overflow-auto">
-                  {this.state.error.toString()}
-                  <br />
-                  {this.state.errorInfo?.componentStack}
-                </pre>
-              </details>
-            )}
-          </div>
-        </div>
-      )
+    
+    if (!response.ok) {
+      let errorMessage = 'API call failed'
+      try {
+        const error = await response.json()
+        errorMessage = error.error || error.message || errorMessage
+      } catch {
+        errorMessage = `HTTP ${response.status}: ${response.statusText}`
+      }
+      throw new Error(errorMessage)
     }
-
-    return this.props.children
+    
+    return await response.json()
+  } catch (error) {
+    console.error('API Error:', error)
+    throw error
   }
 }
 
-// Enhanced Loading Skeleton Components
-const UsageCardSkeleton = () => (
-  <div className="animate-pulse">
-    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
-    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-1"></div>
-    <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-  </div>
-)
-
-const MessageSkeleton = () => (
-  <div className="flex justify-start w-full mb-3">
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 max-w-[80%] p-4 rounded-2xl animate-pulse">
-      <div className="space-y-3">
-        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
-        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-4/6"></div>
-      </div>
-    </div>
-  </div>
-)
-
-// Enhanced Network Status Component
-interface NetworkStatusProps {
-  isOnline: boolean
-  isConnecting: boolean
-}
-
-const NetworkStatus: React.FC<NetworkStatusProps> = ({ isOnline, isConnecting }) => {
-  if (isOnline) return null
+// Document Header Component
+const DocumentHeader: React.FC<{
+  activeDoc: Document | null
+  onSave: () => void
+  onShare: () => void
+  onDownload: (format: 'pdf' | 'docx') => void
+  onFullscreen: () => void
+  onToggleComments: () => void
+  showComments: boolean
+  commentsCount: number
+  isAutoSaving: boolean
+  onToggleDocuments: () => void
+  showDocuments: boolean
+}> = ({ 
+  activeDoc, 
+  onSave, 
+  onShare, 
+  onDownload,
+  onFullscreen, 
+  onToggleComments, 
+  showComments, 
+  commentsCount, 
+  isAutoSaving, 
+  onToggleDocuments, 
+  showDocuments 
+}) => {
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false)
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-red-500 text-white p-2 text-center text-sm">
-      <div className="flex items-center justify-center gap-2">
-        {isConnecting ? (
-          <>
-            <FaSpinner className="animate-spin" />
-            <span>Reconnecting...</span>
-          </>
+    <motion.header 
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      className="relative bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border-b border-gray-200/50 dark:border-slate-700/50 px-6 py-3 shadow-sm"
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onToggleDocuments}
+            className={`p-2 rounded-xl transition-all duration-200 ${
+              showDocuments 
+                ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400' 
+                : 'hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400'
+            }`}
+          >
+            <Menu className="w-4 h-4" />
+          </motion.button>
+          
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <FileText className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                {activeDoc?.title || 'Untitled Document'}
+              </h1>
+              {/* Fixed position status that doesn't cause layout shift */}
+              <div className="h-4 relative w-32">
+                <AnimatePresence>
+                  {isAutoSaving && (
+                    <motion.div 
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      className="absolute left-0 top-0 flex items-center gap-1 text-blue-600 dark:text-blue-400 text-xs whitespace-nowrap"
+                    >
+                      <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse" />
+                      Saving...
+                    </motion.div>
+                  )}
+                  {!isAutoSaving && activeDoc && (
+                    <motion.span 
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="absolute left-0 top-0 text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap"
+                    >
+                      Saved {new Date(activeDoc.updatedAt).toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onToggleComments}
+            className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-medium transition-all duration-200 text-sm ${
+              showComments
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+                : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600'
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            Comments
+            {commentsCount > 0 && (
+              <motion.span 
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold"
+              >
+                {commentsCount}
+              </motion.span>
+            )}
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onFullscreen}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-all duration-200 font-medium text-sm"
+          >
+            <Maximize2 className="w-3.5 h-3.5" />
+            Focus
+          </motion.button>
+
+          {/* Download Button with Menu */}
+          <div className="relative">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-violet-600 text-white rounded-xl hover:from-purple-700 hover:to-violet-700 transition-all duration-200 font-medium shadow-lg shadow-purple-500/30 text-sm"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Download
+            </motion.button>
+            
+            {showDownloadMenu && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="absolute top-full right-0 mt-2 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200/50 dark:border-slate-700/50 p-2 z-50 min-w-[150px]"
+              >
+                <button
+                  onClick={() => {
+                    onDownload('pdf')
+                    setShowDownloadMenu(false)
+                  }}
+                  className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-colors text-sm"
+                >
+                  📄 Download as PDF
+                </button>
+                <button
+                  onClick={() => {
+                    onDownload('docx')
+                    setShowDownloadMenu(false)
+                  }}
+                  className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-colors text-sm"
+                >
+                  📝 Download as Word
+                </button>
+              </motion.div>
+            )}
+          </div>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onShare}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium shadow-lg shadow-green-500/30 text-sm"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            Share
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onSave}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg shadow-blue-500/30 text-sm"
+          >
+            <Save className="w-3.5 h-3.5" />
+            Save
+          </motion.button>
+        </div>
+      </div>
+    </motion.header>
+  )
+}
+
+// Documents Sidebar Component
+const DocumentsSidebar: React.FC<{
+  isVisible: boolean
+  docs: Document[]
+  activeDoc: Document | null
+  onSelectDoc: (doc: Document) => void
+  onNewDoc: () => void
+  onDeleteDoc: (docId: string) => void
+  onClose: () => void
+}> = ({ 
+  isVisible, 
+  docs, 
+  activeDoc, 
+  onSelectDoc, 
+  onNewDoc, 
+  onDeleteDoc, 
+  onClose 
+}) => (
+  <motion.div
+    initial={{ x: -400, opacity: 0 }}
+    animate={{ x: 0, opacity: 1 }}
+    exit={{ x: -400, opacity: 0 }}
+    transition={{ type: "spring", damping: 25, stiffness: 300 }}
+    className="fixed left-0 top-0 h-full w-96 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border-r border-gray-200/50 dark:border-slate-700/50 shadow-2xl z-40 flex flex-col"
+  >
+    <div className="flex items-center justify-between p-6 border-b border-gray-200/50 dark:border-slate-700/50">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+          <FileText className="w-5 h-5 text-white" />
+        </div>
+        <h2 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+          Documents
+        </h2>
+      </div>
+      <motion.button
+        whileHover={{ scale: 1.1, rotate: 90 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={onClose}
+        className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-colors"
+      >
+        <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+      </motion.button>
+    </div>
+
+    <div className="p-6">
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={onNewDoc}
+        className="w-full flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-bold shadow-xl shadow-blue-500/30 mb-6"
+      >
+        <Plus className="w-5 h-5" />
+        Create New Document
+      </motion.button>
+    </div>
+
+    <div className="flex-1 overflow-y-auto px-6 pb-6">
+      <div className="space-y-3">
+        {docs.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <FileText className="w-8 h-8 text-gray-400" />
+            </div>
+            <p className="text-gray-500 dark:text-gray-400 font-medium">No documents yet</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Create your first document to get started</p>
+          </div>
         ) : (
-          <>
-            <FaWifi className="opacity-50" />
-            <span>No internet connection</span>
-          </>
+          docs.map((doc, index) => (
+            <motion.div
+              key={doc.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className={`group relative p-4 rounded-2xl cursor-pointer transition-all duration-200 border ${
+                activeDoc?.id === doc.id
+                  ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-700 shadow-lg'
+                  : 'bg-gray-50/50 dark:bg-slate-700/50 border-gray-200/50 dark:border-slate-600/50 hover:bg-gray-100/80 dark:hover:bg-slate-600/80 hover:border-gray-300 dark:hover:border-slate-500'
+              }`}
+              onClick={() => onSelectDoc(doc)}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-gray-900 dark:text-white truncate text-lg mb-1">
+                    {doc.title}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                    {new Date(doc.updatedAt).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 line-clamp-2">
+                    {doc.content ? doc.content.substring(0, 100) + '...' : 'Empty document'}
+                  </p>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDeleteDoc(doc.id)
+                  }}
+                  className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-xl transition-all duration-200 text-red-500"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </motion.button>
+              </div>
+            </motion.div>
+          ))
         )}
+      </div>
+    </div>
+  </motion.div>
+)
+
+// Comments Sidebar Component
+const CommentsSidebar: React.FC<{
+  isVisible: boolean
+  comments: Comment[]
+  activeDocId: string | null
+  onAddComment: (text: string, from: number, to: number, selectedText?: string) => Promise<void>
+  onDeleteComment: (commentId: string) => Promise<void>
+  onClose: () => void
+  selectedText?: string
+}> = ({ 
+  isVisible, 
+  comments, 
+  activeDocId, 
+  onAddComment, 
+  onDeleteComment, 
+  onClose,
+  selectedText = ''
+}) => {
+  const [newComment, setNewComment] = useState<string>('')
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+  
+  const docComments = comments.filter(c => 
+    c.documentId === activeDocId || c.docId === activeDocId
+  )
+
+  const handleSubmit = async (): Promise<void> => {
+    if (!newComment.trim() || isSubmitting) return
+    
+    setIsSubmitting(true)
+    try {
+      await onAddComment(newComment, 0, 0, selectedText)
+      setNewComment('')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <motion.div
+      initial={{ x: 400, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={{ x: 400, opacity: 0 }}
+      transition={{ type: "spring", damping: 25, stiffness: 300 }}
+      className="fixed right-0 top-0 h-full w-96 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border-l border-gray-200/50 dark:border-slate-700/50 shadow-2xl z-40 flex flex-col"
+    >
+      <div className="flex items-center justify-between p-6 border-b border-gray-200/50 dark:border-slate-700/50">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
+            <MessageSquare className="w-5 h-5 text-white" />
+          </div>
+          <h2 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+            Comments ({docComments.length})
+          </h2>
+        </div>
+        <motion.button
+          whileHover={{ scale: 1.1, rotate: 90 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={onClose}
+          className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-colors"
+        >
+          <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+        </motion.button>
+      </div>
+
+      <div className="p-6 border-b border-gray-200/50 dark:border-slate-700/50">
+        <div className="space-y-4">
+          {/* Selected text context */}
+          {selectedText && selectedText.trim() && (
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border-l-4 border-blue-500">
+              <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mb-1">Commenting on selected text:</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300 italic">"{selectedText}"</p>
+            </div>
+          )}
+          
+          <textarea
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder={selectedText && selectedText.trim() ? "Add your comment about the selected text..." : "Add a comment..."}
+            className="w-full p-4 bg-gray-50/80 dark:bg-slate-700/80 border border-gray-200/50 dark:border-slate-600/50 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all duration-200 text-sm leading-relaxed"
+            rows={3}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                handleSubmit()
+              }
+            }}
+          />
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleSubmit}
+            disabled={!newComment.trim() || isSubmitting}
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
+            {isSubmitting ? 'Adding...' : (selectedText && selectedText.trim()) ? 'Add Comment on Selection' : 'Add Comment'}
+          </motion.button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="space-y-4">
+          {docComments.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gray-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <MessageSquare className="w-8 h-8 text-gray-400" />
+              </div>
+              <p className="text-gray-500 dark:text-gray-400 font-medium">No comments yet</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Select text and add a comment to start collaborating</p>
+            </div>
+          ) : (
+            docComments.map((comment, index) => (
+              <motion.div
+                key={comment.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="group p-4 bg-gray-50/80 dark:bg-slate-700/80 rounded-2xl border border-gray-200/50 dark:border-slate-600/50"
+              >
+                {/* Selected text context (if available) */}
+                {comment.selectedText && (
+                  <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border-l-4 border-blue-500">
+                    <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mb-1">Commenting on:</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 italic">"{comment.selectedText}"</p>
+                  </div>
+                )}
+                
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm font-medium">
+                        {(comment.user?.name || comment.user?.email || 'A')[0].toUpperCase()}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white text-sm">
+                        {comment.user?.name || comment.user?.email || 'Anonymous'}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {new Date(comment.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => onDeleteComment(comment.id)}
+                    className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-all duration-200 text-red-500"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </motion.button>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+                  {comment.text}
+                </p>
+              </motion.div>
+            ))
+          )}
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+// Rich Text Editor Component
+const Editor: React.FC<{
+  content: string
+  setContent: (content: string) => void
+  docId: string
+  showComments: boolean
+  selectedText?: string
+  setSelectedText?: (text: string) => void
+}> = ({ content, setContent, docId, showComments, selectedText = '', setSelectedText = () => {} }) => {
+  const [isFocused, setIsFocused] = useState<boolean>(false)
+  const [fontSize, setFontSize] = useState<string>('16')
+  const [textColor, setTextColor] = useState<string>('#000000')
+  const [highlightColor, setHighlightColor] = useState<string>('#ffff00')
+  const [isFormatActive, setIsFormatActive] = useState<{ [key: string]: boolean }>({})
+  const editorRef = useRef<HTMLDivElement>(null)
+
+  // Enhanced formatting command execution
+  const executeCommand = (command: string, value?: string) => {
+    try {
+      const selection = window.getSelection()
+      if (!selection || selection.rangeCount === 0) {
+        editorRef.current?.focus()
+        return
+      }
+
+      // Special handling for highlight color
+      if (command === 'hiliteColor') {
+        if (selection.isCollapsed) {
+          // Create a temporary notification
+          const notification = document.createElement('div')
+          notification.innerHTML = '⚠️ Please select text first to highlight'
+          notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #fef3c7;
+            color: #92400e;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid #fbbf24;
+            z-index: 9999;
+            font-weight: 500;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          `
+          document.body.appendChild(notification)
+          setTimeout(() => {
+            if (document.body.contains(notification)) {
+              document.body.removeChild(notification)
+            }
+          }, 3000)
+          return
+        }
+        
+        // Simple highlight approach
+        try {
+          const success = document.execCommand('backColor', false, value)
+          if (success) {
+            // Show success notification
+            const notification = document.createElement('div')
+            notification.innerHTML = '✅ Text highlighted!'
+            notification.style.cssText = `
+              position: fixed;
+              top: 20px;
+              right: 20px;
+              background: #d1fae5;
+              color: #047857;
+              padding: 12px 16px;
+              border-radius: 8px;
+              border: 1px solid #10b981;
+              z-index: 9999;
+              font-weight: 500;
+              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            `
+            document.body.appendChild(notification)
+            setTimeout(() => {
+              if (document.body.contains(notification)) {
+                document.body.removeChild(notification)
+              }
+            }, 2000)
+          }
+        } catch (error) {
+          console.error('Highlight failed:', error)
+        }
+        
+        // Update content
+        setTimeout(() => {
+          if (editorRef.current) {
+            setContent(editorRef.current.innerHTML)
+          }
+        }, 100)
+      } else {
+        // Execute normal commands
+        document.execCommand(command, false, value)
+      }
+      
+      // Update content
+      if (editorRef.current) {
+        setContent(editorRef.current.innerHTML)
+      }
+
+      // Check active formatting
+      updateActiveStates()
+      
+      // Restore selection if possible
+      editorRef.current?.focus()
+    } catch (error) {
+      console.error('Command execution error:', error)
+    }
+  }
+
+  // Check which formatting options are currently active
+  const updateActiveStates = () => {
+    try {
+      const newActiveStates = {
+        bold: document.queryCommandState('bold'),
+        italic: document.queryCommandState('italic'),
+        underline: document.queryCommandState('underline'),
+        insertUnorderedList: document.queryCommandState('insertUnorderedList'),
+        insertOrderedList: document.queryCommandState('insertOrderedList'),
+        justifyLeft: document.queryCommandState('justifyLeft'),
+        justifyCenter: document.queryCommandState('justifyCenter'),
+        justifyRight: document.queryCommandState('justifyRight')
+      }
+      setIsFormatActive(newActiveStates)
+    } catch (error) {
+      console.error('Error checking command states:', error)
+    }
+  }
+
+  const handleContentChange = () => {
+    if (editorRef.current) {
+      setContent(editorRef.current.innerHTML)
+      updateActiveStates()
+    }
+  }
+
+  // Enhanced selection detection for comments
+  const handleSelectionChange = () => {
+    try {
+      const selection = window.getSelection()
+      if (selection && !selection.isCollapsed && editorRef.current?.contains(selection.anchorNode)) {
+        const text = selection.toString().trim()
+        if (text && text.length > 0 && setSelectedText) {
+          setSelectedText(text)
+        }
+      } else if (setSelectedText) {
+        setSelectedText('')
+      }
+      updateActiveStates()
+    } catch (error) {
+      console.error('Selection change error:', error)
+    }
+  }
+
+  // Listen for selection changes on the document
+  useEffect(() => {
+    document.addEventListener('selectionchange', handleSelectionChange)
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange)
+    }
+  }, [setSelectedText])
+
+  // Enhanced font size handling
+  const handleFontSizeChange = (newSize: string) => {
+    setFontSize(newSize)
+    const selection = window.getSelection()
+    if (selection && !selection.isCollapsed) {
+      // Wrap selected text in a span with the new font size
+      try {
+        document.execCommand('fontSize', false, '7') // Temporary size
+        const fontElements = editorRef.current?.querySelectorAll('font[size="7"]')
+        fontElements?.forEach(el => {
+          const span = document.createElement('span')
+          span.style.fontSize = newSize + 'px'
+          span.innerHTML = el.innerHTML
+          el.parentNode?.replaceChild(span, el)
+        })
+        handleContentChange()
+      } catch (error) {
+        console.error('Font size change error:', error)
+      }
+    }
+  }
+
+  return (
+    <div className="h-full flex flex-col">
+      {/* Formatting Toolbar */}
+      <div className="border-b border-gray-200/50 dark:border-slate-700/50 p-4 bg-gray-50/50 dark:bg-slate-800/50">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Bold, Italic, Underline */}
+          <button
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => executeCommand('bold')}
+            title="Bold"
+            className={`p-2.5 rounded-xl transition-all duration-200 ${
+              isFormatActive.bold
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-blue-600 hover:text-white'
+            }`}
+          >
+            <Bold className="w-4 h-4" />
+          </button>
+          
+          <button
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => executeCommand('italic')}
+            title="Italic"
+            className={`p-2.5 rounded-xl transition-all duration-200 ${
+              isFormatActive.italic
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-blue-600 hover:text-white'
+            }`}
+          >
+            <Italic className="w-4 h-4" />
+          </button>
+          
+          <button
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => executeCommand('underline')}
+            title="Underline"
+            className={`p-2.5 rounded-xl transition-all duration-200 ${
+              isFormatActive.underline
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-blue-600 hover:text-white'
+            }`}
+          >
+            <Underline className="w-4 h-4" />
+          </button>
+
+          <div className="w-px h-6 bg-gray-300 dark:bg-slate-600 mx-2" />
+
+          {/* Font Size */}
+          <div className="flex items-center gap-2">
+            <Type className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+            <select
+              value={fontSize}
+              onChange={(e) => handleFontSizeChange(e.target.value)}
+              className="px-3 py-2 text-sm rounded-xl bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-slate-600 focus:ring-1 focus:ring-blue-500/50"
+            >
+              <option value="12">12px</option>
+              <option value="14">14px</option>
+              <option value="16">16px</option>
+              <option value="18">18px</option>
+              <option value="20">20px</option>
+              <option value="24">24px</option>
+              <option value="32">32px</option>
+            </select>
+          </div>
+
+          <div className="w-px h-6 bg-gray-300 dark:bg-slate-600 mx-2" />
+
+          {/* Text Color */}
+          <div className="flex items-center gap-2">
+            <Palette className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+            <input
+              type="color"
+              value={textColor}
+              onChange={(e) => {
+                setTextColor(e.target.value)
+                executeCommand('foreColor', e.target.value)
+              }}
+              className="w-8 h-8 rounded-xl cursor-pointer bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600"
+              title="Text Color"
+            />
+          </div>
+
+          {/* Highlight Color */}
+          <div className="flex items-center gap-2">
+            <Highlighter className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+            <input
+              type="color"
+              value={highlightColor}
+              onChange={(e) => {
+                setHighlightColor(e.target.value)
+                executeCommand('hiliteColor', e.target.value)
+              }}
+              className="w-8 h-8 rounded-xl cursor-pointer bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600"
+              title="Highlight Color - Select text first, then choose color"
+            />
+          </div>
+
+          <div className="w-px h-6 bg-gray-300 dark:bg-slate-600 mx-2" />
+
+          {/* Lists */}
+          <button
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => executeCommand('insertUnorderedList')}
+            className={`p-2.5 rounded-xl transition-all duration-200 ${
+              isFormatActive.insertUnorderedList
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-blue-600 hover:text-white'
+            }`}
+            title="Bullet List"
+          >
+            <List className="w-4 h-4" />
+          </button>
+
+          <button
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => executeCommand('insertOrderedList')}
+            className={`p-2.5 rounded-xl transition-all duration-200 ${
+              isFormatActive.insertOrderedList
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-blue-600 hover:text-white'
+            }`}
+            title="Numbered List"
+          >
+            <ListOrdered className="w-4 h-4" />
+          </button>
+
+          <div className="w-px h-6 bg-gray-300 dark:bg-slate-600 mx-2" />
+
+          {/* Alignment */}
+          <button
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => executeCommand('justifyLeft')}
+            className={`p-2.5 rounded-xl transition-all duration-200 ${
+              isFormatActive.justifyLeft
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-blue-600 hover:text-white'
+            }`}
+            title="Align Left"
+          >
+            <AlignLeft className="w-4 h-4" />
+          </button>
+
+          <button
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => executeCommand('justifyCenter')}
+            className={`p-2.5 rounded-xl transition-all duration-200 ${
+              isFormatActive.justifyCenter
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-blue-600 hover:text-white'
+            }`}
+            title="Align Center"
+          >
+            <AlignCenter className="w-4 h-4" />
+          </button>
+
+          <button
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => executeCommand('justifyRight')}
+            className={`p-2.5 rounded-xl transition-all duration-200 ${
+              isFormatActive.justifyRight
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-blue-600 hover:text-white'
+            }`}
+            title="Align Right"
+          >
+            <AlignRight className="w-4 h-4" />
+          </button>
+
+          {/* Comment on Selection */}
+          {selectedText && selectedText.trim() && (
+            <>
+              <div className="w-px h-6 bg-gray-300 dark:bg-slate-600 mx-2" />
+              <button
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  // Trigger parent component to open comments
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('openComments', { detail: { selectedText } }))
+                  }
+                }}
+                className="flex items-center gap-2 px-3 py-2 bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 rounded-xl transition-colors text-sm font-medium hover:bg-green-200 dark:hover:bg-green-900/70"
+                title={`Comment on: "${selectedText.substring(0, 30)}..."`}
+              >
+                <MessageSquare className="w-4 h-4" />
+                Comment
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Editor Area */}
+      <div className={`flex-1 p-8 transition-all duration-300 ${isFocused ? 'bg-white dark:bg-slate-800' : ''}`}>
+        <div
+          ref={editorRef}
+          contentEditable
+          onInput={handleContentChange}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          onMouseUp={handleSelectionChange}
+          onKeyUp={handleSelectionChange}
+          suppressContentEditableWarning={true}
+          dangerouslySetInnerHTML={{ __html: content || '' }}
+          className="w-full h-full outline-none bg-transparent text-gray-900 dark:text-white text-lg leading-relaxed font-medium [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-gray-400 [&:empty]:before:pointer-events-none selection:bg-blue-200 dark:selection:bg-blue-800"
+          style={{
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            minHeight: '200px'
+          }}
+          data-placeholder="Start writing your document... ✨"
+        />
       </div>
     </div>
   )
 }
 
-// Copy functionality
-const copyToClipboard = async (text: string) => {
-  try {
-    await navigator.clipboard.writeText(text)
-    return true
-  } catch (err) {
-    const textArea = document.createElement('textarea')
-    textArea.value = text
-    document.body.appendChild(textArea)
-    textArea.focus()
-    textArea.select()
+// Share Modal Component
+const ShareModal: React.FC<{
+  isOpen: boolean
+  onClose: () => void
+  activeDoc: Document | null
+  onShare: (email: string) => Promise<ApiResponse>
+}> = ({ isOpen, onClose, activeDoc, onShare }) => {
+  const [email, setEmail] = useState<string>('')
+  const [shareLink, setShareLink] = useState<string>('')
+  const [isSharing, setIsSharing] = useState<boolean>(false)
+  const [copied, setCopied] = useState<boolean>(false)
+
+  const handleShareByEmail = async (): Promise<void> => {
+    if (!email.trim() || isSharing) return
+    
+    setIsSharing(true)
     try {
-      document.execCommand('copy')
-      document.body.removeChild(textArea)
-      return true
-    } catch (fallbackErr) {
-      document.body.removeChild(textArea)
-      return false
-    }
-  }
-}
-
-// Enhanced Image error handling component
-interface SafeImageProps {
-  src: string
-  alt: string
-  className?: string
-  onError?: () => void
-}
-
-const SafeImage: React.FC<SafeImageProps> = ({ src, alt, className, onError }) => {
-  const [error, setError] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [retryCount, setRetryCount] = useState(0)
-  const maxRetries = 3
-
-  const handleError = () => {
-    setLoading(false)
-    if (retryCount < maxRetries) {
-      // Retry loading after a delay
-      setTimeout(() => {
-        setRetryCount(prev => prev + 1)
-        setError(false)
-        setLoading(true)
-      }, 1000 * (retryCount + 1))
-    } else {
-      setError(true)
-      onError?.()
+      await onShare(email)
+      setEmail('')
+    } finally {
+      setIsSharing(false)
     }
   }
 
-  const handleLoad = () => {
-    setLoading(false)
-    setRetryCount(0)
+  const handleGetLink = async (): Promise<void> => {
+    setIsSharing(true)
+    try {
+      const result = await onShare('')
+      if (result?.link) {
+        // Replace backend URL with frontend URL
+        const frontendUrl = 'https://app.growfly.io'
+        const linkWithFrontendUrl = result.link.replace(/https?:\/\/[^\/]+/, frontendUrl)
+        setShareLink(linkWithFrontendUrl)
+      }
+    } finally {
+      setIsSharing(false)
+    }
   }
 
-  if (error) {
+  const copyToClipboard = async (): Promise<void> => {
+    if (shareLink) {
+      await navigator.clipboard.writeText(shareLink)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-6"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.9, opacity: 0, y: 20 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-3xl p-8 w-full max-w-md shadow-2xl border border-gray-200/50 dark:border-slate-700/50"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center">
+                <Share2 className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                  Share Document
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {activeDoc?.title}
+                </p>
+              </div>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.1, rotate: 90 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-colors"
+            >
+              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            </motion.button>
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                Share with specific user
+              </label>
+              <div className="flex gap-3">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="user@example.com"
+                  className="flex-1 p-4 bg-gray-50/80 dark:bg-slate-700/80 border border-gray-200/50 dark:border-slate-600/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all duration-200"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleShareByEmail()
+                  }}
+                />
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleShareByEmail}
+                  disabled={!email.trim() || isSharing}
+                  className="px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSharing ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    'Share'
+                  )}
+                </motion.button>
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200/50 dark:border-slate-600/50" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-white dark:bg-slate-800 text-gray-500 dark:text-gray-400 font-medium">
+                  or
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                Get shareable link
+              </label>
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={shareLink}
+                    readOnly
+                    placeholder="Click 'Generate Link' to create a shareable URL"
+                    className="flex-1 p-4 bg-gray-50/80 dark:bg-slate-700/80 border border-gray-200/50 dark:border-slate-600/50 rounded-2xl text-sm"
+                  />
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleGetLink}
+                    disabled={isSharing}
+                    className="px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium shadow-lg shadow-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSharing ? (
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      'Generate'
+                    )}
+                  </motion.button>
+                </div>
+                
+                {shareLink && (
+                  <motion.button
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={copyToClipboard}
+                    className="w-full flex items-center justify-center gap-2 p-3 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-all duration-200 font-medium"
+                  >
+                    {copied ? (
+                      <>
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        Copied to clipboard!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        Copy to clipboard
+                      </>
+                    )}
+                  </motion.button>
+                )}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  )
+}
+
+// Main Collab Zone Component
+const CollabZone: React.FC = () => {
+  const [docs, setDocs] = useState<Document[]>([])
+  const [activeDoc, setActiveDoc] = useState<Document | null>(null)
+  const [comments, setComments] = useState<Comment[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [showDocuments, setShowDocuments] = useState<boolean>(false)
+  const [showComments, setShowComments] = useState<boolean>(false)
+  const [showShareModal, setShowShareModal] = useState<boolean>(false)
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false)
+  const [isAutoSaving, setIsAutoSaving] = useState<boolean>(false)
+  const [statusMsg, setStatusMsg] = useState<StatusMessage | null>(null)
+  const [selectedText, setSelectedText] = useState<string>('')
+
+  // Status message helper
+  const showStatus = useCallback((type: 'success' | 'error', text: string): void => {
+    setStatusMsg({ type, text })
+    setTimeout(() => setStatusMsg(null), 3000)
+  }, [])
+
+  // Load documents from API
+  const loadDocuments = useCallback(async (): Promise<void> => {
+    try {
+      const data = await apiCall<Document[]>('/collab')
+      setDocs(data)
+    } catch (error) {
+      showStatus('error', 'Failed to load documents')
+      console.error('Load documents error:', error)
+    }
+  }, [showStatus])
+
+  // Load comments for active document
+  const loadComments = useCallback(async (): Promise<void> => {
+    if (!activeDoc) return
+    
+    try {
+      const data = await apiCall<Comment[]>(`/comments/${activeDoc.id}`)
+      setComments(data)
+    } catch (error) {
+      showStatus('error', 'Failed to load comments')
+      console.error('Load comments error:', error)
+    }
+  }, [activeDoc, showStatus])
+
+  // Save document
+  const saveDocument = useCallback(async (doc: Document, showMessage: boolean = false): Promise<void> => {
+    if (!doc) return
+    
+    try {
+      setIsAutoSaving(true)
+      const updated = await apiCall<Document>(`/collab/${doc.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          title: doc.title,
+          content: doc.content
+        })
+      })
+      
+      // Update local state
+      setDocs(prev => prev.map(d => d.id === doc.id ? updated : d))
+      if (activeDoc && activeDoc.id === doc.id) {
+        setActiveDoc(updated)
+      }
+      
+      // Only show message for manual saves
+      if (showMessage) {
+        showStatus('success', '💾 Document saved!')
+      }
+    } catch (error) {
+      showStatus('error', 'Failed to save document')
+      console.error('Save document error:', error)
+    } finally {
+      setIsAutoSaving(false)
+    }
+  }, [activeDoc, showStatus])
+
+  // Auto-save effect (silent) - Conservative timing to preserve user workflow
+  useEffect(() => {
+    if (!activeDoc) return
+    
+    const timeoutId = setTimeout(() => {
+      saveDocument(activeDoc, false) // false = don't show popup
+    }, 20000) // Auto-save after 20 seconds of inactivity
+    
+    return () => clearTimeout(timeoutId)
+  }, [activeDoc?.content, saveDocument])
+
+  // Handle manual save (with popup)
+  const handleSave = useCallback((): void => {
+    if (activeDoc) {
+      saveDocument(activeDoc, true) // true = show popup
+    }
+  }, [activeDoc, saveDocument])
+
+  // Create new document
+  const handleNewDoc = useCallback(async (): Promise<void> => {
+    try {
+      const newDoc = await apiCall<Document>('/collab', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: 'Untitled Document',
+          content: ''
+        })
+      })
+      
+      setDocs(prev => [newDoc, ...prev])
+      setActiveDoc(newDoc)
+      showStatus('success', '📄 New document created!')
+    } catch (error) {
+      showStatus('error', 'Failed to create document')
+      console.error('Create document error:', error)
+    }
+  }, [showStatus])
+
+  // Delete document
+  const handleDeleteDoc = useCallback(async (docId: string): Promise<void> => {
+    if (!window.confirm('Are you sure you want to delete this document?')) return
+    
+    try {
+      await apiCall(`/collab/${docId}`, { method: 'DELETE' })
+      
+      setDocs(prev => prev.filter(d => d.id !== docId))
+      if (activeDoc && activeDoc.id === docId) {
+        setActiveDoc(null)
+      }
+      
+      showStatus('success', '🗑️ Document deleted')
+    } catch (error) {
+      showStatus('error', 'Failed to delete document')
+      console.error('Delete document error:', error)
+    }
+  }, [activeDoc, showStatus])
+
+  // Share document
+  const handleShare = useCallback(async (email: string): Promise<ApiResponse> => {
+    if (!activeDoc) throw new Error('No active document')
+    
+    try {
+      const result = await apiCall<ApiResponse>(`/collab/${activeDoc.id}/share`, {
+        method: 'POST',
+        body: JSON.stringify({ email: email || undefined })
+      })
+      
+      if (result.link) {
+        showStatus('success', '🔗 Share link generated!')
+      } else if (result.message) {
+        showStatus('success', result.message)
+      } else {
+        showStatus('success', '📤 Document shared successfully!')
+      }
+      
+      return result
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to share document'
+      showStatus('error', message)
+      console.error('Share document error:', error)
+      throw error
+    }
+  }, [activeDoc, showStatus])
+
+  // Add comment
+  const handleAddComment = useCallback(async (text: string, from: number, to: number, selectedText?: string): Promise<void> => {
+    if (!activeDoc) return
+    
+    try {
+      const comment = await apiCall<Comment>('/comments', {
+        method: 'POST',
+        body: JSON.stringify({
+          docId: activeDoc.id,
+          text,
+          from: from || 0,
+          to: to || 0,
+          selectedText: selectedText || undefined
+        })
+      })
+      
+      setComments(prev => [...prev, comment])
+      setSelectedText('') // Clear selected text after commenting
+      showStatus('success', '💬 Comment added!')
+    } catch (error) {
+      showStatus('error', 'Failed to add comment')
+      console.error('Add comment error:', error)
+    }
+  }, [activeDoc, showStatus, setSelectedText])
+
+  // Delete comment
+  const handleDeleteComment = useCallback(async (commentId: string): Promise<void> => {
+    try {
+      await apiCall(`/comments/${commentId}`, { method: 'DELETE' })
+      
+      setComments(prev => prev.filter(c => c.id !== commentId))
+      showStatus('success', '🗑️ Comment deleted')
+    } catch (error) {
+      showStatus('error', 'Failed to delete comment')
+      console.error('Delete comment error:', error)
+    }
+  }, [showStatus])
+
+  // Download document
+  const handleDownload = useCallback(async (format: 'pdf' | 'docx'): Promise<void> => {
+    if (!activeDoc) return
+    
+    try {
+      // Get token for authenticated request
+      const token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('growfly_jwt='))
+        ?.split('=')[1]
+
+      const response = await fetch(`${API_BASE}/collab/${activeDoc.id}/download?type=${format}`, {
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        throw new Error('Download failed')
+      }
+
+      // Create blob and download
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${activeDoc.title}.growfly.${format}`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      
+      showStatus('success', `📥 Document downloaded as ${format.toUpperCase()}!`)
+    } catch (error) {
+      showStatus('error', 'Failed to download document')
+      console.error('Download error:', error)
+    }
+  }, [activeDoc, showStatus])
+
+  // Handle shared document access from URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const sharedDocId = urlParams.get('doc')
+    
+    if (sharedDocId) {
+      const loadSharedDoc = async (): Promise<void> => {
+        try {
+          const sharedDoc = await apiCall<Document>(`/collab/${sharedDocId}`)
+          setActiveDoc(sharedDoc)
+          showStatus('success', '📄 Shared document loaded!')
+        } catch (error) {
+          showStatus('error', 'Shared document not found or access denied')
+          console.error('Load shared document error:', error)
+        }
+      }
+      
+      loadSharedDoc()
+    }
+  }, [showStatus])
+
+  // Load data on mount
+  useEffect(() => {
+    const loadData = async (): Promise<void> => {
+      setLoading(true)
+      try {
+        await loadDocuments()
+      } catch (error) {
+        console.error('Initial load error:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    // Handle comment button clicks from editor
+    const handleOpenComments = (event: any) => {
+      if (event.detail?.selectedText) {
+        setSelectedText(event.detail.selectedText)
+        setShowComments(true)
+      }
+    }
+    
+    window.addEventListener('openComments', handleOpenComments)
+    loadData()
+    
+    return () => {
+      window.removeEventListener('openComments', handleOpenComments)
+    }
+  }, [loadDocuments])
+
+  // Load comments when active document changes
+  useEffect(() => {
+    if (activeDoc) {
+      loadComments()
+    }
+  }, [activeDoc, loadComments])
+
+  // Update active document content
+  const updateActiveDocContent = useCallback((content: string): void => {
+    if (activeDoc) {
+      setActiveDoc({ ...activeDoc, content })
+    }
+  }, [activeDoc])
+
+  const unreadCommentsCount = comments.filter(c => 
+    (c.documentId === activeDoc?.id || c.docId === activeDoc?.id) && !c.isRead
+  ).length
+
+  if (loading) {
     return (
-      <div className={`${className} bg-gray-100 dark:bg-gray-800 flex items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700`}>
-        <div className="text-center p-4">
-          <FaExclamationTriangle className="text-gray-400 text-2xl mx-auto mb-2" />
-          <p className="text-xs text-gray-500 dark:text-gray-400">Image failed to load</p>
-          {retryCount > 0 && (
-            <p className="text-xs text-gray-400 mt-1">Retried {retryCount} times</p>
-          )}
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/50 dark:from-slate-900 dark:via-slate-800/50 dark:to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-20 h-20 border-4 border-blue-200/30 border-t-blue-600 rounded-full mx-auto mb-8"
+          />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent mb-3">
+              Loading your workspace...
+            </h2>
+            <p className="text-gray-500 dark:text-gray-400 font-medium text-lg">Preparing your documents and collaboration tools ✨</p>
+          </motion.div>
         </div>
       </div>
     )
   }
 
-  return (
-    <div className="relative">
-      {loading && (
-        <div className={`${className} bg-gray-100 dark:bg-gray-800 flex items-center justify-center rounded-xl animate-pulse`}>
-          <div className="flex flex-col items-center">
-            <FaSpinner className="text-gray-400 text-xl animate-spin mb-2" />
-            {retryCount > 0 && (
-              <p className="text-xs text-gray-400">Retry {retryCount}/{maxRetries}</p>
-            )}
+  if (isFullscreen && activeDoc) {
+    return (
+      <div className="fixed inset-0 bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/50 dark:from-slate-900 dark:via-slate-800/50 dark:to-slate-900 z-50 flex flex-col">
+        <DocumentHeader 
+          activeDoc={activeDoc}
+          onSave={handleSave}
+          onShare={() => setShowShareModal(true)}
+          onDownload={handleDownload}
+          onFullscreen={() => setIsFullscreen(false)}
+          onToggleComments={() => setShowComments(!showComments)}
+          showComments={showComments}
+          commentsCount={unreadCommentsCount}
+          isAutoSaving={isAutoSaving}
+          onToggleDocuments={() => setShowDocuments(!showDocuments)}
+          showDocuments={showDocuments}
+        />
+        
+        <div className="flex-1 overflow-hidden p-8">
+          <div className="max-w-6xl mx-auto bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/50 dark:border-slate-700/50 h-full overflow-hidden">
+            <Editor
+              key={`fullscreen-${activeDoc.id}`}
+              content={activeDoc.content}
+              setContent={updateActiveDocContent}
+              docId={activeDoc.id}
+              showComments={false}
+            />
           </div>
         </div>
-      )}
-      <img
-        src={src}
-        alt={alt}
-        className={`${className} ${loading ? 'opacity-0 absolute' : 'opacity-100'} transition-opacity duration-300`}
-        onError={handleError}
-        onLoad={handleLoad}
+
+        <AnimatePresence>
+          {showComments && (
+            <CommentsSidebar
+              isVisible={showComments}
+              comments={comments}
+              activeDocId={activeDoc.id}
+              onAddComment={handleAddComment}
+              onDeleteComment={handleDeleteComment}
+              onClose={() => setShowComments(false)}
+              selectedText={selectedText}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/50 dark:from-slate-900 dark:via-slate-800/50 dark:to-slate-900 flex flex-col">
+      {/* Document Header */}
+      <DocumentHeader 
+        activeDoc={activeDoc}
+        onSave={handleSave}
+        onShare={() => setShowShareModal(true)}
+        onDownload={handleDownload}
+        onFullscreen={() => setIsFullscreen(true)}
+        onToggleComments={() => setShowComments(!showComments)}
+        showComments={showComments}
+        commentsCount={unreadCommentsCount}
+        isAutoSaving={isAutoSaving}
+        onToggleDocuments={() => setShowDocuments(!showDocuments)}
+        showDocuments={showDocuments}
+      />
+
+      {/* Status Messages */}
+      <AnimatePresence>
+        {statusMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: -50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -50, scale: 0.9 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className={`fixed top-24 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-4 px-8 py-4 rounded-2xl font-semibold shadow-2xl backdrop-blur-md ${
+              statusMsg.type === 'success'
+                ? 'bg-gradient-to-r from-emerald-500/90 to-teal-600/90 text-white border border-emerald-400/50'
+                : 'bg-gradient-to-r from-red-500/90 to-pink-600/90 text-white border border-red-400/50'
+            }`}
+          >
+            {statusMsg.type === 'success' ? (
+              <CheckCircle className="w-6 h-6" />
+            ) : (
+              <AlertCircle className="w-6 h-6" />
+            )}
+            <span className="text-base">{statusMsg.text}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Main Content */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Documents Sidebar */}
+        <AnimatePresence>
+          {showDocuments && (
+            <DocumentsSidebar
+              isVisible={showDocuments}
+              docs={docs}
+              activeDoc={activeDoc}
+              onSelectDoc={(doc) => {
+                setActiveDoc(doc)
+                setShowDocuments(false)
+              }}
+              onNewDoc={handleNewDoc}
+              onDeleteDoc={handleDeleteDoc}
+              onClose={() => setShowDocuments(false)}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Editor Area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {activeDoc ? (
+            <div className="flex-1 p-6 overflow-hidden">
+              <div className="max-w-5xl mx-auto bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/50 dark:border-slate-700/50 h-full overflow-hidden">
+                <Editor
+                  key={activeDoc.id}
+                  content={activeDoc.content}
+                  setContent={updateActiveDocContent}
+                  docId={activeDoc.id}
+                  showComments={false}
+                  selectedText={selectedText}
+                  setSelectedText={setSelectedText}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center p-12">
+              <div className="text-center max-w-lg mx-auto">
+                <motion.div 
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.5, type: "spring", damping: 25, stiffness: 200 }}
+                  className="w-24 h-24 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-blue-500/30"
+                >
+                  <FileText className="w-12 h-12 text-white" />
+                </motion.div>
+                <motion.h2 
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.1, duration: 0.5 }}
+                  className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent mb-4"
+                >
+                  Welcome to Collab Zone ✨
+                </motion.h2>
+                <motion.p 
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2, duration: 0.5 }}
+                  className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed text-lg"
+                >
+                  Create beautiful documents and collaborate with your team in real-time. Your ideas deserve the perfect workspace.
+                </motion.p>
+                <motion.div 
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3, duration: 0.5 }}
+                  className="flex flex-col sm:flex-row gap-4 justify-center"
+                >
+                  <button
+                    onClick={handleNewDoc}
+                    className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-bold shadow-xl shadow-blue-500/30 hover:scale-105 text-base"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Create Document
+                  </button>
+                  <button
+                    onClick={() => setShowDocuments(true)}
+                    className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-gray-100 to-gray-50 dark:from-slate-800 dark:to-slate-700 text-gray-700 dark:text-gray-300 rounded-2xl hover:from-gray-200 hover:to-gray-100 dark:hover:from-slate-700 dark:hover:to-slate-600 transition-all duration-200 font-bold border border-gray-200/50 dark:border-slate-600/50 hover:scale-105 text-base"
+                  >
+                    <FileText className="w-5 h-5" />
+                    Browse Documents
+                  </button>
+                </motion.div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Comments Sidebar */}
+        <AnimatePresence>
+          {showComments && (
+            <CommentsSidebar
+              isVisible={showComments}
+              comments={comments}
+              activeDocId={activeDoc?.id || null}
+              onAddComment={handleAddComment}
+              onDeleteComment={handleDeleteComment}
+              onClose={() => setShowComments(false)}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        activeDoc={activeDoc}
+        onShare={handleShare}
       />
     </div>
   )
 }
 
-// File Preview Component
-interface FilePreviewProps {
-  file: UploadedFile
-  onRemove: () => void
-}
-
-const FilePreview: React.FC<FilePreviewProps> = ({ file, onRemove }) => {
-  const getFileIcon = () => {
-    if (file.type.startsWith('image/')) {
-      return file.preview ? (
-        <img src={file.preview} alt={file.name} className="w-12 h-12 object-cover rounded border border-gray-200 dark:border-gray-700" />
-      ) : (
-        <FaFileImage className="w-12 h-12 text-gray-500" />
-      )
-    } else if (file.type === 'application/pdf') {
-      return <FaFilePdf className="w-12 h-12 text-red-500" />
-    } else if (file.type.includes('sheet') || file.type.includes('excel') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-      return <FaFileExcel className="w-12 h-12 text-green-500" />
-    } else if (file.type.includes('word') || file.name.endsWith('.docx') || file.name.endsWith('.doc')) {
-      return <FaFileAlt className="w-12 h-12 text-gray-600" />
-    } else if (file.type.includes('presentation') || file.name.endsWith('.pptx') || file.name.endsWith('.ppt')) {
-      return <FaFileAlt className="w-12 h-12 text-orange-500" />
-    } else {
-      return <FaFileAlt className="w-12 h-12 text-gray-500" />
-    }
-  }
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes'
-    const k = 1024
-    const sizes = ['Bytes', 'KB', 'MB', 'GB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-  }
-
-  return (
-    <div className="relative bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-      <button
-        onClick={onRemove}
-        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-      >
-        <FaTimes className="w-3 h-3" />
-      </button>
-      <div className="flex items-center gap-3">
-        {getFileIcon()}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{file.name}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{formatFileSize(file.size)}</p>
-          <p className="text-xs text-gray-400">{file.type}</p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-interface ImageGenerationModalProps {
-  open: boolean
-  onClose: () => void
-  onImageGenerated: (image: GeneratedImage) => void
-}
-
-const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({ open, onClose, onImageGenerated }) => {
-  const [prompt, setPrompt] = useState('')
-  const [size, setSize] = useState('1024x1024')
-  const [style, setStyle] = useState('vivid')
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [showSuccess, setShowSuccess] = useState(false)
-  const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null)
-  const [error, setError] = useState('')
-  const [imageUsage, setImageUsage] = useState<ImageUsage | null>(null)
-  const [isLoadingUsage, setIsLoadingUsage] = useState(false)
-  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
-  const router = useRouter()
-
-  useEffect(() => {
-    if (open && token) {
-      setIsLoadingUsage(true)
-      setError('')
-      
-      fetch(`${API_BASE_URL}/api/dalle/usage`, {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-        .then(res => {
-          if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`)
-          return res.json()
-        })
-        .then(data => {
-          if (data && !data.error && data.dailyImages && data.monthlyImages) {
-            setImageUsage(data)
-          } else {
-            const subType = data.subscriptionType || 'free'
-            const limits = IMAGE_LIMITS[subType] || IMAGE_LIMITS.free
-            setImageUsage({
-              subscriptionType: subType,
-              subscriptionName: subType.charAt(0).toUpperCase() + subType.slice(1),
-              dailyImages: { used: 0, limit: limits.daily, remaining: limits.daily },
-              monthlyImages: { used: 0, limit: limits.monthly, remaining: limits.monthly },
-              totalPrompts: { used: 0, limit: PROMPT_LIMITS[subType] || 20, remaining: PROMPT_LIMITS[subType] || 20 },
-              canGenerate: true,
-              _fallback: true
-            })
-          }
-        })
-        .catch((err: unknown) => {
-          console.error('❌ Failed to fetch image usage in modal:', err)
-          setError('Failed to load usage data. Some features may be limited.')
-          const limits = IMAGE_LIMITS.free
-          setImageUsage({
-            subscriptionType: 'free',
-            subscriptionName: 'Free',
-            dailyImages: { used: 0, limit: limits.daily, remaining: limits.daily },
-            monthlyImages: { used: 0, limit: limits.monthly, remaining: limits.monthly },
-            totalPrompts: { used: 0, limit: PROMPT_LIMITS.free, remaining: PROMPT_LIMITS.free },
-            canGenerate: true,
-            _fallback: true
-          })
-        })
-        .finally(() => {
-          setIsLoadingUsage(false)
-        })
-    }
-  }, [open, token])
-
-  useEffect(() => {
-    if (open) {
-      setShowSuccess(false)
-      setGeneratedImage(null)
-      setError('')
-    }
-  }, [open])
-
-  const handleGenerate = async () => {
-    if (!prompt.trim() || prompt.length < 3) {
-      setError('Prompt must be at least 3 characters long')
-      return
-    }
-
-    setIsGenerating(true)
-    setError('')
-    setShowSuccess(false)
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/dalle/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ 
-          prompt, 
-          size, 
-          quality: 'standard',
-          style 
-        })
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        if (response.status === 429) {
-          if (data.reason === 'daily_images') {
-            setError(`Daily image limit reached (${data.current}/${data.limit}). ${data.resetInfo || 'Resets at midnight.'} Upgrade for more images!`)
-          } else if (data.reason === 'monthly_images') {
-            setError(`Monthly image limit reached (${data.current}/${data.limit}). ${data.resetInfo || 'Resets monthly.'} Upgrade for more images!`)
-          } else if (data.reason === 'total_prompts') {
-            setError(`Total prompt limit reached (${data.current}/${data.limit}). ${data.resetInfo || 'Resets monthly.'} Upgrade for more prompts!`)
-          } else {
-            setError(data.message || 'Generation limit reached. Please upgrade your plan!')
-          }
-        } else {
-          throw new Error(data.error || 'Failed to generate image')
-        }
-        return
-      }
-
-      const imageData: GeneratedImage = {
-        id: data.imageId,
-        url: data.imageUrl,
-        originalPrompt: data.prompt,
-        revisedPrompt: data.prompt,
-        size: size,
-        style: style,
-        createdAt: new Date().toISOString()
-      }
-
-      setGeneratedImage(imageData)
-      setShowSuccess(true)
-
-      setTimeout(() => {
-        onImageGenerated(imageData)
-        setPrompt('')
-        onClose()
-      }, 2000)
-
-      if (data.usage) {
-        setImageUsage(prev => prev ? {
-          ...prev,
-          totalPrompts: data.usage.totalPrompts,
-          dailyImages: data.usage.dailyImages,
-          monthlyImages: data.usage.monthlyImages,
-          canGenerate: data.usage.dailyImages.remaining > 0 && data.usage.monthlyImages.remaining > 0 && data.usage.totalPrompts.remaining > 0
-        } : null)
-      }
-
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to generate image. Please check your connection and try again.'
-      setError(errorMessage)
-    } finally {
-      setIsGenerating(false)
-    }
-  }
-
-  const handleUpgrade = () => {
-    onClose()
-    router.push('/change-plan')
-  }
-
-  if (!open) return null
-
-  const canGenerate = imageUsage?.canGenerate ?? false
-  const isAtDailyLimit = imageUsage && (imageUsage.dailyImages?.remaining || 0) <= 0
-  const isAtMonthlyLimit = imageUsage && (imageUsage.monthlyImages?.remaining || 0) <= 0
-  const isAtPromptLimit = imageUsage && (imageUsage.totalPrompts?.remaining || 0) <= 0
-
-  const getResetInfo = () => {
-    const now = new Date()
-    const tomorrow = new Date(now)
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    tomorrow.setHours(0, 0, 0, 0)
-    
-    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-    
-    const hoursUntilMidnight = Math.ceil((tomorrow.getTime() - now.getTime()) / (1000 * 60 * 60))
-    const daysUntilNextMonth = Math.ceil((nextMonth.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-    
-    return { hoursUntilMidnight, daysUntilNextMonth }
-  }
-
-  const resetInfo = getResetInfo()
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <FaPalette className="text-gray-700 dark:text-gray-300" />
-              Create an image with Growfly
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              disabled={isGenerating}
-            >
-              <HiX className="w-6 h-6" />
-            </button>
-          </div>
-
-          {showSuccess && generatedImage ? (
-            <div className="text-center py-8">
-              <div className="mb-6">
-                <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FaCheck className="text-white text-2xl" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                  Image Created Successfully!
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Your image has been generated and saved to your gallery.
-                </p>
-              </div>
-              
-              <div className="mb-6">
-                <SafeImage
-                  src={generatedImage.url}
-                  alt={generatedImage.originalPrompt}
-                  className="w-full max-w-sm mx-auto rounded-xl shadow-lg"
-                />
-              </div>
-              
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                Adding to your chat conversation...
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                <p className="text-sm text-gray-800 dark:text-gray-200">
-                  <strong>🎨 Create professional images for your business</strong><br />
-                  Describe what you want and our AI will generate a custom image. Perfect for social media, presentations, marketing materials, and more.
-                </p>
-              </div>
-
-              {isLoadingUsage ? (
-                <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse"></div>
-                    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-24 animate-pulse"></div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <UsageCardSkeleton />
-                    <UsageCardSkeleton />
-                    <UsageCardSkeleton />
-                  </div>
-                </div>
-              ) : imageUsage && (
-                <div className="mb-6 space-y-4">
-                  {imageUsage._fallback && (
-                    <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                      <div className="text-yellow-800 dark:text-yellow-200 text-sm">
-                        ⚠️ Using default limits. Some features may be limited until your account data is refreshed.
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold text-gray-800 dark:text-gray-200">
-                        {imageUsage.subscriptionName} Plan Limits
-                      </h3>
-                      {!canGenerate && (
-                        <button
-                          onClick={handleUpgrade}
-                          className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 text-white px-3 py-1 rounded-lg text-xs font-medium transition-colors"
-                        >
-                          Upgrade Plan
-                        </button>
-                      )}
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div className="text-center">
-                        <div className="text-gray-600 dark:text-gray-400 text-xs">Daily Images</div>
-                        <div className={`font-bold text-lg ${isAtDailyLimit ? 'text-red-600' : 'text-gray-700 dark:text-gray-300'}`}>
-                          {imageUsage.dailyImages?.remaining || 0}/{imageUsage.dailyImages?.limit === -1 ? '∞' : imageUsage.dailyImages?.limit || 0}
-                        </div>
-                        {isAtDailyLimit && (
-                          <div className="text-xs text-red-500 mt-1">
-                            Resets in {resetInfo.hoursUntilMidnight}h
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="text-center">
-                        <div className="text-gray-600 dark:text-gray-400 text-xs">Monthly Images</div>
-                        <div className={`font-bold text-lg ${isAtMonthlyLimit ? 'text-red-600' : 'text-gray-700 dark:text-gray-300'}`}>
-                          {imageUsage.monthlyImages?.remaining || 0}/{imageUsage.monthlyImages?.limit === -1 ? '∞' : imageUsage.monthlyImages?.limit || 0}
-                        </div>
-                        {isAtMonthlyLimit && (
-                          <div className="text-xs text-red-500 mt-1">
-                            Resets in {resetInfo.daysUntilNextMonth}d
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="text-center">
-                        <div className="text-gray-600 dark:text-gray-400 text-xs">Total Prompts</div>
-                        <div className={`font-bold text-lg ${isAtPromptLimit ? 'text-red-600' : 'text-gray-700 dark:text-gray-300'}`}>
-                          {imageUsage.totalPrompts?.remaining || 0}/{imageUsage.totalPrompts?.limit === -1 ? '∞' : imageUsage.totalPrompts?.limit || 0}
-                        </div>
-                        {isAtPromptLimit && (
-                          <div className="text-xs text-red-500 mt-1">
-                            Resets monthly
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {!canGenerate && (
-                    <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-red-600 text-lg">🚫</span>
-                        <h4 className="font-semibold text-red-800 dark:text-red-200">Generation Limit Reached</h4>
-                      </div>
-                      <div className="text-sm text-red-700 dark:text-red-300 space-y-1">
-                        {isAtDailyLimit && (
-                          <div>• Daily limit: Resets in {resetInfo.hoursUntilMidnight} hours</div>
-                        )}
-                        {isAtMonthlyLimit && (
-                          <div>• Monthly limit: Resets in {resetInfo.daysUntilNextMonth} days</div>
-                        )}
-                        {isAtPromptLimit && (
-                          <div>• Prompt limit: Resets monthly with your subscription</div>
-                        )}
-                      </div>
-                      <div className="mt-3 flex gap-2">
-                        <button
-                          onClick={handleUpgrade}
-                          className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                        >
-                          Upgrade for More Images
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {error && (
-                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                  <div className="text-red-700 dark:text-red-300 text-sm font-medium mb-2">
-                    {error}
-                  </div>
-                  {error.includes('limit') && !error.includes('characters') && (
-                    <button
-                      onClick={handleUpgrade}
-                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
-                    >
-                      Upgrade Plan
-                    </button>
-                  )}
-                </div>
-              )}
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Describe your image
-                  </label>
-                  <textarea
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="Describe the image you want to generate... e.g., 'A professional logo for a tech startup, modern and minimalist style, blue and white colors'"
-                    className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none focus:ring-2 focus:ring-gray-500 focus:border-transparent min-h-[4rem] max-h-32"
-                    rows={3}
-                    disabled={isGenerating || !canGenerate}
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Be specific and detailed for best results ({prompt.length}/4000 characters)
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Size
-                    </label>
-                    <select
-                      value={size}
-                      onChange={(e) => setSize(e.target.value)}
-                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                      disabled={isGenerating || !canGenerate}
-                    >
-                      <option value="1024x1024">Square (1024×1024)</option>
-                      <option value="1024x1792">Portrait (1024×1792)</option>
-                      <option value="1792x1024">Landscape (1792×1024)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Style
-                    </label>
-                    <select
-                      value={style}
-                      onChange={(e) => setStyle(e.target.value)}
-                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                      disabled={isGenerating || !canGenerate}
-                    >
-                      <option value="vivid">Vivid (More Creative)</option>
-                      <option value="natural">Natural (More Realistic)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <button
-                    onClick={onClose}
-                    className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                    disabled={isGenerating}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleGenerate}
-                    disabled={isGenerating || !prompt.trim() || !canGenerate}
-                    className="flex-1 px-4 py-3 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400 text-white rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <FaSpinner className="animate-spin" />
-                        Generating...
-                      </>
-                    ) : !canGenerate ? (
-                      'Limit Reached'
-                    ) : (
-                      <>
-                        <FaMagic />
-                        Generate Image
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// Helper function to get reset date
-const getResetDate = (subscriptionType: string) => {
-  const now = new Date()
-  if (subscriptionType?.toLowerCase() === 'free') {
-    // Daily reset at midnight
-    const tomorrow = new Date(now)
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    tomorrow.setHours(0, 0, 0, 0)
-    return tomorrow
-  } else {
-    // Monthly reset on the 1st
-    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-    return nextMonth
-  }
-}
-
-function DashboardContent() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-
-  const { user, setUser } = useUserStore()
-  const token = typeof window !== 'undefined' ? localStorage.getItem('growfly_jwt') || '' : ''
-
-  // Enhanced loading states
-  const [isLoadingUser, setIsLoadingUser] = useState(true)
-  const [isLoadingMessages, setIsLoadingMessages] = useState(true)
-  const [isLoadingUsage, setIsLoadingUsage] = useState(true)
-  const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? navigator.onLine : true)
-  const [isConnecting, setIsConnecting] = useState(false)
-  const [retryCount, setRetryCount] = useState(0)
-
-  const promptLimit = PROMPT_LIMITS[user?.subscriptionType?.toLowerCase() || 'free'] || 20
-  const promptsUsed = user?.promptsUsed ?? 0
-  const promptsRemaining = Math.max(0, promptLimit - promptsUsed)
-  const isAtPromptLimit = promptsUsed >= promptLimit
-
-  // ✅ FIXED: Tutorial state management with force option
-  const [showTutorial, setShowTutorial] = useState(false)
-  const [forceTutorial, setForceTutorial] = useState(false)
-
-  // States
-  const [showHelpModal, setShowHelpModal] = useState(false)
-  const [showImageModal, setShowImageModal] = useState(false)
-  const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([])
-  const [imageUsage, setImageUsage] = useState<ImageUsage | null>(null)
-  const [input, setInput] = useState('')
-  const [messages, setMessages] = useState<Message[]>([])
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
-  const [showSaveModal, setShowSaveModal] = useState(false)
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isStreaming, setIsStreaming] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null)
-  const [isUserScrolling, setIsUserScrolling] = useState(false)
-  const [currentSaveMessageId, setCurrentSaveMessageId] = useState<string | null>(null)
-  const [currentFeedbackMessageId, setCurrentFeedbackMessageId] = useState<string | null>(null)
-  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
-  const [disableAutoScroll, setDisableAutoScroll] = useState(false)
-  const [isDragOver, setIsDragOver] = useState(false)
-  const [showSecurityNotice, setShowSecurityNotice] = useState(true)
-  const [showSuggestions, setShowSuggestions] = useState<{[key: string]: boolean}>({})
-  const [inputFocused, setInputFocused] = useState(false)
-  const [shakeInput, setShakeInput] = useState(false)
-
-  // Refs
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const chatEndRef = useRef<HTMLDivElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const scrollTimeoutRef = useRef<NodeJS.Timeout>()
-  const lastScrollTop = useRef<number>(0)
-
-  // Network status monitoring
-  useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true)
-      setIsConnecting(false)
-    }
-
-    const handleOffline = () => {
-      setIsOnline(false)
-    }
-
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
-  }, [])
-
-  // Enhanced error handling with retry logic
-  const handleApiError = async (error: unknown, operation: string, retryFn?: () => Promise<void>) => {
-    console.error(`❌ ${operation} failed:`, error)
-    
-    if (!isOnline) {
-      return
-    }
-
-    const errorObj = error as { name?: string; message?: string; status?: number }
-
-    if (errorObj?.name === 'TypeError' && errorObj?.message?.includes('fetch')) {
-      setIsConnecting(true)
-      
-      // Auto-retry after 3 seconds
-      if (retryFn && retryCount < 3) {
-        setTimeout(async () => {
-          setRetryCount(prev => prev + 1)
-          try {
-            await retryFn()
-            setIsConnecting(false)
-            setRetryCount(0)
-          } catch (retryError) {
-            handleApiError(retryError, `${operation} (retry ${retryCount + 1})`, retryFn)
-          }
-        }, 3000)
-      } else {
-        setIsConnecting(false)
-        setRetryCount(0)
-      }
-      return
-    }
-
-    if (errorObj?.status === 401) {
-      localStorage.removeItem('growfly_jwt')
-      router.push('/onboarding')
-      return
-    }
-  }
-
-  // ✅ ENHANCED: Tutorial integration for new users with better logging
-  useEffect(() => {
-    // Check if user just completed onboarding
-    const justCompleted = sessionStorage.getItem('justCompletedOnboarding')
-    const hasSeenTutorial = localStorage.getItem('growfly-tutorial-completed')
-    
-    console.log('🎯 New user tutorial check:', { 
-      justCompleted, 
-      hasSeenTutorial, 
-      user: !!user,
-      showTutorial,
-      forceTutorial
-    })
-    
-    if (justCompleted && !hasSeenTutorial && user) {
-      console.log('🚀 Starting tutorial for new user')
-      sessionStorage.removeItem('justCompletedOnboarding')
-      setTimeout(() => {
-        setShowTutorial(true)
-        setForceTutorial(true)
-      }, 2000)
-    }
-  }, [user]) // Depend on user so it runs when user data loads
-
-  // ✅ ENHANCED: Multiple trigger methods for tutorial
-  useEffect(() => {
-    const handleTutorialStart = (event: any) => {
-      console.log('🎯 Tutorial start event received:', event)
-      setShowTutorial(true)
-      setForceTutorial(true)  // ✅ Force tutorial for existing users
-    }
-
-    // Method 1: Custom event listener (from Settings button)
-    window.addEventListener('startGrowflyTour', handleTutorialStart)
-    
-    // Method 2: Check URL parameters (from Settings navigation)
-    const urlParams = new URLSearchParams(window.location.search)
-    if (urlParams.get('tutorial') === 'start') {
-      console.log('🎯 Tutorial triggered via URL parameter')
-      setTimeout(() => {
-        setShowTutorial(true)
-        setForceTutorial(true)
-        // Clean up URL
-        window.history.replaceState({}, '', '/dashboard')
-      }, 1000)
-    }
-    
-    // Method 3: Check localStorage flag (backup method)
-    const forceTutorialFlag = localStorage.getItem('force-tutorial-start')
-    if (forceTutorialFlag === 'true') {
-      console.log('🎯 Tutorial triggered via localStorage flag')
-      localStorage.removeItem('force-tutorial-start') // Clean up
-      setTimeout(() => {
-        setShowTutorial(true)
-        setForceTutorial(true)
-      }, 1500)
-    }
-    
-    return () => {
-      window.removeEventListener('startGrowflyTour', handleTutorialStart)
-    }
-  }, []) // Run once on mount
-
-  // ✅ ENHANCED: Tutorial completion handler with proper cleanup
-  const handleTutorialComplete = () => {
-    console.log('✅ Tutorial completed')
-    setShowTutorial(false)
-    setForceTutorial(false)
-    localStorage.setItem('growfly-tutorial-completed', 'true')
-    
-    // Clean up any remaining flags
-    localStorage.removeItem('force-tutorial-start')
-    sessionStorage.removeItem('justCompletedOnboarding')
-  }
-
-  // ✅ DEBUG: Add debugging for tutorial state
-  useEffect(() => {
-    console.log('🔍 Tutorial state debug:', {
-      showTutorial,
-      forceTutorial,
-      hasSeenTutorial: localStorage.getItem('growfly-tutorial-completed'),
-      justCompleted: sessionStorage.getItem('justCompletedOnboarding'),
-      user: !!user
-    })
-  }, [showTutorial, forceTutorial, user])
-
-  // Copy message handler
-  const handleCopyMessage = async (messageId: string, content: string) => {
-    const success = await copyToClipboard(content)
-    if (success) {
-      setCopiedMessageId(messageId)
-      setTimeout(() => setCopiedMessageId(null), 2000)
-    }
-  }
-
-  // Enhanced load dashboard conversations from DB with error handling
-  const loadDashboardConversationsFromDB = async () => {
-    if (!token) return
-    
-    setIsLoadingMessages(true)
-    
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/chat/dashboard-history`, {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        if (data.messages && data.messages.length > 0) {
-          console.log('✅ Loaded user-specific messages from database:', data.messages.length)
-          setMessages(data.messages.slice(-MAX_PERSISTENT_MESSAGES))
-        } else {
-          console.log('✅ No previous messages for this user')
-          setMessages([])
-        }
-      } else {
-        console.log('No dashboard history found or error loading')
-        setMessages([])
-      }
-    } catch (err: unknown) {
-      console.error('Failed to load dashboard conversations from DB:', err)
-      handleApiError(err, 'Loading conversation history')
-      setMessages([])
-    } finally {
-      setIsLoadingMessages(false)
-    }
-  }
-
-  // Load user's private messages on mount
-  useEffect(() => {
-    if (token) {
-      loadDashboardConversationsFromDB()
-    }
-  }, [token])
-
-  // Helper function for creating files from base64 previews
-  const createFileFromPreview = (preview: string, name: string, type: string): File => {
-    const arr = preview.split(',')
-    const mime = arr[0].match(/:(.*?);/)?.[1] || type
-    const bstr = atob(arr[1])
-    let n = bstr.length
-    const u8arr = new Uint8Array(n)
-    
-    while (n--) {
-      u8arr[n] = bstr.charCodeAt(n)
-    }
-    
-    return new File([u8arr], name, { type: mime })
-  }
-
-  // Clear conversations
-  const createNewConversation = () => {
-    setMessages([])
-    setError(null)
-    setInput('')
-    setUploadedFiles([])
-  }
-
-  // Enhanced image usage fetching with better error handling
-  useEffect(() => {
-    if (token && user) {
-      setIsLoadingUsage(true)
-      
-      const fetchImageUsage = async () => {
-        try {
-          const response = await fetch(`${API_BASE_URL}/api/dalle/usage`, {
-            headers: { 
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          })
-          
-          if (response.ok) {
-            const data = await response.json()
-            
-            // Validate the response has the required fields
-            if (data && data.dailyImages && data.monthlyImages && data.totalPrompts) {
-              console.log('✅ Successfully loaded real usage data:', data)
-              setImageUsage(data)
-              return
-            }
-          }
-          
-          // If API call failed or returned invalid data, use user's actual subscription data
-          console.log('⚠️ API call failed, using subscription-based limits')
-          const subType = user.subscriptionType?.toLowerCase() || 'free'
-          const limits = IMAGE_LIMITS[subType] || IMAGE_LIMITS.free
-          
-          setImageUsage({
-            subscriptionType: subType,
-            subscriptionName: user.subscriptionType || 'Free',
-            dailyImages: { 
-              used: 0, 
-              limit: limits.daily, 
-              remaining: limits.daily 
-            },
-            monthlyImages: { 
-              used: 0, 
-              limit: limits.monthly, 
-              remaining: limits.monthly 
-            },
-            totalPrompts: { 
-              used: user.promptsUsed || 0, 
-              limit: promptLimit, 
-              remaining: Math.max(0, promptLimit - (user.promptsUsed || 0))
-            },
-            canGenerate: (user.promptsUsed || 0) < promptLimit,
-          })
-          
-        } catch (err: unknown) {
-          console.error('❌ Failed to fetch image usage:', err)
-          handleApiError(err, 'Loading image usage')
-          
-          // Fallback with user's actual subscription data
-          const subType = user.subscriptionType?.toLowerCase() || 'free'
-          const limits = IMAGE_LIMITS[subType] || IMAGE_LIMITS.free
-          
-          setImageUsage({
-            subscriptionType: subType,
-            subscriptionName: user.subscriptionType || 'Free',
-            dailyImages: { 
-              used: 0, 
-              limit: limits.daily, 
-              remaining: limits.daily 
-            },
-            monthlyImages: { 
-              used: 0, 
-              limit: limits.monthly, 
-              remaining: limits.monthly 
-            },
-            totalPrompts: { 
-              used: user.promptsUsed || 0, 
-              limit: promptLimit, 
-              remaining: Math.max(0, promptLimit - (user.promptsUsed || 0))
-            },
-            canGenerate: (user.promptsUsed || 0) < promptLimit,
-          })
-        } finally {
-          setIsLoadingUsage(false)
-        }
-      }
-      
-      fetchImageUsage()
-    }
-  }, [token, user, promptLimit])
-
-  // Enhanced user data fetching with retry logic
-  useEffect(() => {
-    if (!token) {
-      router.push('/onboarding')
-      return
-    }
-    
-    const fetchUserData = async () => {
-      setIsLoadingUser(true)
-      
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
-          method: 'GET',
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        })
-        
-        if (response.ok) {
-          const userData = await response.json()
-          setUser(userData)
-        } else {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-        }
-      } catch (error) {
-        const errorObj = error as { status?: number }
-        handleApiError(error, 'Loading user data', fetchUserData)
-        
-        if (errorObj?.status === 401) {
-          localStorage.removeItem('growfly_jwt')
-          router.push('/onboarding')
-        }
-      } finally {
-        setIsLoadingUser(false)
-      }
-    }
-    
-    fetchUserData()
-    const syncInterval = setInterval(fetchUserData, 60000)
-    
-    return () => clearInterval(syncInterval)
-  }, [token, router, setUser])
-
-  // Check if security notice should be shown
-  useEffect(() => {
-    const lastDismissed = localStorage.getItem('security_notice_dismissed')
-    if (lastDismissed) {
-      const dismissedDate = new Date(lastDismissed)
-      const now = new Date()
-      const daysDiff = (now.getTime() - dismissedDate.getTime()) / (1000 * 3600 * 24)
-      
-      if (daysDiff < 7) {
-        setShowSecurityNotice(false)
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault()
-        textareaRef.current?.focus()
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === '/') {
-        e.preventDefault()
-        setShowHelpModal(true)
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
-
-  // Auto-resize textarea - simplified for modern input
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = '36px' // Reset to minimum
-      
-      const scrollHeight = textareaRef.current.scrollHeight
-      const maxHeight = 96 // 4 lines max
-      
-      const newHeight = Math.min(scrollHeight, maxHeight)
-      textareaRef.current.style.height = newHeight + 'px'
-    }
-  }, [input])
-
-  // Improved scroll handling - detect manual scrolling
-  useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-
-    const handleScroll = () => {
-      const currentScrollTop = container.scrollTop
-      const maxScroll = container.scrollHeight - container.clientHeight
-      
-      // If user scrolled up manually, disable auto-scroll
-      if (currentScrollTop < lastScrollTop.current && currentScrollTop < maxScroll - 100) {
-        setDisableAutoScroll(true)
-        setIsUserScrolling(true)
-      }
-      
-      // If user scrolled to bottom, re-enable auto-scroll
-      if (currentScrollTop >= maxScroll - 50) {
-        setDisableAutoScroll(false)
-        setIsUserScrolling(false)
-      }
-      
-      lastScrollTop.current = currentScrollTop
-
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current)
-      }
-      scrollTimeoutRef.current = setTimeout(() => {
-        setIsUserScrolling(false)
-      }, 1000)
-    }
-
-    container.addEventListener('scroll', handleScroll, { passive: true })
-    
-    return () => {
-      container.removeEventListener('scroll', handleScroll)
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current)
-      }
-    }
-  }, [])
-
-  // Better auto-scroll logic
-  useEffect(() => {
-    if (!disableAutoScroll && !isUserScrolling && (isStreaming || messages.length > 0)) {
-      setTimeout(() => {
-        chatEndRef.current?.scrollIntoView({ 
-          behavior: isStreaming ? 'auto' : 'smooth',
-          block: 'end'
-        })
-      }, 100)
-    }
-  }, [messages, disableAutoScroll, isUserScrolling, isStreaming])
-
-  // Enhanced file handling with drag & drop and better error handling
-  const handleFileSelect = (files: FileList) => {
-    Array.from(files).forEach(file => {
-      try {
-        // Enhanced file size limit (25MB for documents, 10MB for images)
-        const maxSize = file.type.startsWith('image/') ? 10 * 1024 * 1024 : 25 * 1024 * 1024
-        if (file.size > maxSize) {
-          const sizeMB = Math.round(maxSize / (1024 * 1024))
-          setError(`File ${file.name} is too large. Maximum size is ${sizeMB}MB.`)
-          return
-        }
-
-        const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-        const newFile: UploadedFile = {
-          id: fileId,
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          file: file,
-        }
-
-        // Enhanced file preview support with error handling
-        if (file.type.startsWith('image/')) {
-          const reader = new FileReader()
-          reader.onload = (e) => {
-            setUploadedFiles(prev => prev.map(f => 
-              f.id === fileId ? { ...f, preview: e.target?.result as string } : f
-            ))
-          }
-          reader.onerror = () => {
-            setError(`Failed to read image file: ${file.name}`)
-          }
-          reader.readAsDataURL(file)
-        } else if (file.type === 'application/pdf') {
-          newFile.content = `PDF file: ${file.name}`
-        } else if (file.type.includes('sheet') || file.type.includes('excel') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-          newFile.content = `Excel file: ${file.name}`
-        } else if (file.type.includes('word') || file.name.endsWith('.docx') || file.name.endsWith('.doc')) {
-          newFile.content = `Word document: ${file.name}`
-        } else if (file.type.includes('presentation') || file.name.endsWith('.pptx') || file.name.endsWith('.ppt')) {
-          newFile.content = `PowerPoint presentation: ${file.name}`
-        }
-
-        setUploadedFiles(prev => [...prev, newFile])
-      } catch (error: unknown) {
-        console.error('Error processing file:', error)
-        setError(`Failed to process file: ${file.name}`)
-      }
-    })
-  }
-
-  const removeFile = (fileId: string) => {
-    setUploadedFiles(prev => prev.filter(f => f.id !== fileId))
-  }
-
-  // Drag and drop handlers
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(true)
-  }
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(false)
-  }
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(false)
-    
-    const files = e.dataTransfer.files
-    if (files.length > 0) {
-      handleFileSelect(files)
-    }
-  }
-
-  const fetchFollowUps = async (text: string): Promise<string[]> => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/ai/followups`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ message: text }),
-      })
-      if (!res.ok) throw new Error('Follow-ups fetch failed')
-      const data = await res.json()
-      const rawFollowUps = (data.followUps as string[]) || []
-      
-      // Only return ONE follow-up question
-      if (rawFollowUps.length > 0) {
-        return [rawFollowUps[0]]
-      }
-      
-      if (text.toLowerCase().includes('marketing')) {
-        return ['How can I measure the success of these marketing strategies?']
-      } else if (text.toLowerCase().includes('business') || text.toLowerCase().includes('improve')) {
-        return ['What would be the first step to implement this improvement?']
-      } else if (text.toLowerCase().includes('document') || text.toLowerCase().includes('create')) {
-        return ['Can you help me customize this for my specific industry?']
-      } else {
-        return ['Can you provide more specific examples for my situation?']
-      }
-    } catch {
-      return ['Tell me more about how to implement this']
-    }
-  }
-
-  // Enhanced handleStream with conversation context and files and better error handling
-  const handleStreamWithFiles = async (prompt: string, aId: string, files: File[] = []) => {
-    let fullContent = ''
-    let followUps: string[] = []
-    setIsLoading(true)
-    setIsStreaming(true)
-    setError(null)
-
-    setMessages((prev) =>
-      prev.map((msg) =>
-        msg.id === aId ? { ...msg, content: '' } : msg
-      )
-    )
-
-    try {
-      // Prepare conversation history for backend
-      const conversationHistory = messages.slice(-6).map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }))
-
-      console.log('🔍 Sending conversation history:', conversationHistory.length, 'messages')
-
-      await streamChat({
-        prompt,
-        token,
-        files,
-        conversationHistory, // Now sending to backend!
-        onStream: (chunk: any) => {
-          if (chunk.content) {
-            fullContent += chunk.content
-            
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === aId
-                  ? { ...msg, content: fullContent }
-                  : msg
-              )
-            )
-          }
-          
-          if (chunk.followUps) {
-            followUps = chunk.followUps
-          }
-
-          if (chunk.processedFiles) {
-            console.log('📁 Processed files:', chunk.processedFiles)
-          }
-        },
-        onComplete: async () => {
-          setIsLoading(false)
-          setIsStreaming(false)
-          
-          if (!followUps.length && fullContent.trim()) {
-            followUps = await fetchFollowUps(fullContent)
-          }
-          
-          if (!followUps.length) {
-            followUps = ['Tell me more about this']
-          }
-          
-          // Ensure only ONE follow-up question
-          if (followUps.length > 1) {
-            followUps = [followUps[0]]
-          }
-          
-          setMessages((prev) => {
-            const updated = prev.map((msg) =>
-              msg.id === aId ? { ...msg, content: fullContent, followUps } : msg
-            )
-            const trimmed = updated.slice(-MAX_PERSISTENT_MESSAGES)
-            return trimmed
-          })
-          
-          try {
-            await fetch(`${API_BASE_URL}/api/chat/save-to-dashboard`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                userMessage: prompt,
-                assistantMessage: fullContent,
-              }),
-            })
-          } catch (saveError) {
-            console.error('Failed to save to dashboard history:', saveError)
-            // Don't show error to user for save failure
-          }
-          
-          if (user) {
-            const newPromptsUsed = (user.promptsUsed ?? 0) + 1
-            const newXP = (user.totalXP ?? 0) + 2.5
-            
-            setUser({
-              ...user,
-              promptsUsed: newPromptsUsed,
-              totalXP: newXP,
-            })
-            
-            try {
-              const updateResponse = await fetch(`${API_BASE_URL}/api/user/update`, {
-                method: 'PATCH',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                  promptsUsed: newPromptsUsed,
-                  totalXP: newXP,
-                }),
-              })
-              
-              if (updateResponse.ok) {
-                const freshDataResponse = await fetch(`${API_BASE_URL}/api/auth/me`, {
-                  headers: { Authorization: `Bearer ${token}` }
-                })
-                
-                if (freshDataResponse.ok) {
-                  const freshUserData = await freshDataResponse.json()
-                  setUser(freshUserData)
-                }
-              }
-            } catch (error: unknown) {
-              console.error('❌ Database sync error:', error)
-              // Don't show error to user for sync failure
-            }
-          }
-        },
-        onError: (error: unknown) => {
-          setIsLoading(false)
-          setIsStreaming(false)
-          
-          const errorObj = error as { type?: string; message?: string }
-          if (errorObj?.type === 'rate_limit') {
-            setError(errorObj.message || 'Rate limit exceeded')
-            setMessages((prev) => prev.filter(msg => msg.id !== aId))
-          } else {
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === aId
-                  ? { ...msg, content: '❌ Failed to get response. Please try again.' }
-                  : msg
-              )
-            )
-            handleApiError(error, 'Sending message')
-          }
-        },
-      })
-    } catch (error: unknown) {
-      setIsLoading(false)
-      setIsStreaming(false)
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === aId
-            ? { ...msg, content: '❌ Failed to get response. Please try again.' }
-            : msg
-        )
-      )
-      handleApiError(error, 'Sending message')
-    }
-  }
-
-  // Enhanced handleSubmit with better error handling
-  const handleSubmit = async (override?: string) => {
-    const text = override || input.trim()
-    if (!text && uploadedFiles.length === 0) return
-
-    setError(null)
-
-    if (promptsUsed >= promptLimit) {
-      const planType = user?.subscriptionType?.toLowerCase() || 'free'
-      const resetDate = getResetDate(planType)
-      const periodText = planType === 'free' ? 'daily' : 'monthly'
-      const resetDateText = resetDate.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit'
-      })
-      
-      setError(`You've reached your ${periodText} limit of ${promptLimit} prompts. Resets on ${resetDateText}. Upgrade your plan to continue.`)
-      setShakeInput(true)
-      setTimeout(() => setShakeInput(false), 600)
-      return
-    }
-
-    if (!isOnline) {
-      setError('No internet connection. Please check your network and try again.')
-      return
-    }
-
-    const uId = `u${Date.now()}`
-    const userMessage: Message = { 
-      id: uId, 
-      role: 'user' as const, 
-      content: text,
-      files: uploadedFiles.length > 0 ? [...uploadedFiles] : undefined
-    }
-    
-    setMessages((prev) => {
-      const updated = [...prev, userMessage]
-      return updated.slice(-MAX_PERSISTENT_MESSAGES)
-    })
-    setInput('')
-    
-    const aId = `a${Date.now()}`
-    setMessages((prev) => {
-      const updated = [...prev, { id: aId, role: 'assistant', content: '' } as Message]
-      return updated.slice(-MAX_PERSISTENT_MESSAGES)
-    })
-
-    const filesToSend: File[] = []
-    
-    for (const uploadedFile of uploadedFiles) {
-      try {
-        if (uploadedFile.file) {
-          filesToSend.push(uploadedFile.file)
-        } else if (uploadedFile.preview && uploadedFile.type.startsWith('image/')) {
-          const file = createFileFromPreview(uploadedFile.preview, uploadedFile.name, uploadedFile.type)
-          filesToSend.push(file)
-        }
-      } catch (error: unknown) {
-        console.error('Error processing file for upload:', error)
-        setError(`Failed to process file: ${uploadedFile.name}`)
-      }
-    }
-
-    setUploadedFiles([])
-    handleStreamWithFiles(text, aId, filesToSend)
-  }
-
-  const handleSaveResponse = async (title: string, messageId: string) => {
-    try {
-      const message = messages.find(m => m.id === messageId)
-      if (!message || message.role !== 'assistant') {
-        throw new Error('Invalid message to save')
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/saved`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ 
-          title, 
-          content: message.content
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to save response')
-      }
-
-      const result = await response.json()
-      setShowSaveModal(false)
-      setError(null)
-      
-      return result
-    } catch (error: unknown) {
-      console.error('Error saving response:', error)
-      setError('Failed to save response. Please try again.')
-      return null
-    }
-  }
-
-  const handleSaveToCollabZone = async (title: string, messageId: string) => {
-    try {
-      const message = messages.find(m => m.id === messageId)
-      if (!message || message.role !== 'assistant') {
-        throw new Error('Invalid message to save')
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/collab`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ 
-          title, 
-          content: message.content,
-          type: 'document'
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to save to Collab Zone')
-      }
-
-      const result = await response.json()
-      setError(null)
-      
-      setShowSaveModal(false)
-      setCurrentSaveMessageId(null)
-      
-      return result
-    } catch (error: unknown) {
-      console.error('Error saving to Collab Zone:', error)
-      setError('Failed to save to Collab Zone. Please try again.')
-      return null
-    }
-  }
-
-  const handleShareToCollabZone = async (messageId: string) => {
-    const message = messages.find(m => m.id === messageId)
-    if (!message || message.role !== 'assistant') return
-
-    try {
-      const autoTitle = `Shared Response - ${new Date().toLocaleDateString()}`
-      const result = await handleSaveToCollabZone(autoTitle, messageId)
-      
-      if (result) {
-        router.push(`/collab-zone?document=${result.id}`)
-      }
-    } catch (error: unknown) {
-      console.error('Error sharing to Collab Zone:', error)
-      setError('Failed to share to Collab Zone. Please try again.')
-    }
-  }
-
-  const handleImageGenerated = (image: GeneratedImage) => {
-    console.log('🎨 Image generated:', image.id)
-    
-    setGeneratedImages(prev => [image, ...prev])
-    
-    const imageMessageId = `img_${Date.now()}`
-    const imageMessage: Message = {
-      id: imageMessageId,
-      role: 'assistant',
-      content: `I've created an image for you: "${image.originalPrompt}"`,
-      generatedImage: image,
-      followUps: [
-        'Can you create a variation of this image?'
-      ]
-    }
-    
-    setMessages(prev => {
-      const updated = [...prev, imageMessage]
-      const trimmed = updated.slice(-MAX_PERSISTENT_MESSAGES)
-      return trimmed
-    })
-    
-    if (token) {
-      fetch(`${API_BASE_URL}/api/dalle/usage`, {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-        .then(res => {
-          if (!res.ok) throw new Error(`HTTP ${res.status}`)
-          return res.json()
-        })
-        .then(data => {
-          if (data && !data.error && data.dailyImages && data.monthlyImages) {
-            setImageUsage(data)
-          }
-        })
-        .catch((err: unknown) => {
-          console.error('Failed to refresh image usage:', err)
-          handleApiError(err, 'Refreshing image usage')
-        })
-    }
-  }
-
-  const handleDownloadImage = (image: GeneratedImage) => {
-    try {
-      const link = document.createElement('a')
-      link.href = image.url
-      link.download = `growfly-${image.id}.png`
-      link.target = '_blank'
-      link.click()
-    } catch (error: unknown) {
-      console.error('Failed to download image:', error)
-      window.open(image.url, '_blank')
-    }
-  }
-
-  const handleShareImage = (image: GeneratedImage) => {
-    if (navigator.share) {
-      navigator.share({
-        title: 'Check out this AI-generated image!',
-        text: image.originalPrompt,
-        url: image.url
-      })
-    } else {
-      navigator.clipboard.writeText(image.url)
-      alert('Image URL copied to clipboard!')
-    }
-  }
-
-  const dismissError = () => setError(null)
-
-  const dismissSecurityNotice = () => {
-    setShowSecurityNotice(false)
-    localStorage.setItem('security_notice_dismissed', new Date().toISOString())
-  }
-
-  // Show loading screen while initial data is loading
-  if (isLoadingUser || isLoadingMessages) {
-    return (
-      <div className="h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center max-w-md mx-4">
-          <div className="flex items-center justify-center mb-6">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            Loading Growfly Dashboard
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            {isLoadingUser ? 'Fetching your account data...' : 'Loading your conversations...'}
-          </p>
-          <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
-            <FaSpinner className="animate-spin" />
-            <span>Please wait</span>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <ErrorBoundary>
-      <div 
-        className="h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300 flex flex-col relative"
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        <style jsx>{`
-          @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
-            20%, 40%, 60%, 80% { transform: translateX(2px); }
-          }
-        `}</style>
-        
-        {/* Network Status Banner */}
-        <NetworkStatus isOnline={isOnline} isConnecting={isConnecting} />
-        
-        {/* Drag and Drop Overlay */}
-        {isDragOver && (
-          <div className="fixed inset-0 z-50 bg-gray-500/20 backdrop-blur-sm flex items-center justify-center">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-2xl border-2 border-dashed border-gray-500 max-w-md text-center">
-              <div className="text-6xl mb-4">📁</div>
-              <h3 className="text-2xl font-bold text-gray-600 dark:text-gray-300 mb-2">Drop Files Here</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Support for images, PDF, Word, Excel, PowerPoint
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-                Up to 25MB per document, 10MB per image
-              </p>
-            </div>
-          </div>
-        )}
-        
-        {/* Security Notice - Compact Banner */}
-        {messages.length > 0 && showSecurityNotice && (
-          <div className="w-full bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800 p-2">
-            <div className="flex items-center justify-between max-w-5xl mx-auto">
-              <div className="flex items-center gap-2">
-                <span className="text-blue-600 dark:text-blue-400 text-base">💡</span>
-                <div className="text-sm">
-                  <span className="text-blue-900 dark:text-blue-100 font-medium">Your conversations are securely saved!</span>
-                  <span className="text-blue-700 dark:text-blue-300 ml-1">Your last 10 exchanges stay private to your account.</span>
-                </div>
-              </div>
-              <button
-                onClick={dismissSecurityNotice}
-                className="text-blue-400 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-300 p-1.5 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-800 transition-all duration-200 transform hover:scale-105"
-                title="Dismiss for 7 days"
-              >
-                <HiX className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Content Area - Proper sidebar spacing */}
-        <div className="flex-1 overflow-hidden ml-0 sm:ml-56" data-tour="dashboard-main">
-          <div ref={containerRef} className="h-full overflow-y-auto pb-80 pl-0 pr-4 pt-4">
-
-          {/* Prompt Limit Warning */}
-          {isAtPromptLimit && (
-            <div className="mt-4 mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
-              <button 
-                onClick={dismissError}
-                className="absolute top-2 right-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200"
-              >
-                <HiX className="w-4 h-4" />
-              </button>
-              <strong>🚫 Prompt Limit Reached</strong>
-              <p className="mt-2">
-                You've used all {promptLimit} prompts for your {user?.subscriptionType?.toLowerCase() || 'free'} plan.
-              </p>
-              <p className="text-sm mt-1">
-                Resets: {getResetDate(user?.subscriptionType?.toLowerCase() || 'free').toLocaleDateString('en-US', { 
-                  month: 'short', 
-                  day: 'numeric',
-                  hour: 'numeric',
-                  minute: '2-digit'
-                })}
-              </p>
-              <div className="mt-3">
-                <button
-                  onClick={() => router.push('/change-plan')}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors"
-                >
-                  Upgrade Plan
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Error Message */}
-          {error && (
-            <div className="mt-4 mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm relative">
-              <button 
-                onClick={dismissError}
-                className="absolute top-2 right-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200"
-              >
-                <HiX className="w-4 h-4" />
-              </button>
-              <strong>⚠️ {error}</strong>
-              {error.includes('limit') && (
-                <div className="mt-2">
-                  <button
-                    onClick={() => router.push('/change-plan')}
-                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors"
-                  >
-                    Upgrade Plan
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Chat Messages - Traditional Chat Layout */}
-          <div className="space-y-3 min-h-0 flex-1 pt-6">
-            {messages.length === 0 ? (
-              <div className="flex items-center justify-center h-full min-h-[50vh] pt-8">
-                <div className="text-center max-w-2xl">
-                  <div className="mb-6">
-                    <div className="text-6xl md:text-8xl mb-4 animate-bounce">👋</div>
-                    <h3 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-3">
-                      Welcome to Growfly! 🚀
-                    </h3>
-                    <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
-                      Your AI business assistant is ready to help you grow, optimize, and succeed. 
-                      Start by choosing a quick prompt or asking any business question.
-                    </p>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
-                      <div className="text-xl mb-2">💡</div>
-                      <h4 className="font-semibold text-gray-900 dark:text-white text-sm">Smart Suggestions</h4>
-                      <p className="text-xs text-gray-700 dark:text-gray-300 mt-1">Get AI-powered business insights</p>
-                    </div>
-                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700" data-tour="gallery">
-                      <div className="text-xl mb-2">📁</div>
-                      <h4 className="font-semibold text-gray-900 dark:text-white text-sm">Enhanced File Support</h4>
-                      <p className="text-xs text-gray-700 dark:text-gray-300 mt-1">Drag & drop Excel, Word, PowerPoint files</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-                    <div className="flex items-center gap-2">
-                      <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">⌘</kbd>
-                      <span>+</span>
-                      <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">K</kbd>
-                      <span>Quick shortcuts</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full animate-pulse ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                      <span>{isOnline ? 'Ready to help' : 'Connection issues'}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <>
-                {messages.map((msg, index) => (
-                  <div
-                    key={msg.id}
-                    className={`flex mb-3 w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                    onMouseEnter={() => setHoveredMessageId(msg.id)}
-                    onMouseLeave={() => setHoveredMessageId(null)}
-                  >
-                    {/* Traditional Chat Bubbles */}
-                    <div
-                      className={`relative rounded-2xl shadow-sm transition-all duration-200 ${
-                        msg.role === 'user'
-                          ? 'bg-blue-600 text-white max-w-[75%] sm:max-w-[65%] p-4'
-                          : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-white max-w-[90%] sm:max-w-[80%] p-4'
-                      }`}
-                    >
-                      {/* Display uploaded files for user messages */}
-                      {msg.role === 'user' && msg.files && msg.files.length > 0 && (
-                        <div className="mb-3 space-y-2">
-                          <p className="text-xs text-blue-200 font-medium">📎 Attached Files:</p>
-                          <div className="grid grid-cols-1 gap-2">
-                            {msg.files.map((file) => (
-                              <div key={file.id} className="bg-blue-500 rounded-lg p-2 flex items-center gap-2">
-                                {file.type.startsWith('image/') && file.preview ? (
-                                  <img src={file.preview} alt={file.name} className="w-8 h-8 object-cover rounded" />
-                                ) : file.type === 'application/pdf' ? (
-                                  <FaFilePdf className="w-6 h-6 text-blue-200" />
-                                ) : (
-                                  <FaFileAlt className="w-6 h-6 text-blue-200" />
-                                )}
-                                <span className="text-xs text-blue-100">{file.name}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {msg.imageUrl && (
-                        <Image
-                          src={msg.imageUrl}
-                          alt="Uploaded"
-                          width={280}
-                          height={280}
-                          className="mb-3 rounded-xl shadow-md"
-                        />
-                      )}
-
-                      {/* Generated images */}
-                      {msg.generatedImage && (
-                        <div className="mb-3">
-                          <SafeImage
-                            src={msg.generatedImage.url}
-                            alt={msg.generatedImage.originalPrompt}
-                            className="w-full max-w-lg rounded-xl shadow-lg"
-                            onError={() => {
-                              console.error('Failed to load generated image:', msg.generatedImage?.url)
-                            }}
-                          />
-                          <div className="mt-3 flex gap-2">
-                            <button
-                              onClick={() => handleDownloadImage(msg.generatedImage!)}
-                              className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
-                            >
-                              <FaFileDownload />
-                              Download
-                            </button>
-                            <button
-                              onClick={() => router.push('/gallery')}
-                              className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
-                            >
-                              <FaImages />
-                              Gallery
-                            </button>
-                            <button
-                              onClick={() => handleShareImage(msg.generatedImage!)}
-                              className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
-                            >
-                              <FaShareSquare />
-                              Share
-                            </button>
-                          </div>
-                          <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                            <p><strong>Size:</strong> {msg.generatedImage.size} • <strong>Style:</strong> {msg.generatedImage.style}</p>
-                            <p><strong>Created:</strong> {new Date(msg.generatedImage.createdAt).toLocaleDateString()}</p>
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                        {msg.content ? (
-                          <div className="prose prose-sm max-w-none dark:prose-invert">
-                            {msg.content}
-                          </div>
-                        ) : msg.role === 'assistant' && (isLoading || isStreaming) ? (
-                          <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400 py-2">
-                            <div className="flex gap-1">
-                              <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                              <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                              <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
-                            </div>
-                            <span className="animate-pulse text-sm font-medium">Thinking...</span>
-                          </div>
-                        ) : ''}
-                      </div>
-
-                      {msg.role === 'assistant' && msg.content && (
-                        <>
-                          {/* Follow-up Questions - Only ONE */}
-                          {msg.followUps && msg.followUps.length > 0 && (
-                            <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="text-sm">💡</span>
-                                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Continue the conversation:</span>
-                              </div>
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault()
-                                  const cleanFollowUp = msg.followUps![0].replace(/^\s*[\(\)]\s*/, '').trim()
-                                  handleSubmit(cleanFollowUp)
-                                }}
-                                disabled={isLoading || isStreaming}
-                                className="w-full bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 disabled:bg-gray-100 dark:disabled:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-200 disabled:text-gray-500 dark:disabled:text-gray-500 p-0 rounded-xl text-sm font-medium shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-600 disabled:border-gray-200 dark:disabled:border-gray-600 transition-all duration-200 hover:scale-[1.01] disabled:transform-none disabled:cursor-not-allowed text-left focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
-                              >
-                                <div className="px-3 py-2">
-                                  {msg.followUps[0].replace(/^\s*[\(\)]\s*/, '').trim()}
-                                </div>
-                              </button>
-                            </div>
-                          )}
-
-                          {/* Action Buttons - NO PDF/Excel downloads */}
-                          <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                            <div className="relative">
-                              <button
-                                onClick={() => handleCopyMessage(msg.id, msg.content)}
-                                className={`p-2 rounded-xl border transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 ${
-                                  copiedMessageId === msg.id 
-                                    ? 'text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
-                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-gray-50 dark:bg-gray-800'
-                                }`}
-                                title="Copy message"
-                              >
-                                <FaCopy className="w-4 h-4" />
-                              </button>
-                              {copiedMessageId === msg.id && (
-                                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap z-10">
-                                  Copied!
-                                </div>
-                              )}
-                            </div>
-
-                            <button
-                              onClick={() => {
-                                setCurrentFeedbackMessageId(msg.id)
-                                setShowFeedbackModal(true)
-                              }}
-                              className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-200 dark:hover:border-green-800 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
-                              title="Like this response"
-                            >
-                              <HiThumbUp className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                setCurrentFeedbackMessageId(msg.id)
-                                setShowFeedbackModal(true)
-                              }}
-                              className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 dark:hover:border-red-800 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
-                              title="Dislike this response"
-                            >
-                              <HiThumbDown className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                setCurrentSaveMessageId(msg.id)
-                                setShowSaveModal(true)
-                              }}
-                              className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-yellow-600 dark:hover:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:border-yellow-200 dark:hover:border-yellow-800 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
-                              title="Save to Saved Responses"
-                              data-tour="saved-responses"
-                            >
-                              <FaRegBookmark className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleShareToCollabZone(msg.id)}
-                              className="p-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500 transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-gray-50 dark:bg-gray-800"
-                              title="Share to Collab Zone"
-                              data-tour="collab-zone"
-                            >
-                              <FaShareSquare className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                <div ref={chatEndRef} className="h-8" />
-              </>
-            )}
-          </div>
-          </div>
-        </div>
-
-        {/* File Upload Preview - Modern Compact Style */}
-        {uploadedFiles.length > 0 && (
-          <div className="fixed bottom-16 left-4 right-4 sm:left-60 z-30">
-            <div className="max-w-4xl mx-auto">
-              <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-700 p-2 shadow-lg">
-                <div className="flex items-center gap-2 overflow-x-auto">
-                  {uploadedFiles.map((file) => (
-                    <div key={file.id} className="relative flex-shrink-0 group">
-                      <div className="relative bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden">
-                        {file.type.startsWith('image/') && file.preview ? (
-                          <img 
-                            src={file.preview} 
-                            alt={file.name} 
-                            className="w-12 h-12 object-cover" 
-                          />
-                        ) : (
-                          <div className="w-12 h-12 flex items-center justify-center">
-                            {file.type === 'application/pdf' ? (
-                              <FaFilePdf className="w-6 h-6 text-red-500" />
-                            ) : file.type.includes('sheet') || file.type.includes('excel') ? (
-                              <FaFileExcel className="w-6 h-6 text-green-500" />
-                            ) : (
-                              <FaFileAlt className="w-6 h-6 text-gray-500" />
-                            )}
-                          </div>
-                        )}
-                        <button
-                          onClick={() => removeFile(file.id)}
-                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
-                        >
-                          ×
-                        </button>
-                      </div>
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs px-1 py-0.5 rounded-b-lg truncate opacity-0 group-hover:opacity-100 transition-opacity">
-                        {file.name.split('.')[0].substring(0, 8)}...
-                      </div>
-                    </div>
-                  ))}
-                  <button
-                    onClick={() => setUploadedFiles([])}
-                    className="text-xs text-gray-500 dark:text-gray-400 hover:text-red-500 px-2 py-1 rounded transition-colors flex-shrink-0"
-                  >
-                    Clear all
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Modern Single-Line Input */}
-        <div className="fixed bottom-4 left-4 right-4 sm:left-60 z-20">
-          <div className="max-w-4xl mx-auto">
-            {/* Inline Error Messages */}
-            {error && (
-              <div className="mb-2 text-sm text-red-600 dark:text-red-400 flex items-center gap-1 bg-red-50 dark:bg-red-900/20 p-2 rounded-lg border border-red-200 dark:border-red-800">
-                <span>⚠️</span>
-                <span>{error}</span>
-                <button onClick={dismissError} className="ml-auto text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-300">
-                  <HiX className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-            
-            <div className={`bg-white dark:bg-gray-800 shadow-xl rounded-full border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:shadow-2xl ${
-              shakeInput ? 'animate-pulse border-red-300 dark:border-red-700' : ''
-            } ${input.trim() || uploadedFiles.length > 0 ? 'rounded-2xl' : 'rounded-full'}`}>
-              <div className="flex items-end gap-2 p-2">
-                
-                {/* Action Buttons - Enhanced with blue theme */}
-                <div className="flex gap-1 flex-shrink-0">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault()
-                      if (!isLoading && !isStreaming && fileInputRef.current) {
-                        fileInputRef.current.click()
-                      }
-                    }}
-                    disabled={isLoading || isStreaming || isAtPromptLimit}
-                    className={`p-2 rounded-full transition-all duration-200 ${
-                      isLoading || isStreaming || isAtPromptLimit
-                        ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-700 text-gray-400'
-                        : 'bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-800/50 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:scale-110 active:scale-95'
-                    }`}
-                    title="Upload files"
-                  >
-                    <FaPaperclip className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      if (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0) {
-                        setShowImageModal(true)
-                      } else {
-                        router.push('/change-plan')
-                      }
-                    }}
-                    disabled={isAtPromptLimit}
-                    className={`p-2 rounded-full transition-all duration-200 ${
-                      (imageUsage?.canGenerate && (imageUsage?.dailyImages?.remaining || 0) > 0 && !isAtPromptLimit)
-                        ? 'bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-800/50 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:scale-110 active:scale-95'
-                        : 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-700 text-gray-400'
-                    }`}
-                    title="Generate image"
-                    data-tour="gallery"
-                  >
-                    <FaPalette className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {/* Text Input */}
-                <div className="flex-1 relative min-h-[36px] flex items-center">
-                  <textarea
-                    ref={textareaRef}
-                    rows={1}
-                    placeholder="Type your message..."
-                    className="w-full px-3 py-2 border-0 bg-transparent text-gray-900 dark:text-white resize-none text-sm focus:outline-none placeholder-gray-400 dark:placeholder-gray-500 leading-tight"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onFocus={() => setInputFocused(true)}
-                    onBlur={() => setInputFocused(false)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault()
-                        handleSubmit()
-                      }
-                    }}
-                    disabled={isLoading || isStreaming || isAtPromptLimit || !isOnline}
-                    data-tour="chat-input"
-                    style={{ maxHeight: '96px', minHeight: '36px' }}
-                  />
-                </div>
-
-                {/* Send Button */}
-                <button
-                  onClick={(e) => {
-                    e.preventDefault()
-                    handleSubmit()
-                  }}
-                  disabled={(!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || isAtPromptLimit || !isOnline}
-                  className={`p-2 rounded-full transition-all duration-200 flex-shrink-0 flex items-center justify-center min-w-[36px] min-h-[36px] ${
-                    (!input.trim() && uploadedFiles.length === 0) || isLoading || isStreaming || isAtPromptLimit || !isOnline
-                      ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                      : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95'
-                  }`}
-                  title="Send message"
-                >
-                  {isLoading || isStreaming ? (
-                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                    </svg>
-                  )}
-                </button>
-                
-                <input
-                  type="file"
-                  accept="image/*,application/pdf,.txt,.doc,.docx,.xls,.xlsx,.ppt,.pptx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-excel,application/vnd.ms-powerpoint,application/msword"
-                  onChange={(e) => {
-                    const files = e.target.files
-                    if (files) handleFileSelect(files)
-                  }}
-                  className="hidden"
-                  ref={fileInputRef}
-                  disabled={isLoading || isStreaming || isAtPromptLimit}
-                  multiple
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Help Button - Enhanced Style */}
-        <div className="fixed right-4 bottom-20 md:bottom-24 z-30">
-          <button
-            onClick={() => setShowHelpModal(true)}
-            disabled={isLoading || isStreaming}
-            className="bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white p-0 md:p-0 rounded-full shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-110 active:scale-95 disabled:transform-none w-12 h-12 md:w-10 md:h-10 flex items-center justify-center touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
-            title="Quick Start Guide"
-            data-tour="education-hub"
-          >
-            <FaQuestionCircle className="w-5 h-5 md:w-4 md:h-4" />
-          </button>
-        </div>
-
-        {/* ✅ ENHANCED: Development test button with better debug info */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="fixed top-4 right-4 bg-red-500 text-white p-3 rounded-lg z-50 text-sm space-y-2">
-            <div>
-              <strong>🧪 Tutorial Debug</strong>
-            </div>
-            <div className="text-xs space-y-1">
-              <div>showTutorial: {showTutorial.toString()}</div>
-              <div>forceTutorial: {forceTutorial.toString()}</div>
-              <div>hasCompleted: {localStorage.getItem('growfly-tutorial-completed') || 'false'}</div>
-              <div>justCompleted: {sessionStorage.getItem('justCompletedOnboarding') || 'false'}</div>
-            </div>
-            <button
-              onClick={() => {
-                console.log('🎯 Manual tutorial trigger from debug panel')
-                setShowTutorial(true)
-                setForceTutorial(true)
-              }}
-              className="bg-white text-red-500 px-2 py-1 rounded text-xs font-bold w-full"
-            >
-              🎯 Force Start Tutorial
-            </button>
-            <button
-              onClick={() => {
-                localStorage.removeItem('growfly-tutorial-completed')
-                sessionStorage.setItem('justCompletedOnboarding', 'true')
-                window.location.reload()
-              }}
-              className="bg-yellow-500 text-white px-2 py-1 rounded text-xs font-bold w-full"
-            >
-              🔄 Reset as New User
-            </button>
-          </div>
-        )}
-
-        {/* Help Modal */}
-        {showHelpModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-5xl mx-4 w-full max-h-[90vh] overflow-y-auto border border-gray-200/50 dark:border-gray-700/50">
-              <div className="p-8">
-                <div className="flex items-center justify-between mb-8">
-                  <div>
-                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
-                      🚀 Quick Start Hub
-                    </h2>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Choose from these proven business prompts to get immediate value from Growfly
-                    </p>
-                  </div>
-                  <button 
-                    onClick={() => setShowHelpModal(false)} 
-                    className="p-3 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <button
-                    onClick={() => {
-                      handleSubmit("What are some effective marketing strategies for my business that I can implement this month?")
-                      setShowHelpModal(false)
-                    }}
-                    disabled={isLoading || isStreaming || isAtPromptLimit}
-                    className="group p-6 text-left bg-gray-50 dark:bg-gray-800 rounded-3xl hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200 dark:border-gray-700"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="text-4xl group-hover:scale-110 transition-transform duration-300">📈</div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Marketing Strategies</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Get actionable marketing ideas, campaign strategies, and customer acquisition tactics you can implement immediately to grow your business.</p>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Social Media</span>
-                          <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Content Strategy</span>
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleSubmit("Analyze my business operations and suggest 3 specific improvements I can make this week.")
-                      setShowHelpModal(false)
-                    }}
-                    disabled={isLoading || isStreaming || isAtPromptLimit}
-                    className="group p-6 text-left bg-gray-50 dark:bg-gray-800 rounded-3xl hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200 dark:border-gray-700"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="text-4xl group-hover:scale-110 transition-transform duration-300">⚡</div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Business Optimization</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Identify bottlenecks, streamline processes, and find quick wins to improve efficiency, reduce costs, and boost productivity.</p>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Process Improvement</span>
-                          <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Cost Reduction</span>
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleSubmit("Help me create a compelling business proposal for a potential client or investor.")
-                      setShowHelpModal(false)
-                    }}
-                    disabled={isLoading || isStreaming || isAtPromptLimit}
-                    className="group p-6 text-left bg-gray-50 dark:bg-gray-800 rounded-3xl hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200 dark:border-gray-700"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="text-4xl group-hover:scale-110 transition-transform duration-300">📊</div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Business Proposals</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Create compelling proposals, pitch decks, and business documents that win clients and secure funding opportunities.</p>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Proposals</span>
-                          <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Pitch Decks</span>
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleSubmit("What are the current trends in my industry and how can I capitalize on them?")
-                      setShowHelpModal(false)
-                    }}
-                    disabled={isLoading || isStreaming || isAtPromptLimit}
-                    className="group p-6 text-left bg-gray-50 dark:bg-gray-800 rounded-3xl hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl border border-gray-200 dark:border-gray-700"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="text-4xl group-hover:scale-110 transition-transform duration-300">🎯</div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Industry Analysis</h4>
-                        <p className="text-gray-600 dark:text-gray-400 leading-relaxed">Stay ahead of the competition with insights into industry trends, market opportunities, and strategic positioning.</p>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Market Research</span>
-                          <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Competitive Analysis</span>
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                </div>
-                
-                <div className="mt-8 p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                    ⚡ Pro Tips for Better Results
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div className="flex items-start gap-3">
-                      <span className="text-gray-500 text-lg">💡</span>
-                      <div>
-                        <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Be Specific</h4>
-                        <p className="text-gray-600 dark:text-gray-400">Include your industry, company size, and specific goals for more tailored advice.</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <span className="text-gray-500 text-lg">📁</span>
-                      <div>
-                        <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Upload Files</h4>
-                        <p className="text-gray-600 dark:text-gray-400">Share documents, spreadsheets, or presentations for analysis and insights.</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <span className="text-gray-500 text-lg">🎨</span>
-                      <div>
-                        <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Create Images</h4>
-                        <p className="text-gray-600 dark:text-gray-400">Generate professional visuals for marketing, presentations, and social media.</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <span className="text-gray-500 text-lg">🔖</span>
-                      <div>
-                        <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Save Responses</h4>
-                        <p className="text-gray-600 dark:text-gray-400">Bookmark useful responses to access them anytime in your saved collection.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Image Generation Modal */}
-        <ImageGenerationModal
-          open={showImageModal}
-          onClose={() => setShowImageModal(false)}
-          onImageGenerated={handleImageGenerated}
-        />
-
-        {/* Save Modal */}
-        {showSaveModal && currentSaveMessageId && (
-          <SaveModal
-            open={showSaveModal}
-            onClose={() => {
-              setShowSaveModal(false)
-              setCurrentSaveMessageId(null)
-            }}
-            messageId={currentSaveMessageId}
-            onSaveResponse={handleSaveResponse}
-            onSaveToCollabZone={handleSaveToCollabZone}
-          />
-        )}
-
-        {/* Feedback Modal */}
-        {showFeedbackModal && currentFeedbackMessageId && (
-          <FeedbackModal
-            open={showFeedbackModal}
-            onClose={() => {
-              setShowFeedbackModal(false)
-              setCurrentFeedbackMessageId(null)
-            }}
-            responseId={currentFeedbackMessageId}
-          />
-        )}
-
-        {/* ✅ FIXED: Tutorial Component with force option */}
-        <GrowflyTutorial 
-          isFirstTime={showTutorial || forceTutorial}
-          autoplay={true}
-          onComplete={handleTutorialComplete}
-        />
-      </div>
-    </ErrorBoundary>
-  )
-}
-
-export default function Dashboard() {
-  return (
-    <Suspense fallback={
-      <div className="h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 dark:border-gray-400 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading dashboard...</p>
-        </div>
-      </div>
-    }>
-      <DashboardContent />
-    </Suspense>
-  )
-}
+export default CollabZone
