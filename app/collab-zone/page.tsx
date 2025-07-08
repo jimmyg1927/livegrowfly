@@ -655,10 +655,38 @@ const Editor: React.FC<{
             
             range.surroundContents(span)
             selection.removeAllRanges()
+            
+            // Show success notification
+            const notification = document.createElement('div')
+            notification.innerHTML = '✅ Text highlighted successfully!'
+            notification.style.cssText = `
+              position: fixed;
+              top: 20px;
+              right: 20px;
+              background: #d1fae5;
+              color: #047857;
+              padding: 12px 16px;
+              border-radius: 8px;
+              border: 1px solid #10b981;
+              z-index: 9999;
+              font-weight: 500;
+              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            `
+            document.body.appendChild(notification)
+            setTimeout(() => {
+              document.body.removeChild(notification)
+            }, 2000)
           } catch (fallbackError) {
             console.error('Highlight fallback failed:', fallbackError)
           }
         }
+        
+        // Immediately update content after highlighting
+        setTimeout(() => {
+          if (editorRef.current) {
+            setContent(editorRef.current.innerHTML)
+          }
+        }, 500)
       } else {
         // Execute normal commands
         document.execCommand(command, false, value)
@@ -1273,13 +1301,13 @@ const CollabZone: React.FC = () => {
     }
   }, [activeDoc, showStatus])
 
-  // Auto-save effect (silent)
+  // Auto-save effect (silent) - Conservative timing to preserve user workflow
   useEffect(() => {
     if (!activeDoc) return
     
     const timeoutId = setTimeout(() => {
       saveDocument(activeDoc, false) // false = don't show popup
-    }, 2000) // Auto-save after 2 seconds of inactivity
+    }, 20000) // Auto-save after 20 seconds of inactivity
     
     return () => clearTimeout(timeoutId)
   }, [activeDoc?.content, saveDocument])
