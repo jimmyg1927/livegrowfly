@@ -19,17 +19,59 @@ class ApiClient {
 
   private getToken(): string | null {
     if (typeof window === 'undefined') return null
-    return localStorage.getItem('growfly_jwt')
+    
+    // Try localStorage first, then cookies as fallback
+    const localToken = localStorage.getItem('growfly_jwt')
+    if (localToken) return localToken
+    
+    // Fallback to cookies
+    return this.getCookieToken()
+  }
+
+  private getCookieToken(): string | null {
+    if (typeof document === 'undefined') return null
+    
+    const cookies = document.cookie.split(';')
+    for (let cookie of cookies) {
+      const [name, value] = cookie.trim().split('=')
+      if (name === 'growfly_jwt') {
+        return decodeURIComponent(value)
+      }
+    }
+    return null
   }
 
   private setToken(token: string): void {
     if (typeof window === 'undefined') return
+    
+    // ✅ Store in both localStorage AND cookies
     localStorage.setItem('growfly_jwt', token)
+    this.setCookieToken(token)
+  }
+
+  private setCookieToken(token: string): void {
+    if (typeof document === 'undefined') return
+    
+    // Set cookie with same settings as middleware expects
+    const isProduction = process.env.NODE_ENV === 'production'
+    const maxAge = 30 * 24 * 60 * 60 // 30 days in seconds
+    
+    document.cookie = `growfly_jwt=${encodeURIComponent(token)}; Max-Age=${maxAge}; Path=/; SameSite=Lax${isProduction ? '; Secure' : ''}`
   }
 
   private removeToken(): void {
     if (typeof window === 'undefined') return
+    
+    // ✅ Remove from both localStorage AND cookies
     localStorage.removeItem('growfly_jwt')
+    this.removeCookieToken()
+  }
+
+  private removeCookieToken(): void {
+    if (typeof document === 'undefined') return
+    
+    // Set cookie with past expiration date to remove it
+    document.cookie = 'growfly_jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; Path=/; SameSite=Lax'
   }
 
   private async refreshToken(): Promise<string> {
@@ -134,6 +176,7 @@ class ApiClient {
 
     // ✅ Auto-update token if server provides a new one
     if (data.newToken) {
+      console.log('🔄 Auto-updating token from server response')
       this.setToken(data.newToken)
     }
 
@@ -180,11 +223,31 @@ export const apiClient = new ApiClient(API_BASE_URL)
 
 // ✅ Helper function for auth operations
 export const authAPI = {
-  login: (email: string, password: string) =>
-    apiClient.post('/api/auth/login', { email, password }),
+  login: async (email: string, password: string) => {
+    console.log('🔐 Login API call started')
+    const result = await apiClient.post('/api/auth/login', { email, password })
+    
+    if (result.data?.token) {
+      console.log('✅ Login successful, token stored')
+    } else {
+      console.log('❌ Login failed:', result.error)
+    }
+    
+    return result
+  },
   
-  signup: (userData: any) =>
-    apiClient.post('/api/auth/signup', userData),
+  signup: async (userData: any) => {
+    console.log('🚀 Signup API call started')
+    const result = await apiClient.post('/api/auth/signup', userData)
+    
+    if (result.data?.token) {
+      console.log('✅ Signup successful, token stored in localStorage and cookies')
+    } else {
+      console.log('❌ Signup failed:', result.error)
+    }
+    
+    return result
+  },
   
   getMe: () =>
     apiClient.get('/api/auth/me'),
