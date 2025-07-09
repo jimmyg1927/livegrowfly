@@ -355,12 +355,12 @@ const SlideIndicators: React.FC<SlideIndicatorsProps> = ({
   current, 
   onSlideSelect 
 }) => (
-  <div className="flex justify-center gap-2 mb-6">
+  <div className="flex justify-center gap-2 mb-4">
     {Array.from({ length: total }, (_, i) => (
       <button
         key={i}
         onClick={() => onSlideSelect(i)}
-        className={`w-3 h-3 rounded-full transition-all duration-300 ${
+        className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
           i === current 
             ? 'bg-white scale-125 shadow-lg' 
             : 'bg-white/30 hover:bg-white/50'
@@ -380,27 +380,27 @@ const SkipModal: React.FC<SkipModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/70 z-[90] flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-md w-full p-8 transform scale-100 border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-md w-full p-6 transform scale-100 border border-gray-200 dark:border-gray-700">
         <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900 dark:to-red-900 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-orange-200 dark:border-orange-700">
-            <X className="w-8 h-8 text-orange-600 dark:text-orange-400" />
+          <div className="w-14 h-14 bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900 dark:to-red-900 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-orange-200 dark:border-orange-700 shadow-lg">
+            <X className="w-6 h-6 text-orange-600 dark:text-orange-400" />
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Skip Dashboard Tour?</h3>
-          <p className="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Skip Dashboard Tour?</h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed text-sm">
             This quick tour shows you the key features of your Growfly dashboard. 
             You can always restart it later from Settings.
           </p>
           
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <button
               onClick={onCancel}
-              className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white py-3 px-6 rounded-xl font-medium transition-all duration-200"
+              className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white py-3 px-4 rounded-2xl font-medium transition-all duration-200"
             >
               Continue Tour
             </button>
             <button
               onClick={onConfirm}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-6 rounded-xl font-medium transition-all duration-200 shadow-lg"
+              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-4 rounded-2xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               Skip Tour
             </button>
@@ -419,29 +419,29 @@ const SlideContent: React.FC<SlideContentProps> = ({
   
   return (
     <div className={`transition-all duration-500 ${isAnimating ? 'opacity-75 scale-98' : 'opacity-100 scale-100'}`}>
-      {/* Icon Section */}
-      <div className="text-center mb-8">
-        <div className={`w-20 h-20 bg-gradient-to-r ${slide.color} rounded-3xl flex items-center justify-center mx-auto mb-4 text-white shadow-lg transform hover:scale-105 transition-transform duration-200`}>
+      {/* Compact Icon Section */}
+      <div className="text-center mb-5">
+        <div className={`w-14 h-14 bg-gradient-to-br ${slide.color} rounded-2xl flex items-center justify-center mx-auto mb-3 text-white shadow-xl transform hover:scale-105 transition-all duration-200`}>
           {slide.icon}
         </div>
-        <div className="text-5xl mb-4" role="img" aria-label={`${slide.emoji} emoji`}>
+        <div className="text-3xl mb-2" role="img" aria-label={`${slide.emoji} emoji`}>
           {slide.emoji}
         </div>
       </div>
 
-      {/* Content Section */}
+      {/* Compact Content Section */}
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3 leading-tight">
           {slide.title}
         </h2>
         
         {isListSlide ? (
-          <div className="text-left bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 mb-6">
-            <div className="space-y-3">
+          <div className="text-left bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-700 mb-4 shadow-inner">
+            <div className="space-y-2">
               {slide.text.split('\n').map((item, index) => (
-                <div key={index} className="flex items-start gap-4">
-                  <div className="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full mt-2.5 flex-shrink-0"></div>
-                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                <div key={index} className="flex items-start gap-3">
+                  <div className="w-1.5 h-1.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mt-2 flex-shrink-0 shadow-sm"></div>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                     {item.replace('• ', '')}
                   </p>
                 </div>
@@ -449,14 +449,14 @@ const SlideContent: React.FC<SlideContentProps> = ({
             </div>
           </div>
         ) : (
-          <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
+          <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4 text-sm">
             {slide.text}
           </p>
         )}
         
         {slide.subtext && (
-          <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-2xl border border-blue-200 dark:border-blue-800">
-            <p className="text-blue-800 dark:text-blue-300 font-medium italic">
+          <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-xl border border-blue-200 dark:border-blue-800 shadow-inner">
+            <p className="text-xs text-blue-800 dark:text-blue-300 font-medium italic">
               {slide.subtext}
             </p>
           </div>
@@ -517,45 +517,45 @@ const SlideshowModal: React.FC = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-blue-600/95 via-indigo-700/95 to-purple-800/95 backdrop-blur-sm" />
       <div className="absolute inset-0 bg-black/30" />
       
-      {/* Main Modal - Improved Size & Spacing */}
-      <div className="relative z-10 w-full max-w-2xl max-h-[95vh] overflow-y-auto">
-        <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+      {/* Main Modal - Compact Size & Spacing */}
+      <div className="relative z-10 w-full max-w-xl max-h-[85vh] overflow-y-auto">
+        <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden backdrop-blur-sm">
           
-          {/* Enhanced Header */}
-          <div className={`relative bg-gradient-to-r ${currentSlide.color} p-6 text-white`}>
-            <div className="flex items-center justify-between mb-4">
+          {/* Enhanced Header with better styling */}
+          <div className={`relative bg-gradient-to-br ${currentSlide.color} p-4 text-white`}>
+            <div className="flex items-center justify-between mb-3">
               <div>
-                <h1 className="text-2xl font-bold">Dashboard Tour</h1>
-                <p className="text-white/90">
+                <h1 className="text-xl font-bold">Dashboard Tour</h1>
+                <p className="text-white/90 text-sm">
                   Slide {state.currentSlide + 1} of {slides.length}
                 </p>
               </div>
               
               <button
                 onClick={handleSkip}
-                className="w-12 h-12 hover:bg-white/20 rounded-2xl flex items-center justify-center transition-all"
+                className="w-10 h-10 hover:bg-white/20 rounded-2xl flex items-center justify-center transition-all duration-200 backdrop-blur-sm"
                 aria-label="Skip tour"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5" />
               </button>
             </div>
             
-            {/* Enhanced Progress Bar */}
-            <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
+            {/* Enhanced Progress Bar with glow effect */}
+            <div className="w-full bg-white/20 rounded-full h-1.5 overflow-hidden backdrop-blur-sm">
               <div 
-                className="h-2 bg-white rounded-full transition-all duration-700 ease-out shadow-lg"
+                className="h-1.5 bg-white rounded-full transition-all duration-700 ease-out shadow-lg"
                 style={{ width: `${progress}%` }}
               />
             </div>
           </div>
 
-          {/* Enhanced Slide Content */}
-          <div className="p-8">
+          {/* Compact Slide Content with enhanced styling */}
+          <div className="p-5">
             <SlideContent slide={currentSlide} isAnimating={state.isAnimating} />
           </div>
 
-          {/* Enhanced Footer */}
-          <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6">
+          {/* Enhanced Compact Footer */}
+          <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 border-t border-gray-200 dark:border-gray-700">
             <SlideIndicators 
               total={slides.length} 
               current={state.currentSlide}
@@ -563,11 +563,11 @@ const SlideshowModal: React.FC = () => {
             />
             
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 {!isFirstSlide && (
                   <button
                     onClick={handlePrev}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-all duration-200 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700"
                   >
                     <ChevronRight className="w-4 h-4 rotate-180" />
                     Previous
@@ -577,21 +577,21 @@ const SlideshowModal: React.FC = () => {
               
               <button
                 onClick={handleNext}
-                className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-semibold transition-all shadow-lg transform hover:scale-105 ${
+                className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 shadow-lg transform hover:scale-105 ${
                   isLastSlide
-                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700'
-                    : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 hover:shadow-xl'
+                    : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 hover:shadow-xl'
                 }`}
               >
                 {isLastSlide ? (
                   <>
                     Get Started
-                    <Sparkles className="w-5 h-5" />
+                    <Sparkles className="w-4 h-4" />
                   </>
                 ) : (
                   <>
                     Next
-                    <ArrowRight className="w-5 h-5" />
+                    <ArrowRight className="w-4 h-4" />
                   </>
                 )}
               </button>
@@ -698,9 +698,9 @@ const LaunchTourButton: React.FC<LaunchTourButtonProps> = ({
     <>
       <button
         onClick={() => setShowSlideshow(true)}
-        className={`inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-2xl transition-all duration-200 hover:scale-105 shadow-lg ${className}`}
+        className={`inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-2xl transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl ${className}`}
       >
-        <Sparkles className="w-5 h-5" />
+        <Sparkles className="w-4 h-4" />
         {children}
       </button>
       
