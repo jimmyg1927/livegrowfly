@@ -20,12 +20,24 @@ class ApiClient {
   private getToken(): string | null {
     if (typeof window === 'undefined') return null
     
-    // Try localStorage first, then cookies as fallback
+    // Always prefer localStorage for cross-domain reliability
     const localToken = localStorage.getItem('growfly_jwt')
-    if (localToken) return localToken
+    if (localToken) {
+      console.log('🔑 Found token in localStorage')
+      return localToken
+    }
     
-    // Fallback to cookies
-    return this.getCookieToken()
+    // Fallback to cookies (might not work cross-domain)
+    const cookieToken = this.getCookieToken()
+    if (cookieToken) {
+      console.log('🔑 Found token in cookies')
+      // If found in cookies but not localStorage, sync them
+      localStorage.setItem('growfly_jwt', cookieToken)
+      return cookieToken
+    }
+    
+    console.log('🔑 No token found anywhere')
+    return null
   }
 
   private getCookieToken(): string | null {
@@ -46,45 +58,94 @@ class ApiClient {
     
     console.log('🔧 Setting token:', token.substring(0, 20) + '...')
     
-    // ✅ Store in both localStorage AND cookies
+    // ✅ PRIMARY: Always store in localStorage (works cross-domain)
     localStorage.setItem('growfly_jwt', token)
-    console.log('🔧 Token stored in localStorage')
+    console.log('✅ Token stored in localStorage')
     
-    this.setCookieToken(token)
-    console.log('🔧 Token stored in cookies')
+    // ✅ SECONDARY: Try to store in cookies (may fail cross-domain)
+    try {
+      this.setCookieToken(token)
+      console.log('✅ Token stored in cookies')
+    } catch (error) {
+      console.warn('⚠️ Cookie storage failed (cross-domain?), localStorage will handle auth')
+    }
     
-    // Verify storage worked
+    // ✅ VERIFICATION: Ensure storage worked
     setTimeout(() => {
       const stored = localStorage.getItem('growfly_jwt')
       const cookieStored = this.getCookieToken()
-      console.log('🔍 Verification - localStorage has token:', !!stored)
-      console.log('🔍 Verification - cookie has token:', !!cookieStored)
+      console.log('🔍 Verification:')
+      console.log('  - localStorage has token:', !!stored)
+      console.log('  - cookie has token:', !!cookieStored)
+      
+      if (!stored) {
+        console.error('❌ CRITICAL: Token not stored in localStorage!')
+      }
     }, 100)
   }
 
   private setCookieToken(token: string): void {
     if (typeof document === 'undefined') return
     
-    // Set cookie with same settings as middleware expects
-    const isProduction = process.env.NODE_ENV === 'production'
     const maxAge = 30 * 24 * 60 * 60 // 30 days in seconds
+    const isProduction = process.env.NODE_ENV === 'production'
+    const isDevelopment = process.env.NODE_ENV === 'development'
     
-    document.cookie = `growfly_jwt=${encodeURIComponent(token)}; Max-Age=${maxAge}; Path=/; SameSite=Lax${isProduction ? '; Secure' : ''}`
+    // ✅ Cross-domain cookie settings
+    let cookieString = `growfly_jwt=${encodeURIComponent(token)}; Max-Age=${maxAge}; Path=/`
+    
+    if (isProduction) {
+      // Production: Secure cookies with cross-domain support
+      cookieString += '; SameSite=None; Secure'
+      // Try to set domain for growfly.io subdomains
+      if (window.location.hostname.includes('growfly.io')) {
+        cookieString += '; Domain=.growfly.io'
+      }
+    } else if (isDevelopment) {
+      // Development: Relaxed settings for localhost
+      cookieString += '; SameSite=Lax'
+    } else {
+      // Default: Safe settings
+      cookieString += '; SameSite=Lax'
+    }
+    
+    document.cookie = cookieString
+    console.log('🍪 Cookie set:', cookieString)
   }
 
   private removeToken(): void {
     if (typeof window === 'undefined') return
     
-    // ✅ Remove from both localStorage AND cookies
+    console.log('🗑️ Removing tokens from all storage')
+    
+    // ✅ Remove from localStorage
     localStorage.removeItem('growfly_jwt')
+    
+    // ✅ Remove from cookies (all possible variations)
     this.removeCookieToken()
+    
+    console.log('✅ Tokens removed from all storage')
   }
 
   private removeCookieToken(): void {
     if (typeof document === 'undefined') return
     
-    // Set cookie with past expiration date to remove it
-    document.cookie = 'growfly_jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; Path=/; SameSite=Lax'
+    // Remove with different domain/path combinations to be thorough
+    const expireDate = 'expires=Thu, 01 Jan 1970 00:00:00 UTC'
+    const variations = [
+      `growfly_jwt=; ${expireDate}; Path=/`,
+      `growfly_jwt=; ${expireDate}; Path=/; Domain=.growfly.io`,
+      `growfly_jwt=; ${expireDate}; Path=/; SameSite=None; Secure`,
+      `growfly_jwt=; ${expireDate}; Path=/; SameSite=Lax`,
+    ]
+    
+    variations.forEach(cookieString => {
+      try {
+        document.cookie = cookieString
+      } catch (error) {
+        // Ignore errors for cross-domain cookie removal
+      }
+    })
   }
 
   private async refreshToken(): Promise<string> {
@@ -109,6 +170,8 @@ class ApiClient {
       throw new Error('No token to refresh')
     }
 
+    console.log('🔄 Attempting token refresh...')
+
     const response = await fetch(`${this.baseURL}/api/auth/refresh`, {
       method: 'POST',
       headers: {
@@ -118,16 +181,19 @@ class ApiClient {
     })
 
     if (!response.ok) {
+      console.log('❌ Token refresh failed')
       this.removeToken()
       throw new Error('Token refresh failed')
     }
 
     const data = await response.json()
     if (!data.token) {
+      console.log('❌ No token in refresh response')
       this.removeToken()
       throw new Error('No token in refresh response')
     }
 
+    console.log('✅ Token refreshed successfully')
     this.setToken(data.token)
     return data.token
   }
@@ -147,6 +213,8 @@ class ApiClient {
       headers.Authorization = `Bearer ${token}`
     }
 
+    console.log(`🌐 ${options.method || 'GET'} ${this.baseURL}${url}`)
+
     let response = await fetch(`${this.baseURL}${url}`, {
       ...options,
       headers: headers as HeadersInit,
@@ -154,21 +222,25 @@ class ApiClient {
 
     // Handle expired token
     if (response.status === 401) {
+      console.log('🔒 401 Unauthorized - checking token expiry...')
       const errorData = await response.json()
       
       if (errorData.code === 'TOKEN_EXPIRED' && errorData.refreshable) {
+        console.log('🔄 Token expired but refreshable, attempting refresh...')
         try {
           // Try to refresh the token
           const newToken = await this.refreshToken()
           
           // Retry the original request with new token
           headers.Authorization = `Bearer ${newToken}`
+          console.log('🔄 Retrying original request with new token...')
           response = await fetch(`${this.baseURL}${url}`, {
             ...options,
             headers: headers as HeadersInit,
           })
         } catch (refreshError) {
           // Refresh failed, redirect to login
+          console.log('❌ Token refresh failed, redirecting to login')
           this.removeToken()
           if (typeof window !== 'undefined') {
             window.location.href = '/login'
@@ -177,6 +249,7 @@ class ApiClient {
         }
       } else {
         // Token is invalid, redirect to login
+        console.log('❌ Token invalid, redirecting to login')
         this.removeToken()
         if (typeof window !== 'undefined') {
           window.location.href = '/login'
@@ -186,7 +259,7 @@ class ApiClient {
     }
 
     const data = await response.json()
-    console.log('🔍 API Response data:', data)
+    console.log(`📦 Response:`, { status: response.status, hasData: !!data })
 
     // ✅ Auto-update token if server provides a new one
     if (data.newToken) {
@@ -237,19 +310,41 @@ class ApiClient {
   async delete<T = any>(url: string): Promise<ApiResponse<T>> {
     return this.request<T>(url, { method: 'DELETE' })
   }
+
+  // ✅ Utility method to verify authentication
+  async verifyAuth(): Promise<boolean> {
+    const token = this.getToken()
+    if (!token) {
+      console.log('🔒 No token available for verification')
+      return false
+    }
+
+    try {
+      console.log('🔍 Verifying authentication...')
+      const result = await this.get('/api/auth/me')
+      const isValid = !result.error && !!result.data
+      console.log('🔍 Auth verification result:', isValid)
+      return isValid
+    } catch (error) {
+      console.log('🔍 Auth verification failed:', error)
+      return false
+    }
+  }
 }
 
 // ✅ Export singleton instance
 export const apiClient = new ApiClient(API_BASE_URL)
 
-// ✅ Helper function for auth operations
+// ✅ Helper function for auth operations with enhanced logging
 export const authAPI = {
   login: async (email: string, password: string) => {
-    console.log('🔐 Login API call started')
+    console.log('🔐 === LOGIN API CALL STARTED ===')
     const result = await apiClient.post('/api/auth/login', { email, password })
     
     if (result.data?.token) {
       console.log('✅ Login successful, token stored')
+      // Verify authentication immediately
+      setTimeout(() => apiClient.verifyAuth(), 100)
     } else {
       console.log('❌ Login failed:', result.error)
     }
@@ -258,11 +353,14 @@ export const authAPI = {
   },
   
   signup: async (userData: any) => {
-    console.log('🚀 Signup API call started')
+    console.log('🚀 === SIGNUP API CALL STARTED ===')
+    console.log('🚀 Signup data:', userData)
     const result = await apiClient.post('/api/auth/signup', userData)
     
     if (result.data?.token) {
       console.log('✅ Signup successful, token stored in localStorage and cookies')
+      // Verify authentication immediately
+      setTimeout(() => apiClient.verifyAuth(), 100)
     } else {
       console.log('❌ Signup failed:', result.error)
     }
@@ -270,14 +368,35 @@ export const authAPI = {
     return result
   },
   
-  getMe: () =>
-    apiClient.get('/api/auth/me'),
+  getMe: () => {
+    console.log('👤 Getting user data...')
+    return apiClient.get('/api/auth/me')
+  },
   
   getReferralData: () =>
     apiClient.get('/api/auth/referral-data'),
   
-  refresh: () =>
-    apiClient.post('/api/auth/refresh', {}),
+  refresh: () => {
+    console.log('🔄 Manual token refresh...')
+    return apiClient.post('/api/auth/refresh', {})
+  },
+
+  // ✅ New method for pre-navigation verification
+  verifyBeforeNavigation: async (): Promise<boolean> => {
+    console.log('🔍 === PRE-NAVIGATION AUTH CHECK ===')
+    const hasToken = !!localStorage.getItem('growfly_jwt')
+    console.log('🔍 Has token in localStorage:', hasToken)
+    
+    if (!hasToken) {
+      console.log('❌ No token found, navigation will fail')
+      return false
+    }
+    
+    const isValid = await apiClient.verifyAuth()
+    console.log('🔍 Token is valid:', isValid)
+    
+    return isValid
+  }
 }
 
 // ✅ Type definitions for better TypeScript support
