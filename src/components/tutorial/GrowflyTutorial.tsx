@@ -14,7 +14,7 @@ import React, {
 import { 
   X, ChevronRight, ArrowRight, 
   BarChart3, Image, Bookmark, Users, GraduationCap, 
-  Handshake, Settings, Sparkles, Zap, Lightbulb, Mail
+  Handshake, Settings, Sparkles, Zap, Lightbulb, Mail, Layout
 } from 'lucide-react'
 
 // ========================= COMPONENT PROPS INTERFACES =========================
@@ -40,7 +40,6 @@ interface SlideContent {
   text: string
   subtext?: string
   icon: ReactNode
-  emoji: string
   color: string
 }
 
@@ -73,101 +72,97 @@ interface SlideshowContextValue {
 const SLIDES: SlideContent[] = [
   {
     id: 'welcome',
-    title: 'Welcome to Growfly — Your AI-Powered Business Sidekick 🚀',
-    text: 'Growfly is your distraction-free, AI productivity platform designed for entrepreneurs, creators and teams. Let\'s show you around the key parts of your dashboard so you can get the most out of it from Day 1.',
+    title: 'Welcome to Growfly — Your AI-Powered Business Sidekick',
+    text: 'Growfly is your distraction-free AI productivity platform designed for entrepreneurs, creators and teams. Let\'s show you around the key parts of your dashboard so you can get the most out of it from Day 1.',
     icon: <Sparkles className="w-6 h-6" />,
-    emoji: '🚀',
     color: 'from-purple-500 to-pink-500'
   },
   {
+    id: 'dashboard-overview',
+    title: 'Your Personalised Dashboard — Built Just for You',
+    text: 'Your dashboard is designed to eliminate distractions and accelerate your workflow. Every element is tailored to your brand settings, helping you speed up processes, save valuable time, and dramatically improve your output quality.',
+    subtext: 'Personalised advice • No distractions • Brand-perfected responses',
+    icon: <Layout className="w-6 h-6" />,
+    color: 'from-cyan-400 to-blue-500'
+  },
+  {
     id: 'email-assistant',
-    title: 'Email Assistant — Coming Very Soon! 📧',
-    text: 'Your AI-powered email companion that reads, understands, and drafts professional responses using your brand voice. Generate professional email responses in seconds, perfectly matched to your brand voice.',
-    subtext: 'Instant AI Responses • Smart Event Detection • Smart Task Management',
+    title: 'Email Assistant — Coming Very Soon',
+    text: 'Your AI-powered email companion that reads, understands, and drafts professional responses using your brand voice. It automatically creates to-do lists, schedules calendar invites, and manages meetings based on your email conversations.',
+    subtext: 'Instant AI Responses • Smart Event Detection • Automatic Task Management • Calendar Integration',
     icon: <Mail className="w-6 h-6" />,
-    emoji: '📧',
     color: 'from-emerald-500 to-teal-500'
   },
   {
     id: 'xp-tracker',
-    title: 'Your XP Score — See Your Progress in Real Time 📊',
-    text: 'Every prompt you run earns you XP. You\'ll level up through fun titles like "Just Curious" and "Prompt Commander". More XP = More mastery, smarter responses, and unlockable perks.',
+    title: 'Your XP Score — Track Your Progress in Real Time',
+    text: 'Every prompt you run earns you experience points. You\'ll level up through engaging titles like "Just Curious" and "Prompt Commander". Higher XP means greater mastery, smarter AI responses, and exclusive unlockable perks.',
     icon: <BarChart3 className="w-6 h-6" />,
-    emoji: '📊',
     color: 'from-blue-500 to-cyan-500'
   },
   {
     id: 'gallery',
-    title: 'Gallery — Your AI-Generated Visuals in One Place 🖼️',
-    text: 'Every image you generate with Growfly is saved here automatically. Download, review or reuse them whenever you like — from product visuals to marketing mockups.',
+    title: 'Gallery — Your AI-Generated Visuals in One Place',
+    text: 'Every image you generate with Growfly is automatically saved and organised here. Download, review, or reuse them whenever you like — from product visuals and marketing mockups to social media content and presentations.',
     icon: <Image className="w-6 h-6" />,
-    emoji: '🖼️',
     color: 'from-green-500 to-emerald-500'
   },
   {
     id: 'saved',
-    title: 'Saved — Bookmark Your Best Ideas 💡',
-    text: 'Keep your favourite responses handy. From content drafts to clever answers, you can title and revisit your saved AI responses anytime in one tidy tab.',
+    title: 'Saved — Bookmark Your Brilliant Ideas',
+    text: 'Keep your favourite AI responses easily accessible. From content drafts and clever answers to strategic insights, you can title, categorise and revisit your saved AI responses anytime in one organised location.',
     icon: <Bookmark className="w-6 h-6" />,
-    emoji: '💡',
     color: 'from-yellow-500 to-orange-500'
   },
   {
     id: 'collab-zone',
-    title: 'Collab Zone — Edit Together, Anywhere ✍️',
-    text: 'Create, edit and collaborate on live documents with your team. Work in real-time, add comments, and export to Word or PDF. Perfect for brainstorming, reports or planning together.',
+    title: 'Collab Zone — Collaborate Seamlessly, Anywhere',
+    text: 'Create, edit and collaborate on live documents with your team in real-time. Add comments, track changes, and export to Word or PDF formats. Perfect for brainstorming sessions, detailed reports, or strategic planning together.',
     icon: <Users className="w-6 h-6" />,
-    emoji: '✍️',
     color: 'from-indigo-500 to-purple-500'
   },
   {
     id: 'education-hub',
-    title: 'Education Hub — Level Up Your Skills 📚',
-    text: 'Packed with prompt examples, AI how-tos, and tips to sharpen your creativity. Whether you\'re new to AI or want to push further, the Education Hub helps you stay ahead.',
+    title: 'Education Hub — Continuously Level Up Your Skills',
+    text: 'Packed with expertly crafted prompt examples, comprehensive AI how-to guides, and advanced tips to sharpen your creativity and productivity. Whether you\'re new to AI or looking to push boundaries, the Education Hub keeps you ahead of the curve.',
     icon: <GraduationCap className="w-6 h-6" />,
-    emoji: '📚',
     color: 'from-teal-500 to-blue-500'
   },
   {
     id: 'trusted-partners',
-    title: 'Trusted Partners — Pre-Vetted Tools We Trust 🤖',
-    text: 'Explore a curated list of tools, platforms, and expert services we trust to help you grow your business — from automation and branding to finance and legal support.',
+    title: 'Trusted Partners — Pre-Vetted Tools We Recommend',
+    text: 'Explore our carefully curated collection of tools, platforms, and expert services we trust to help accelerate your business growth — from automation and branding solutions to finance management and legal support.',
     icon: <Handshake className="w-6 h-6" />,
-    emoji: '🤖',
     color: 'from-rose-500 to-pink-500'
   },
   {
     id: 'brand-settings',
-    title: 'Brand Settings — Smarter AI Starts Here 🎯',
-    text: 'Tell Growfly about your brand: tone of voice, audience, industry, and goals. The more we know, the better the AI responses match your brand identity.',
-    subtext: 'Customise once. Get tailored responses forever.',
+    title: 'Brand Settings — Where Smarter AI Begins',
+    text: 'Tell Growfly about your brand personality: tone of voice, target audience, industry focus, and business goals. The more detailed information we have, the better our AI responses will match your unique brand identity and messaging.',
+    subtext: 'Customise once. Receive tailored responses forever.',
     icon: <Settings className="w-6 h-6" />,
-    emoji: '🎯',
     color: 'from-violet-500 to-purple-500'
   },
   {
     id: 'wishlist',
-    title: 'Wishlist — The Place Where Dreams Come True ✨',
-    text: 'Got an idea? Drop it in the Wishlist. Suggest new tools, features or AI use cases for your business. The most upvoted ones get built by our nerds (seriously). If your idea gets picked, we\'ll even reward you.',
-    subtext: 'Shape the future of Growfly with your ideas.',
+    title: 'Wishlist — Where Your Dreams Become Reality',
+    text: 'Have a brilliant idea? Submit it to the Wishlist. Suggest new tools, features, or AI use cases for your business. The most upvoted suggestions get built by our development team. If your idea gets selected, we\'ll reward you for your contribution.',
+    subtext: 'Shape the future of Growfly with your innovative ideas.',
     icon: <Lightbulb className="w-6 h-6" />,
-    emoji: '✨',
     color: 'from-amber-500 to-yellow-500'
   },
   {
     id: 'other-features',
-    title: 'Even More Awesomeness Awaits ⚡',
-    text: '• Refer a Friend: Earn bonus prompts\n• Change Plan: Upgrade as you grow\n• Account Settings: Manage your info and preferences\n• Support: We\'re always here if you need help',
+    title: 'Even More Powerful Features Await',
+    text: '• Refer a Friend: Earn bonus prompts and exclusive rewards\n• Change Plan: Upgrade seamlessly as your business grows\n• Account Settings: Manage your information and preferences\n• Support: Our dedicated team is always here when you need assistance',
     icon: <Zap className="w-6 h-6" />,
-    emoji: '⚡',
     color: 'from-orange-500 to-red-500'
   },
   {
     id: 'final',
-    title: 'You\'re All Set to Start Using Growfly 🦋',
-    text: 'Try your first prompt, explore your dashboard, and let the AI do the heavy lifting. You\'ve got this — and we\'ve got your back.',
+    title: 'You\'re All Set to Start Using Growfly',
+    text: 'Try your first prompt, explore your personalised dashboard, and let our AI handle the heavy lifting. You\'ve got the tools for success — and we\'ve got your back every step of the way.',
     icon: <Sparkles className="w-6 h-6" />,
-    emoji: '🦋',
     color: 'from-cyan-500 to-blue-500'
   }
 ]
@@ -360,10 +355,10 @@ const SlideIndicators: React.FC<SlideIndicatorsProps> = ({
       <button
         key={i}
         onClick={() => onSlideSelect(i)}
-        className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+        className={`w-3 h-3 rounded-full transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 ${
           i === current 
-            ? 'bg-white scale-125 shadow-lg' 
-            : 'bg-white/30 hover:bg-white/50'
+            ? 'bg-cyan-400 scale-125 shadow-lg shadow-cyan-400/30 animate-pulse' 
+            : 'bg-white/30 hover:bg-white/60 hover:shadow-md'
         }`}
         aria-label={`Go to slide ${i + 1}`}
       />
@@ -394,13 +389,13 @@ const SkipModal: React.FC<SkipModalProps> = ({
           <div className="flex gap-3">
             <button
               onClick={onCancel}
-              className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white py-3 px-4 rounded-2xl font-medium transition-all duration-200"
+              className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white py-3 px-4 rounded-2xl font-medium transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-gray-400"
             >
               Continue Tour
             </button>
             <button
               onClick={onConfirm}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-4 rounded-2xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-4 rounded-2xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-400"
             >
               Skip Tour
             </button>
@@ -419,19 +414,16 @@ const SlideContent: React.FC<SlideContentProps> = ({
   
   return (
     <div className={`transition-all duration-500 ${isAnimating ? 'opacity-75 scale-98' : 'opacity-100 scale-100'}`}>
-      {/* Compact Icon Section */}
+      {/* Compact Icon Section with simple animations */}
       <div className="text-center mb-5">
-        <div className={`w-14 h-14 bg-gradient-to-br ${slide.color} rounded-2xl flex items-center justify-center mx-auto mb-3 text-white shadow-xl transform hover:scale-105 transition-all duration-200`}>
+        <div className={`w-16 h-16 bg-gradient-to-br ${slide.color} rounded-2xl flex items-center justify-center mx-auto mb-4 text-white shadow-xl transform transition-all hover:scale-110 hover:rotate-3`}>
           {slide.icon}
-        </div>
-        <div className="text-3xl mb-2" role="img" aria-label={`${slide.emoji} emoji`}>
-          {slide.emoji}
         </div>
       </div>
 
-      {/* Compact Content Section */}
+      {/* Enhanced Content Section */}
       <div className="text-center">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3 leading-tight">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
           {slide.title}
         </h2>
         
@@ -440,7 +432,7 @@ const SlideContent: React.FC<SlideContentProps> = ({
             <div className="space-y-2">
               {slide.text.split('\n').map((item, index) => (
                 <div key={index} className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mt-2 flex-shrink-0 shadow-sm"></div>
+                  <div className="w-2 h-2 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full mt-2 flex-shrink-0 shadow-sm animate-pulse"></div>
                   <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                     {item.replace('• ', '')}
                   </p>
@@ -455,8 +447,8 @@ const SlideContent: React.FC<SlideContentProps> = ({
         )}
         
         {slide.subtext && (
-          <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-xl border border-blue-200 dark:border-blue-800 shadow-inner">
-            <p className="text-xs text-blue-800 dark:text-blue-300 font-medium italic">
+          <div className="mt-4 p-3 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/30 dark:to-blue-900/30 rounded-xl border border-cyan-200 dark:border-cyan-800 shadow-inner">
+            <p className="text-xs text-cyan-800 dark:text-cyan-300 font-medium italic">
               {slide.subtext}
             </p>
           </div>
@@ -517,11 +509,11 @@ const SlideshowModal: React.FC = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-blue-600/95 via-indigo-700/95 to-purple-800/95 backdrop-blur-sm" />
       <div className="absolute inset-0 bg-black/30" />
       
-      {/* Main Modal - Compact Size & Spacing */}
+      {/* Main Modal */}
       <div className="relative z-10 w-full max-w-xl max-h-[85vh] overflow-y-auto">
         <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden backdrop-blur-sm">
           
-          {/* Enhanced Header with better styling */}
+          {/* Enhanced Header */}
           <div className={`relative bg-gradient-to-br ${currentSlide.color} p-4 text-white`}>
             <div className="flex items-center justify-between mb-3">
               <div>
@@ -533,23 +525,23 @@ const SlideshowModal: React.FC = () => {
               
               <button
                 onClick={handleSkip}
-                className="w-10 h-10 hover:bg-white/20 rounded-2xl flex items-center justify-center transition-all duration-200 backdrop-blur-sm"
+                className="w-10 h-10 hover:bg-white/20 rounded-2xl flex items-center justify-center transition-all duration-200 backdrop-blur-sm transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/50"
                 aria-label="Skip tour"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             
-            {/* Enhanced Progress Bar with glow effect */}
+            {/* Enhanced Progress Bar */}
             <div className="w-full bg-white/20 rounded-full h-1.5 overflow-hidden backdrop-blur-sm">
               <div 
-                className="h-1.5 bg-white rounded-full transition-all duration-700 ease-out shadow-lg"
+                className="h-1.5 bg-gradient-to-r from-white to-white/90 rounded-full transition-all duration-1000 ease-out shadow-lg shadow-white/30"
                 style={{ width: `${progress}%` }}
               />
             </div>
           </div>
 
-          {/* Compact Slide Content with enhanced styling */}
+          {/* Compact Slide Content */}
           <div className="p-5">
             <SlideContent slide={currentSlide} isAnimating={state.isAnimating} />
           </div>
@@ -567,7 +559,7 @@ const SlideshowModal: React.FC = () => {
                 {!isFirstSlide && (
                   <button
                     onClick={handlePrev}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-all duration-200 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700"
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-all duration-200 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-400"
                   >
                     <ChevronRight className="w-4 h-4 rotate-180" />
                     Previous
@@ -577,10 +569,10 @@ const SlideshowModal: React.FC = () => {
               
               <button
                 onClick={handleNext}
-                className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 shadow-lg transform hover:scale-105 ${
+                className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 shadow-lg transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 ${
                   isLastSlide
-                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 hover:shadow-xl'
-                    : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 hover:shadow-xl'
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 hover:shadow-xl focus:ring-green-400'
+                    : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 hover:shadow-xl focus:ring-blue-400'
                 }`}
               >
                 {isLastSlide ? (
@@ -698,7 +690,7 @@ const LaunchTourButton: React.FC<LaunchTourButtonProps> = ({
     <>
       <button
         onClick={() => setShowSlideshow(true)}
-        className={`inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-2xl transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl ${className}`}
+        className={`inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-2xl transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-400 ${className}`}
       >
         <Sparkles className="w-4 h-4" />
         {children}
@@ -723,96 +715,60 @@ function SlideshowDemo(): React.ReactElement {
       <div className="max-w-6xl mx-auto p-8">
         <div className="text-center mb-16">
           <h1 className="text-6xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
-            Improved Growfly Tutorial ✨
+            Enhanced Growfly Tutorial
           </h1>
           <p className="text-2xl text-gray-600 dark:text-gray-300 mb-8">
-            Enhanced design • Email Assistant feature • No autoplay • Better UX
+            Growfly blue indicators • Enhanced animations • UK English • Improved content
           </p>
         </div>
 
         {/* Enhanced Feature Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-            <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center mb-6">
-              <Mail className="w-8 h-8 text-white" />
+          {[
+            { icon: <Mail className="w-8 h-8 text-white" />, title: 'Email Assistant Enhanced', desc: 'Added automatic to-do lists and calendar integration features', color: 'from-emerald-500 to-teal-500' },
+            { icon: <Layout className="w-8 h-8 text-white" />, title: 'New Dashboard Slide', desc: 'Personalised advice, no distractions, brand-perfected responses', color: 'from-cyan-400 to-blue-500' },
+            { icon: <Sparkles className="w-8 h-8 text-white" />, title: 'Smooth Animations', desc: 'Slide-in animations, hover effects, and smooth transitions throughout', color: 'from-purple-500 to-violet-500' },
+            { icon: <BarChart3 className="w-8 h-8 text-white" />, title: 'Growfly Blue Indicators', desc: 'Current slide indicators now use authentic Growfly blue colour', color: 'from-cyan-400 to-blue-500' },
+            { icon: <Settings className="w-8 h-8 text-white" />, title: 'Enhanced Content', desc: 'All content rewritten in proper UK English with expanded information', color: 'from-indigo-500 to-purple-500' },
+            { icon: <ArrowRight className="w-8 h-8 text-white" />, title: 'Micro-interactions', desc: 'Button press animations, focus states, and enhanced accessibility', color: 'from-blue-500 to-indigo-500' }
+          ].map((feature, index) => (
+            <div 
+              key={index} 
+              className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
+            >
+              <div className={`w-16 h-16 bg-gradient-to-r ${feature.color} rounded-2xl flex items-center justify-center mb-6 transform transition-transform duration-300 hover:scale-110 hover:rotate-3`}>
+                {feature.icon}
+              </div>
+              <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">{feature.title}</h3>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                {feature.desc}
+              </p>
             </div>
-            <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">📧 Email Assistant</h3>
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-              New slide featuring the upcoming Email Assistant with AI-powered email responses and smart task management.
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-            <div className="w-16 h-16 bg-gradient-to-r from-red-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6">
-              <X className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">🚫 No Autoplay</h3>
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-              Removed autoplay functionality for better user control and manual navigation experience.
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mb-6">
-              <Sparkles className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">✨ Enhanced Design</h3>
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-              Larger modal, better spacing, enhanced gradients, and improved visual hierarchy throughout.
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-            <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-violet-500 rounded-2xl flex items-center justify-center mb-6">
-              <ArrowRight className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">⚡ Cleaner Navigation</h3>
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-              Removed bottom-left skip button, improved button placement and enhanced keyboard navigation.
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-            <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mb-6">
-              <BarChart3 className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">📊 All Features Intact</h3>
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-              LocalStorage, keyboard navigation, skip modal, and progress tracking all preserved and enhanced.
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-            <div className="w-16 h-16 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center mb-6">
-              <Settings className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">🔧 Same API</h3>
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-              Perfect drop-in replacement with same props, exports, and integration - just improved!
-            </p>
-          </div>
+          ))}
         </div>
 
         {/* Demo Button */}
         <div className="flex justify-center">
           <LaunchTourButton className="px-12 py-6 text-xl">
-            🎯 Launch Improved Tour
+            Launch Enhanced Tour
           </LaunchTourButton>
         </div>
 
         {/* Key Improvements Summary */}
-        <div className="mt-16 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-8 rounded-3xl border border-blue-200 dark:border-blue-800">
-          <h3 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white text-center">🎉 Key Improvements</h3>
+        <div className="mt-16 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 p-8 rounded-3xl border border-cyan-200 dark:border-cyan-800">
+          <h3 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white text-center">Latest Enhancements</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-700 dark:text-gray-300">
             <div>
-              <p><strong>✅ Added Email Assistant slide</strong> with coming soon features</p>
-              <p><strong>✅ Removed autoplay functionality</strong> for manual control</p>
-              <p><strong>✅ Removed bottom-left skip button</strong> for cleaner UI</p>
+              <p><strong>✅ Growfly blue slide indicators</strong> with pulse animation</p>
+              <p><strong>✅ New personalised dashboard slide</strong> with key benefits</p>
+              <p><strong>✅ Enhanced Email Assistant</strong> with calendar & task features</p>
+              <p><strong>✅ Removed all emojis</strong> for cleaner presentation</p>
             </div>
             <div>
-              <p><strong>✅ Enhanced modal size</strong> and improved spacing</p>
-              <p><strong>✅ Better gradients and colors</strong> throughout</p>
-              <p><strong>✅ Improved button placement</strong> and styling</p>
+              <p><strong>✅ Comprehensive animations</strong> throughout interface</p>
+              <p><strong>✅ UK English content</strong> with expanded information</p>
+              <p><strong>✅ Enhanced accessibility</strong> with focus states</p>
+              <p><strong>✅ Micro-interactions</strong> for premium feel</p>
             </div>
           </div>
         </div>
