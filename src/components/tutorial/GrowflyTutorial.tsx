@@ -12,16 +12,16 @@ import React, {
   ReactNode
 } from 'react'
 import { 
-  X, ChevronRight, ArrowRight, Play, Pause, 
+  X, ChevronRight, ArrowRight, 
   BarChart3, Image, Bookmark, Users, GraduationCap, 
-  Handshake, Settings, Sparkles, Zap, Lightbulb
+  Handshake, Settings, Sparkles, Zap, Lightbulb, Mail
 } from 'lucide-react'
 
 // ========================= COMPONENT PROPS INTERFACES =========================
 
 interface GrowflyTutorialProps {
   isFirstTime?: boolean
-  autoplay?: boolean
+  autoplay?: boolean // Accepted but ignored for backward compatibility
   onComplete?: () => void
 }
 
@@ -47,19 +47,17 @@ interface SlideContent {
 interface SlideshowState {
   isActive: boolean
   currentSlide: number
-  isAutoPlaying: boolean
   showSkipModal: boolean
   isAnimating: boolean
   hasStarted: boolean
 }
 
 type SlideshowAction = 
-  | { type: 'ACTIVATE'; payload?: { autoplay?: boolean } }
+  | { type: 'ACTIVATE' }
   | { type: 'DEACTIVATE' }
   | { type: 'NEXT_SLIDE' }
   | { type: 'PREV_SLIDE' }
   | { type: 'SET_SLIDE'; payload: number }
-  | { type: 'TOGGLE_AUTOPLAY' }
   | { type: 'SHOW_SKIP_MODAL'; payload: boolean }
   | { type: 'SET_ANIMATING'; payload: boolean }
   | { type: 'MARK_STARTED' }
@@ -80,6 +78,15 @@ const SLIDES: SlideContent[] = [
     icon: <Sparkles className="w-6 h-6" />,
     emoji: '🚀',
     color: 'from-purple-500 to-pink-500'
+  },
+  {
+    id: 'email-assistant',
+    title: 'Email Assistant — Coming Very Soon! 📧',
+    text: 'Your AI-powered email companion that reads, understands, and drafts professional responses using your brand voice. Generate professional email responses in seconds, perfectly matched to your brand voice.',
+    subtext: 'Instant AI Responses • Smart Event Detection • Smart Task Management',
+    icon: <Mail className="w-6 h-6" />,
+    emoji: '📧',
+    color: 'from-emerald-500 to-teal-500'
   },
   {
     id: 'xp-tracker',
@@ -183,7 +190,6 @@ const debounce = <T extends (...args: any[]) => any>(
 const initialSlideshowState: SlideshowState = {
   isActive: false,
   currentSlide: 0,
-  isAutoPlaying: false,
   showSkipModal: false,
   isAnimating: false,
   hasStarted: false
@@ -196,7 +202,6 @@ const slideshowReducer = (state: SlideshowState, action: SlideshowAction): Slide
         ...state,
         isActive: true,
         currentSlide: 0,
-        isAutoPlaying: action.payload?.autoplay ?? false,
         showSkipModal: false,
         hasStarted: true
       }
@@ -206,7 +211,6 @@ const slideshowReducer = (state: SlideshowState, action: SlideshowAction): Slide
         ...state,
         isActive: false,
         currentSlide: 0,
-        isAutoPlaying: false,
         showSkipModal: false,
         isAnimating: false
       }
@@ -230,12 +234,6 @@ const slideshowReducer = (state: SlideshowState, action: SlideshowAction): Slide
         ...state,
         currentSlide: action.payload,
         isAnimating: true
-      }
-    
-    case 'TOGGLE_AUTOPLAY':
-      return {
-        ...state,
-        isAutoPlaying: !state.isAutoPlaying
       }
     
     case 'SHOW_SKIP_MODAL':
@@ -290,48 +288,12 @@ const useLocalStorage = <T extends unknown>(key: string, initialValue: T) => {
   return [storedValue, setValue] as const
 }
 
-const useAutoplay = (
-  isActive: boolean,
-  isAutoPlaying: boolean,
-  currentSlide: number,
-  totalSlides: number,
-  onNext: () => void,
-  onComplete: () => void
-) => {
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
-
-  useEffect(() => {
-    if (isActive && isAutoPlaying && currentSlide < totalSlides - 1) {
-      intervalRef.current = setInterval(() => {
-        onNext()
-      }, 5000) // 5 seconds per slide
-    } else if (isActive && isAutoPlaying && currentSlide === totalSlides - 1) {
-      // Auto-complete on final slide
-      setTimeout(() => {
-        onComplete()
-      }, 5000)
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
-    }
-  }, [isActive, isAutoPlaying, currentSlide, totalSlides, onNext, onComplete])
-}
-
 const useKeyboardNavigation = (
   isActive: boolean,
   handlers: {
     onNext: () => void
     onPrev: () => void
     onEscape: () => void
-    onToggleAutoplay: () => void
   }
 ) => {
   useEffect(() => {
@@ -342,8 +304,7 @@ const useKeyboardNavigation = (
         'Escape': () => handlers.onEscape(),
         'ArrowRight': () => handlers.onNext(),
         'ArrowLeft': () => handlers.onPrev(),
-        'Enter': () => handlers.onNext(),
-        ' ': (event: KeyboardEvent) => { event.preventDefault(); handlers.onToggleAutoplay() }
+        'Enter': () => handlers.onNext()
       }
 
       const handler = keyMap[e.key]
@@ -394,15 +355,15 @@ const SlideIndicators: React.FC<SlideIndicatorsProps> = ({
   current, 
   onSlideSelect 
 }) => (
-  <div className="flex justify-center gap-1.5 mb-4">
+  <div className="flex justify-center gap-2 mb-6">
     {Array.from({ length: total }, (_, i) => (
       <button
         key={i}
         onClick={() => onSlideSelect(i)}
-        className={`w-2 h-2 rounded-full transition-all duration-300 ${
+        className={`w-3 h-3 rounded-full transition-all duration-300 ${
           i === current 
             ? 'bg-white scale-125 shadow-lg' 
-            : 'bg-white/40 hover:bg-white/60'
+            : 'bg-white/30 hover:bg-white/50'
         }`}
         aria-label={`Go to slide ${i + 1}`}
       />
@@ -418,28 +379,28 @@ const SkipModal: React.FC<SkipModalProps> = ({
   if (!isVisible) return null
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-[90] flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 transform scale-100 border border-gray-200 dark:border-gray-700">
+    <div className="fixed inset-0 bg-black/70 z-[90] flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-md w-full p-8 transform scale-100 border border-gray-200 dark:border-gray-700">
         <div className="text-center">
-          <div className="w-14 h-14 bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900 dark:to-red-900 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-orange-200 dark:border-orange-700">
-            <X className="w-7 h-7 text-orange-600 dark:text-orange-400" />
+          <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900 dark:to-red-900 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-orange-200 dark:border-orange-700">
+            <X className="w-8 h-8 text-orange-600 dark:text-orange-400" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Skip Dashboard Tour?</h3>
-          <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Skip Dashboard Tour?</h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
             This quick tour shows you the key features of your Growfly dashboard. 
             You can always restart it later from Settings.
           </p>
           
-          <div className="flex gap-3">
+          <div className="flex gap-4">
             <button
               onClick={onCancel}
-              className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white py-3 px-4 rounded-xl font-medium transition-all duration-200"
+              className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white py-3 px-6 rounded-xl font-medium transition-all duration-200"
             >
               Continue Tour
             </button>
             <button
               onClick={onConfirm}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-4 rounded-xl font-medium transition-all duration-200 shadow-lg"
+              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-6 rounded-xl font-medium transition-all duration-200 shadow-lg"
             >
               Skip Tour
             </button>
@@ -459,28 +420,28 @@ const SlideContent: React.FC<SlideContentProps> = ({
   return (
     <div className={`transition-all duration-500 ${isAnimating ? 'opacity-75 scale-98' : 'opacity-100 scale-100'}`}>
       {/* Icon Section */}
-      <div className="text-center mb-6">
-        <div className={`w-16 h-16 bg-gradient-to-r ${slide.color} rounded-2xl flex items-center justify-center mx-auto mb-4 text-white shadow-lg`}>
+      <div className="text-center mb-8">
+        <div className={`w-20 h-20 bg-gradient-to-r ${slide.color} rounded-3xl flex items-center justify-center mx-auto mb-4 text-white shadow-lg transform hover:scale-105 transition-transform duration-200`}>
           {slide.icon}
         </div>
-        <div className="text-4xl mb-3" role="img" aria-label={`${slide.emoji} emoji`}>
+        <div className="text-5xl mb-4" role="img" aria-label={`${slide.emoji} emoji`}>
           {slide.emoji}
         </div>
       </div>
 
       {/* Content Section */}
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
           {slide.title}
         </h2>
         
         {isListSlide ? (
-          <div className="text-left bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 mb-4">
-            <div className="space-y-2">
+          <div className="text-left bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 mb-6">
+            <div className="space-y-3">
               {slide.text.split('\n').map((item, index) => (
-                <div key={index} className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 bg-blue-500 dark:bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                <div key={index} className="flex items-start gap-4">
+                  <div className="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full mt-2.5 flex-shrink-0"></div>
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                     {item.replace('• ', '')}
                   </p>
                 </div>
@@ -488,14 +449,14 @@ const SlideContent: React.FC<SlideContentProps> = ({
             </div>
           </div>
         ) : (
-          <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+          <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
             {slide.text}
           </p>
         )}
         
         {slide.subtext && (
-          <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-xl border border-blue-200 dark:border-blue-800">
-            <p className="text-sm font-medium text-blue-800 dark:text-blue-300 italic">
+          <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-2xl border border-blue-200 dark:border-blue-800">
+            <p className="text-blue-800 dark:text-blue-300 font-medium italic">
               {slide.subtext}
             </p>
           </div>
@@ -531,10 +492,6 @@ const SlideshowModal: React.FC = () => {
     dispatch({ type: 'SHOW_SKIP_MODAL', payload: true })
   }, [dispatch])
 
-  const handleToggleAutoplay = useCallback(() => {
-    dispatch({ type: 'TOGGLE_AUTOPLAY' })
-  }, [dispatch])
-
   // Stop animation after delay
   useEffect(() => {
     if (state.isAnimating) {
@@ -545,81 +502,60 @@ const SlideshowModal: React.FC = () => {
     }
   }, [state.isAnimating, dispatch])
 
-  // Autoplay functionality
-  useAutoplay(
-    state.isActive,
-    state.isAutoPlaying,
-    state.currentSlide,
-    slides.length,
-    handleNext,
-    () => dispatch({ type: 'DEACTIVATE' })
-  )
-
   // Keyboard navigation
   useKeyboardNavigation(state.isActive, {
     onNext: handleNext,
     onPrev: handlePrev,
-    onEscape: handleSkip,
-    onToggleAutoplay: handleToggleAutoplay
+    onEscape: handleSkip
   })
 
   if (!state.isActive || !currentSlide) return null
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-      {/* Blurred Background */}
+      {/* Enhanced Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-600/95 via-indigo-700/95 to-purple-800/95 backdrop-blur-sm" />
-      <div className="absolute inset-0 bg-black/20" />
+      <div className="absolute inset-0 bg-black/30" />
       
-      {/* Main Modal - Compact Size */}
-      <div className="relative z-10 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      {/* Main Modal - Improved Size & Spacing */}
+      <div className="relative z-10 w-full max-w-2xl max-h-[95vh] overflow-y-auto">
         <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
           
-          {/* Header */}
-          <div className={`relative bg-gradient-to-r ${currentSlide.color} p-4 text-white`}>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={handleToggleAutoplay}
-                  className="w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-xl flex items-center justify-center transition-all"
-                  aria-label={state.isAutoPlaying ? 'Pause autoplay' : 'Start autoplay'}
-                >
-                  {state.isAutoPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                </button>
-                <div>
-                  <h1 className="text-lg font-bold">Dashboard Tour</h1>
-                  <p className="text-sm text-white/80">
-                    Slide {state.currentSlide + 1} of {slides.length}
-                    {state.isAutoPlaying && ' • Auto-playing'}
-                  </p>
-                </div>
+          {/* Enhanced Header */}
+          <div className={`relative bg-gradient-to-r ${currentSlide.color} p-6 text-white`}>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h1 className="text-2xl font-bold">Dashboard Tour</h1>
+                <p className="text-white/90">
+                  Slide {state.currentSlide + 1} of {slides.length}
+                </p>
               </div>
               
               <button
                 onClick={handleSkip}
-                className="w-10 h-10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-all"
+                className="w-12 h-12 hover:bg-white/20 rounded-2xl flex items-center justify-center transition-all"
                 aria-label="Skip tour"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               </button>
             </div>
             
-            {/* Progress Bar */}
-            <div className="w-full bg-white/20 rounded-full h-1.5 overflow-hidden">
+            {/* Enhanced Progress Bar */}
+            <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
               <div 
-                className="h-1.5 bg-white rounded-full transition-all duration-700 ease-out"
+                className="h-2 bg-white rounded-full transition-all duration-700 ease-out shadow-lg"
                 style={{ width: `${progress}%` }}
               />
             </div>
           </div>
 
-          {/* Slide Content - Compact */}
-          <div className="p-6">
+          {/* Enhanced Slide Content */}
+          <div className="p-8">
             <SlideContent slide={currentSlide} isAnimating={state.isAnimating} />
           </div>
 
-          {/* Footer */}
-          <div className="bg-gray-50 dark:bg-gray-900 p-4">
+          {/* Enhanced Footer */}
+          <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6">
             <SlideIndicators 
               total={slides.length} 
               current={state.currentSlide}
@@ -627,17 +563,11 @@ const SlideshowModal: React.FC = () => {
             />
             
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleSkip}
-                  className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-                >
-                  Skip Tour
-                </button>
+              <div className="flex items-center gap-4">
                 {!isFirstSlide && (
                   <button
                     onClick={handlePrev}
-                    className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors"
                   >
                     <ChevronRight className="w-4 h-4 rotate-180" />
                     Previous
@@ -647,7 +577,7 @@ const SlideshowModal: React.FC = () => {
               
               <button
                 onClick={handleNext}
-                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all shadow-lg ${
+                className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-semibold transition-all shadow-lg transform hover:scale-105 ${
                   isLastSlide
                     ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700'
                     : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
@@ -656,12 +586,12 @@ const SlideshowModal: React.FC = () => {
                 {isLastSlide ? (
                   <>
                     Get Started
-                    <Sparkles className="w-4 h-4" />
+                    <Sparkles className="w-5 h-5" />
                   </>
                 ) : (
                   <>
                     Next
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-5 h-5" />
                   </>
                 )}
               </button>
@@ -677,7 +607,7 @@ const SlideshowModal: React.FC = () => {
 
 const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({ 
   isFirstTime = false,
-  autoplay = false,
+  autoplay, // Accepted but ignored
   onComplete
 }) => {
   const [state, dispatch] = useReducer(slideshowReducer, initialSlideshowState)
@@ -696,10 +626,10 @@ const GrowflyTutorial: React.FC<GrowflyTutorialProps> = ({
         if (typeof document !== 'undefined') {
           document.body.style.overflow = 'hidden'
         }
-        dispatch({ type: 'ACTIVATE', payload: { autoplay } })
+        dispatch({ type: 'ACTIVATE' })
       }, 500) // Small delay for better UX
     }
-  }, [isFirstTime, autoplay, hasSeenTour])
+  }, [isFirstTime, hasSeenTour])
 
   // Cleanup
   useEffect(() => {
@@ -768,15 +698,14 @@ const LaunchTourButton: React.FC<LaunchTourButtonProps> = ({
     <>
       <button
         onClick={() => setShowSlideshow(true)}
-        className={`inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-2xl transition-all duration-200 hover:scale-105 shadow-lg ${className}`}
+        className={`inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-2xl transition-all duration-200 hover:scale-105 shadow-lg ${className}`}
       >
-        <Play className="w-4 h-4" />
+        <Sparkles className="w-5 h-5" />
         {children}
       </button>
       
       <GrowflyTutorial
         isFirstTime={showSlideshow}
-        autoplay={false}
         onComplete={() => setShowSlideshow(false)}
       />
     </>
@@ -787,101 +716,107 @@ const LaunchTourButton: React.FC<LaunchTourButtonProps> = ({
 
 function SlideshowDemo(): React.ReactElement {
   const [showSlideshow, setShowSlideshow] = useState(false)
-  const [showAutoplaySlideshow, setShowAutoplaySlideshow] = useState(false)
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 transition-colors duration-200">
       {/* Demo Content */}
-      <div className="max-w-4xl mx-auto p-8">
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">
-            Modern Compact Tutorial 🚀
+      <div className="max-w-6xl mx-auto p-8">
+        <div className="text-center mb-16">
+          <h1 className="text-6xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
+            Improved Growfly Tutorial ✨
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
-            Full-featured tutorial that fits perfectly on any screen
+          <p className="text-2xl text-gray-600 dark:text-gray-300 mb-8">
+            Enhanced design • Email Assistant feature • No autoplay • Better UX
           </p>
         </div>
 
-        {/* Feature Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg border border-gray-200 dark:border-gray-700">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">✨ All Original Features</h2>
-            <ul className="space-y-3 text-gray-700 dark:text-gray-300">
-              <li>• Complete original functionality</li>
-              <li>• LocalStorage persistence</li>
-              <li>• All slide content preserved</li>
-              <li>• Context provider system</li>
-              <li>• Custom hooks maintained</li>
-            </ul>
+        {/* Enhanced Feature Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
+            <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center mb-6">
+              <Mail className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">📧 Email Assistant</h3>
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              New slide featuring the upcoming Email Assistant with AI-powered email responses and smart task management.
+            </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg border border-gray-200 dark:border-gray-700">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">🎨 Modern Compact UI</h2>
-            <ul className="space-y-3 text-gray-700 dark:text-gray-300">
-              <li>• Fits on screen (max-w-lg)</li>
-              <li>• Beautiful color gradients</li>
-              <li>• Smooth animations</li>
-              <li>• Perfect mobile experience</li>
-              <li>• Clean, modern design</li>
-            </ul>
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
+            <div className="w-16 h-16 bg-gradient-to-r from-red-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6">
+              <X className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">🚫 No Autoplay</h3>
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              Removed autoplay functionality for better user control and manual navigation experience.
+            </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg border border-gray-200 dark:border-gray-700">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">⚡ Full Functionality</h2>
-            <ul className="space-y-3 text-gray-700 dark:text-gray-300">
-              <li>• Autoplay with pause/play</li>
-              <li>• Keyboard navigation</li>
-              <li>• Skip tour modal</li>
-              <li>• Progress tracking</li>
-              <li>• Slide indicators</li>
-            </ul>
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mb-6">
+              <Sparkles className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">✨ Enhanced Design</h3>
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              Larger modal, better spacing, enhanced gradients, and improved visual hierarchy throughout.
+            </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg border border-gray-200 dark:border-gray-700">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">🔧 Developer Ready</h2>
-            <ul className="space-y-3 text-gray-700 dark:text-gray-300">
-              <li>• Same export structure</li>
-              <li>• All original props/interfaces</li>
-              <li>• Drop-in replacement</li>
-              <li>• TypeScript complete</li>
-              <li>• Production ready</li>
-            </ul>
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
+            <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-violet-500 rounded-2xl flex items-center justify-center mb-6">
+              <ArrowRight className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">⚡ Cleaner Navigation</h3>
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              Removed bottom-left skip button, improved button placement and enhanced keyboard navigation.
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
+            <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mb-6">
+              <BarChart3 className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">📊 All Features Intact</h3>
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              LocalStorage, keyboard navigation, skip modal, and progress tracking all preserved and enhanced.
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
+            <div className="w-16 h-16 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center mb-6">
+              <Settings className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">🔧 Same API</h3>
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              Perfect drop-in replacement with same props, exports, and integration - just improved!
+            </p>
           </div>
         </div>
 
-        {/* Demo Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button
-            onClick={() => setShowAutoplaySlideshow(true)}
-            className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-2xl transition-all duration-200 hover:scale-105 shadow-lg"
-          >
-            <Play className="w-5 h-5" />
-            Demo: First-Time User (Autoplay)
-          </button>
-          
-          <LaunchTourButton className="px-8 py-4 text-lg">
-            🎯 Manual Launch Tour
+        {/* Demo Button */}
+        <div className="flex justify-center">
+          <LaunchTourButton className="px-12 py-6 text-xl">
+            🎯 Launch Improved Tour
           </LaunchTourButton>
         </div>
 
-        {/* Integration Guide */}
+        {/* Key Improvements Summary */}
         <div className="mt-16 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-8 rounded-3xl border border-blue-200 dark:border-blue-800">
-          <h3 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">🔄 Perfect Drop-in Replacement</h3>
-          <div className="space-y-4 text-gray-700 dark:text-gray-300">
-            <p><strong>✅ Same API:</strong> All props, exports, and functionality preserved</p>
-            <p><strong>✅ Same Imports:</strong> Use exactly the same import statements</p>
-            <p><strong>✅ Same Features:</strong> LocalStorage, autoplay, skip modal, etc.</p>
-            <p><strong>✅ Just Better:</strong> Compact, modern UI that always fits on screen</p>
+          <h3 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white text-center">🎉 Key Improvements</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-700 dark:text-gray-300">
+            <div>
+              <p><strong>✅ Added Email Assistant slide</strong> with coming soon features</p>
+              <p><strong>✅ Removed autoplay functionality</strong> for manual control</p>
+              <p><strong>✅ Removed bottom-left skip button</strong> for cleaner UI</p>
+            </div>
+            <div>
+              <p><strong>✅ Enhanced modal size</strong> and improved spacing</p>
+              <p><strong>✅ Better gradients and colors</strong> throughout</p>
+              <p><strong>✅ Improved button placement</strong> and styling</p>
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Demo Slideshows */}
-      <GrowflyTutorial
-        isFirstTime={showAutoplaySlideshow}
-        autoplay={true}
-        onComplete={() => setShowAutoplaySlideshow(false)}
-      />
     </div>
   )
 }
