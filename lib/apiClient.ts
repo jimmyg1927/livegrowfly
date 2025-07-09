@@ -44,9 +44,22 @@ class ApiClient {
   private setToken(token: string): void {
     if (typeof window === 'undefined') return
     
+    console.log('🔧 Setting token:', token.substring(0, 20) + '...')
+    
     // ✅ Store in both localStorage AND cookies
     localStorage.setItem('growfly_jwt', token)
+    console.log('🔧 Token stored in localStorage')
+    
     this.setCookieToken(token)
+    console.log('🔧 Token stored in cookies')
+    
+    // Verify storage worked
+    setTimeout(() => {
+      const stored = localStorage.getItem('growfly_jwt')
+      const cookieStored = this.getCookieToken()
+      console.log('🔍 Verification - localStorage has token:', !!stored)
+      console.log('🔍 Verification - cookie has token:', !!cookieStored)
+    }, 100)
   }
 
   private setCookieToken(token: string): void {
@@ -173,6 +186,7 @@ class ApiClient {
     }
 
     const data = await response.json()
+    console.log('🔍 API Response data:', data)
 
     // ✅ Auto-update token if server provides a new one
     if (data.newToken) {
@@ -181,7 +195,14 @@ class ApiClient {
     }
 
     if (!response.ok) {
+      console.log('❌ API Error:', data.error || 'Request failed')
       return { error: data.error || 'Request failed' }
+    }
+
+    // ✅ For auth endpoints, also check for token in main response
+    if (data.token) {
+      console.log('🔑 Found token in main response, storing...')
+      this.setToken(data.token)
     }
 
     return { data }
