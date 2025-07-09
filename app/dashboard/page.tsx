@@ -864,7 +864,7 @@ function DashboardContent() {
   const promptsRemaining = Math.max(0, promptLimit - promptsUsed)
   const isAtPromptLimit = promptsUsed >= promptLimit
 
-  // ✅ FIXED: Tutorial state management with force option
+  // ✅ FIXED: Tutorial state management with enhanced trigger detection
   const [showTutorial, setShowTutorial] = useState(false)
   const [forceTutorial, setForceTutorial] = useState(false)
 
@@ -960,68 +960,61 @@ function DashboardContent() {
     }
   }
 
-  // ✅ ENHANCED: Tutorial integration for new users with better logging
+  // ✅ ENHANCED: Comprehensive tutorial trigger detection
   useEffect(() => {
-    // Check if user just completed onboarding
+    // Check multiple trigger conditions
     const justCompleted = sessionStorage.getItem('justCompletedOnboarding')
     const hasSeenTutorial = localStorage.getItem('growfly-tutorial-completed')
+    const urlParams = new URLSearchParams(window.location.search)
+    const urlTrigger = urlParams.get('tutorial') === 'start'
+    const forceTutorialFlag = localStorage.getItem('force-tutorial-start')
     
-    console.log('🎯 New user tutorial check:', { 
-      justCompleted, 
-      hasSeenTutorial, 
+    console.log('🎯 Tutorial trigger check:', { 
+      justCompleted: !!justCompleted,
+      hasSeenTutorial: !!hasSeenTutorial,
+      urlTrigger,
+      forceTutorialFlag,
       user: !!user,
       showTutorial,
       forceTutorial
     })
     
-    if (justCompleted && !hasSeenTutorial && user) {
-      console.log('🚀 Starting tutorial for new user')
+    // Trigger tutorial for new users OR manual triggers
+    if ((justCompleted && !hasSeenTutorial && user) || urlTrigger || forceTutorialFlag === 'true') {
+      console.log('🚀 Starting tutorial:', {
+        reason: justCompleted ? 'new user' : urlTrigger ? 'url param' : 'manual'
+      })
+      
+      // Clean up trigger flags
       sessionStorage.removeItem('justCompletedOnboarding')
+      localStorage.removeItem('force-tutorial-start')
+      if (urlTrigger) {
+        window.history.replaceState({}, '', '/dashboard') // Clean URL
+      }
+      
+      // Start tutorial after small delay for better UX
       setTimeout(() => {
         setShowTutorial(true)
         setForceTutorial(true)
-      }, 2000)
+      }, 1000)
     }
-  }, [user]) // Depend on user so it runs when user data loads
+  }, [user]) // Only depend on user so it runs when user data loads
 
   // ✅ ENHANCED: Multiple trigger methods for tutorial
   useEffect(() => {
     const handleTutorialStart = (event: any) => {
-      console.log('🎯 Tutorial start event received:', event)
+      console.log('🎯 Manual tutorial start event received')
       setShowTutorial(true)
-      setForceTutorial(true)  // ✅ Force tutorial for existing users
+      setForceTutorial(true)
     }
 
-    // Method 1: Custom event listener (from Settings button)
+    // Listen for custom events (from Settings button, etc.)
     window.addEventListener('startGrowflyTour', handleTutorialStart)
-    
-    // Method 2: Check URL parameters (from Settings navigation)
-    const urlParams = new URLSearchParams(window.location.search)
-    if (urlParams.get('tutorial') === 'start') {
-      console.log('🎯 Tutorial triggered via URL parameter')
-      setTimeout(() => {
-        setShowTutorial(true)
-        setForceTutorial(true)
-        // Clean up URL
-        window.history.replaceState({}, '', '/dashboard')
-      }, 1000)
-    }
-    
-    // Method 3: Check localStorage flag (backup method)
-    const forceTutorialFlag = localStorage.getItem('force-tutorial-start')
-    if (forceTutorialFlag === 'true') {
-      console.log('🎯 Tutorial triggered via localStorage flag')
-      localStorage.removeItem('force-tutorial-start') // Clean up
-      setTimeout(() => {
-        setShowTutorial(true)
-        setForceTutorial(true)
-      }, 1500)
-    }
     
     return () => {
       window.removeEventListener('startGrowflyTour', handleTutorialStart)
     }
-  }, []) // Run once on mount
+  }, [])
 
   // ✅ ENHANCED: Tutorial completion handler with proper cleanup
   const handleTutorialComplete = () => {
@@ -2645,7 +2638,7 @@ function DashboardContent() {
           />
         )}
 
-        {/* ✅ FIXED: Tutorial Component with force option */}
+        {/* ✅ FIXED: Tutorial Component with enhanced trigger system */}
         <GrowflyTutorial 
           isFirstTime={showTutorial || forceTutorial}
           autoplay={true}
