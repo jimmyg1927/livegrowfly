@@ -197,7 +197,30 @@ export default function ChangePlanPage() {
       })
 
       if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`)
+        // ✅ Enhanced error handling to show more specific error messages
+        let errorMessage = 'Unable to process plan change. Please try again.'
+        
+        try {
+          const errorData = await res.json()
+          if (errorData.error) {
+            errorMessage = errorData.error
+          }
+        } catch (e) {
+          // If we can't parse the error response, use the status-based message
+          if (res.status === 500) {
+            errorMessage = 'Server error occurred. Please contact support if this continues.'
+          } else if (res.status === 404) {
+            errorMessage = 'Plan change service is temporarily unavailable. Please try again later.'
+          } else if (res.status === 401) {
+            errorMessage = 'Authentication failed. Please log in again.'
+            router.push('/login')
+            return
+          }
+        }
+        
+        setMessage(errorMessage)
+        setSelectedPlan(null)
+        return
       }
 
       const data = await res.json()
@@ -210,7 +233,7 @@ export default function ChangePlanPage() {
       }
     } catch (err) {
       console.error('Plan change error:', err)
-      setMessage('Unable to process plan change. Please try again.')
+      setMessage('Network error occurred. Please check your connection and try again.')
       setSelectedPlan(null)
     }
   }
@@ -327,11 +350,11 @@ export default function ChangePlanPage() {
                     </ul>
                   </div>
 
-                  {/* Action Button */}
+                  {/* Action Button - ✅ Updated with rounded-2xl for more rounded corners */}
                   <button
                     onClick={() => handleSelect(plan.id)}
                     disabled={selectedPlan === plan.id || isCurrentPlan}
-                    className={`w-full py-2.5 px-3 rounded-lg font-semibold text-xs transition-all duration-200 ${
+                    className={`w-full py-2.5 px-3 rounded-2xl font-semibold text-xs transition-all duration-200 ${
                       selectedPlan === plan.id
                         ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
                         : isCurrentPlan
@@ -364,7 +387,7 @@ export default function ChangePlanPage() {
         {message && (
           <div className="max-w-2xl mx-auto mb-6">
             <div className={`p-4 rounded-xl border backdrop-blur-sm ${
-              message.includes('Unable') || message.includes('Failed')
+              message.includes('Unable') || message.includes('Failed') || message.includes('error')
                 ? 'bg-red-500/10 border-red-500/30 text-red-300'
                 : 'bg-blue-500/10 border-blue-500/30 text-blue-300'
             }`}>

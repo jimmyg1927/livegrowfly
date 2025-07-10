@@ -1440,14 +1440,14 @@ function DashboardContent() {
       if (text.toLowerCase().includes('marketing')) {
         return ['How can I measure the success of these marketing strategies?']
       } else if (text.toLowerCase().includes('business') || text.toLowerCase().includes('improve')) {
-        return ['What would be the first step to implement this improvement?']
+        return ['What would be the first step for me to implement this improvement?']
       } else if (text.toLowerCase().includes('document') || text.toLowerCase().includes('create')) {
         return ['Can you help me customize this for my specific industry?']
       } else {
         return ['Can you provide more specific examples for my situation?']
       }
     } catch {
-      return ['Tell me more about how to implement this']
+      return ['How can I implement this in my business?']
     }
   }
 
@@ -1509,7 +1509,7 @@ function DashboardContent() {
           }
           
           if (!followUps.length) {
-            followUps = ['Tell me more about this']
+            followUps = ['How can I implement this?']
           }
           
           // Ensure only ONE follow-up question
@@ -1994,8 +1994,8 @@ function DashboardContent() {
           {/* Chat Messages - Traditional Chat Layout */}
           <div className="space-y-3 min-h-0 flex-1 pt-6">
             {messages.length === 0 ? (
-              <div className="flex items-center justify-center h-full min-h-[50vh] pt-8">
-                <div className="text-center max-w-2xl">
+              <div className="flex items-center justify-center h-full min-h-[50vh] pt-8 px-4">
+                <div className="text-center max-w-2xl mx-auto">
                   <div className="mb-6">
                     <div className="text-6xl md:text-8xl mb-4 animate-bounce">👋</div>
                     <h3 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-3">
@@ -2018,6 +2018,19 @@ function DashboardContent() {
                       <h4 className="font-semibold text-gray-900 dark:text-white text-sm">Enhanced File Support</h4>
                       <p className="text-xs text-gray-700 dark:text-gray-300 mt-1">Drag & drop Excel, Word, PowerPoint files</p>
                     </div>
+                  </div>
+                  
+                  <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                    <p className="text-center text-gray-700 dark:text-gray-300">
+                      <span className="font-medium">🤔 Don't know where to start?</span>{" "}
+                      <a 
+                        href="/nerd-mode" 
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline font-medium"
+                      >
+                        Visit our Education Hub
+                      </a>{" "}
+                      to see what type of questions you can ask
+                    </p>
                   </div>
                   
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-gray-500 dark:text-gray-400">
