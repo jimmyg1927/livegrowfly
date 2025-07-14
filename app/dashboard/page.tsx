@@ -844,6 +844,13 @@ const getResetDate = (subscriptionType: string) => {
   }
 }
 
+// ✅ FIXED: Helper to detect image generation requests
+const detectImageRequest = (message: string): boolean => {
+  const imageKeywords = ['create image', 'generate image', 'make image', 'create logo', 'design logo', 'generate logo', 'make logo', 'create graphic', 'design graphic', 'make graphic', 'create picture', 'generate picture', 'make picture', 'create visual', 'generate visual', 'design visual']
+  const lowerMessage = message.toLowerCase()
+  return imageKeywords.some(keyword => lowerMessage.includes(keyword))
+}
+
 function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -1289,7 +1296,7 @@ function DashboardContent() {
     }
   }, [input])
 
-  // Improved scroll handling - detect manual scrolling
+  // Improved scroll handling - detect manual scrolling with better thresholds
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -1298,14 +1305,14 @@ function DashboardContent() {
       const currentScrollTop = container.scrollTop
       const maxScroll = container.scrollHeight - container.clientHeight
       
-      // If user scrolled up manually, disable auto-scroll
-      if (currentScrollTop < lastScrollTop.current && currentScrollTop < maxScroll - 100) {
+      // If user scrolled up manually by more than 50px, disable auto-scroll
+      if (currentScrollTop < lastScrollTop.current - 50 && currentScrollTop < maxScroll - 150) {
         setDisableAutoScroll(true)
         setIsUserScrolling(true)
       }
       
-      // If user scrolled to bottom, re-enable auto-scroll
-      if (currentScrollTop >= maxScroll - 50) {
+      // If user scrolled to bottom (within 30px), re-enable auto-scroll
+      if (currentScrollTop >= maxScroll - 30) {
         setDisableAutoScroll(false)
         setIsUserScrolling(false)
       }
@@ -1317,7 +1324,7 @@ function DashboardContent() {
       }
       scrollTimeoutRef.current = setTimeout(() => {
         setIsUserScrolling(false)
-      }, 1000)
+      }, 1500) // Longer timeout
     }
 
     container.addEventListener('scroll', handleScroll, { passive: true })
@@ -1330,17 +1337,18 @@ function DashboardContent() {
     }
   }, [])
 
-  // Better auto-scroll logic
+  // Better auto-scroll logic - less aggressive
   useEffect(() => {
-    if (!disableAutoScroll && !isUserScrolling && (isStreaming || messages.length > 0)) {
+    if (!disableAutoScroll && !isUserScrolling && isStreaming) {
+      // Only auto-scroll when actively streaming, not on every message change
       setTimeout(() => {
         chatEndRef.current?.scrollIntoView({ 
-          behavior: isStreaming ? 'auto' : 'smooth',
-          block: 'end'
+          behavior: 'smooth',
+          block: 'nearest' // Less aggressive than 'end'
         })
       }, 100)
     }
-  }, [messages, disableAutoScroll, isUserScrolling, isStreaming])
+  }, [messages.length, disableAutoScroll, isUserScrolling, isStreaming]) // Removed general messages dependency
 
   // Enhanced file handling with drag & drop and better error handling
   const handleFileSelect = (files: FileList) => {
@@ -1418,6 +1426,7 @@ function DashboardContent() {
     }
   }
 
+  // ✅ FIXED: Updated fetchFollowUps to generate actionable responses
   const fetchFollowUps = async (text: string): Promise<string[]> => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/ai/followups`, {
@@ -1437,17 +1446,18 @@ function DashboardContent() {
         return [rawFollowUps[0]]
       }
       
+      // ✅ FIXED: Better contextual follow-ups as actionable responses
       if (text.toLowerCase().includes('marketing')) {
-        return ['How can I measure the success of these marketing strategies?']
+        return ['Help me measure the success of these marketing strategies']
       } else if (text.toLowerCase().includes('business') || text.toLowerCase().includes('improve')) {
-        return ['What would be the first step for me to implement this improvement?']
+        return ['Show me the first step to implement this improvement']
       } else if (text.toLowerCase().includes('document') || text.toLowerCase().includes('create')) {
-        return ['Can you help me customize this for my specific industry?']
+        return ['Help me customize this for my specific industry']
       } else {
-        return ['Can you provide more specific examples for my situation?']
+        return ['Provide more specific examples for my situation']
       }
     } catch {
-      return ['How can I implement this in my business?']
+      return ['Help me implement this in my business']
     }
   }
 
@@ -1466,6 +1476,43 @@ function DashboardContent() {
     )
 
     try {
+      // ✅ FIXED: Check if user is asking for image generation
+      if (detectImageRequest(prompt)) {
+        // Guide user to image generation feature
+        const imageGuideResponse = `I can help you create images! I have a powerful image generation feature using DALLE. Click the 🎨 palette button next to the upload button to create professional images, logos, graphics, and more.
+
+Would you like me to guide you through the image creation process, or would you prefer to use the image generator directly?`
+
+        // Show the guide response with animation
+        let currentIndex = 0
+        const typeInterval = setInterval(() => {
+          if (currentIndex <= imageGuideResponse.length) {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === aId ? { ...msg, content: imageGuideResponse.substring(0, currentIndex) } : msg
+              )
+            )
+            currentIndex += 3 // Type 3 characters at a time for faster typing
+          } else {
+            clearInterval(typeInterval)
+            setIsLoading(false)
+            setIsStreaming(false)
+            
+            // Add follow-up buttons
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === aId ? { 
+                  ...msg, 
+                  content: imageGuideResponse,
+                  followUps: ['Open the image generator for me', 'Guide me through the image creation process']
+                } : msg
+              )
+            )
+          }
+        }, 30)
+        return
+      }
+
       // Prepare conversation history for backend
       const conversationHistory = messages.slice(-6).map(msg => ({
         role: msg.role,
@@ -1509,7 +1556,7 @@ function DashboardContent() {
           }
           
           if (!followUps.length) {
-            followUps = ['How can I implement this?']
+            followUps = ['Help me implement this']
           }
           
           // Ensure only ONE follow-up question
@@ -1641,6 +1688,12 @@ function DashboardContent() {
 
     if (!isOnline) {
       setError('No internet connection. Please check your network and try again.')
+      return
+    }
+
+    // ✅ FIXED: Handle special follow-up actions
+    if (text === 'Open the image generator for me') {
+      setShowImageModal(true)
       return
     }
 
@@ -1786,7 +1839,7 @@ function DashboardContent() {
       content: `I've created an image for you: "${image.originalPrompt}"`,
       generatedImage: image,
       followUps: [
-        'Can you create a variation of this image?'
+        'Create a variation of this image'
       ]
     }
     
@@ -1934,7 +1987,7 @@ function DashboardContent() {
 
         {/* Content Area - Proper sidebar spacing */}
         <div className="flex-1 overflow-hidden ml-0 sm:ml-56" data-tour="dashboard-main">
-          <div ref={containerRef} className="h-full overflow-y-auto pb-80 pl-0 pr-4 pt-4">
+          <div ref={containerRef} className="h-full overflow-y-auto pb-32 pl-0 pr-4 pt-4">
 
           {/* Prompt Limit Warning */}
           {isAtPromptLimit && (
@@ -1994,8 +2047,8 @@ function DashboardContent() {
           {/* Chat Messages - Traditional Chat Layout */}
           <div className="space-y-3 min-h-0 flex-1 pt-6">
             {messages.length === 0 ? (
-              <div className="flex items-center justify-center h-full min-h-[50vh] pt-8 px-4">
-                <div className="text-center max-w-2xl mx-auto">
+              <div className="flex items-center justify-center w-full min-h-[60vh] px-4">
+                <div className="text-center max-w-2xl mx-auto w-full">
                   <div className="mb-6">
                     <div className="text-6xl md:text-8xl mb-4 animate-bounce">👋</div>
                     <h3 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-3">
@@ -2007,7 +2060,7 @@ function DashboardContent() {
                     </p>
                   </div>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 max-w-lg mx-auto">
                     <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
                       <div className="text-xl mb-2">💡</div>
                       <h4 className="font-semibold text-gray-900 dark:text-white text-sm">Smart Suggestions</h4>
@@ -2020,7 +2073,7 @@ function DashboardContent() {
                     </div>
                   </div>
                   
-                  <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                  <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 max-w-lg mx-auto">
                     <p className="text-center text-gray-700 dark:text-gray-300">
                       <span className="font-medium">🤔 Don't know where to start?</span>{" "}
                       <a 
@@ -2244,7 +2297,7 @@ function DashboardContent() {
                     </div>
                   </div>
                 ))}
-                <div ref={chatEndRef} className="h-8" />
+                <div ref={chatEndRef} className="h-4" />
               </>
             )}
           </div>
@@ -2253,7 +2306,7 @@ function DashboardContent() {
 
         {/* File Upload Preview - Modern Compact Style */}
         {uploadedFiles.length > 0 && (
-          <div className="fixed bottom-16 left-4 right-4 sm:left-60 z-30">
+          <div className="fixed bottom-20 left-4 right-4 sm:left-60 z-30">
             <div className="max-w-4xl mx-auto">
               <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-700 p-2 shadow-lg">
                 <div className="flex items-center gap-2 overflow-x-auto">
@@ -2291,7 +2344,7 @@ function DashboardContent() {
                   ))}
                   <button
                     onClick={() => setUploadedFiles([])}
-                    className="text-xs text-gray-500 dark:text-gray-400 hover:text-red-500 px-2 py-1 rounded transition-colors flex-shrink-0"
+                    className="text-xs text-white hover:text-red-300 px-2 py-1 rounded transition-colors flex-shrink-0"
                   >
                     Clear all
                   </button>
@@ -2568,7 +2621,7 @@ function DashboardContent() {
                       <div className="text-4xl group-hover:scale-110 transition-transform duration-300">🎯</div>
                       <div className="flex-1">
                         <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Industry Analysis</h4>
-                        <p className="text-gray-600 dark:text-gray-400 leading-relaxed">Stay ahead of the competition with insights into industry trends, market opportunities, and strategic positioning.</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Stay ahead of the competition with insights into industry trends, market opportunities, and strategic positioning.</p>
                         <div className="mt-3 flex flex-wrap gap-2">
                           <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Market Research</span>
                           <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">Competitive Analysis</span>

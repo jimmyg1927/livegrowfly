@@ -129,7 +129,7 @@ const shareToTwitter = (imageUrl: string, prompt: string, style: string, customH
     }
     
     const styleTag = safeStyle ? `#${safeStyle.replace(/\s+/g, '')}` : '#DigitalArt'
-    const defaultHashtags = ['#AIArt', '#GeneratedWithGrowfly', '#AICreativity', '#DigitalArt', styleTag]
+    const defaultHashtags = ['#AIArt', '#GeneratedWithGrowfly.io', '#AICreativity', '#DigitalArt', styleTag]
     const hashtags = customHashtags || defaultHashtags
     const hashtagString = hashtags.join(' ')
     
@@ -160,7 +160,7 @@ const shareToFacebook = (imageUrl: string, prompt: string, style: string) => {
       return
     }
     
-    const text = `🎨 Check out this AI-generated masterpiece I just created!
+    const text = `🎨 Check out this AI-generated masterpiece I just created with growfly.io!
 
 Prompt: "${safePrompt}"
 Style: ${safeStyle}
