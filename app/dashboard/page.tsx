@@ -1220,7 +1220,7 @@ function DashboardContent() {
     }
   }, [token, user, promptLimit])
 
-  // Enhanced user data fetching with retry logic
+  // ✅ FIXED: Enhanced user data fetching with controlled refresh (no auto-reload)
   useEffect(() => {
     if (!token) {
       router.push('/onboarding')
@@ -1247,7 +1247,7 @@ function DashboardContent() {
         }
       } catch (error) {
         const errorObj = error as { status?: number }
-        handleApiError(error, 'Loading user data', fetchUserData)
+        handleApiError(error, 'Loading user data')
         
         if (errorObj?.status === 401) {
           localStorage.removeItem('growfly_jwt')
@@ -1258,11 +1258,14 @@ function DashboardContent() {
       }
     }
     
+    // Only fetch once on mount, no automatic refresh interval
     fetchUserData()
-    const syncInterval = setInterval(fetchUserData, 60000)
     
-    return () => clearInterval(syncInterval)
-  }, [token, router, setUser])
+    // Optional: Add a much longer interval (10 minutes) for background sync
+    // const syncInterval = setInterval(fetchUserData, 600000) // 10 minutes instead of 1 minute
+    
+    // return () => clearInterval(syncInterval)
+  }, [token, router, setUser]) // Removed automatic sync interval
 
   // Check if security notice should be shown
   useEffect(() => {
