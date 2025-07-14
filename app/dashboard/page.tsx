@@ -844,9 +844,20 @@ const getResetDate = (subscriptionType: string) => {
   }
 }
 
-// ✅ FIXED: Helper to detect image generation requests
+// ✅ ENHANCED: Better image request detection
 const detectImageRequest = (message: string): boolean => {
-  const imageKeywords = ['create image', 'generate image', 'make image', 'create logo', 'design logo', 'generate logo', 'make logo', 'create graphic', 'design graphic', 'make graphic', 'create picture', 'generate picture', 'make picture', 'create visual', 'generate visual', 'design visual']
+  const imageKeywords = [
+    'create image', 'generate image', 'make image', 'design image',
+    'create logo', 'design logo', 'generate logo', 'make logo', 'build logo',
+    'create graphic', 'design graphic', 'make graphic', 'generate graphic',
+    'create picture', 'generate picture', 'make picture', 'design picture',
+    'create visual', 'generate visual', 'design visual', 'make visual',
+    'make me a logo', 'design me a logo', 'create me a logo',
+    'better logo', 'new logo', 'logo design', 'logo creation',
+    'make banner', 'create banner', 'design banner',
+    'social media image', 'marketing image', 'promotional image',
+    'illustration', 'artwork', 'visual content'
+  ]
   const lowerMessage = message.toLowerCase()
   return imageKeywords.some(keyword => lowerMessage.includes(keyword))
 }
@@ -1296,7 +1307,7 @@ function DashboardContent() {
     }
   }, [input])
 
-  // Improved scroll handling - detect manual scrolling with better thresholds
+  // ✅ ENHANCED: Improved scroll handling with better detection
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -1305,14 +1316,15 @@ function DashboardContent() {
       const currentScrollTop = container.scrollTop
       const maxScroll = container.scrollHeight - container.clientHeight
       
-      // If user scrolled up manually by more than 50px, disable auto-scroll
-      if (currentScrollTop < lastScrollTop.current - 50 && currentScrollTop < maxScroll - 150) {
+      // More reliable detection: only disable auto-scroll if user scrolled up significantly
+      const scrollDifference = lastScrollTop.current - currentScrollTop
+      if (scrollDifference > 100 && currentScrollTop < maxScroll - 200) {
         setDisableAutoScroll(true)
         setIsUserScrolling(true)
       }
       
-      // If user scrolled to bottom (within 30px), re-enable auto-scroll
-      if (currentScrollTop >= maxScroll - 30) {
+      // Re-enable auto-scroll when near bottom (within 100px)
+      if (currentScrollTop >= maxScroll - 100) {
         setDisableAutoScroll(false)
         setIsUserScrolling(false)
       }
@@ -1324,7 +1336,7 @@ function DashboardContent() {
       }
       scrollTimeoutRef.current = setTimeout(() => {
         setIsUserScrolling(false)
-      }, 1500) // Longer timeout
+      }, 2000) // Longer timeout to prevent accidental re-enabling
     }
 
     container.addEventListener('scroll', handleScroll, { passive: true })
@@ -1337,18 +1349,20 @@ function DashboardContent() {
     }
   }, [])
 
-  // Better auto-scroll logic - less aggressive
+  // ✅ ENHANCED: Better auto-scroll logic that follows conversations
   useEffect(() => {
-    if (!disableAutoScroll && !isUserScrolling && isStreaming) {
-      // Only auto-scroll when actively streaming, not on every message change
-      setTimeout(() => {
-        chatEndRef.current?.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'nearest' // Less aggressive than 'end'
-        })
-      }, 100)
+    if (!disableAutoScroll && !isUserScrolling) {
+      // Auto-scroll for new messages or when streaming
+      if (isStreaming || messages.length > 0) {
+        setTimeout(() => {
+          chatEndRef.current?.scrollIntoView({ 
+            behavior: isStreaming ? 'smooth' : 'smooth',
+            block: 'end'
+          })
+        }, 50) // Faster response for better UX
+      }
     }
-  }, [messages.length, disableAutoScroll, isUserScrolling, isStreaming]) // Removed general messages dependency
+  }, [messages.length, messages[messages.length - 1]?.content, isStreaming, disableAutoScroll, isUserScrolling])
 
   // Enhanced file handling with drag & drop and better error handling
   const handleFileSelect = (files: FileList) => {
@@ -1426,7 +1440,7 @@ function DashboardContent() {
     }
   }
 
-  // ✅ FIXED: Updated fetchFollowUps to generate actionable responses
+  // ✅ ENHANCED: Better follow-up generation with proper tense and perspective
   const fetchFollowUps = async (text: string): Promise<string[]> => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/ai/followups`, {
@@ -1441,23 +1455,43 @@ function DashboardContent() {
       const data = await res.json()
       const rawFollowUps = (data.followUps as string[]) || []
       
-      // Only return ONE follow-up question
+      // Only return ONE follow-up question, properly formatted
       if (rawFollowUps.length > 0) {
-        return [rawFollowUps[0]]
+        // Convert to user perspective if needed
+        const followUp = rawFollowUps[0]
+        if (followUp.toLowerCase().startsWith('have you considered') || 
+            followUp.toLowerCase().startsWith('would you like') ||
+            followUp.toLowerCase().includes('you should')) {
+          // Convert to actionable user request
+          if (followUp.toLowerCase().includes('professional') && followUp.toLowerCase().includes('designer')) {
+            return ['Help me find design professionals or tools']
+          } else if (followUp.toLowerCase().includes('implement')) {
+            return ['Show me step-by-step implementation']
+          } else {
+            return ['Give me more specific guidance']
+          }
+        }
+        return [followUp]
       }
       
-      // ✅ FIXED: Better contextual follow-ups as actionable responses
-      if (text.toLowerCase().includes('marketing')) {
-        return ['Help me measure the success of these marketing strategies']
-      } else if (text.toLowerCase().includes('business') || text.toLowerCase().includes('improve')) {
-        return ['Show me the first step to implement this improvement']
-      } else if (text.toLowerCase().includes('document') || text.toLowerCase().includes('create')) {
-        return ['Help me customize this for my specific industry']
+      // ✅ ENHANCED: Better contextual follow-ups based on content analysis
+      const lowerText = text.toLowerCase()
+      
+      if (lowerText.includes('logo') || lowerText.includes('design') || lowerText.includes('visual')) {
+        return ['Help me create this using your image generator']
+      } else if (lowerText.includes('marketing') || lowerText.includes('strategy')) {
+        return ['Create a timeline to implement these strategies']
+      } else if (lowerText.includes('business') || lowerText.includes('improve') || lowerText.includes('optimize')) {
+        return ['Break this down into actionable steps']
+      } else if (lowerText.includes('document') || lowerText.includes('proposal') || lowerText.includes('plan')) {
+        return ['Help me customize this for my industry']
+      } else if (lowerText.includes('analysis') || lowerText.includes('data') || lowerText.includes('research')) {
+        return ['Show me how to track progress on this']
       } else {
-        return ['Provide more specific examples for my situation']
+        return ['Give me specific examples for my situation']
       }
     } catch {
-      return ['Help me implement this in my business']
+      return ['Help me implement this step by step']
     }
   }
 
@@ -1476,12 +1510,21 @@ function DashboardContent() {
     )
 
     try {
-      // ✅ FIXED: Check if user is asking for image generation
+      // ✅ ENHANCED: Proper image generation awareness and guidance
       if (detectImageRequest(prompt)) {
-        // Guide user to image generation feature
-        const imageGuideResponse = `I can help you create images! I have a powerful image generation feature using DALLE. Click the 🎨 palette button next to the upload button to create professional images, logos, graphics, and more.
+        // Guide user to image generation feature with awareness of capabilities
+        const imageGuideResponse = `I can absolutely help you create images! 🎨 
 
-Would you like me to guide you through the image creation process, or would you prefer to use the image generator directly?`
+I have a powerful built-in image generation feature using DALL-E that can create:
+• Professional logos and branding
+• Marketing graphics and social media images  
+• Business presentations and visuals
+• Custom illustrations and artwork
+
+**To create an image:**
+Click the 🎨 palette button next to the upload button below, or I can open it for you right now.
+
+What type of image would you like me to help you create?`
 
         // Show the guide response with animation
         let currentIndex = 0
@@ -1492,7 +1535,7 @@ Would you like me to guide you through the image creation process, or would you 
                 msg.id === aId ? { ...msg, content: imageGuideResponse.substring(0, currentIndex) } : msg
               )
             )
-            currentIndex += 3 // Type 3 characters at a time for faster typing
+            currentIndex += 4 // Slightly faster typing
           } else {
             clearInterval(typeInterval)
             setIsLoading(false)
@@ -1504,12 +1547,12 @@ Would you like me to guide you through the image creation process, or would you 
                 msg.id === aId ? { 
                   ...msg, 
                   content: imageGuideResponse,
-                  followUps: ['Open the image generator for me', 'Guide me through the image creation process']
+                  followUps: ['Open the image generator for me']
                 } : msg
               )
             )
           }
-        }, 30)
+        }, 25) // Faster typing animation
         return
       }
 
@@ -1537,6 +1580,16 @@ Would you like me to guide you through the image creation process, or would you 
                   : msg
               )
             )
+            
+            // ✅ ENHANCED: Auto-scroll during streaming for better UX
+            if (!disableAutoScroll && !isUserScrolling) {
+              setTimeout(() => {
+                chatEndRef.current?.scrollIntoView({ 
+                  behavior: 'smooth',
+                  block: 'end'
+                })
+              }, 10)
+            }
           }
           
           if (chunk.followUps) {
@@ -1691,8 +1744,8 @@ Would you like me to guide you through the image creation process, or would you 
       return
     }
 
-    // ✅ FIXED: Handle special follow-up actions
-    if (text === 'Open the image generator for me') {
+    // ✅ ENHANCED: Handle special follow-up actions with better recognition
+    if (text === 'Open the image generator for me' || text === 'Help me create this using your image generator') {
       setShowImageModal(true)
       return
     }
