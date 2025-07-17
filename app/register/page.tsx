@@ -100,12 +100,12 @@ export default function RegisterPage() {
           <Image src="/growfly-logo.png" alt="Growfly Logo" width={100} height={30} />
         </div>
 
-        {/* Title Section */}
+        {/* Title Section - UPDATED HIERARCHY */}
         <div className="text-center mb-4">
-          <p className="text-cyan-300 text-sm font-medium mb-2">AI for professionals, without the distraction</p>
-          <h1 className="text-2xl md:text-3xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+          <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
             Improve your productivity
           </h1>
+          <p className="text-cyan-300 text-sm font-medium mb-2">AI for professionals, without the distraction</p>
           <div className="text-sm text-white/80 space-y-1">
             <p>Start for free. Upgrade or cancel anytime.</p>
           </div>
@@ -124,9 +124,9 @@ export default function RegisterPage() {
                     : 'bg-white/10 border-2 border-cyan-400/50 hover:border-cyan-400/80 hover:bg-white/15'
                 } hover:transform hover:scale-[1.02]`}
               >
-                {/* Popular Badge */}
+                {/* Popular Badge - ADDED MARGIN BOTTOM FOR SPACING */}
                 {plan.popular && (
-                  <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-20">
+                  <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-20 mb-2">
                     <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center gap-1">
                       <Zap size={8} />
                       MOST POPULAR
@@ -134,8 +134,8 @@ export default function RegisterPage() {
                   </div>
                 )}
 
-                {/* Plan Header */}
-                <div className="text-center mb-4">
+                {/* Plan Header - ADDED TOP MARGIN FOR SPACING WHEN POPULAR */}
+                <div className={`text-center mb-4 ${plan.popular ? 'mt-4' : ''}`}>
                   <div className={`inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-r ${plan.color} text-white mb-2`}>
                     <PlanIcon size={20} />
                   </div>
