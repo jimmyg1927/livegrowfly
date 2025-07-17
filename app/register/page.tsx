@@ -108,7 +108,6 @@ export default function RegisterPage() {
           </h1>
           <div className="text-sm text-white/80 space-y-1">
             <p>Start for free. Upgrade or cancel anytime.</p>
-            <p>No credit card required for Launch plan.</p>
           </div>
         </div>
 
